@@ -1,6 +1,6 @@
 
 import { useState } from 'react';
-import { Clock, Code, Globe, Calendar } from 'lucide-react';
+import { Clock, Code, Globe } from 'lucide-react';
 import { useTheme } from '../contexts/ThemeContext';
 // import Header from './Header';
 
