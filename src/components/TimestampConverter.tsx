@@ -20,15 +20,31 @@ export default function TimestampConverter() {
     const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
     setUserTimezone(timezone);
     
-    // 检查URL哈希
+    // 检查URL哈希并设置 canonical
     const handleHashChange = () => {
       const hash = window.location.hash.slice(1);
+      let canonicalUrl = 'https://tsconv.com/';
+      
       if (hash === 'api') {
         setCurrentPage('api');
+        canonicalUrl = 'https://tsconv.com/#api';
       } else if (hash === 'guide') {
         setCurrentPage('guide');
+        canonicalUrl = 'https://tsconv.com/#guide';
       } else {
         setCurrentPage('converter');
+        canonicalUrl = 'https://tsconv.com/';
+      }
+      
+      // 更新 canonical URL
+      let canonical = document.querySelector('link[rel="canonical"]');
+      if (canonical) {
+        canonical.setAttribute('href', canonicalUrl);
+      } else {
+        canonical = document.createElement('link');
+        canonical.setAttribute('rel', 'canonical');
+        canonical.setAttribute('href', canonicalUrl);
+        document.head.appendChild(canonical);
       }
     };
     
