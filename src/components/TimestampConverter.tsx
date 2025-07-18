@@ -281,26 +281,41 @@ export default function TimestampConverter() {
 
             {/* Current Timestamp */}
             <div className="mb-8">
-              <div className={`p-3 sm:p-4 rounded-lg ${isDark ? 'bg-slate-800' : 'bg-slate-50'}`}>
+              <div className={`p-4 sm:p-6 rounded-xl border-2 ${
+                isDark 
+                  ? 'bg-gradient-to-r from-blue-900/30 to-purple-900/30 border-blue-500/30' 
+                  : 'bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200'
+              }`}>
                 <div className="flex justify-between items-start gap-3">
                   <div className="flex-1 min-w-0">
-                    <div className={`text-xs sm:text-sm ${isDark ? 'text-slate-400' : 'text-slate-600'} mb-1`}>
-                      Current Unix timestamp
+                    <div className={`text-sm sm:text-base font-medium mb-2 ${
+                      isDark ? 'text-blue-300' : 'text-blue-700'
+                    }`}>
+                      🕐 Current Unix Timestamp
                     </div>
-                    <div className="text-sm sm:text-lg font-mono break-all">
+                    <div className={`text-xl sm:text-2xl font-mono font-bold break-all ${
+                      isDark ? 'text-white' : 'text-slate-900'
+                    }`}>
                       {currentTimestamp}
+                    </div>
+                    <div className={`text-xs sm:text-sm mt-1 ${
+                      isDark ? 'text-slate-400' : 'text-slate-600'
+                    }`}>
+                      Updates every second
                     </div>
                   </div>
                   <button
                     onClick={() => copyToClipboard(currentTimestamp.toString(), 'current')}
-                    className={`flex-shrink-0 p-2 rounded transition-colors ${
-                      isDark ? 'hover:bg-slate-700' : 'hover:bg-slate-200'
+                    className={`flex-shrink-0 p-3 rounded-lg transition-all duration-200 ${
+                      isDark 
+                        ? 'hover:bg-blue-800/50 bg-blue-900/30 border border-blue-500/30' 
+                        : 'hover:bg-blue-100 bg-blue-50 border border-blue-200'
                     }`}
                   >
                     {copiedStates.current ? (
-                      <Check className="w-4 h-4 text-green-500" />
+                      <Check className="w-5 h-5 text-green-500" />
                     ) : (
-                      <Copy className="w-4 h-4" />
+                      <Copy className={`w-5 h-5 ${isDark ? 'text-blue-300' : 'text-blue-600'}`} />
                     )}
                   </button>
                 </div>
