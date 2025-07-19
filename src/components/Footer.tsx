@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { useTheme } from '../contexts/ThemeContext';
 
 export default function Footer() {
@@ -28,28 +29,28 @@ export default function Footer() {
             </h4>
             <ul className="space-y-2 text-sm">
               <li>
-                <button 
-                  onClick={() => window.location.hash = ''}
+                <Link 
+                  to="/"
                   className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
                 >
                   Timestamp Converter
-                </button>
+                </Link>
               </li>
               <li>
-                <button 
-                  onClick={() => window.location.hash = 'api'}
+                <Link 
+                  to="/api"
                   className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
                 >
                   API Documentation
-                </button>
+                </Link>
               </li>
               <li>
-                <button 
-                  onClick={() => window.location.hash = 'guide'}
+                <Link 
+                  to="/guide"
                   className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
                 >
                   Developer Guides
-                </button>
+                </Link>
               </li>
             </ul>
           </div>

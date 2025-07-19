@@ -2,16 +2,13 @@ import { useState, useEffect } from "react";
 import { Copy, Check } from "lucide-react";
 import { useTheme } from "../contexts/ThemeContext";
 import Header from "./Header";
-import ApiDocs from "./ApiDocs";
-import Guide from "./Guide";
 import Footer from "./Footer";
+
 export default function TimestampConverter() {
   const [input, setInput] = useState("");
   const [currentTime, setCurrentTime] = useState(new Date());
   const [copiedStates, setCopiedStates] = useState<{[key: string]: boolean}>({});
   const [userTimezone, setUserTimezone] = useState("");
-  const [currentPage, setCurrentPage] = useState<'converter' | 'api' | 'guide'>('converter');
-  
   const { isDark } = useTheme();
 
   // 初始化
@@ -20,38 +17,16 @@ export default function TimestampConverter() {
     const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
     setUserTimezone(timezone);
     
-    // 检查URL哈希并设置 canonical
-    const handleHashChange = () => {
-      const hash = window.location.hash.slice(1);
-      let canonicalUrl = 'https://tsconv.com/';
-      
-      if (hash === 'api') {
-        setCurrentPage('api');
-        canonicalUrl = 'https://tsconv.com/#api';
-      } else if (hash === 'guide') {
-        setCurrentPage('guide');
-        canonicalUrl = 'https://tsconv.com/#guide';
-      } else {
-        setCurrentPage('converter');
-        canonicalUrl = 'https://tsconv.com/';
-      }
-      
-      // 更新 canonical URL
-      let canonical = document.querySelector('link[rel="canonical"]');
-      if (canonical) {
-        canonical.setAttribute('href', canonicalUrl);
-      } else {
-        canonical = document.createElement('link');
-        canonical.setAttribute('rel', 'canonical');
-        canonical.setAttribute('href', canonicalUrl);
-        document.head.appendChild(canonical);
-      }
-    };
-    
-    window.addEventListener('hashchange', handleHashChange);
-    handleHashChange(); // 初始化
-    
-    return () => window.removeEventListener('hashchange', handleHashChange);
+    // 设置 canonical URL
+    let canonical = document.querySelector('link[rel="canonical"]');
+    if (canonical) {
+      canonical.setAttribute('href', 'https://tsconv.com/');
+    } else {
+      canonical = document.createElement('link');
+      canonical.setAttribute('rel', 'canonical');
+      canonical.setAttribute('href', 'https://tsconv.com/');
+      document.head.appendChild(canonical);
+    }
   }, []);
 
   // 更新当前时间
@@ -146,225 +121,205 @@ export default function TimestampConverter() {
     <div className={`min-h-screen flex flex-col transition-colors duration-200 ${
       isDark ? 'bg-slate-900 text-white' : 'bg-white text-slate-900'
     }`}>
-      <Header currentPage={currentPage} />
+      <Header />
+      {/* 转换器主要内容 */}
+      <main className="flex-1 max-w-2xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
+        {/* Title */}
+        <div className="text-center mb-8 sm:mb-12">
+          <h1 className="text-2xl sm:text-4xl font-light mb-4">
+            Timestamp conversion, simplified.
+          </h1>
+          <p className="text-sm sm:text-base text-slate-600 dark:text-slate-400">
+            Convert Unix timestamps to human-readable dates and vice versa
+          </p>
+        </div>
 
-      {/* Page Content */}
-      {currentPage === 'converter' ? (
-        <>
-          {/* Main Content */}
-          <main className="flex-1 max-w-2xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
-            {/* Title */}
-            <div className="text-center mb-8 sm:mb-12">
-              <h1 className="text-2xl sm:text-4xl font-light mb-4">
-                Timestamp conversion, simplified.
-              </h1>
-              <p className="text-sm sm:text-base text-slate-600 dark:text-slate-400">
-                Convert Unix timestamps to human-readable dates and vice versa
-              </p>
-            </div>
+        {/* Input */}
+        <div className="mb-6 sm:mb-8">
+          <input
+            type="text"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            placeholder="Enter timestamp or date..."
+            className={`w-full text-base sm:text-lg p-3 sm:p-4 border-2 rounded-lg transition-colors focus:outline-none ${
+              isDark
+                ? 'bg-slate-800 border-slate-700 focus:border-blue-500 placeholder-slate-400'
+                : 'bg-white border-slate-200 focus:border-blue-500 placeholder-slate-500'
+            }`}
+          />
+        </div>
 
-            {/* Input */}
-            <div className="mb-6 sm:mb-8">
-              <input
-                type="text"
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                placeholder="Enter timestamp or date..."
-                className={`w-full text-base sm:text-lg p-3 sm:p-4 border-2 rounded-lg transition-colors focus:outline-none ${
-                  isDark
-                    ? 'bg-slate-800 border-slate-700 focus:border-blue-500 placeholder-slate-400'
-                    : 'bg-white border-slate-200 focus:border-blue-500 placeholder-slate-500'
-                }`}
-              />
-            </div>
-
-            {/* Results */}
-            {results && (
-              <div className="space-y-4 sm:space-y-6 mb-8">
-                {/* Primary Results */}
-                <div className="space-y-3 sm:space-y-4">
-                  {/* UTC Date */}
-                  <div className={`p-3 sm:p-4 rounded-lg ${isDark ? 'bg-slate-800' : 'bg-slate-50'}`}>
-                    <div className="flex justify-between items-start gap-3">
-                      <div className="flex-1 min-w-0">
-                        <div className={`text-xs sm:text-sm ${isDark ? 'text-slate-400' : 'text-slate-600'} mb-1`}>
-                          Human readable date (UTC)
-                        </div>
-                        <div className="text-sm sm:text-lg font-mono break-all">
-                          {results.utcDate}
-                        </div>
-                      </div>
-                      <button
-                        onClick={() => copyToClipboard(results.utcDate, 'utc')}
-                        className={`flex-shrink-0 p-2 rounded transition-colors ${
-                          isDark ? 'hover:bg-slate-700' : 'hover:bg-slate-200'
-                        }`}
-                      >
-                        {copiedStates.utc ? (
-                          <Check className="w-4 h-4 text-green-500" />
-                        ) : (
-                          <Copy className="w-4 h-4" />
-                        )}
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Local Date */}
-                  <div className={`p-3 sm:p-4 rounded-lg ${isDark ? 'bg-slate-800' : 'bg-slate-50'}`}>
-                    <div className="flex justify-between items-start gap-3">
-                      <div className="flex-1 min-w-0">
-                        <div className={`text-xs sm:text-sm ${isDark ? 'text-slate-400' : 'text-slate-600'} mb-1`}>
-                          Your timezone: {userTimezone}
-                        </div>
-                        <div className="text-sm sm:text-lg font-mono break-all">
-                          {results.localDate}
-                        </div>
-                      </div>
-                      <button
-                        onClick={() => copyToClipboard(results.localDate, 'local')}
-                        className={`flex-shrink-0 p-2 rounded transition-colors ${
-                          isDark ? 'hover:bg-slate-700' : 'hover:bg-slate-200'
-                        }`}
-                      >
-                        {copiedStates.local ? (
-                          <Check className="w-4 h-4 text-green-500" />
-                        ) : (
-                          <Copy className="w-4 h-4" />
-                        )}
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Unix Timestamp */}
-                  <div className={`p-3 sm:p-4 rounded-lg ${isDark ? 'bg-slate-800' : 'bg-slate-50'}`}>
-                    <div className="flex justify-between items-start gap-3">
-                      <div className="flex-1 min-w-0">
-                        <div className={`text-xs sm:text-sm ${isDark ? 'text-slate-400' : 'text-slate-600'} mb-1`}>
-                          Unix timestamp (seconds)
-                        </div>
-                        <div className="text-sm sm:text-lg font-mono break-all">
-                          {results.timestamp}
-                        </div>
-                      </div>
-                      <button
-                        onClick={() => copyToClipboard(results.timestamp.toString(), 'timestamp')}
-                        className={`flex-shrink-0 p-2 rounded transition-colors ${
-                          isDark ? 'hover:bg-slate-700' : 'hover:bg-slate-200'
-                        }`}
-                      >
-                        {copiedStates.timestamp ? (
-                          <Check className="w-4 h-4 text-green-500" />
-                        ) : (
-                          <Copy className="w-4 h-4" />
-                        )}
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Secondary Information */}
-                <details className={`${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
-                  <summary className="cursor-pointer hover:text-current transition-colors text-sm sm:text-base">
-                    More formats
-                  </summary>
-                  <div className="mt-3 sm:mt-4 space-y-3">
-                    <div className="flex justify-between items-center gap-3">
-                      <span className="text-sm">Relative time:</span>
-                      <span className="font-mono text-sm break-all">{results.relative}</span>
-                    </div>
-                    <div className="flex justify-between items-start gap-3">
-                      <span className="text-sm flex-shrink-0">ISO 8601:</span>
-                      <div className="flex items-center gap-2 min-w-0">
-                        <span className="font-mono text-xs sm:text-sm break-all">{results.iso8601}</span>
-                        <button
-                          onClick={() => copyToClipboard(results.iso8601, 'iso')}
-                          className={`flex-shrink-0 p-1 rounded transition-colors ${
-                            isDark ? 'hover:bg-slate-700' : 'hover:bg-slate-200'
-                          }`}
-                        >
-                          {copiedStates.iso ? (
-                            <Check className="w-3 h-3 text-green-500" />
-                          ) : (
-                            <Copy className="w-3 h-3" />
-                          )}
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </details>
-              </div>
-            )}
-
-            {/* Current Timestamp */}
-            <div className="mb-8">
-              <div className={`p-4 sm:p-6 rounded-xl border-2 ${
-                isDark 
-                  ? 'bg-gradient-to-r from-blue-900/30 to-purple-900/30 border-blue-500/30' 
-                  : 'bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200'
-              }`}>
+        {/* Results */}
+        {results && (
+          <div className="space-y-4 sm:space-y-6 mb-8">
+            {/* Primary Results */}
+            <div className="space-y-3 sm:space-y-4">
+              {/* UTC Date */}
+              <div className={`p-3 sm:p-4 rounded-lg ${isDark ? 'bg-slate-800' : 'bg-slate-50'}`}>
                 <div className="flex justify-between items-start gap-3">
                   <div className="flex-1 min-w-0">
-                    <div className={`text-sm sm:text-base font-medium mb-2 ${
-                      isDark ? 'text-blue-300' : 'text-blue-700'
-                    }`}>
-                      🕐 Current Unix Timestamp
+                    <div className={`text-xs sm:text-sm ${isDark ? 'text-slate-400' : 'text-slate-600'} mb-1`}>
+                      Human readable date (UTC)
                     </div>
-                    <div className={`text-xl sm:text-2xl font-mono font-bold break-all ${
-                      isDark ? 'text-white' : 'text-slate-900'
-                    }`}>
-                      {currentTimestamp}
-                    </div>
-                    <div className={`text-xs sm:text-sm mt-1 ${
-                      isDark ? 'text-slate-400' : 'text-slate-600'
-                    }`}>
-                      Updates every second
+                    <div className="text-sm sm:text-lg font-mono break-all">
+                      {results.utcDate}
                     </div>
                   </div>
                   <button
-                    onClick={() => copyToClipboard(currentTimestamp.toString(), 'current')}
-                    className={`flex-shrink-0 p-3 rounded-lg transition-all duration-200 ${
-                      isDark 
-                        ? 'hover:bg-blue-800/50 bg-blue-900/30 border border-blue-500/30' 
-                        : 'hover:bg-blue-100 bg-blue-50 border border-blue-200'
+                    onClick={() => copyToClipboard(results.utcDate, 'utc')}
+                    className={`flex-shrink-0 p-2 rounded transition-colors ${
+                      isDark ? 'hover:bg-slate-700' : 'hover:bg-slate-200'
                     }`}
                   >
-                    {copiedStates.current ? (
-                      <Check className="w-5 h-5 text-green-500" />
+                    {copiedStates.utc ? (
+                      <Check className="w-4 h-4 text-green-500" />
                     ) : (
-                      <Copy className={`w-5 h-5 ${isDark ? 'text-blue-300' : 'text-blue-600'}`} />
+                      <Copy className="w-4 h-4" />
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              {/* Local Date */}
+              <div className={`p-3 sm:p-4 rounded-lg ${isDark ? 'bg-slate-800' : 'bg-slate-50'}`}>
+                <div className="flex justify-between items-start gap-3">
+                  <div className="flex-1 min-w-0">
+                    <div className={`text-xs sm:text-sm ${isDark ? 'text-slate-400' : 'text-slate-600'} mb-1`}>
+                      Your timezone: {userTimezone}
+                    </div>
+                    <div className="text-sm sm:text-lg font-mono break-all">
+                      {results.localDate}
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => copyToClipboard(results.localDate, 'local')}
+                    className={`flex-shrink-0 p-2 rounded transition-colors ${
+                      isDark ? 'hover:bg-slate-700' : 'hover:bg-slate-200'
+                    }`}
+                  >
+                    {copiedStates.local ? (
+                      <Check className="w-4 h-4 text-green-500" />
+                    ) : (
+                      <Copy className="w-4 h-4" />
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              {/* Unix Timestamp */}
+              <div className={`p-3 sm:p-4 rounded-lg ${isDark ? 'bg-slate-800' : 'bg-slate-50'}`}>
+                <div className="flex justify-between items-start gap-3">
+                  <div className="flex-1 min-w-0">
+                    <div className={`text-xs sm:text-sm ${isDark ? 'text-slate-400' : 'text-slate-600'} mb-1`}>
+                      Unix timestamp (seconds)
+                    </div>
+                    <div className="text-sm sm:text-lg font-mono break-all">
+                      {results.timestamp}
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => copyToClipboard(results.timestamp.toString(), 'timestamp')}
+                    className={`flex-shrink-0 p-2 rounded transition-colors ${
+                      isDark ? 'hover:bg-slate-700' : 'hover:bg-slate-200'
+                    }`}
+                  >
+                    {copiedStates.timestamp ? (
+                      <Check className="w-4 h-4 text-green-500" />
+                    ) : (
+                      <Copy className="w-4 h-4" />
                     )}
                   </button>
                 </div>
               </div>
             </div>
 
-            {/* What is Unix Timestamp */}
-            <div className="mb-8">
-              <h2 className="text-lg sm:text-xl font-medium mb-3 sm:mb-4">What is a Unix Timestamp?</h2>
-              <p className={`${isDark ? 'text-slate-400' : 'text-slate-600'} leading-relaxed text-sm sm:text-base`}>
-                A Unix timestamp is the number of seconds that have elapsed since January 1, 1970, 00:00:00 UTC. 
-                It's a simple way to represent time that's widely used in programming and databases.
-              </p>
-            </div>
-          </main>
+            {/* Secondary Information */}
+            <details className={`${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+              <summary className="cursor-pointer hover:text-current transition-colors text-sm sm:text-base">
+                More formats
+              </summary>
+              <div className="mt-3 sm:mt-4 space-y-3">
+                <div className="flex justify-between items-center gap-3">
+                  <span className="text-sm">Relative time:</span>
+                  <span className="font-mono text-sm break-all">{results.relative}</span>
+                </div>
+                <div className="flex justify-between items-start gap-3">
+                  <span className="text-sm flex-shrink-0">ISO 8601:</span>
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className="font-mono text-xs sm:text-sm break-all">{results.iso8601}</span>
+                    <button
+                      onClick={() => copyToClipboard(results.iso8601, 'iso')}
+                      className={`flex-shrink-0 p-1 rounded transition-colors ${
+                        isDark ? 'hover:bg-slate-700' : 'hover:bg-slate-200'
+                      }`}
+                    >
+                      {copiedStates.iso ? (
+                        <Check className="w-3 h-3 text-green-500" />
+                      ) : (
+                        <Copy className="w-3 h-3" />
+                      )}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </details>
+          </div>
+        )}
 
-          <Footer />
-        </>
-      ) : currentPage === 'api' ? (
-        <>
-          <div className="flex-1">
-            <ApiDocs />
+        {/* Current Timestamp */}
+        <div className="mb-8">
+          <div className={`p-4 sm:p-6 rounded-xl border-2 ${
+            isDark 
+              ? 'bg-gradient-to-r from-blue-900/30 to-purple-900/30 border-blue-500/30' 
+              : 'bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200'
+          }`}>
+            <div className="flex justify-between items-start gap-3">
+              <div className="flex-1 min-w-0">
+                <div className={`text-sm sm:text-base font-medium mb-2 ${
+                  isDark ? 'text-blue-300' : 'text-blue-700'
+                }`}>
+                  🕐 Current Unix Timestamp
+                </div>
+                <div className={`text-xl sm:text-2xl font-mono font-bold break-all ${
+                  isDark ? 'text-white' : 'text-slate-900'
+                }`}>
+                  {currentTimestamp}
+                </div>
+                <div className={`text-xs sm:text-sm mt-1 ${
+                  isDark ? 'text-slate-400' : 'text-slate-600'
+                }`}>
+                  Updates every second
+                </div>
+              </div>
+              <button
+                onClick={() => copyToClipboard(currentTimestamp.toString(), 'current')}
+                className={`flex-shrink-0 p-3 rounded-lg transition-all duration-200 ${
+                  isDark 
+                    ? 'hover:bg-blue-800/50 bg-blue-900/30 border border-blue-500/30' 
+                    : 'hover:bg-blue-100 bg-blue-50 border border-blue-200'
+                }`}
+              >
+                {copiedStates.current ? (
+                  <Check className="w-5 h-5 text-green-500" />
+                ) : (
+                  <Copy className={`w-5 h-5 ${isDark ? 'text-blue-300' : 'text-blue-600'}`} />
+                )}
+              </button>
+            </div>
           </div>
-          <Footer />
-        </>
-      ) : (
-        <>
-          <div className="flex-1">
-            <Guide />
-          </div>
-          <Footer />
-        </>
-      )}
+        </div>
+
+        {/* What is Unix Timestamp */}
+        <div className="mb-8">
+          <h2 className="text-lg sm:text-xl font-medium mb-3 sm:mb-4">What is a Unix Timestamp?</h2>
+          <p className={`${isDark ? 'text-slate-400' : 'text-slate-600'} leading-relaxed text-sm sm:text-base`}>
+            A Unix timestamp is the number of seconds that have elapsed since January 1, 1970, 00:00:00 UTC. 
+            It's a simple way to represent time that's widely used in programming and databases.
+          </p>
+        </div>
+      </main>
+
+      <Footer />
     </div>
   );
 }

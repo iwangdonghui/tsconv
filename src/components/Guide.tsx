@@ -1,8 +1,10 @@
 
 import { useState } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { Clock, Code, Globe, Database, Server } from 'lucide-react';
 import { useTheme } from '../contexts/ThemeContext';
-// import Header from './Header';
+import Header from './Header';
+import Footer from './Footer';
 
 // 导入指南组件
 import WhatIsUnixTimestamp from './guides/WhatIsUnixTimestamp';
@@ -13,7 +15,8 @@ import DatabaseTimestamps from './guides/DatabaseTimestamps';
 import APITimestampHandling from './guides/APITimestampHandling';
 
 export default function Guide() {
-  const [selectedArticle, setSelectedArticle] = useState<string | null>(null);
+  const { articleId } = useParams();
+  const navigate = useNavigate();
   const { isDark } = useTheme();
 
   const articles = [
@@ -61,33 +64,44 @@ export default function Guide() {
     }
   ];
 
-  if (selectedArticle) {
-    const article = articles.find(a => a.id === selectedArticle);
+  // 如果有 articleId，显示具体文章
+  if (articleId) {
+    const article = articles.find(a => a.id === articleId);
+    
+    if (!article) {
+      // 文章不存在，重定向到指南列表
+      navigate('/guide');
+      return null;
+    }
+
     return (
       <div className={`min-h-screen transition-colors duration-200 ${
         isDark ? 'bg-slate-900 text-white' : 'bg-white text-slate-900'
       }`}>
+        <Header />
         <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
           <button
-            onClick={() => setSelectedArticle(null)}
+            onClick={() => navigate('/guide')}
             className="mb-4 sm:mb-6 text-blue-600 dark:text-blue-400 hover:underline text-sm sm:text-base"
           >
             ← Back to Guides
           </button>
           <div className="prose prose-slate dark:prose-invert max-w-none">
-            {article?.content}
+            {article.content}
           </div>
         </div>
+        <Footer />
       </div>
     );
   }
 
+  // 显示指南列表
   return (
-    <div className={`min-h-screen transition-colors duration-200 ${
+    <div className={`min-h-screen flex flex-col transition-colors duration-200 ${
       isDark ? 'bg-slate-900 text-white' : 'bg-white text-slate-900'
     }`}>
-      {/* <Header currentPage="guide" /> */}
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
+      <Header />
+      <div className="flex-1 max-w-4xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
         <h1 className="text-2xl sm:text-3xl font-bold mb-3 sm:mb-4">Developer Guides</h1>
         <p className="text-base sm:text-lg mb-6 sm:mb-8 text-slate-600 dark:text-slate-400">
           Comprehensive guides for working with timestamps in different programming languages and scenarios.
@@ -97,7 +111,7 @@ export default function Guide() {
           {articles.map((article) => (
             <div
               key={article.id}
-              onClick={() => setSelectedArticle(article.id)}
+              onClick={() => navigate(`/guide/${article.id}`)}
               className={`p-4 sm:p-6 rounded-lg border cursor-pointer transition-all hover:shadow-lg ${
                 isDark 
                   ? 'bg-slate-800 border-slate-700 hover:border-slate-600' 
@@ -119,6 +133,7 @@ export default function Guide() {
           ))}
         </div>
       </div>
+      <Footer />
     </div>
   );
 }
