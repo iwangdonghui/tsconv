@@ -1,4 +1,4 @@
-import { NextApiRequest, NextApiResponse } from 'next';
+import { VercelRequest, VercelResponse } from '@vercel/node';
 
 interface ConvertResponse {
   success: boolean;
@@ -9,7 +9,7 @@ interface ConvertResponse {
   };
 }
 
-export default function handler(req: NextApiRequest, res: NextApiResponse<ConvertResponse>) {
+export default function handler(req: VercelRequest, res: VercelResponse) {
   // 设置CORS头
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
