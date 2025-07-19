@@ -1,104 +1,105 @@
-export default function handler(req: any, res: any) {
+import { NextApiRequest, NextApiResponse } from 'next';
+
+interface ConvertResponse {
+  success: boolean;
+  data?: any;
+  error?: {
+    code: string;
+    message: string;
+  };
+}
+
+export default function handler(req: NextApiRequest, res: NextApiResponse<ConvertResponse>) {
   // 设置CORS头
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
-  // 处理OPTIONS请求
   if (req.method === 'OPTIONS') {
     res.status(200).end();
     return;
   }
 
   try {
-    const { timestamp, date, format = 'json' } = req.query;
+    const { timestamp, date } = req.query;
 
-    // 验证输入
     if (!timestamp && !date) {
       return res.status(400).json({
-        error: 'Missing required parameter',
-        message: 'Please provide either "timestamp" or "date" parameter',
-        example: '/api/convert?timestamp=1640995200'
+        success: false,
+        error: {
+          code: "MISSING_PARAMETER",
+          message: "Please provide either 'timestamp' or 'date' parameter"
+        }
       });
     }
 
     let result: any = {};
-    let inputDate: Date;
 
     if (timestamp) {
-      // 处理时间戳输入
       const ts = parseInt(timestamp as string);
       if (isNaN(ts)) {
         return res.status(400).json({
-          error: 'Invalid timestamp',
-          message: 'Timestamp must be a valid number',
-          provided: timestamp
+          success: false,
+          error: {
+            code: "INVALID_TIMESTAMP",
+            message: "The provided timestamp is invalid"
+          }
         });
       }
 
-      // 判断是秒还是毫秒
-      const timestampMs = ts.toString().length === 10 ? ts * 1000 : ts;
-      inputDate = new Date(timestampMs);
-
-      if (isNaN(inputDate.getTime())) {
-        return res.status(400).json({
-          error: 'Invalid timestamp',
-          message: 'Timestamp is out of valid range',
-          provided: timestamp
-        });
-      }
-
+      const date = new Date(ts * 1000);
       result = {
-        input: {
+        success: true,
+        data: {
           timestamp: ts,
-          type: ts.toString().length === 10 ? 'seconds' : 'milliseconds'
-        },
-        output: {
-          utc: inputDate.toUTCString(),
-          iso8601: inputDate.toISOString(),
-          unix_seconds: Math.floor(inputDate.getTime() / 1000),
-          unix_milliseconds: inputDate.getTime()
-        }
-      };
-    } else if (date) {
-      // 处理日期输入
-      inputDate = new Date(date as string);
-
-      if (isNaN(inputDate.getTime())) {
-        return res.status(400).json({
-          error: 'Invalid date',
-          message: 'Date format is not recognized',
-          provided: date
-        });
-      }
-
-      result = {
-        input: {
-          date: date,
-          parsed: inputDate.toISOString()
-        },
-        output: {
-          utc: inputDate.toUTCString(),
-          iso8601: inputDate.toISOString(),
-          unix_seconds: Math.floor(inputDate.getTime() / 1000),
-          unix_milliseconds: inputDate.getTime()
+          utc: date.toUTCString(),
+          iso8601: date.toISOString(),
+          relative: getRelativeTime(date)
         }
       };
     }
 
-    // 添加元数据
-    result.meta = {
-      api_version: 'v1',
-      timestamp: new Date().toISOString()
-    };
+    if (date) {
+      const parsedDate = new Date(date as string);
+      if (isNaN(parsedDate.getTime())) {
+        return res.status(400).json({
+          success: false,
+          error: {
+            code: "INVALID_DATE",
+            message: "The date parameter cannot be parsed"
+          }
+        });
+      }
+
+      result = {
+        success: true,
+        data: {
+          date: date,
+          timestamp: Math.floor(parsedDate.getTime() / 1000),
+          utc: parsedDate.toUTCString(),
+          iso8601: parsedDate.toISOString()
+        }
+      };
+    }
 
     res.status(200).json(result);
-
   } catch (error) {
-    console.error('API Error:', error);
     res.status(500).json({
-      error: 'Internal server error',
-      message: 'An unexpected error occurred'
+      success: false,
+      error: {
+        code: "INTERNAL_ERROR",
+        message: "An unexpected error occurred"
+      }
     });
   }
+}
+
+function getRelativeTime(date: Date): string {
+  const now = new Date();
+  const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+  
+  if (diffInSeconds < 60) return `${diffInSeconds} seconds ago`;
+  if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)} minutes ago`;
+  if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)} hours ago`;
+  return `${Math.floor(diffInSeconds / 86400)} days ago`;
 }

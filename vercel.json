@@ -1,0 +1,10 @@
+{
+  "functions": {
+    "api/convert.ts": {
+      "maxDuration": 10
+    },
+    "api/now.ts": {
+      "maxDuration": 10
+    }
+  }
+}
