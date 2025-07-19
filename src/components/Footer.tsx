@@ -1,8 +1,10 @@
 import { Link } from 'react-router-dom';
 import { useTheme } from '../contexts/ThemeContext';
+import { useLanguage } from '../contexts/LanguageContext';
 
 export default function Footer() {
   const { isDark } = useTheme();
+  const { t } = useLanguage();
 
   return (
     <footer className={`border-t transition-colors duration-200 ${
@@ -15,17 +17,17 @@ export default function Footer() {
           {/* Brand Section */}
           <div>
             <h3 className="font-semibold text-lg mb-3 text-slate-900 dark:text-white">
-              tsconv.com
+              {t('footer.brand.title')}
             </h3>
             <p className="text-sm leading-relaxed">
-              The fastest and most reliable timestamp conversion tool for developers worldwide.
+              {t('footer.brand.description')}
             </p>
           </div>
 
           {/* Quick Links */}
           <div>
             <h4 className="font-medium mb-3 text-slate-900 dark:text-white">
-              Quick Links
+              {t('footer.links.title')}
             </h4>
             <ul className="space-y-2 text-sm">
               <li>
@@ -33,7 +35,7 @@ export default function Footer() {
                   to="/"
                   className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
                 >
-                  Timestamp Converter
+                  {t('footer.links.converter')}
                 </Link>
               </li>
               <li>
@@ -41,7 +43,7 @@ export default function Footer() {
                   to="/api"
                   className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
                 >
-                  API Documentation
+                  {t('footer.links.api')}
                 </Link>
               </li>
               <li>
@@ -49,7 +51,7 @@ export default function Footer() {
                   to="/guide"
                   className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
                 >
-                  Developer Guides
+                  {t('footer.links.guide')}
                 </Link>
               </li>
             </ul>
@@ -58,7 +60,7 @@ export default function Footer() {
           {/* Resources */}
           <div>
             <h4 className="font-medium mb-3 text-slate-900 dark:text-white">
-              Resources
+              {t('footer.resources.title')}
             </h4>
             <ul className="space-y-2 text-sm">
               <li>
@@ -69,7 +71,7 @@ export default function Footer() {
                   title="Learn more about Unix time on Wikipedia"
                   className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
                 >
-                  About Unix Time
+                  {t('footer.resources.unix')}
                 </a>
               </li>
               <li>
@@ -80,7 +82,7 @@ export default function Footer() {
                   title="Official IANA Time Zone Database"
                   className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
                 >
-                  IANA Time Zones
+                  {t('footer.resources.timezone')}
                 </a>
               </li>
               <li>
@@ -91,7 +93,7 @@ export default function Footer() {
                   title="RFC 3339 Date and Time on the Internet Standard"
                   className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
                 >
-                  RFC 3339 Standard
+                  {t('footer.resources.rfc')}
                 </a>
               </li>
             </ul>
@@ -102,10 +104,10 @@ export default function Footer() {
         <div className="mt-8 pt-6 border-t border-slate-200 dark:border-slate-700">
           <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
             <p className="text-xs">
-              © 2025 tsconv.com. Built for developers, by developers.
+              {t('footer.copyright')}
             </p>
             <div className="flex items-center gap-4 text-xs">
-              <span>Made with ❤️ for the developer community</span>
+              <span>{t('footer.made')}</span>
             </div>
           </div>
         </div>

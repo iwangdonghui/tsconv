@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
-import { Copy, Check } from "lucide-react";
+import { Copy, Check, X } from "lucide-react";
 import { useTheme } from "../contexts/ThemeContext";
+import { useLanguage } from '../contexts/LanguageContext';
 import Header from "./Header";
 import Footer from "./Footer";
 
@@ -21,6 +22,7 @@ export default function TimestampConverter() {
     second: new Date().getSeconds()
   });
   const { isDark } = useTheme();
+  const { t } = useLanguage();
 
   // 初始化
   useEffect(() => {
@@ -168,27 +170,39 @@ export default function TimestampConverter() {
       <main className="flex-1 max-w-2xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
         {/* Title */}
         <div className="text-center mb-8 sm:mb-12">
-          <h1 className="text-2xl sm:text-4xl font-light mb-4">
-            Timestamp conversion, simplified.
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-3 sm:mb-4">
+            {t('converter.title')}
           </h1>
-          <p className="text-sm sm:text-base text-slate-600 dark:text-slate-400">
-            Convert Unix timestamps to human-readable dates and vice versa
+          <p className="text-base sm:text-lg text-slate-600 dark:text-slate-400 max-w-2xl mx-auto">
+            {t('converter.subtitle')}
           </p>
         </div>
 
         {/* Input */}
         <div className="mb-6 sm:mb-8">
-          <input
-            type="text"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder="Enter timestamp or date..."
-            className={`w-full text-base sm:text-lg p-3 sm:p-4 border-2 rounded-lg transition-colors focus:outline-none ${
-              isDark
-                ? 'bg-slate-800 border-slate-700 focus:border-blue-500 placeholder-slate-400'
-                : 'bg-white border-slate-200 focus:border-blue-500 placeholder-slate-500'
-            }`}
-          />
+          <div className="relative">
+            <input
+              type="text"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              placeholder={t('converter.placeholder')}
+              className={`w-full p-4 sm:p-6 text-base sm:text-lg border-2 rounded-xl transition-all duration-200 ${
+                isDark 
+                  ? 'bg-slate-800 border-slate-600 text-white placeholder-slate-400 focus:border-blue-500' 
+                  : 'bg-white border-slate-300 placeholder-slate-500 focus:border-blue-500'
+              } focus:outline-none focus:ring-4 focus:ring-blue-500/20`}
+            />
+            {input && (
+              <button
+                onClick={() => setInput("")}
+                className={`absolute right-3 sm:right-4 top-1/2 transform -translate-y-1/2 p-2 rounded-lg transition-colors ${
+                  isDark ? 'hover:bg-slate-700 text-slate-400' : 'hover:bg-slate-100 text-slate-500'
+                }`}
+              >
+                <X className="w-5 h-5" />
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Results */}
@@ -320,7 +334,7 @@ export default function TimestampConverter() {
                 <div className={`text-sm sm:text-base font-medium mb-2 ${
                   isDark ? 'text-blue-300' : 'text-blue-700'
                 }`}>
-                  🕐 Current Unix Timestamp
+                  {t('current.title')}
                 </div>
                 <div className={`text-xl sm:text-2xl font-mono font-bold break-all ${
                   isDark ? 'text-white' : 'text-slate-900'
@@ -330,7 +344,7 @@ export default function TimestampConverter() {
                 <div className={`text-xs sm:text-sm mt-1 ${
                   isDark ? 'text-slate-400' : 'text-slate-600'
                 }`}>
-                  {isPaused ? 'Paused' : 'Updates every second'}
+                  {isPaused ? t('current.paused') : t('current.updates')}
                 </div>
               </div>
               <div className="flex gap-2">
@@ -341,7 +355,7 @@ export default function TimestampConverter() {
                       ? 'hover:bg-blue-800/50 bg-blue-900/30 border border-blue-500/30' 
                       : 'hover:bg-blue-100 bg-blue-50 border border-blue-200'
                   }`}
-                  title={isPaused ? 'Resume' : 'Pause'}
+                  title={isPaused ? t('current.resume') : t('current.pause')}
                 >
                   {isPaused ? (
                     <svg className={`w-5 h-5 ${isDark ? 'text-blue-300' : 'text-blue-600'}`} fill="currentColor" viewBox="0 0 20 20">
@@ -377,10 +391,12 @@ export default function TimestampConverter() {
           <div className={`p-4 sm:p-6 rounded-xl border ${
             isDark ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-200'
           }`}>
-            <h3 className="text-lg font-medium mb-4">Manual Date & Time</h3>
+            <h3 className="text-lg font-medium mb-4">{t('manual.title')}</h3>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-4">
               <div>
-                <label className={`block text-xs mb-1 ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>Year</label>
+                <label className={`block text-xs mb-1 ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+                  {t('manual.year')}
+                </label>
                 <input
                   type="number"
                   value={manualDate.year}
@@ -393,7 +409,9 @@ export default function TimestampConverter() {
                 />
               </div>
               <div>
-                <label className={`block text-xs mb-1 ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>Month</label>
+                <label className={`block text-xs mb-1 ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+                  {t('manual.month')}
+                </label>
                 <input
                   type="number"
                   min="1"
@@ -408,7 +426,9 @@ export default function TimestampConverter() {
                 />
               </div>
               <div>
-                <label className={`block text-xs mb-1 ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>Day</label>
+                <label className={`block text-xs mb-1 ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+                  {t('manual.day')}
+                </label>
                 <input
                   type="number"
                   min="1"
@@ -423,7 +443,9 @@ export default function TimestampConverter() {
                 />
               </div>
               <div>
-                <label className={`block text-xs mb-1 ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>Hour</label>
+                <label className={`block text-xs mb-1 ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+                  {t('manual.hour')}
+                </label>
                 <input
                   type="number"
                   min="0"
@@ -438,7 +460,9 @@ export default function TimestampConverter() {
                 />
               </div>
               <div>
-                <label className={`block text-xs mb-1 ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>Minute</label>
+                <label className={`block text-xs mb-1 ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+                  {t('manual.minute')}
+                </label>
                 <input
                   type="number"
                   min="0"
@@ -453,7 +477,9 @@ export default function TimestampConverter() {
                 />
               </div>
               <div>
-                <label className={`block text-xs mb-1 ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>Second</label>
+                <label className={`block text-xs mb-1 ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+                  {t('manual.second')}
+                </label>
                 <input
                   type="number"
                   min="0"
@@ -470,7 +496,9 @@ export default function TimestampConverter() {
             </div>
             <div className="flex justify-between items-center">
               <div className="text-sm">
-                <span className={isDark ? 'text-slate-400' : 'text-slate-600'}>Timestamp: </span>
+                <span className={isDark ? 'text-slate-400' : 'text-slate-600'}>
+                  {t('manual.timestamp')}: 
+                </span>
                 <span className="font-mono font-bold">{getManualTimestamp()}</span>
               </div>
               <button
@@ -503,7 +531,7 @@ export default function TimestampConverter() {
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
               </svg>
-              <span>Batch Converter</span>
+              <span>{t('batch.title')}</span>
             </div>
           </button>
           
@@ -511,9 +539,9 @@ export default function TimestampConverter() {
             <div className={`mt-4 p-4 rounded-lg border ${
               isDark ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-200'
             }`}>
-              <h3 className="text-lg font-medium mb-3">Batch Conversion</h3>
+              <h3 className="text-lg font-medium mb-3">{t('batch.title')}</h3>
               <p className={`text-sm mb-3 ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
-                Enter multiple timestamps or dates (one per line) for batch conversion:
+                {t('batch.description')}
               </p>
               <textarea
                 value={batchInput}
@@ -552,10 +580,9 @@ export default function TimestampConverter() {
 
         {/* What is Unix Timestamp */}
         <div className="mb-8">
-          <h2 className="text-lg sm:text-xl font-medium mb-3 sm:mb-4">What is a Unix Timestamp?</h2>
+          <h2 className="text-lg sm:text-xl font-medium mb-3 sm:mb-4">{t('unix.what.title')}</h2>
           <p className={`${isDark ? 'text-slate-400' : 'text-slate-600'} leading-relaxed text-sm sm:text-base`}>
-            A Unix timestamp is the number of seconds that have elapsed since January 1, 1970, 00:00:00 UTC. 
-            It's a simple way to represent time that's widely used in programming and databases.
+            {t('unix.what.description')}
           </p>
         </div>
       </main>
