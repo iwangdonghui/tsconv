@@ -60,7 +60,8 @@ Visit [tsconv.com](https://tsconv.com) to use the tool directly in your browser.
 - **Styling**: Tailwind CSS
 - **Icons**: Lucide React
 - **Date Handling**: Native JavaScript Date API
-- **Deployment**: Static hosting ready
+- **API**: Vercel Serverless Functions
+- **Deployment**: Vercel
 
 ## 📖 Usage Examples
 
@@ -84,25 +85,71 @@ Output: 1640995200
 
 ## 🔧 API Usage
 
-### Get Current Timestamp
-```bash
-curl https://api.tsconv.com/current
+### Base URL
+```
+https://api.tsconv.com
 ```
 
-### Convert Timestamp
+### Get Current Timestamp
+```bash
+curl https://api.tsconv.com/now
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "timestamp": 1640995200,
+    "utc": "Sat, 01 Jan 2022 00:00:00 GMT",
+    "iso8601": "2022-01-01T00:00:00.000Z"
+  }
+}
+```
+
+### Convert Timestamp to Date
 ```bash
 curl "https://api.tsconv.com/convert?timestamp=1640995200"
 ```
 
-### Convert Date
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "timestamp": 1640995200,
+    "utc": "Sat, 01 Jan 2022 00:00:00 GMT",
+    "iso8601": "2022-01-01T00:00:00.000Z",
+    "relative": "2 years ago"
+  }
+}
+```
+
+### Convert Date to Timestamp
 ```bash
 curl "https://api.tsconv.com/convert?date=2022-01-01"
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "date": "2022-01-01",
+    "timestamp": 1640995200,
+    "utc": "Sat, 01 Jan 2022 00:00:00 GMT",
+    "iso8601": "2022-01-01T00:00:00.000Z"
+  }
+}
 ```
 
 ## 📁 Project Structure
 
 ```
 tsconv/
+├── api/                      # Vercel Serverless Functions
+│   ├── convert.ts           # Timestamp conversion API
+│   └── now.ts               # Current timestamp API
 ├── public/
 │   ├── tsconv_logo.png
 │   └── favicon.ico
@@ -123,7 +170,8 @@ tsconv/
 ├── package.json
 ├── tailwind.config.js
 ├── tsconfig.json
-└── vite.config.ts
+├── vite.config.ts
+└── vercel.json              # Vercel configuration
 ```
 
 ## 🎨 Features Overview
@@ -137,8 +185,8 @@ tsconv/
 ### API Documentation
 - Complete REST API reference
 - Request/response examples
-- Authentication details
-- Rate limiting information
+- CORS support for cross-origin requests
+- Error handling with detailed messages
 
 ### Developer Guide
 - Common use cases and examples
@@ -174,13 +222,26 @@ npm run build
 npm run preview
 ```
 
-### Deploy to Static Hosting
-The built files in `dist/` can be deployed to any static hosting service:
-- Vercel
-- Netlify
-- GitHub Pages
-- AWS S3
-- Cloudflare Pages
+### Deploy to Vercel
+```bash
+# Install Vercel CLI
+npm i -g vercel
+
+# Deploy
+vercel --prod
+```
+
+### Environment Variables
+No environment variables required for basic functionality.
+
+## 🔧 API Configuration
+
+The API is configured to work with the custom domain `api.tsconv.com`. The configuration includes:
+
+- **CORS Headers**: Enabled for cross-origin requests
+- **Error Handling**: Comprehensive error responses
+- **TypeScript**: Full type safety with Vercel functions
+- **Rate Limiting**: Handled by Vercel's infrastructure
 
 ## 🤝 Contributing
 
@@ -201,11 +262,13 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - Built with [React](https://reactjs.org/) and [Vite](https://vitejs.dev/)
 - Styled with [Tailwind CSS](https://tailwindcss.com/)
 - Icons by [Lucide](https://lucide.dev/)
+- API powered by [Vercel Serverless Functions](https://vercel.com/docs/functions)
 - Inspired by the developer community's need for simple, reliable tools
 
 ## 📞 Support
 
 - **Website**: [tsconv.com](https://tsconv.com)
+- **API**: [api.tsconv.com](https://api.tsconv.com)
 - **Issues**: [GitHub Issues](https://github.com/yourusername/tsconv/issues)
 - **Email**: support@tsconv.com
 
