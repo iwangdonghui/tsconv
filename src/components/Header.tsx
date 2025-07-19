@@ -3,6 +3,13 @@ import { useState } from "react";
 import { Link, useLocation } from 'react-router-dom';
 import { useTheme } from "../contexts/ThemeContext";
 
+const navigation = [
+  { name: 'Timestamp Converter', href: '/' },
+  { name: 'API', href: '/api' },
+  { name: 'Guide', href: '/guide' },
+  { name: 'How To', href: '/how-to' },
+];
+
 export default function Header() {
   const { isDark, toggleDarkMode } = useTheme();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -35,7 +42,7 @@ export default function Header() {
                   : 'hover:bg-slate-100 dark:hover:bg-slate-700'
               }`}
             >
-              Converter
+              Timestamp Converter
             </Link>
             <Link
               to="/api"
@@ -56,6 +63,16 @@ export default function Header() {
               }`}
             >
               Guide
+            </Link>
+            <Link
+              to="/how-to"
+              className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                isActive('/how-to')
+                  ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300'
+                  : 'hover:bg-slate-100 dark:hover:bg-slate-700'
+              }`}
+            >
+              How To
             </Link>
           </nav>
 
@@ -93,7 +110,7 @@ export default function Header() {
                     : 'hover:bg-slate-100 dark:hover:bg-slate-700'
                 }`}
               >
-                Converter
+                Timestamp Converter
               </Link>
               <Link
                 to="/api"
@@ -116,6 +133,17 @@ export default function Header() {
                 }`}
               >
                 Guide
+              </Link>
+              <Link
+                to="/how-to"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className={`block px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                  isActive('/how-to')
+                    ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300'
+                    : 'hover:bg-slate-100 dark:hover:bg-slate-700'
+                }`}
+              >
+                How To
               </Link>
             </div>
           </div>

@@ -7,6 +7,7 @@ import { ThemeProvider } from './contexts/ThemeContext';
 const TimestampConverter = lazy(() => import('./components/TimestampConverter'));
 const ApiDocs = lazy(() => import('./components/ApiDocs'));
 const Guide = lazy(() => import('./components/Guide'));
+const HowTo = lazy(() => import('./components/HowTo'));
 
 function App() {
   return (
@@ -18,6 +19,8 @@ function App() {
             <Route path="/api" element={<ApiDocs />} />
             <Route path="/guide" element={<Guide />} />
             <Route path="/guide/:articleId" element={<Guide />} />
+            <Route path="/how-to" element={<HowTo />} />
+            <Route path="/how-to/:articleId" element={<HowTo />} />
           </Routes>
         </Suspense>
       </Router>
