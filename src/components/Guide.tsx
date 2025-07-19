@@ -1,6 +1,6 @@
 
 import { useState } from 'react';
-import { Clock, Code, Globe } from 'lucide-react';
+import { Clock, Code, Globe, Database, Server } from 'lucide-react';
 import { useTheme } from '../contexts/ThemeContext';
 // import Header from './Header';
 
@@ -9,6 +9,8 @@ import WhatIsUnixTimestamp from './guides/WhatIsUnixTimestamp';
 import JavaScriptTimestamps from './guides/JavaScriptTimestamps';
 import PythonDatetime from './guides/PythonDatetime';
 import TimezonesGuide from './guides/TimezonesGuide';
+import DatabaseTimestamps from './guides/DatabaseTimestamps';
+import APITimestampHandling from './guides/APITimestampHandling';
 
 export default function Guide() {
   const [selectedArticle, setSelectedArticle] = useState<string | null>(null);
@@ -42,6 +44,20 @@ export default function Guide() {
       description: 'Master timezone management in global applications',
       icon: <Globe className="w-5 h-5 sm:w-6 sm:h-6" />,
       content: <TimezonesGuide />
+    },
+    {
+      id: 'database-timestamps',
+      title: 'Database Timestamp Best Practices',
+      description: 'Optimize timestamp storage and queries across different databases',
+      icon: <Database className="w-5 h-5 sm:w-6 sm:h-6" />,
+      content: <DatabaseTimestamps />
+    },
+    {
+      id: 'api-timestamp-handling',
+      title: 'API Timestamp Design Patterns',
+      description: 'RESTful and GraphQL timestamp handling best practices',
+      icon: <Server className="w-5 h-5 sm:w-6 sm:h-6" />,
+      content: <APITimestampHandling />
     }
   ];
 
@@ -51,7 +67,6 @@ export default function Guide() {
       <div className={`min-h-screen transition-colors duration-200 ${
         isDark ? 'bg-slate-900 text-white' : 'bg-white text-slate-900'
       }`}>
-        {/* <Header currentPage="guide" /> */}
         <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
           <button
             onClick={() => setSelectedArticle(null)}
@@ -59,7 +74,6 @@ export default function Guide() {
           >
             ← Back to Guides
           </button>
-          <h1 className="text-2xl sm:text-3xl font-bold mb-4">{article?.title}</h1>
           <div className="prose prose-slate dark:prose-invert max-w-none">
             {article?.content}
           </div>
