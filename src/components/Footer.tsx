@@ -65,6 +65,7 @@ export default function Footer() {
                   href="https://en.wikipedia.org/wiki/Unix_time" 
                   target="_blank" 
                   rel="noopener noreferrer"
+                  title="Learn more about Unix time on Wikipedia"
                   className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
                 >
                   About Unix Time
@@ -75,6 +76,7 @@ export default function Footer() {
                   href="https://www.iana.org/time-zones" 
                   target="_blank" 
                   rel="noopener noreferrer"
+                  title="Official IANA Time Zone Database"
                   className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
                 >
                   IANA Time Zones
@@ -85,6 +87,7 @@ export default function Footer() {
                   href="https://tools.ietf.org/html/rfc3339" 
                   target="_blank" 
                   rel="noopener noreferrer"
+                  title="RFC 3339 Date and Time on the Internet Standard"
                   className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
                 >
                   RFC 3339 Standard
