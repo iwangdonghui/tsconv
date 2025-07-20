@@ -35,6 +35,7 @@
     />
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://tsconv.com" />
+    <meta property="og:image" content="https://tsconv.com/tsconv_logo.png" />
     <meta name="twitter:card" content="summary" />
     <meta
       name="twitter:title"
@@ -44,6 +45,35 @@
       name="twitter:description"
       content="Convert Unix timestamps to human-readable dates and vice versa. Fast, simple, and accurate timestamp conversion tool."
     />
+    <meta name="twitter:image" content="https://tsconv.com/tsconv_logo.png" />
+    
+    <!-- JSON-LD Structured Data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "tsconv.com",
+      "alternateName": "Timestamp Converter",
+      "url": "https://tsconv.com",
+      "logo": "https://tsconv.com/tsconv_logo.png",
+      "description": "Convert Unix timestamps to human-readable dates and vice versa. Fast, simple, and accurate timestamp conversion tool with real-time results.",
+      "publisher": {
+        "@type": "Organization",
+        "name": "tsconv.com",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://tsconv.com/tsconv_logo.png",
+          "width": 512,
+          "height": 512
+        }
+      },
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": "https://tsconv.com/?q={search_term_string}",
+        "query-input": "required name=search_term_string"
+      }
+    }
+    </script>
   </head>
   <body>
     <div id="root"></div>
