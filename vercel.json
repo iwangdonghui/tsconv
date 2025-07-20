@@ -1,4 +1,6 @@
 {
+  "buildCommand": "npm ci && npm run build",
+  "framework": "vite",
   "functions": {
     "api/convert.ts": {
       "maxDuration": 10
