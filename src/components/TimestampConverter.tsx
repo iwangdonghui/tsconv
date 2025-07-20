@@ -1,10 +1,12 @@
 import { useState, useEffect, useRef } from "react";
-import { Copy, Check, X } from "lucide-react";
+import { Copy, Check, X, Clock } from "lucide-react";
 import { useTheme } from "../contexts/ThemeContext";
 import { useLanguage } from '../contexts/LanguageContext';
 import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts';
+import { useHistory } from '../hooks/useHistory';
 import Header from "./Header";
 import Footer from "./Footer";
+import { HistoryPanel } from './HistoryPanel';
 
 export default function TimestampConverter() {
   const [input, setInput] = useState("");
@@ -25,6 +27,8 @@ export default function TimestampConverter() {
   const { isDark } = useTheme();
   const { t } = useLanguage();
   const inputRef = useRef<HTMLInputElement>(null);
+  const [showHistory, setShowHistory] = useState(false);
+  const { history, addToHistory, clearHistory } = useHistory();
 
   // Add keyboard shortcuts
   useKeyboardShortcuts({
@@ -75,23 +79,38 @@ export default function TimestampConverter() {
   }, [isPaused]);
 
   // 智能解析输入
-  const parseInput = (value: string) => {
+  const parseInput = (value: string): { type: 'timestamp' | 'date'; value: number } | null => {
     if (!value.trim()) return null;
 
     const trimmed = value.trim();
     
-    // 尝试解析为时间戳（10位或13位数字）
-    if (/^\d{10}$/.test(trimmed)) {
-      return { type: 'timestamp', value: parseInt(trimmed) * 1000 };
-    }
-    if (/^\d{13}$/.test(trimmed)) {
-      return { type: 'timestamp', value: parseInt(trimmed) };
+    // 移除可能的逗号分隔符
+    const cleanedNumber = trimmed.replace(/,/g, '');
+    
+    // 尝试解析为时间戳
+    if (/^\d+$/.test(cleanedNumber)) {
+      const num = parseInt(cleanedNumber);
+      
+      // 10位时间戳 (2001-2286年): 1000000000 - 9999999999
+      if (num >= 1000000000 && num <= 9999999999) {
+        return { type: 'timestamp' as const, value: num * 1000 };
+      }
+      
+      // 13位时间戳 (毫秒): 1000000000000 - 9999999999999
+      if (num >= 1000000000000 && num <= 9999999999999) {
+        return { type: 'timestamp' as const, value: num };
+      }
+      
+      // 9位时间戳 (1973-2001年): 100000000 - 999999999
+      if (num >= 100000000 && num <= 999999999) {
+        return { type: 'timestamp' as const, value: num * 1000 };
+      }
     }
 
     // 尝试解析为日期字符串
     const date = new Date(trimmed);
     if (!isNaN(date.getTime())) {
-      return { type: 'date', value: date.getTime() };
+      return { type: 'date' as const, value: date.getTime() };
     }
 
     return null;
@@ -118,7 +137,7 @@ export default function TimestampConverter() {
     const date = new Date(parsed.value);
     const timestamp = Math.floor(parsed.value / 1000);
 
-    return {
+    const result = {
       utcDate: date.toUTCString(),
       localDate: date.toLocaleString('en-US', {
         weekday: 'long',
@@ -134,7 +153,41 @@ export default function TimestampConverter() {
       iso8601: date.toISOString(),
       relative: getRelativeTime(date)
     };
+
+    return result;
   };
+
+  // Save to history when input changes and produces valid results
+  useEffect(() => {
+    if (!input.trim()) return;
+
+    const timeoutId = setTimeout(() => {
+      const parsed = parseInput(input);
+      if (parsed) {
+        // 检查是否是完整的时间戳（9位、10位或13位）或有效日期
+        const trimmed = input.trim();
+        const cleanedNumber = trimmed.replace(/,/g, '');
+        let isCompleteTimestamp = false;
+        
+        if (/^\d+$/.test(cleanedNumber)) {
+          const num = parseInt(cleanedNumber);
+          isCompleteTimestamp = (num >= 100000000 && num <= 9999999999) || 
+                               (num >= 1000000000000 && num <= 9999999999999);
+        }
+        
+        const isValidDate = !isCompleteTimestamp && !isNaN(new Date(trimmed).getTime());
+        
+        if (isCompleteTimestamp || isValidDate) {
+          const date = new Date(parsed.value);
+          const timestamp = Math.floor(parsed.value / 1000);
+          const output = parsed.type === 'timestamp' ? date.toUTCString() : timestamp.toString();
+          addToHistory(input.trim(), output, parsed.type);
+        }
+      }
+    }, 800); // 800ms 防抖，给用户足够时间输入
+
+    return () => clearTimeout(timeoutId);
+  }, [input, addToHistory]);
 
   // 获取相对时间
   const getRelativeTime = (date: Date) => {
@@ -215,16 +268,39 @@ export default function TimestampConverter() {
                   : 'bg-white border-slate-300 placeholder-slate-500 focus:border-blue-500'
               } focus:outline-none focus:ring-4 focus:ring-blue-500/20`}
             />
-            {input && (
+            <div className="absolute right-3 sm:right-4 top-1/2 transform -translate-y-1/2 flex items-center gap-2">
+              {/* History Button */}
               <button
-                onClick={() => setInput("")}
-                className={`absolute right-3 sm:right-4 top-1/2 transform -translate-y-1/2 p-2 rounded-lg transition-colors ${
+                onClick={() => setShowHistory(!showHistory)}
+                className={`p-2 rounded-lg transition-colors ${
                   isDark ? 'hover:bg-slate-700 text-slate-400' : 'hover:bg-slate-100 text-slate-500'
                 }`}
+                title="Show history"
               >
-                <X className="w-5 h-5" />
+                <Clock className="w-5 h-5" />
               </button>
-            )}
+              
+              {/* Clear Button */}
+              {input && (
+                <button
+                  onClick={() => setInput("")}
+                  className={`p-2 rounded-lg transition-colors ${
+                    isDark ? 'hover:bg-slate-700 text-slate-400' : 'hover:bg-slate-100 text-slate-500'
+                  }`}
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              )}
+            </div>
+            
+            {/* History Panel */}
+            <HistoryPanel
+              history={history}
+              onSelectItem={(value) => setInput(value)}
+              onClear={clearHistory}
+              isOpen={showHistory}
+              onClose={() => setShowHistory(false)}
+            />
           </div>
         </div>
 
