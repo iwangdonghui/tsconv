@@ -30,19 +30,19 @@ export default function TimestampConverter() {
   useKeyboardShortcuts({
     onFocusInput: () => inputRef.current?.focus(),
     onConvert: () => {
+      // No separate convert function needed, input change triggers formatResults
       if (input.trim()) {
-        handleConvert();
+        inputRef.current?.focus();
       }
     },
     onCopy: () => {
-      if (result) {
-        navigator.clipboard.writeText(result.utc || result.timestamp?.toString() || '');
+      if (results) {
+        navigator.clipboard.writeText(results.utcDate || results.timestamp?.toString() || '');
       }
     },
     onClear: () => {
       setInput('');
-      setResult(null);
-      setError('');
+      inputRef.current?.focus();
     }
   });
 
