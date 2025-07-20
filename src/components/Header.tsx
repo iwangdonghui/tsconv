@@ -32,8 +32,7 @@ export default function Header() {
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <Link to="/" className="flex items-center space-x-2">
-            <div className="text-2xl">🕐</div>
-            <span className="text-xl font-bold">tsconv</span>
+            <span className="text-xl font-bold">tsconv.com</span>
           </Link>
 
           {/* Desktop Navigation */}
