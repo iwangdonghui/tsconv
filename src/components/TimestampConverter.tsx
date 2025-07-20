@@ -1,7 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Copy, Check, X } from "lucide-react";
 import { useTheme } from "../contexts/ThemeContext";
 import { useLanguage } from '../contexts/LanguageContext';
+import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts';
 import Header from "./Header";
 import Footer from "./Footer";
 
@@ -23,6 +24,27 @@ export default function TimestampConverter() {
   });
   const { isDark } = useTheme();
   const { t } = useLanguage();
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  // Add keyboard shortcuts
+  useKeyboardShortcuts({
+    onFocusInput: () => inputRef.current?.focus(),
+    onConvert: () => {
+      if (input.trim()) {
+        handleConvert();
+      }
+    },
+    onCopy: () => {
+      if (result) {
+        navigator.clipboard.writeText(result.utc || result.timestamp?.toString() || '');
+      }
+    },
+    onClear: () => {
+      setInput('');
+      setResult(null);
+      setError('');
+    }
+  });
 
   // 初始化
   useEffect(() => {
@@ -182,6 +204,7 @@ export default function TimestampConverter() {
         <div className="mb-6 sm:mb-8">
           <div className="relative">
             <input
+              ref={inputRef}
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
