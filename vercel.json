@@ -1,6 +1,16 @@
 {
   "buildCommand": "npm ci && npm run build",
   "framework": "vite",
+  "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "/api/$1"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ],
   "functions": {
     "api/convert.ts": {
       "maxDuration": 10
