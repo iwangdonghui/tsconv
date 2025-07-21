@@ -4,8 +4,7 @@ export default function JavaScriptTimestamps() {
       <div className="mb-8">
         <h1 className="text-3xl font-bold mb-4">JavaScript Timestamp Gotchas</h1>
         <p className="text-lg text-slate-600 dark:text-slate-400 leading-relaxed">
-          JavaScript's approach to handling timestamps can be confusing, especially when working with APIs 
-          and databases. Here are the most common pitfalls and how to avoid them.
+          JavaScript's approach to handling timestamps can be confusing...
         </p>
       </div>
 

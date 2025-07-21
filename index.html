@@ -8,6 +8,21 @@
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Timestamp Converter - Unix & Epoch Time | tsconv.com</title>
+    
+    <!-- Resource hints for critical assets -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    
+    <!-- Preload critical JavaScript files -->
+    <link rel="modulepreload" href="/assets/index-3d886579.js" fetchpriority="high" />
+    <link rel="modulepreload" href="/assets/Timestamp….js" />
+    
+    <!-- Preload critical font files -->
+    <link rel="preload" href="https://fonts.gstatic.com/s/inter/v19/UcC73FwrK3iLTeHuS_fvQtMwCp50KnMa1ZL7.woff2" as="font" type="font/woff2" crossorigin />
+    
+    <!-- Preload Google Fonts stylesheet -->
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'" />
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" /></noscript>
     <meta
       name="description"
       content="Convert Unix timestamps to human-readable dates and vice versa. Fast, simple, and accurate timestamp conversion tool with real-time results."
@@ -77,6 +92,52 @@
   </head>
   <body>
     <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
+    
+    <!-- Inline critical CSS for above-the-fold content -->
+    <style>
+      /* Critical CSS for initial render - minimal styles for header and main container */
+      body {
+        margin: 0;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+      }
+      #root {
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+      }
+      /* Add any other critical styles needed for above-the-fold content */
+    </style>
+    
+    <!-- Async CSS loading -->
+    <script>
+      // Function to load CSS asynchronously
+      function loadCSS(href) {
+        var link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.href = href;
+        link.media = 'all';
+        document.head.appendChild(link);
+      }
+      
+      // Load non-critical CSS asynchronously
+      loadCSS('/assets/index-c73fe8ca.css');
+      
+      // Preload additional JS modules after initial render
+      window.addEventListener('load', function() {
+        [
+          '/assets/Footer-f191671f.js',
+          '/assets/clock-ce486696.js',
+          '/assets/copy-71833557.js'
+        ].forEach(function(src) {
+          var preload = document.createElement('link');
+          preload.rel = 'modulepreload';
+          preload.href = src;
+          document.head.appendChild(preload);
+        });
+      });
+    </script>
+    
+    <!-- Main application script with high priority -->
+    <script type="module" src="/src/main.tsx" fetchpriority="high"></script>
   </body>
 </html>

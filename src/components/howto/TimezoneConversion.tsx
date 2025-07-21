@@ -14,25 +14,6 @@ export default function TimezoneConversion() {
           <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
             <span className="text-yellow-500">📄</span> JavaScript
           </h2>
-          <pre className="bg-slate-900 text-slate-100 p-3 rounded text-sm overflow-x-auto"><code>{`const timestamp = 1640995200; // UTC timestamp
-const date = new Date(timestamp * 1000);
-
-// Convert to different timezones
-const nyTime = date.toLocaleString('en-US', {
-  timeZone: 'America/New_York'
-}); // 12/31/2021, 7:00:00 PM
-
-const tokyoTime = date.toLocaleString('en-US', {
-  timeZone: 'Asia/Tokyo'
-}); // 1/1/2022, 9:00:00 AM
-
-const londonTime = date.toLocaleString('en-GB', {
-  timeZone: 'Europe/London'
-}); // 01/01/2022, 00:00:00
-
-// Get timezone offset
-const offset = date.getTimezoneOffset(); // Minutes from UTC
-console.log(\`Local offset: \${offset / 60} hours\`);`}</code></pre>
         </div>
 
         {/* Python */}

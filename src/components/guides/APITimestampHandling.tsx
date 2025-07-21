@@ -5,7 +5,6 @@ export default function APITimestampHandling() {
         <h1 className="text-3xl font-bold mb-4">API Timestamp Design Patterns</h1>
         <p className="text-lg text-slate-600 dark:text-slate-400 leading-relaxed">
           Best practices for handling timestamps in REST APIs, GraphQL, and real-time applications.
-          Includes examples for Node.js, Express, and popular frameworks.
         </p>
       </div>
 

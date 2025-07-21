@@ -4,8 +4,7 @@ export default function GetCurrentTimestamp() {
       <div className="mb-8">
         <h1 className="text-3xl font-bold mb-4">Get Current Timestamp in 9 Programming Languages</h1>
         <p className="text-lg text-slate-600 dark:text-slate-400 leading-relaxed">
-          Complete guide to getting the current Unix timestamp across JavaScript, Python, Java, PHP, Go, C#, Ruby, Rust, and Swift. 
-          All examples return seconds since January 1, 1970 UTC with copy-paste ready code snippets.
+          Complete guide to getting the current Unix timestamp across JavaScript, Python, Java, PHP, Go, C#, Ruby, Rust, and Swift.
         </p>
       </div>
 

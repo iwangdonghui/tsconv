@@ -244,12 +244,12 @@ export default function TimestampConverter() {
       {/* 转换器主要内容 */}
       <main className="flex-1 max-w-2xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
         {/* Title */}
-        <div className="text-center mb-8 sm:mb-12">
-          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-3 sm:mb-4">
-            {t('converter.title')}
+        <div className="text-center mb-8">
+          <h1 className="text-3xl sm:text-4xl font-bold mb-4">
+            Timestamp Converter
           </h1>
-          <p className="text-base sm:text-lg text-slate-600 dark:text-slate-400 max-w-2xl mx-auto">
-            {t('converter.subtitle')}
+          <p className="text-lg text-slate-600 dark:text-slate-400">
+            Convert Unix timestamps to human-readable dates and vice versa
           </p>
         </div>
 
@@ -276,6 +276,7 @@ export default function TimestampConverter() {
                   isDark ? 'hover:bg-slate-700 text-slate-400' : 'hover:bg-slate-100 text-slate-500'
                 }`}
                 title="Show history"
+                aria-label="Show conversion history"
               >
                 <Clock className="w-5 h-5" />
               </button>
@@ -287,6 +288,7 @@ export default function TimestampConverter() {
                   className={`p-2 rounded-lg transition-colors ${
                     isDark ? 'hover:bg-slate-700 text-slate-400' : 'hover:bg-slate-100 text-slate-500'
                   }`}
+                  aria-label="Clear input"
                 >
                   <X className="w-5 h-5" />
                 </button>
@@ -325,6 +327,7 @@ export default function TimestampConverter() {
                     className={`flex-shrink-0 p-2 rounded transition-colors ${
                       isDark ? 'hover:bg-slate-700' : 'hover:bg-slate-200'
                     }`}
+                    aria-label="Copy UTC date"
                   >
                     {copiedStates.utc ? (
                       <Check className="w-4 h-4 text-green-500" />
@@ -351,6 +354,7 @@ export default function TimestampConverter() {
                     className={`flex-shrink-0 p-2 rounded transition-colors ${
                       isDark ? 'hover:bg-slate-700' : 'hover:bg-slate-200'
                     }`}
+                    aria-label="Copy local date"
                   >
                     {copiedStates.local ? (
                       <Check className="w-4 h-4 text-green-500" />
@@ -377,6 +381,7 @@ export default function TimestampConverter() {
                     className={`flex-shrink-0 p-2 rounded transition-colors ${
                       isDark ? 'hover:bg-slate-700' : 'hover:bg-slate-200'
                     }`}
+                    aria-label="Copy timestamp"
                   >
                     {copiedStates.timestamp ? (
                       <Check className="w-4 h-4 text-green-500" />
@@ -407,6 +412,7 @@ export default function TimestampConverter() {
                       className={`flex-shrink-0 p-1 rounded transition-colors ${
                         isDark ? 'hover:bg-slate-700' : 'hover:bg-slate-200'
                       }`}
+                      aria-label="Copy ISO 8601 date"
                     >
                       {copiedStates.iso ? (
                         <Check className="w-3 h-3 text-green-500" />
@@ -485,18 +491,19 @@ export default function TimestampConverter() {
           </div>
         </div>
 
-        {/* Manual Date Input */}
+        {/* Manual Date & Time section */}
         <div className="mb-8">
           <div className={`p-4 sm:p-6 rounded-xl border ${
             isDark ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-200'
           }`}>
-            <h3 className="text-lg font-medium mb-4">{t('manual.title')}</h3>
+            <h2 className="text-lg font-medium mb-4">{t('manual.title')}</h2>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-4">
               <div>
-                <label className={`block text-xs mb-1 ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+                <label htmlFor="manual-year" className={`block text-xs mb-1 ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
                   {t('manual.year')}
                 </label>
                 <input
+                  id="manual-year"
                   type="number"
                   value={manualDate.year}
                   onChange={(e) => updateManualDate('year', parseInt(e.target.value) || new Date().getFullYear())}
@@ -508,10 +515,11 @@ export default function TimestampConverter() {
                 />
               </div>
               <div>
-                <label className={`block text-xs mb-1 ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+                <label htmlFor="manual-month" className={`block text-xs mb-1 ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
                   {t('manual.month')}
                 </label>
                 <input
+                  id="manual-month"
                   type="number"
                   min="1"
                   max="12"
@@ -525,10 +533,11 @@ export default function TimestampConverter() {
                 />
               </div>
               <div>
-                <label className={`block text-xs mb-1 ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+                <label htmlFor="manual-day" className={`block text-xs mb-1 ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
                   {t('manual.day')}
                 </label>
                 <input
+                  id="manual-day"
                   type="number"
                   min="1"
                   max="31"
@@ -542,10 +551,11 @@ export default function TimestampConverter() {
                 />
               </div>
               <div>
-                <label className={`block text-xs mb-1 ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+                <label htmlFor="manual-hour" className={`block text-xs mb-1 ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
                   {t('manual.hour')}
                 </label>
                 <input
+                  id="manual-hour"
                   type="number"
                   min="0"
                   max="23"
@@ -559,10 +569,11 @@ export default function TimestampConverter() {
                 />
               </div>
               <div>
-                <label className={`block text-xs mb-1 ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+                <label htmlFor="manual-minute" className={`block text-xs mb-1 ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
                   {t('manual.minute')}
                 </label>
                 <input
+                  id="manual-minute"
                   type="number"
                   min="0"
                   max="59"
@@ -576,10 +587,11 @@ export default function TimestampConverter() {
                 />
               </div>
               <div>
-                <label className={`block text-xs mb-1 ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+                <label htmlFor="manual-second" className={`block text-xs mb-1 ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
                   {t('manual.second')}
                 </label>
                 <input
+                  id="manual-second"
                   type="number"
                   min="0"
                   max="59"
@@ -605,6 +617,7 @@ export default function TimestampConverter() {
                 className={`p-2 rounded transition-colors ${
                   isDark ? 'hover:bg-slate-700' : 'hover:bg-slate-200'
                 }`}
+                aria-label="Copy manual timestamp"
               >
                 {copiedStates.manual ? (
                   <Check className="w-4 h-4 text-green-500" />
@@ -638,11 +651,12 @@ export default function TimestampConverter() {
             <div className={`mt-4 p-4 rounded-lg border ${
               isDark ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-200'
             }`}>
-              <h3 className="text-lg font-medium mb-3">{t('batch.title')}</h3>
-              <p className={`text-sm mb-3 ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+              <h2 className="text-lg font-medium mb-3">{t('batch.title')}</h2>
+              <label htmlFor="batch-input" className={`text-sm mb-3 block ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
                 {t('batch.description')}
-              </p>
+              </label>
               <textarea
+                id="batch-input"
                 value={batchInput}
                 onChange={(e) => setBatchInput(e.target.value)}
                 placeholder="1640995200&#10;2022-01-01&#10;1672531200"
@@ -655,7 +669,7 @@ export default function TimestampConverter() {
               />
               {batchInput.trim() && (
                 <div className="mt-3">
-                  <h4 className="font-medium mb-2">Results:</h4>
+                  <h3 className="font-medium mb-2">Results:</h3>
                   <pre className={`p-3 rounded text-xs font-mono whitespace-pre-wrap ${
                     isDark ? 'bg-slate-900 text-slate-300' : 'bg-white text-slate-700'
                   }`}>
@@ -668,6 +682,7 @@ export default function TimestampConverter() {
                         ? 'bg-blue-600 hover:bg-blue-700 text-white' 
                         : 'bg-blue-500 hover:bg-blue-600 text-white'
                     }`}
+                    aria-label="Copy batch results"
                   >
                     {copiedStates.batch ? 'Copied!' : 'Copy Results'}
                   </button>

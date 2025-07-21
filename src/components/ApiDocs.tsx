@@ -54,9 +54,6 @@ export default function ApiDocs() {
       <div className="flex-1 w-full max-w-4xl mx-auto px-3 sm:px-6 py-6 sm:py-12">
         <div className="w-full max-w-none">
           <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold mb-4 sm:mb-8 break-words">API Documentation</h1>
-          <p className="text-sm sm:text-base lg:text-lg mb-8 text-slate-600 dark:text-slate-400">
-            Convert timestamps programmatically with our simple REST API.
-          </p>
           
           {/* Base URL */}
           <section className="mb-6 sm:mb-8 w-full">

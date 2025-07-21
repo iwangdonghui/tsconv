@@ -18,6 +18,16 @@ const translations = {
     'nav.guide': 'Guide',
     'nav.howto': 'How To',
     
+    // Header accessibility
+    'header.language.toggle': 'Change language',
+    'header.language.english': 'Switch to English',
+    'header.language.chinese': 'Switch to Chinese',
+    'header.theme.light': 'Switch to light mode',
+    'header.theme.dark': 'Switch to dark mode',
+    'header.menu.open': 'Open navigation menu',
+    'header.menu.close': 'Close navigation menu',
+    'header.menu.navigation': 'Main navigation',
+    
     // Current Timestamp
     'current.title': '🕐 Current Unix Timestamp',
     'current.updates': 'Updates every second',
@@ -82,6 +92,26 @@ const translations = {
     'nav.api': 'API 文档',
     'nav.guide': '指南',
     'nav.howto': '使用教程',
+    
+    // Header accessibility
+    'header.language.toggle': '切换语言',
+    'header.language.english': '切换到英文',
+    'header.language.chinese': '切换到中文',
+    'header.theme.light': '切换到浅色模式',
+    'header.theme.dark': '切换到深色模式',
+    'header.menu.open': '打开导航菜单',
+    'header.menu.close': '关闭导航菜单',
+    'header.menu.navigation': '主导航',
+    
+    // Header accessibility
+    'header.language.toggle': '切换语言',
+    'header.language.english': '切换到英文',
+    'header.language.chinese': '切换到中文',
+    'header.theme.light': '切换到浅色模式',
+    'header.theme.dark': '切换到深色模式',
+    'header.menu.open': '打开导航菜单',
+    'header.menu.close': '关闭导航菜单',
+    'header.menu.navigation': '主导航',
     
     // Current Timestamp
     'current.title': '🕐 当前 Unix 时间戳',

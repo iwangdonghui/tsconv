@@ -14,29 +14,6 @@ export default function FormatTimestamps() {
           <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
             <span className="text-yellow-500">📄</span> JavaScript
           </h2>
-          <pre className="bg-slate-900 text-slate-100 p-3 rounded text-sm overflow-x-auto"><code>{`const timestamp = 1640995200; // 2022-01-01 00:00:00 UTC
-const date = new Date(timestamp * 1000);
-
-// Built-in formats
-console.log(date.toString());        // Sat Jan 01 2022 00:00:00 GMT+0000
-console.log(date.toISOString());     // 2022-01-01T00:00:00.000Z
-console.log(date.toDateString());    // Sat Jan 01 2022
-console.log(date.toTimeString());    // 00:00:00 GMT+0000
-
-// Locale-specific formatting
-console.log(date.toLocaleDateString('en-US')); // 1/1/2022
-console.log(date.toLocaleDateString('en-GB')); // 01/01/2022
-console.log(date.toLocaleDateString('de-DE')); // 1.1.2022
-
-// Custom formatting with Intl.DateTimeFormat
-const formatter = new Intl.DateTimeFormat('en-US', {
-  year: 'numeric',
-  month: 'long',
-  day: 'numeric',
-  hour: '2-digit',
-  minute: '2-digit'
-});
-console.log(formatter.format(date)); // January 1, 2022 at 12:00 AM`}</code></pre>
         </div>
 
         {/* Python */}
