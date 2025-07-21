@@ -3,10 +3,14 @@ import { Copy, Check, X, Clock } from "lucide-react";
 import { useTheme } from "../contexts/ThemeContext";
 import { useLanguage } from '../contexts/LanguageContext';
 import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts';
-import { useHistory } from '../hooks/useHistory';
+import { useHistory, HistoryItem } from '../hooks/useHistory';
+import { useInputValidation } from '../hooks/useInputValidation';
 import Header from "./Header";
 import Footer from "./Footer";
 import { HistoryPanel } from './HistoryPanel';
+import { ValidationIndicator } from './ui/validation-indicator';
+import { ErrorMessage } from './ui/error-message';
+import { RecoverySuggestions } from './ui/recovery-suggestions';
 
 export default function TimestampConverter() {
   const [input, setInput] = useState("");
@@ -16,6 +20,7 @@ export default function TimestampConverter() {
   const [isPaused, setIsPaused] = useState(false);
   const [batchInput, setBatchInput] = useState("");
   const [showBatchConverter, setShowBatchConverter] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
   const [manualDate, setManualDate] = useState({
     year: new Date().getFullYear(),
     month: new Date().getMonth() + 1,
@@ -24,11 +29,44 @@ export default function TimestampConverter() {
     minute: new Date().getMinutes(),
     second: new Date().getSeconds()
   });
+  const inputRef = useRef<HTMLInputElement>(null);
   const { isDark } = useTheme();
   const { t } = useLanguage();
-  const inputRef = useRef<HTMLInputElement>(null);
-  const [showHistory, setShowHistory] = useState(false);
   const { history, addToHistory, clearHistory } = useHistory();
+  const { validationResult, validateInput: validateMainInput, validationState, isValidating, clearValidation: clearMainValidation } = useInputValidation({
+    debounceMs: 300,
+    enableCache: true
+  });
+  const { validationResult: manualDateValidation, validateInput: validateManualDateInput, resetValidation: resetManualValidation } = useInputValidation({
+    debounceMs: 100,
+    validator: () => {
+      const date = new Date(manualDate.year, manualDate.month - 1, manualDate.day, manualDate.hour, manualDate.minute, manualDate.second);
+      if (isNaN(date.getTime())) {
+        return {
+          isValid: false,
+          errorType: 'syntax' as const,
+          message: 'Invalid manual date configuration',
+          severity: 'error' as const,
+          suggestions: ['Check if the date exists', 'Verify month has correct number of days', 'Ensure all values are within valid ranges']
+        };
+      }
+      if (date.getFullYear() < 1970) {
+        return {
+          isValid: false,
+          errorType: 'range' as const,
+          message: 'Year must be 1970 or later',
+          severity: 'error' as const,
+          suggestions: ['Unix timestamps start from January 1970', 'Use a year of 1970 or later']
+        };
+      }
+      return {
+        isValid: true,
+        errorType: undefined,
+        message: 'Valid date configuration',
+        severity: 'info' as const
+      };
+    }
+  });
 
   // Add keyboard shortcuts
   useKeyboardShortcuts({
@@ -46,6 +84,7 @@ export default function TimestampConverter() {
     },
     onClear: () => {
       setInput('');
+      clearMainValidation();
       inputRef.current?.focus();
     }
   });
@@ -231,7 +270,12 @@ export default function TimestampConverter() {
 
   const updateManualDate = (field: string, value: number) => {
     setManualDate(prev => ({ ...prev, [field]: value }));
+    setTimeout(() => validateManualDateInput(''), 0);
   };
+
+  useEffect(() => {
+    validateManualDateInput('');
+  }, [manualDate, validateManualDateInput]);
 
   const results = formatResults();
   const currentTimestamp = Math.floor(currentTime.getTime() / 1000);
@@ -260,15 +304,27 @@ export default function TimestampConverter() {
               ref={inputRef}
               type="text"
               value={input}
-              onChange={(e) => setInput(e.target.value)}
+              onChange={(e) => {
+                setInput(e.target.value);
+                validateMainInput(e.target.value);
+              }}
               placeholder={t('converter.placeholder')}
-              className={`w-full p-4 sm:p-6 text-base sm:text-lg border-2 rounded-xl transition-all duration-200 ${
+              className={`w-full p-4 sm:p-6 text-base sm:text-lg border-2 rounded-xl transition-all duration-200 pr-24 ${
                 isDark 
                   ? 'bg-slate-800 border-slate-600 text-white placeholder-slate-400 focus:border-blue-500' 
                   : 'bg-white border-slate-300 placeholder-slate-500 focus:border-blue-500'
-              } focus:outline-none focus:ring-4 focus:ring-blue-500/20`}
+              } ${validationState === 'invalid' ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20' : ''}
+              ${validationState === 'valid' ? 'border-green-500 focus:border-green-500 focus:ring-green-500/20' : ''}
+              ${isValidating ? 'border-blue-500' : ''} focus:outline-none focus:ring-4`}
+              aria-invalid={validationState === 'invalid' || validationState === 'warning'}
+              aria-describedby={validationResult ? 'input-validation-feedback' : undefined}
+              aria-busy={isValidating}
+              role="combobox"
+              aria-expanded={showHistory}
             />
             <div className="absolute right-3 sm:right-4 top-1/2 transform -translate-y-1/2 flex items-center gap-2">
+              <ValidationIndicator state={validationState} size="md" animated={true} />
+
               {/* History Button */}
               <button
                 onClick={() => setShowHistory(!showHistory)}
@@ -305,6 +361,20 @@ export default function TimestampConverter() {
             />
           </div>
         </div>
+
+        {/* Validation Feedback */}
+        {validationResult && validationResult.severity === 'error' && (
+          <div id="input-validation-feedback" className="mt-2 space-y-2" role="alert" aria-live="polite">
+            <ErrorMessage result={validationResult} />
+            <RecoverySuggestions result={validationResult} />
+          </div>
+        )}
+        
+        {validationResult && validationResult.severity === 'warning' && (
+          <div id="input-validation-feedback" className="mt-2 space-y-2" role="alert" aria-live="polite">
+            <ErrorMessage result={validationResult} />
+          </div>
+        )}
 
         {/* Results */}
         {results && (
@@ -511,7 +581,13 @@ export default function TimestampConverter() {
                     isDark 
                       ? 'bg-slate-700 border-slate-600 text-white' 
                       : 'bg-white border-slate-300'
-                  }`}
+                  } ${manualDateValidation?.severity === 'error' ? 'border-red-500' : ''}
+                  ${manualDateValidation?.severity === 'info' ? 'border-green-500' : ''}`}
+                  aria-invalid={manualDateValidation?.severity === 'error' || manualDateValidation?.severity === 'warning'}
+                  aria-describedby={manualDateValidation ? 'manual-date-validation' : undefined}
+                  min="1970"
+                  max="3000"
+                  step="1"
                 />
               </div>
               <div>
@@ -530,6 +606,8 @@ export default function TimestampConverter() {
                       ? 'bg-slate-700 border-slate-600 text-white' 
                       : 'bg-white border-slate-300'
                   }`}
+                  aria-describedby={manualDateValidation ? 'manual-date-validation' : undefined}
+                  aria-invalid={manualDateValidation?.severity === 'error' || manualDateValidation?.severity === 'warning'}
                 />
               </div>
               <div>
@@ -605,6 +683,21 @@ export default function TimestampConverter() {
                 />
               </div>
             </div>
+            <div>
+              <ValidationIndicator 
+                state={manualDateValidation?.severity === 'error' ? 'invalid' : 
+                       manualDateValidation?.severity === 'info' ? 'valid' : 'idle'} 
+                size="sm" 
+                animated={true}
+              />
+            </div>
+            
+            {manualDateValidation && manualDateValidation.severity === 'error' && (
+              <div className="mt-2 space-y-2" role="alert" aria-live="polite">
+              <ErrorMessage result={manualDateValidation} />
+            </div>
+            )}
+            
             <div className="flex justify-between items-center">
               <div className="text-sm">
                 <span className={isDark ? 'text-slate-400' : 'text-slate-600'}>

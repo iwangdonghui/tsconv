@@ -72,6 +72,39 @@ const translations = {
     'unix.what.title': 'What is a Unix Timestamp?',
     'unix.what.description': 'A Unix timestamp is the number of seconds that have elapsed since January 1, 1970, 00:00:00 UTC. It\'s a simple way to represent time that\'s widely used in programming and databases.',
     
+    // Validation and Error Messages
+    'validation.suggestions': 'Suggestions:',
+    'validation.state.idle': 'Ready for input',
+    'validation.state.validating': 'Validating input',
+    'validation.state.valid': 'Input is valid',
+    'validation.state.invalid': 'Input is invalid',
+    'validation.state.warning': 'Input has warnings',
+    'validation.apply.suggestion': 'Apply suggestion: {suggestion}',
+    'validation.copy.suggestion': 'Copy suggestion: {suggestion}',
+    
+    // Error Messages
+    'error.timestamp.invalid': 'Invalid timestamp format',
+    'error.timestamp.range': 'Timestamp must be between {min} and {max}',
+    'error.timestamp.length': 'Timestamp must be 9, 10, or 13 digits',
+    'error.date.invalid': 'Invalid date format',
+    'error.date.range': 'Date must be between {min} and {max}',
+    'error.date.malformed': 'Date format is not recognized',
+    'error.date.components': 'Invalid date components',
+    'error.manual.date.invalid': 'Invalid manual date configuration',
+    'error.manual.date.range': 'Year must be 1970 or later for Unix timestamps',
+    'error.batch.limit': 'Batch processing limited to 100 items per request',
+    'error.clipboard.failed': 'Failed to copy to clipboard',
+    'error.clipboard.permission': 'Clipboard access denied. Please check browser permissions.',
+    'error.unknown': 'An unexpected error occurred. Please try again.',
+    
+    // Suggestions
+    'suggestion.timestamp.add_zeros': 'Try adding leading zeros to make a 10-digit timestamp',
+    'suggestion.timestamp.remove_milliseconds': 'Divide by 1000 to convert milliseconds to seconds',
+    'suggestion.date.iso_format': 'Try YYYY-MM-DD or YYYY-MM-DD HH:MM:SS format',
+    'suggestion.date.remove_timezone': 'Remove timezone offset from date string',
+    'suggestion.manual.check_date': 'Verify the date exists (e.g., check for leap years)',
+    'suggestion.manual.check_range': 'Ensure all values are within valid ranges',
+    
     // Footer
     'footer.brand.title': 'tsconv.com',
     'footer.brand.description': 'The fastest and most reliable timestamp conversion tool for developers worldwide.',
@@ -92,16 +125,6 @@ const translations = {
     'nav.api': 'API 文档',
     'nav.guide': '指南',
     'nav.howto': '使用教程',
-    
-    // Header accessibility
-    'header.language.toggle': '切换语言',
-    'header.language.english': '切换到英文',
-    'header.language.chinese': '切换到中文',
-    'header.theme.light': '切换到浅色模式',
-    'header.theme.dark': '切换到深色模式',
-    'header.menu.open': '打开导航菜单',
-    'header.menu.close': '关闭导航菜单',
-    'header.menu.navigation': '主导航',
     
     // Header accessibility
     'header.language.toggle': '切换语言',
@@ -156,6 +179,39 @@ const translations = {
     // What is Unix Timestamp section
     'unix.what.title': '什么是 Unix 时间戳？',
     'unix.what.description': 'Unix 时间戳是自 1970 年 1 月 1 日 00:00:00 UTC 以来经过的秒数。这是一种在编程和数据库中广泛使用的简单时间表示方法。',
+    
+    // Validation and Error Messages
+    'validation.suggestions': '建议：',
+    'validation.state.idle': '等待输入',
+    'validation.state.validating': '正在验证输入',
+    'validation.state.valid': '输入有效',
+    'validation.state.invalid': '输入无效',
+    'validation.state.warning': '输入有警告',
+    'validation.apply.suggestion': '应用建议：{suggestion}',
+    'validation.copy.suggestion': '复制建议：{suggestion}',
+    
+    // Error Messages
+    'error.timestamp.invalid': '无效的时间戳格式',
+    'error.timestamp.range': '时间戳必须在 {min} 和 {max} 之间',
+    'error.timestamp.length': '时间戳必须是9位、10位或13位数字',
+    'error.date.invalid': '无效的日期格式',
+    'error.date.range': '日期必须在 {min} 和 {max} 之间',
+    'error.date.malformed': '无法识别的日期格式',
+    'error.date.components': '无效的日期组件',
+    'error.manual.date.invalid': '无效的手动日期配置',
+    'error.manual.date.range': 'Unix时间戳的年份必须是1970年或之后',
+    'error.batch.limit': '批量处理限制为每次100个项目',
+    'error.clipboard.failed': '复制到剪贴板失败',
+    'error.clipboard.permission': '剪贴板访问被拒绝。请检查浏览器权限。',
+    'error.unknown': '发生意外错误。请重试。',
+    
+    // Suggestions
+    'suggestion.timestamp.add_zeros': '尝试添加前导零使其成为10位时间戳',
+    'suggestion.timestamp.remove_milliseconds': '除以1000将毫秒转换为秒',
+    'suggestion.date.iso_format': '尝试YYYY-MM-DD或YYYY-MM-DD HH:MM:SS格式',
+    'suggestion.date.remove_timezone': '从日期字符串中移除时区偏移',
+    'suggestion.manual.check_date': '验证日期是否存在（例如检查闰年）',
+    'suggestion.manual.check_range': '确保所有值都在有效范围内',
     
     // Footer
     'footer.brand.title': 'tsconv.com',

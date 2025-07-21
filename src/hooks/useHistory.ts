@@ -8,6 +8,8 @@ interface HistoryItem {
   type: 'timestamp' | 'date';
 }
 
+export { HistoryItem };
+
 export const useHistory = () => {
   const [history, setHistory] = useState<HistoryItem[]>([]);
 
