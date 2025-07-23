@@ -5,6 +5,7 @@ import { ThemeProvider } from '../contexts/ThemeContext';
 import { LanguageProvider } from '../contexts/LanguageContext';
 import React from 'react';
 import { vi } from 'vitest';
+import { BrowserRouter } from 'react-router-dom';
 
 // Mock clipboard API
 describe('TimestampConverter Integration Tests', () => {
@@ -15,6 +16,32 @@ describe('TimestampConverter Integration Tests', () => {
         writeText: vi.fn().mockResolvedValue(undefined),
       },
     });
+    
+    // Mock window.matchMedia for theme context
+    Object.defineProperty(window, 'matchMedia', {
+      writable: true,
+      value: vi.fn().mockImplementation(query => ({
+        matches: false,
+        media: query,
+        onchange: null,
+        addListener: vi.fn(),
+        removeListener: vi.fn(),
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+        dispatchEvent: vi.fn(),
+      })),
+    });
+    
+    // Mock localStorage
+    const localStorageMock = {
+      getItem: vi.fn(),
+      setItem: vi.fn(),
+      removeItem: vi.fn(),
+      clear: vi.fn(),
+    };
+    Object.defineProperty(window, 'localStorage', {
+      value: localStorageMock
+    });
   });
 
   afterEach(() => {
@@ -23,11 +50,13 @@ describe('TimestampConverter Integration Tests', () => {
 
   const renderConverter = () => {
     return render(
-      <ThemeProvider>
-        <LanguageProvider>
-          <TimestampConverter />
-        </LanguageProvider>
-      </ThemeProvider>
+      <BrowserRouter>
+        <ThemeProvider>
+          <LanguageProvider>
+            <TimestampConverter />
+          </LanguageProvider>
+        </ThemeProvider>
+      </BrowserRouter>
     );
   };
 

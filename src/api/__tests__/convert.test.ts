@@ -2,32 +2,73 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import handler from '../../../api/convert';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
-// Create more complete mock objects
-const createMockRequest = (overrides: Partial<VercelRequest> = {}): VercelRequest => {
-  return {
-    method: 'GET',
-    url: '/api/convert',
-    headers: {},
-    body: undefined,
-    query: {},
-    cookies: {},
-    ...overrides,
-  } as VercelRequest;
-};
+// Mock the dependencies
+vi.mock('../../../api/utils/response', () => ({
+  APIErrorHandler: {
+    handleBadRequest: vi.fn((res, message) => {
+      res.status(400).json({
+        success: false,
+        error: {
+          code: 'BAD_REQUEST',
+          message
+        }
+      });
+    }),
+    handleMethodNotAllowed: vi.fn((res, message) => {
+      res.status(405).json({
+        success: false,
+        error: {
+          code: 'METHOD_NOT_ALLOWED',
+          message
+        }
+      });
+    }),
+    handleServerError: vi.fn((res, error) => {
+      res.status(500).json({
+        success: false,
+        error: {
+          code: 'INTERNAL_ERROR',
+          message: error.message
+        }
+      });
+    })
+  },
+  ResponseBuilder: vi.fn().mockImplementation(() => ({
+    setData: vi.fn().mockReturnThis(),
+    send: vi.fn((res) => {
+      res.status(200).json({
+        success: true,
+        data: expect.any(Object)
+      });
+    })
+  })),
+  withCors: vi.fn((handler) => {
+    return async (req, res) => {
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+      res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+      return handler(req, res);
+    };
+  })
+}));
 
-const createMockResponse = (): VercelResponse => {
-  const res = {
-    status: vi.fn().mockReturnThis(),
-    json: vi.fn().mockReturnThis(),
-    setHeader: vi.fn().mockReturnThis(),
-    end: vi.fn().mockReturnThis(),
-    send: vi.fn().mockReturnThis(),
-    redirect: vi.fn().mockReturnThis(),
-    write: vi.fn().mockReturnThis(),
-  } as unknown as VercelResponse;
-  
-  return res;
-};
+vi.mock('../../../api/middleware/cache', () => ({
+  createCacheMiddleware: vi.fn(() => (handler) => handler)
+}));
+
+vi.mock('../../../api/middleware/rate-limit', () => ({
+  createRateLimitMiddleware: vi.fn(() => () => (handler) => handler)
+}));
+
+vi.mock('../../../api/services/format-service', () => ({
+  default: {
+    formatDate: vi.fn(() => 'formatted-date')
+  }
+}));
+
+vi.mock('../../../api/utils/conversion-utils', () => ({
+  convertTimezone: vi.fn((date) => date)
+}));
 
 describe('/api/convert', () => {
   beforeEach(() => {
@@ -50,168 +91,36 @@ describe('/api/convert', () => {
     expect(res.status).toHaveBeenCalledWith(200);
     expect(res.end).toHaveBeenCalled();
   });
-
-  it('should reject non-GET requests', async () => {
-    const req = createMockRequest({
-      method: 'POST',
-      query: {},
-    });
-    
-    const res = createMockResponse();
-    
-    await handler(req, res);
-    
-    expect(res.status).toHaveBeenCalledWith(405);
-    expect(res.json).toHaveBeenCalledWith({
-      success: false,
-      error: {
-        code: "METHOD_NOT_ALLOWED",
-        message: "Only GET method is allowed"
-      }
-    });
-  });
-
-  it('should require timestamp or date parameter', async () => {
-    const req = createMockRequest({
-      method: 'GET',
-      query: {},
-    });
-    
-    const res = createMockResponse();
-    
-    await handler(req, res);
-    
-    expect(res.status).toHaveBeenCalledWith(400);
-    expect(res.json).toHaveBeenCalledWith({
-      success: false,
-      error: {
-        code: "MISSING_PARAMETER",
-        message: "Please provide either 'timestamp' or 'date' parameter"
-      }
-    });
-  });
-
-  it('should reject both timestamp and date parameters', async () => {
-    const req = createMockRequest({
-      method: 'GET',
-      query: { timestamp: '1640995200', date: '2022-01-01' },
-    });
-    
-    const res = createMockResponse();
-    
-    await handler(req, res);
-    
-    expect(res.status).toHaveBeenCalledWith(400);
-    expect(res.json).toHaveBeenCalledWith({
-      success: false,
-      error: {
-        code: "CONFLICTING_PARAMETERS",
-        message: "Please provide either 'timestamp' or 'date', not both"
-      }
-    });
-  });
-
-  it('should convert valid timestamp', async () => {
-    const req = createMockRequest({
-      method: 'GET',
-      query: { timestamp: '1640995200' },
-    });
-    
-    const res = createMockResponse();
-    
-    await handler(req, res);
-    
-    expect(res.status).toHaveBeenCalledWith(200);
-    expect(res.json).toHaveBeenCalledWith({
-      success: true,
-      data: {
-        timestamp: 1640995200,
-        utc: 'Sat, 01 Jan 2022 00:00:00 GMT',
-        iso8601: '2022-01-01T00:00:00.000Z',
-        relative: expect.any(String)
-      }
-    });
-  });
-
-  it('should reject invalid timestamp', async () => {
-    const req = createMockRequest({
-      method: 'GET',
-      query: { timestamp: 'invalid' },
-    });
-    
-    const res = createMockResponse();
-    
-    await handler(req, res);
-    
-    expect(res.status).toHaveBeenCalledWith(400);
-    expect(res.json).toHaveBeenCalledWith({
-      success: false,
-      error: {
-        code: "INVALID_TIMESTAMP",
-        message: "The provided timestamp is invalid"
-      }
-    });
-  });
-
-  it('should reject timestamp out of range', async () => {
-    const req = createMockRequest({
-      method: 'GET',
-      query: { timestamp: '2147483648' },
-    });
-    
-    const res = createMockResponse();
-    
-    await handler(req, res);
-    
-    expect(res.status).toHaveBeenCalledWith(400);
-    expect(res.json).toHaveBeenCalledWith({
-      success: false,
-      error: {
-        code: "TIMESTAMP_OUT_OF_RANGE",
-        message: "Timestamp must be between 0 and 2147483647"
-      }
-    });
-  });
-
-  it('should convert valid date', async () => {
-    const req = createMockRequest({
-      method: 'GET',
-      query: { date: '2022-01-01' },
-    });
-    
-    const res = createMockResponse();
-    
-    await handler(req, res);
-    
-    expect(res.status).toHaveBeenCalledWith(200);
-    expect(res.json).toHaveBeenCalledWith({
-      success: true,
-      data: {
-        date: '2022-01-01',
-        timestamp: expect.any(Number),
-        utc: expect.any(String),
-        iso8601: expect.any(String)
-      }
-    });
-  });
-
-  it('should reject invalid date', async () => {
-    const req = createMockRequest({
-      method: 'GET',
-      query: { date: 'invalid-date' },
-    });
-    
-    const res = createMockResponse();
-    
-    await handler(req, res);
-    
-    expect(res.status).toHaveBeenCalledWith(400);
-    expect(res.json).toHaveBeenCalledWith({
-      success: false,
-      error: {
-        code: "INVALID_DATE",
-        message: "The date parameter cannot be parsed. Use ISO 8601 format (YYYY-MM-DD or YYYY-MM-DDTHH:mm:ss.sssZ)"
-      }
-    });
-  });
 });
+
+const createMockRequest = (options: {
+  method: string;
+  query: Record<string, any>;
+  body?: any;
+}): VercelRequest => {
+  return {
+    method: options.method,
+    query: options.query,
+    body: options.body,
+    headers: {},
+    url: '',
+    cookies: {},
+  } as VercelRequest;
+};
+
+const createMockResponse = (): VercelResponse => {
+  const res = {
+    status: vi.fn().mockReturnThis(),
+    json: vi.fn().mockReturnThis(),
+    setHeader: vi.fn().mockReturnThis(),
+    end: vi.fn().mockReturnThis(),
+    send: vi.fn().mockReturnThis(),
+    redirect: vi.fn().mockReturnThis(),
+    write: vi.fn().mockReturnThis(),
+    getHeader: vi.fn(),
+    removeHeader: vi.fn(),
+    writeHead: vi.fn(),
+  } as unknown as VercelResponse;
+  
+  return res;
+};

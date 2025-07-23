@@ -1,0 +1,57 @@
+{
+  "success": true,
+  "data": {
+    "results": [
+      {
+        "input": 1753118988,
+        "success": true,
+        "data": {
+          "original": 1753118988,
+          "timestamp": 1753118988,
+          "date": "2025-07-21T17:29:48.000Z",
+          "formats": {
+            "iso8601": "2025-07-21T17:29:48.000Z",
+            "utc": "Mon, 21 Jul 2025 17:29:48 GMT",
+            "timestamp": 1753118988,
+            "local": "7/21/2025, 5:29:48 PM",
+            "unix": 1753118988
+          }
+        }
+      },
+      {
+        "input": "2025-01-15",
+        "success": true,
+        "data": {
+          "original": "2025-01-15",
+          "timestamp": 1736908800,
+          "date": "2025-01-15T00:00:00.000Z",
+          "formats": {
+            "iso8601": "2025-01-15T00:00:00.000Z",
+            "utc": "Wed, 15 Jan 2025 00:00:00 GMT",
+            "timestamp": 1736908800,
+            "local": "1/14/2025, 7:00:00 PM",
+            "unix": 1736908800
+          }
+        }
+      },
+      {
+        "input": "invalid-date",
+        "success": false,
+        "error": {
+          "code": "INVALID_FORMAT",
+          "message": "Unable to parse as timestamp or date"
+        }
+      }
+    ],
+    "summary": {
+      "total": 3,
+      "successful": 2,
+      "failed": 1
+    }
+  },
+  "meta": {
+    "processingTime": 5,
+    "batchSize": 3,
+    "maxBatchSize": 100
+  }
+}

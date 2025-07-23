@@ -13,16 +13,40 @@
   ],
   "functions": {
     "api/convert.ts": {
-      "maxDuration": 10
+      "maxDuration": 10,
+      "memory": 1024
     },
     "api/now.ts": {
-      "maxDuration": 10
+      "maxDuration": 10,
+      "memory": 512
     },
     "api/batch.ts": {
-      "maxDuration": 15
+      "maxDuration": 15,
+      "memory": 1024
+    },
+    "api/enhanced-batch.ts": {
+      "maxDuration": 20,
+      "memory": 1024
     },
     "api/health.ts": {
-      "maxDuration": 5
+      "maxDuration": 5,
+      "memory": 512
+    },
+    "api/timezone.ts": {
+      "maxDuration": 10,
+      "memory": 1024
+    },
+    "api/timezone-difference.ts": {
+      "maxDuration": 10,
+      "memory": 1024
+    },
+    "api/formats.ts": {
+      "maxDuration": 5,
+      "memory": 512
+    },
+    "api/visualization.ts": {
+      "maxDuration": 10,
+      "memory": 1024
     }
   },
   "headers": [
@@ -40,8 +64,38 @@
         {
           "key": "X-XSS-Protection",
           "value": "1; mode=block"
+        },
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=0, s-maxage=86400, stale-while-revalidate=60"
+        },
+        {
+          "key": "Access-Control-Allow-Origin",
+          "value": "*"
+        },
+        {
+          "key": "Access-Control-Allow-Methods",
+          "value": "GET, POST, OPTIONS"
+        },
+        {
+          "key": "Access-Control-Allow-Headers",
+          "value": "Content-Type, Authorization, X-API-Key"
         }
       ]
+    }
+  ],
+  "env": {
+    "NODE_ENV": "production",
+    "RATE_LIMITING_ENABLED": "true",
+    "CACHING_ENABLED": "true",
+    "METRICS_ENABLED": "true",
+    "LOG_LEVEL": "info"
+  },
+  "regions": ["iad1", "sfo1", "lhr1", "hnd1", "cle1"],
+  "crons": [
+    {
+      "path": "/api/health",
+      "schedule": "*/5 * * * *"
     }
   ]
 }

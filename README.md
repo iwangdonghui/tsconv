@@ -90,6 +90,16 @@ Output: 1640995200
 https://api.tsconv.com
 ```
 
+### API Documentation
+
+We provide comprehensive API documentation:
+
+- **API Documentation**: [API_DOCUMENTATION.md](API_DOCUMENTATION.md)
+- **Detailed Examples**: [API_EXAMPLES_DETAILED.md](API_EXAMPLES_DETAILED.md)
+- **Error Codes**: [API_ERROR_CODES.md](API_ERROR_CODES.md)
+- **Interactive Swagger UI**: [/api/swagger](/api/swagger)
+- **OpenAPI Specification**: [/api/openapi.json](/api/openapi.json)
+
 ### Get Current Timestamp
 ```bash
 curl https://api.tsconv.com/now

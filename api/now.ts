@@ -1,33 +1,53 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
+import { ResponseBuilder, withCors } from './utils/response';
+import { createCacheMiddleware } from './middleware/cache';
+import { createRateLimitMiddleware } from './middleware/rate-limit';
 
-interface NowResponse {
-  success: boolean;
-  data: {
-    timestamp: number;
-    utc: string;
-    iso8601: string;
-  };
-}
-
-export default function handler(req: VercelRequest, res: VercelResponse) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-
-  if (req.method === 'OPTIONS') {
-    res.status(200).end();
-    return;
-  }
-
-  const now = new Date();
-  const timestamp = Math.floor(now.getTime() / 1000);
-
-  res.status(200).json({
-    success: true,
-    data: {
-      timestamp: timestamp,
+async function nowHandler(req: VercelRequest, res: VercelResponse) {
+  try {
+    const now = new Date();
+    const timestamp = Math.floor(now.getTime() / 1000);
+    
+    const formats = {
+      iso8601: now.toISOString(),
       utc: now.toUTCString(),
-      iso8601: now.toISOString()
-    }
-  });
+      timestamp: timestamp,
+      local: now.toLocaleString(),
+      unix: timestamp
+    };
+
+    const response = new ResponseBuilder()
+      .setData({
+        current: {
+          timestamp,
+          date: now.toISOString(),
+          formats
+        },
+        meta: {
+          timestamp: now.toISOString()
+        }
+      });
+
+    response.send(res);
+  } catch (error) {
+    console.error('Now API error:', error);
+    res.status(500).json({
+      success: false,
+      error: {
+        code: 'SERVER_ERROR',
+        message: 'Internal server error'
+      }
+    });
+  }
 }
+
+const enhancedNowHandler = withCors(
+  createRateLimitMiddleware()(
+    createCacheMiddleware({
+      ttl: 1000, // 1 second for current time
+      cacheControlHeader: 'public, max-age=1'
+    })(nowHandler)
+  )
+);
+
+export default enhancedNowHandler;

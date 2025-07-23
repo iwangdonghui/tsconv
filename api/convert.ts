@@ -1,4 +1,9 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
+import { APIErrorHandler, ResponseBuilder, withCors } from './utils/response';
+import { createCacheMiddleware } from './middleware/cache';
+import { createRateLimitMiddleware } from './middleware/rate-limit';
+import formatService from './services/format-service';
+import { convertTimezone } from './utils/conversion-utils';
 
 interface ConvertResponse {
   success: boolean;
@@ -9,131 +14,165 @@ interface ConvertResponse {
   };
 }
 
-export default function handler(req: VercelRequest, res: VercelResponse) {
-  // 设置CORS头
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-
+async function convertHandler(req: VercelRequest, res: VercelResponse) {
+  withCors(res);
+  
   if (req.method === 'OPTIONS') {
     res.status(200).end();
     return;
   }
 
-  // 只允许 GET 请求
-  if (req.method !== 'GET') {
-    return res.status(405).json({
-      success: false,
-      error: {
-        code: "METHOD_NOT_ALLOWED",
-        message: "Only GET method is allowed"
-      }
-    });
+  if (req.method !== 'GET' && req.method !== 'POST') {
+    return APIErrorHandler.handleMethodNotAllowed(res, 'Only GET and POST methods are allowed');
   }
 
   try {
-    const { timestamp, date } = req.query;
+    const params = req.method === 'GET' ? req.query : req.body;
+    const {
+      timestamp,
+      date,
+      format,
+      timezone,
+      targetTimezone,
+      includeFormats = false
+    } = params;
 
     if (!timestamp && !date) {
-      return res.status(400).json({
-        success: false,
-        error: {
-          code: "MISSING_PARAMETER",
-          message: "Please provide either 'timestamp' or 'date' parameter"
-        }
-      });
+      return APIErrorHandler.handleBadRequest(res, 'Please provide either timestamp or date parameter');
     }
 
-    // 不允许同时提供两个参数
     if (timestamp && date) {
-      return res.status(400).json({
-        success: false,
-        error: {
-          code: "CONFLICTING_PARAMETERS",
-          message: "Please provide either 'timestamp' or 'date', not both"
-        }
-      });
+      return APIErrorHandler.handleBadRequest(res, 'Please provide either timestamp or date, not both');
     }
 
-    let result: any = {};
+    // Process conversion logic here...
+    const inputValue = timestamp || date;
+    const isTimestamp = !!timestamp;
 
-    if (timestamp) {
-      const ts = parseInt(timestamp as string);
-      if (isNaN(ts)) {
-        return res.status(400).json({
-          success: false,
-          error: {
-            code: "INVALID_TIMESTAMP",
-            message: "The provided timestamp is invalid"
-          }
-        });
-      }
+    const result = await processConversion(inputValue, isTimestamp, {
+      format: format ? String(format) : undefined,
+      timezone: timezone ? String(timezone) : undefined,
+      targetTimezone: targetTimezone ? String(targetTimezone) : undefined,
+      includeFormats
+    });
 
-      // 验证时间戳范围（1970-2038年）
-      if (ts < 0 || ts > 2147483647) {
-        return res.status(400).json({
-          success: false,
-          error: {
-            code: "TIMESTAMP_OUT_OF_RANGE",
-            message: "Timestamp must be between 0 and 2147483647"
-          }
-        });
-      }
+    const builder = new ResponseBuilder().setData(result);
+    builder.send(res);
 
-      const date = new Date(ts * 1000);
-      result = {
-        success: true,
-        data: {
-          timestamp: ts,
-          utc: date.toUTCString(),
-          iso8601: date.toISOString(),
-          relative: getRelativeTime(date)
-        }
-      };
-    }
-
-    if (date) {
-      const parsedDate = new Date(date as string);
-      if (isNaN(parsedDate.getTime())) {
-        return res.status(400).json({
-          success: false,
-          error: {
-            code: "INVALID_DATE",
-            message: "The date parameter cannot be parsed. Use ISO 8601 format (YYYY-MM-DD or YYYY-MM-DDTHH:mm:ss.sssZ)"
-          }
-        });
-      }
-
-      result = {
-        success: true,
-        data: {
-          date: date,
-          timestamp: Math.floor(parsedDate.getTime() / 1000),
-          utc: parsedDate.toUTCString(),
-          iso8601: parsedDate.toISOString()
-        }
-      };
-    }
-
-    res.status(200).json(result);
   } catch (error) {
     console.error('API Error:', error);
-    res.status(500).json({
-      success: false,
-      error: {
-        code: "INTERNAL_ERROR",
-        message: "An unexpected error occurred"
-      }
-    });
+    if (error instanceof Error) {
+      APIErrorHandler.handleServerError(res, error);
+    } else {
+      APIErrorHandler.handleServerError(res, new Error('Unknown error'));
+    }
   }
+}
+
+async function processConversion(
+  input: string | number,
+  isTimestamp: boolean,
+  options: {
+    format?: string;
+    timezone?: string;
+    targetTimezone?: string;
+    includeFormats?: boolean;
+  }
+): Promise<any> {
+  const {
+    format,
+    timezone,
+    targetTimezone,
+    includeFormats = false
+  } = options;
+
+  let date: Date;
+  let originalTimestamp: number;
+
+  if (isTimestamp) {
+    originalTimestamp = input as number;
+    date = new Date(originalTimestamp * 1000);
+  } else {
+    date = new Date(input as string);
+    originalTimestamp = Math.floor(date.getTime() / 1000);
+  }
+
+  // Handle timezone conversion
+  if (timezone || targetTimezone) {
+    try {
+      if (targetTimezone) {
+        date = convertTimezone(date, timezone || 'UTC', targetTimezone);
+      }
+    } catch (error) {
+      throw new Error(`Timezone conversion failed: ${error}`);
+    }
+  }
+
+  const formats: any = {};
+
+  // Standard formats
+  formats.iso8601 = date.toISOString();
+  formats.utc = date.toUTCString();
+  formats.timestamp = Math.floor(date.getTime() / 1000);
+  formats.local = date.toLocaleString();
+  formats.relative = getRelativeTime(date);
+
+  // Custom format if specified
+  if (format) {
+    try {
+      formats.custom = formatService.formatDate(date, format, targetTimezone || timezone);
+    } catch (error) {
+      console.warn('Custom format error:', error);
+    }
+  }
+
+  // Additional formats if requested
+  if (includeFormats) {
+    formats.rfc2822 = date.toUTCString();
+    formats.unix = formats.timestamp;
+    formats.short = date.toLocaleDateString();
+    formats.time = date.toLocaleTimeString();
+  }
+
+  const result: any = {
+    input: input,
+    timestamp: Math.floor(date.getTime() / 1000),
+    formats: formats
+  };
+
+  if (timezone || targetTimezone) {
+    result.timezone = {
+      original: timezone || 'UTC',
+      target: targetTimezone || timezone || 'UTC'
+    };
+  }
+
+  return result;
 }
 
 function getRelativeTime(date: Date): string {
   const now = new Date();
   const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
   
-  if (diffInSeconds < 60) return `${diffInSeconds} seconds ago`;
-  if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)} minutes ago`;
-  if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)} hours ago`;
-  return `${Math.floor(diffInSeconds / 86400)} days ago`;
+  const absDiff = Math.abs(diffInSeconds);
+  const prefix = diffInSeconds < 0 ? 'in' : '';
+  const suffix = diffInSeconds > 0 ? 'ago' : '';
+
+  if (absDiff < 60) return `${prefix} ${absDiff} seconds ${suffix}`.trim();
+  if (absDiff < 3600) return `${prefix} ${Math.floor(absDiff / 60)} minutes ${suffix}`.trim();
+  if (absDiff < 86400) return `${prefix} ${Math.floor(absDiff / 3600)} hours ${suffix}`.trim();
+  if (absDiff < 2592000) return `${prefix} ${Math.floor(absDiff / 86400)} days ${suffix}`.trim();
+  return `${prefix} ${Math.floor(absDiff / 2592000)} months ${suffix}`.trim();
 }
+
+// Enhanced convert API with caching and rate limiting
+const enhancedConvertHandler = withCors(
+  createRateLimitMiddleware()(
+    createCacheMiddleware({
+      ttl: 5 * 60 * 1000, // 5 minutes
+      cacheControlHeader: 'public, max-age=300, stale-while-revalidate=600'
+    })(convertHandler)
+  )
+);
+
+export default enhancedConvertHandler;

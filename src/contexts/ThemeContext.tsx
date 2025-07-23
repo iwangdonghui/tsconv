@@ -13,7 +13,12 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   // 初始化主题
   useEffect(() => {
     const savedTheme = localStorage.getItem('theme');
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    let prefersDark = false;
+    
+    // Check if running in browser environment
+    if (typeof window !== 'undefined' && window.matchMedia) {
+      prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    }
     
     const shouldBeDark = savedTheme === 'dark' || (!savedTheme && prefersDark);
     

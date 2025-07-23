@@ -1,0 +1,21 @@
+{
+  "success": true,
+  "data": {
+    "input": 1753118988,
+    "timestamp": 1753118988,
+    "formats": {
+      "iso8601": "2025-07-21T17:29:48.000Z",
+      "utc": "Mon, 21 Jul 2025 17:29:48 GMT",
+      "timestamp": 1753118988,
+      "local": "7/21/2025, 5:29:48 PM",
+      "unix": 1753118988,
+      "relative": "in 0 seconds"
+    }
+  },
+  "meta": {
+    "timezone": "UTC",
+    "formats": ["iso8601", "utc", "timestamp", "local", "unix", "relative"],
+    "processingTime": 2,
+    "cacheHit": false
+  }
+}

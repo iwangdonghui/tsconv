@@ -1,0 +1,83 @@
+{
+  "success": true,
+  "data": {
+    "status": "healthy",
+    "timestamp": "2024-01-15T14:30:00.000Z",
+    "uptime": 3600000,
+    "services": {
+      "cache": {
+        "status": "healthy",
+        "responseTime": 2,
+        "lastCheck": "2024-01-15T14:30:00.000Z",
+        "details": {
+          "cacheType": "In-memory cache (Redis not configured)",
+          "size": 42,
+          "maxSize": 104857600,
+          "ttlEnabled": true,
+          "lruEnabled": true
+        }
+      },
+      "rateLimit": {
+        "status": "healthy",
+        "responseTime": 1,
+        "lastCheck": "2024-01-15T14:30:00.000Z",
+        "details": {
+          "type": "memory",
+          "algorithm": "sliding-window"
+        }
+      },
+      "timezone": {
+        "status": "healthy",
+        "responseTime": 5,
+        "lastCheck": "2024-01-15T14:30:00.000Z",
+        "details": {
+          "database": "IANA",
+          "zones": 25
+        }
+      },
+      "format": {
+        "status": "healthy",
+        "responseTime": 3,
+        "lastCheck": "2024-01-15T14:30:00.000Z",
+        "details": {
+          "formats": 20,
+          "customFormats": 0
+        }
+      }
+    },
+    "metrics": {
+      "totalRequests": 1234,
+      "errors": 12,
+      "cacheHitRate": 0.85,
+      "rateLimitUsage": 0.23,
+      "memoryUsage": {
+        "used": 52428800,
+        "total": 1073741824,
+        "percentage": 4.88
+      }
+    },
+    "errors": {
+      "lastHour": 2,
+      "lastDay": 12,
+      "topErrorCodes": [
+        { "code": "BAD_REQUEST", "count": 8 },
+        { "code": "VALIDATION_ERROR", "count": 3 },
+        { "code": "NOT_FOUND", "count": 1 }
+      ],
+      "recoverySuggestions": {
+        "BAD_REQUEST": "Check your request parameters and format",
+        "VALIDATION_ERROR": "Ensure all required fields are provided",
+        "NOT_FOUND": "Verify the endpoint URL is correct"
+      }
+    }
+  },
+  "metadata": {
+    "processingTime": 12,
+    "cacheHit": true,
+    "rateLimit": {
+      "limit": 100,
+      "remaining": 88,
+      "reset": 1705339800
+    }
+  }
+}
