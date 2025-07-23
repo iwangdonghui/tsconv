@@ -116,15 +116,15 @@
       "maxDuration": 5,
       "memory": 512
     },
-    "api/v1/[...slug].ts": {
+    "api/v1/**": {
       "maxDuration": 20,
       "memory": 1024
     },
-    "api/admin/[...slug].ts": {
+    "api/admin/**": {
       "maxDuration": 15,
       "memory": 1024
     },
-    "api/docs/[...slug].ts": {
+    "api/docs/**": {
       "maxDuration": 10,
       "memory": 512
     }
