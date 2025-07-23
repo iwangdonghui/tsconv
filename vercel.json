@@ -91,7 +91,7 @@
     "METRICS_ENABLED": "true",
     "LOG_LEVEL": "info"
   },
-  "regions": ["iad1", "sfo1", "lhr1", "hnd1", "cle1"],
+
   "crons": [
     {
       "path": "/api/health",
