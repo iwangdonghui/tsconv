@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 
-export interface HistoryItem {
+export type { HistoryItem };
+
+interface HistoryItem {
   id: string;
   input: string;
   output: string;

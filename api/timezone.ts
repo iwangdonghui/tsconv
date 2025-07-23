@@ -161,7 +161,7 @@ async function processTimezoneConversion(req: VercelRequest, res: VercelResponse
       originalTimestamp: conversion.originalTimestamp,
       convertedTimestamp: conversion.convertedTimestamp,
       offsetDifference: conversion.offsetDifference,
-      formattedResults: this.formatTimezoneResults(conversion.convertedTimestamp, resolvedTo)
+      formattedResults: formatTimezoneResults(conversion.convertedTimestamp, resolvedTo)
     };
 
     if (includeInfo) {
@@ -182,7 +182,7 @@ async function processTimezoneConversion(req: VercelRequest, res: VercelResponse
   }
 }
 
-private formatTimezoneResults(timestamp: number, timezone: string) {
+function formatTimezoneResults(timestamp: number, timezone: string) {
   const date = new Date(timestamp * 1000);
   return {
     iso8601: date.toISOString(),

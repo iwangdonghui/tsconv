@@ -36,25 +36,3 @@ export const checkServiceAvailability = async () => {
     }
   };
 };
-
-// 创建服务状态指示器
-export const ServiceStatusIndicator = () => {
-  const [services, setServices] = useState({});
-  
-  useEffect(() => {
-    checkServiceAvailability().then(setServices);
-  }, []);
-  
-  return (
-    <div className="text-sm text-slate-600 dark:text-slate-400">
-      {Object.entries(services).map(([name, service]) => (
-        <div key={name} className="flex items-center space-x-2">
-          <span className={`w-2 h-2 rounded-full ${
-            service.available ? 'bg-green-500' : 'bg-yellow-500'
-          }`}></span>
-          <span>{service.description} ({service.type})</span>
-        </div>
-      ))}
-    </div>
-  );
-};
