@@ -129,6 +129,8 @@
       "memory": 512
     }
   },
+  "outputDirectory": "dist",
+  "installCommand": "npm ci",
   "headers": [
     {
       "source": "/api/(.*)",

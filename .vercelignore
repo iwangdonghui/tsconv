@@ -1,0 +1,33 @@
+# Test files
+**/*.test.ts
+**/*.test.js
+**/*.spec.ts
+**/*.spec.js
+**/test/**
+**/__tests__/**
+
+# Config files that shouldn't be functions
+api/config/**/*.js
+api/config/**/*.mjs
+
+# Handler files (not direct functions)
+api/handlers/**
+
+# Middleware, services, utils, types (not functions)
+api/middleware/**
+api/services/**
+api/utils/**
+api/types/**
+
+# Development files
+*.md
+*.txt
+.env*
+.git*
+node_modules/
+dist/
+build/
+
+# Documentation
+docs/
+*.md
