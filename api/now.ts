@@ -4,6 +4,13 @@ import { createCacheMiddleware } from './middleware/cache';
 import { createRateLimitMiddleware } from './middleware/rate-limit';
 
 async function nowHandler(req: VercelRequest, res: VercelResponse) {
+  withCors(res);
+
+  if (req.method === 'OPTIONS') {
+    res.status(200).end();
+    return;
+  }
+
   try {
     const now = new Date();
     const timestamp = Math.floor(now.getTime() / 1000);
@@ -41,13 +48,11 @@ async function nowHandler(req: VercelRequest, res: VercelResponse) {
   }
 }
 
-const enhancedNowHandler = withCors(
-  createRateLimitMiddleware()(
-    createCacheMiddleware({
-      ttl: 1000, // 1 second for current time
-      cacheControlHeader: 'public, max-age=1'
-    })(nowHandler)
-  )
+const enhancedNowHandler = createRateLimitMiddleware()(
+  createCacheMiddleware({
+    ttl: 1000, // 1 second for current time
+    cacheControlHeader: 'public, max-age=1'
+  })(nowHandler)
 );
 
 export default enhancedNowHandler;

@@ -3,6 +3,7 @@ import { APIErrorHandler, ResponseBuilder, withCors } from './utils/response';
 import { createCacheMiddleware } from './middleware/cache';
 import { createRateLimitMiddleware } from './middleware/rate-limit';
 import { createPerformanceMonitoringMiddleware } from './middleware/performance-monitoring';
+import { ErrorHandler } from './middleware/error-handler';
 import { getHealthService } from './services/health-service';
 import { getCacheService } from './services/cache-factory';
 import { getRateLimiter } from './services/rate-limiter-factory';
@@ -223,9 +224,9 @@ class MonitoringService {
     const summary = errorHandler.getErrorSummary();
 
     const topErrorCodes = Object.entries(summary.byCode)
-      .sort(([, a], [, b]) => b - a)
+      .sort(([, a], [, b]) => (b as number) - (a as number))
       .slice(0, 5)
-      .map(([code, count]) => ({ code, count }));
+      .map(([code, count]) => ({ code, count: count as number }));
 
     return {
       lastHour: summary.total,
@@ -265,6 +266,8 @@ class MonitoringService {
 const monitoringService = MonitoringService.getInstance();
 
 async function healthHandler(req: VercelRequest, res: VercelResponse) {
+  withCors(res);
+
   if (req.method === 'OPTIONS') {
     res.status(200).end();
     return;
@@ -329,22 +332,20 @@ async function healthHandler(req: VercelRequest, res: VercelResponse) {
 }
 
 // Enhanced health API with caching, rate limiting, and performance monitoring
-const enhancedHealthHandler = withCors(
-  createPerformanceMonitoringMiddleware({
-    enableMetricsCollection: true,
-    enableCacheHitTracking: true,
-    enableRateLimitTracking: true
+const enhancedHealthHandler = createPerformanceMonitoringMiddleware({
+  enableMetricsCollection: true,
+  enableCacheHitTracking: true,
+  enableRateLimitTracking: true
+})(
+  createRateLimitMiddleware({
+    max: 60, // 60 requests per minute for health checks
+    windowMs: 60 * 1000
   })(
-    createRateLimitMiddleware({
-      max: 60, // 60 requests per minute for health checks
-      windowMs: 60 * 1000
-    })(
-      createCacheMiddleware({
-        ttl: 30 * 1000, // 30 seconds for health checks
-        cacheControlHeader: 'public, max-age=30, stale-while-revalidate=60',
-        skipCache: (req) => req.query.detailed === 'true' // Don't cache detailed health checks
-      })(healthHandler)
-    )
+    createCacheMiddleware({
+      ttl: 30 * 1000, // 30 seconds for health checks
+      cacheControlHeader: 'public, max-age=30, stale-while-revalidate=60',
+      skipCache: (req) => req.query.detailed === 'true' // Don't cache detailed health checks
+    })(healthHandler)
   )
 );
 
