@@ -104,29 +104,9 @@
     }
   ],
   "functions": {
-    "api/convert.ts": {
-      "maxDuration": 10,
-      "memory": 1024
-    },
-    "api/now.ts": {
-      "maxDuration": 10,
-      "memory": 512
-    },
-    "api/health.ts": {
-      "maxDuration": 5,
-      "memory": 512
-    },
-    "api/v1/**": {
+    "api/**": {
       "maxDuration": 20,
       "memory": 1024
-    },
-    "api/admin/**": {
-      "maxDuration": 15,
-      "memory": 1024
-    },
-    "api/docs/**": {
-      "maxDuration": 10,
-      "memory": 512
     }
   },
   "outputDirectory": "dist",
