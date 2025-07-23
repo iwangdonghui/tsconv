@@ -2,61 +2,61 @@ import { VercelRequest, VercelResponse } from '@vercel/node';
 import { APIErrorHandler, withCors } from '../utils/response';
 
 // Import handlers
-import batchConvertHandler from '../batch-convert';
-import enhancedBatchHandler from '../enhanced-batch';
-import formatsHandler from '../formats';
-import timezoneConvertHandler from '../timezone-convert';
-import timezoneDifferenceHandler from '../timezone-difference';
-import timezoneInfoHandler from '../timezone-info';
-import timezoneHandler from '../timezone';
-import visualizationHandler from '../visualization';
+import batchConvertHandler from '../handlers/batch-convert';
+import enhancedBatchHandler from '../handlers/enhanced-batch';
+import formatsHandler from '../handlers/formats';
+import timezoneConvertHandler from '../handlers/timezone-convert';
+import timezoneDifferenceHandler from '../handlers/timezone-difference';
+import timezoneInfoHandler from '../handlers/timezone-info';
+import timezoneHandler from '../handlers/timezone';
+import visualizationHandler from '../handlers/visualization';
 
 // Import simple handlers
 async function simpleConvertHandler(req: VercelRequest, res: VercelResponse) {
   // Import the simple convert logic
-  const { default: handler } = await import('../simple-convert');
+  const { default: handler } = await import('../handlers/simple-convert');
   return handler(req, res);
 }
 
 async function simpleHealthHandler(req: VercelRequest, res: VercelResponse) {
   // Import the simple health logic
-  const { default: handler } = await import('../simple-health');
+  const { default: handler } = await import('../handlers/simple-health');
   return handler(req, res);
 }
 
 async function standaloneConvertHandler(req: VercelRequest, res: VercelResponse) {
   // Import the standalone convert logic
-  const { default: handler } = await import('../standalone-convert');
+  const { default: handler } = await import('../handlers/standalone-convert');
   return handler(req, res);
 }
 
 async function standaloneHealthHandler(req: VercelRequest, res: VercelResponse) {
   // Import the standalone health logic
-  const { default: handler } = await import('../standalone-health');
+  const { default: handler } = await import('../handlers/standalone-health');
   return handler(req, res);
 }
 
 async function workingBatchHandler(req: VercelRequest, res: VercelResponse) {
   // Import the working batch logic
-  const { default: handler } = await import('../working-batch');
+  const { default: handler } = await import('../handlers/working-batch');
   return handler(req, res);
 }
 
 async function workingConvertHandler(req: VercelRequest, res: VercelResponse) {
   // Import the working convert logic
-  const { default: handler } = await import('../working-convert');
+  const { default: handler } = await import('../handlers/working-convert');
   return handler(req, res);
 }
 
 async function workingHealthHandler(req: VercelRequest, res: VercelResponse) {
   // Import the working health logic
-  const { default: handler } = await import('../working-health');
+  const { default: handler } = await import('../handlers/working-health');
   return handler(req, res);
 }
 
 async function batchHandler(req: VercelRequest, res: VercelResponse) {
   // Import the batch logic
-  const { default: handler } = await import('../batch');
+  const { default: handler } = await import('../handlers/batch');
   return handler(req, res);
 }
 

@@ -3,22 +3,22 @@ import { APIErrorHandler, withCors } from '../utils/response';
 
 // Import admin handlers
 async function redisAdminHandler(req: VercelRequest, res: VercelResponse) {
-  const { default: handler } = await import('../redis-admin');
+  const { default: handler } = await import('../handlers/redis-admin');
   return handler(req, res);
 }
 
 async function redisConfigHandler(req: VercelRequest, res: VercelResponse) {
-  const { default: handler } = await import('../redis-config');
+  const { default: handler } = await import('../handlers/redis-config');
   return handler(req, res);
 }
 
 async function metricsHandler(req: VercelRequest, res: VercelResponse) {
-  const { default: handler } = await import('../metrics');
+  const { default: handler } = await import('../handlers/metrics');
   return handler(req, res);
 }
 
 async function testHandler(req: VercelRequest, res: VercelResponse) {
-  const { default: handler } = await import('../test');
+  const { default: handler } = await import('../handlers/test');
   return handler(req, res);
 }
 

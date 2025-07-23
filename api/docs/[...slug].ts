@@ -3,22 +3,22 @@ import { APIErrorHandler, withCors } from '../utils/response';
 
 // Import documentation handlers
 async function docsHandler(req: VercelRequest, res: VercelResponse) {
-  const { default: handler } = await import('../docs');
+  const { default: handler } = await import('../handlers/docs');
   return handler(req, res);
 }
 
 async function swaggerHandler(req: VercelRequest, res: VercelResponse) {
-  const { default: handler } = await import('../swagger');
+  const { default: handler } = await import('../handlers/swagger');
   return handler(req, res);
 }
 
 async function openApiHandler(req: VercelRequest, res: VercelResponse) {
-  const { default: handler } = await import('../openapi');
+  const { default: handler } = await import('../handlers/openapi');
   return handler(req, res);
 }
 
 async function simpleApiHandler(req: VercelRequest, res: VercelResponse) {
-  const { default: handler } = await import('../simple-api');
+  const { default: handler } = await import('../handlers/simple-api');
   return handler(req, res);
 }
 
