@@ -5,14 +5,7 @@ import { createRateLimitMiddleware } from './middleware/rate-limit';
 import formatService from './services/format-service';
 import { convertTimezone } from './utils/conversion-utils';
 
-interface ConvertResponse {
-  success: boolean;
-  data?: any;
-  error?: {
-    code: string;
-    message: string;
-  };
-}
+
 
 async function convertHandler(req: VercelRequest, res: VercelResponse) {
   withCors(res);
@@ -166,13 +159,11 @@ function getRelativeTime(date: Date): string {
 }
 
 // Enhanced convert API with caching and rate limiting
-const enhancedConvertHandler = withCors(
-  createRateLimitMiddleware()(
-    createCacheMiddleware({
-      ttl: 5 * 60 * 1000, // 5 minutes
-      cacheControlHeader: 'public, max-age=300, stale-while-revalidate=600'
-    })(convertHandler)
-  )
+const enhancedConvertHandler = createRateLimitMiddleware()(
+  createCacheMiddleware({
+    ttl: 5 * 60 * 1000, // 5 minutes
+    cacheControlHeader: 'public, max-age=300, stale-while-revalidate=600'
+  })(convertHandler)
 );
 
 export default enhancedConvertHandler;

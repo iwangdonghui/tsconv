@@ -55,3 +55,4 @@ jspm_packages/
 
 # Local development
 .cache/
+node_modules

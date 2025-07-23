@@ -1,6 +1,6 @@
 import React from 'react';
 import { Clock, X, RotateCcw } from 'lucide-react';
-import { HistoryItem } from '../hooks/useHistory';
+import type { HistoryItem } from '../hooks/useHistory';
 
 interface HistoryPanelProps {
   history: HistoryItem[];

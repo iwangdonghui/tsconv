@@ -8,7 +8,7 @@ export type HistoryItem = {
   type: 'timestamp' | 'date';
 };
 
-export const useHistory = () => {
+const useHistory = () => {
   const [history, setHistory] = useState<HistoryItem[]>([]);
 
   useEffect(() => {
@@ -50,3 +50,5 @@ export const useHistory = () => {
 
   return { history, addToHistory, clearHistory };
 };
+
+export { useHistory };
