@@ -3,8 +3,100 @@
   "framework": "vite",
   "rewrites": [
     {
-      "source": "/api/(.*)",
-      "destination": "/api/$1"
+      "source": "/api/batch-convert",
+      "destination": "/api/v1/batch-convert"
+    },
+    {
+      "source": "/api/enhanced-batch",
+      "destination": "/api/v1/enhanced-batch"
+    },
+    {
+      "source": "/api/formats",
+      "destination": "/api/v1/formats"
+    },
+    {
+      "source": "/api/timezone-convert",
+      "destination": "/api/v1/timezone-convert"
+    },
+    {
+      "source": "/api/timezone-difference",
+      "destination": "/api/v1/timezone-difference"
+    },
+    {
+      "source": "/api/timezone-info",
+      "destination": "/api/v1/timezone-info"
+    },
+    {
+      "source": "/api/timezone",
+      "destination": "/api/v1/timezone"
+    },
+    {
+      "source": "/api/visualization",
+      "destination": "/api/v1/visualization"
+    },
+    {
+      "source": "/api/simple-convert",
+      "destination": "/api/v1/simple-convert"
+    },
+    {
+      "source": "/api/simple-health",
+      "destination": "/api/v1/simple-health"
+    },
+    {
+      "source": "/api/standalone-convert",
+      "destination": "/api/v1/standalone-convert"
+    },
+    {
+      "source": "/api/standalone-health",
+      "destination": "/api/v1/standalone-health"
+    },
+    {
+      "source": "/api/working-batch",
+      "destination": "/api/v1/working-batch"
+    },
+    {
+      "source": "/api/working-convert",
+      "destination": "/api/v1/working-convert"
+    },
+    {
+      "source": "/api/working-health",
+      "destination": "/api/v1/working-health"
+    },
+    {
+      "source": "/api/batch",
+      "destination": "/api/v1/batch"
+    },
+    {
+      "source": "/api/redis-admin",
+      "destination": "/api/admin/redis-admin"
+    },
+    {
+      "source": "/api/redis-config",
+      "destination": "/api/admin/redis-config"
+    },
+    {
+      "source": "/api/metrics",
+      "destination": "/api/admin/metrics"
+    },
+    {
+      "source": "/api/test",
+      "destination": "/api/admin/test"
+    },
+    {
+      "source": "/api/docs",
+      "destination": "/api/docs/docs"
+    },
+    {
+      "source": "/api/swagger",
+      "destination": "/api/docs/swagger"
+    },
+    {
+      "source": "/api/openapi",
+      "destination": "/api/docs/openapi"
+    },
+    {
+      "source": "/api/simple-api",
+      "destination": "/api/docs/simple-api"
     },
     {
       "source": "/(.*)",
@@ -20,33 +112,21 @@
       "maxDuration": 10,
       "memory": 512
     },
-    "api/batch.ts": {
-      "maxDuration": 15,
-      "memory": 1024
-    },
-    "api/enhanced-batch.ts": {
-      "maxDuration": 20,
-      "memory": 1024
-    },
     "api/health.ts": {
       "maxDuration": 5,
       "memory": 512
     },
-    "api/timezone.ts": {
-      "maxDuration": 10,
+    "api/v1/[...slug].ts": {
+      "maxDuration": 20,
       "memory": 1024
     },
-    "api/timezone-difference.ts": {
-      "maxDuration": 10,
+    "api/admin/[...slug].ts": {
+      "maxDuration": 15,
       "memory": 1024
     },
-    "api/formats.ts": {
-      "maxDuration": 5,
+    "api/docs/[...slug].ts": {
+      "maxDuration": 10,
       "memory": 512
-    },
-    "api/visualization.ts": {
-      "maxDuration": 10,
-      "memory": 1024
     }
   },
   "headers": [
