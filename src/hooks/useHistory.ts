@@ -1,14 +1,18 @@
 import { useState, useEffect, useCallback } from 'react';
 
-export type HistoryItem = {
+// Type definitions
+type ConversionType = 'timestamp' | 'date';
+
+interface HistoryItem {
   id: string;
   input: string;
   output: string;
   timestamp: number;
-  type: 'timestamp' | 'date';
-};
+  type: ConversionType;
+}
 
-const useHistory = () => {
+// Hook implementation
+function useHistory() {
   const [history, setHistory] = useState<HistoryItem[]>([]);
 
   useEffect(() => {
@@ -22,7 +26,7 @@ const useHistory = () => {
     }
   }, []);
 
-  const addToHistory = useCallback((input: string, output: string, type: 'timestamp' | 'date') => {
+  const addToHistory = useCallback((input: string, output: string, itemType: ConversionType) => {
     setHistory(prevHistory => {
       // Check if this exact input already exists to avoid duplicates
       if (prevHistory.some(item => item.input === input)) {
@@ -34,7 +38,7 @@ const useHistory = () => {
         input,
         output,
         timestamp: Date.now(),
-        type
+        type: itemType
       };
 
       const newHistory = [newItem, ...prevHistory.slice(0, 9)]; // Keep only 10 items
@@ -49,6 +53,8 @@ const useHistory = () => {
   }, []);
 
   return { history, addToHistory, clearHistory };
-};
+}
 
+// Exports
+export type { HistoryItem };
 export { useHistory };
