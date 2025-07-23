@@ -1,4 +1,49 @@
-import { CustomFormat, FormattedResult, FormatValidationResult, SupportedFormat, TimezoneInfo, CommonTimezone, DSTTransition } from '../api/types/api';
+// Frontend-specific type definitions to avoid API dependency
+interface SupportedFormat {
+  name: string;
+  pattern: string;
+  example: string;
+  description: string;
+  category: 'standard' | 'locale' | 'custom' | 'iso' | 'regional' | 'human' | 'technical';
+}
+
+interface FormattedResult {
+  format: string;
+  result: string;
+  success: boolean;
+  error?: string;
+}
+
+interface FormatValidationResult {
+  valid: boolean;
+  format?: string;
+  error?: string;
+  suggestions?: string[];
+}
+
+interface TimezoneInfo {
+  identifier: string;
+  displayName: string;
+  currentOffset: number;
+  isDST: boolean;
+  aliases?: string[];
+}
+
+interface CommonTimezone {
+  identifier: string;
+  displayName: string;
+  region: string;
+  popularityRank: number;
+  offset: number;
+  isDST: boolean;
+}
+
+interface DSTTransition {
+  date: string;
+  offsetBefore: number;
+  offsetAfter: number;
+  type: 'start' | 'end';
+}
 
 export const mockFormatService = {
   format: async (timestamp: number, formats: string[], timezone?: string) => {

@@ -1,14 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
 
-export type { HistoryItem };
-
-interface HistoryItem {
+export type HistoryItem = {
   id: string;
   input: string;
   output: string;
   timestamp: number;
   type: 'timestamp' | 'date';
-}
+};
 
 export const useHistory = () => {
   const [history, setHistory] = useState<HistoryItem[]>([]);
