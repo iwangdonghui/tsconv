@@ -5,6 +5,7 @@ import { useLanguage } from "../contexts/LanguageContext";
 import { useKeyboardShortcuts } from "../hooks/useKeyboardShortcuts";
 import { useHistory, type HistoryItem } from "../hooks/useHistory";
 import { useInputValidation } from "../hooks/useInputValidation";
+import { SEO } from "./SEO";
 import Header from "./Header";
 import Footer from "./Footer";
 import { HistoryPanel } from "./HistoryPanel";
@@ -338,6 +339,14 @@ export default function TimestampConverter() {
         isDark ? "bg-slate-900 text-white" : "bg-white text-slate-900"
       }`}
     >
+      <SEO
+        title="Timestamp Converter - Unix & Epoch Time | tsconv.com"
+        description="Convert Unix timestamps to human-readable dates and vice versa. Fast, simple, and accurate timestamp conversion tool with real-time results."
+        canonical="https://tsconv.com/"
+        ogTitle="Timestamp Converter - Unix & Epoch Time"
+        ogDescription="Convert Unix timestamps to human-readable dates and vice versa. Fast, simple, and accurate timestamp conversion tool with real-time results."
+        keywords="timestamp converter, unix timestamp, epoch time, date converter, time conversion, unix time"
+      />
       <Header />
       {/* 转换器主要内容 */}
       <main className="flex-1 max-w-2xl mx-auto px-4 sm:px-6 py-8 sm:py-12">

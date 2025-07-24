@@ -10,6 +10,7 @@ import { useLanguage } from '../contexts/LanguageContext';
 import { translations } from '../utils/translations';
 import { mockFormatService } from '../utils/services';
 import { mockTimezoneService } from '../utils/services';
+import { SEO } from './SEO';
 import Header from './Header';
 import Footer from './Footer';
 
@@ -86,6 +87,14 @@ const EnhancedApiDocs = () => {
     <div className={`min-h-screen transition-colors duration-200 ${
       isDark ? 'bg-slate-900 text-white' : 'bg-slate-50 text-slate-900'
     }`}>
+      <SEO
+        title="API Documentation - Timestamp Converter | tsconv.com"
+        description="Complete API documentation for tsconv.com timestamp conversion service. Convert Unix timestamps, handle timezones, batch processing, and more."
+        canonical="https://tsconv.com/api"
+        ogTitle="API Documentation - Timestamp Converter"
+        ogDescription="Complete API documentation for tsconv.com timestamp conversion service. Convert Unix timestamps, handle timezones, batch processing, and more."
+        keywords="timestamp API, unix timestamp API, date conversion API, timezone API, batch conversion API"
+      />
       <Header />
       <main className="flex-grow">
         <div className="container mx-auto px-4 py-8 max-w-7xl">

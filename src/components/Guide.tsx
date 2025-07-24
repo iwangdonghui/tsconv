@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Clock, Code, Globe, Database, Server } from 'lucide-react';
 import { useTheme } from '../contexts/ThemeContext';
+import { SEO } from './SEO';
 import Header from './Header';
 import Footer from './Footer';
 
@@ -78,6 +79,14 @@ export default function Guide() {
       <div className={`min-h-screen transition-colors duration-200 ${
         isDark ? 'bg-slate-900 text-white' : 'bg-white text-slate-900'
       }`}>
+        <SEO
+          title={`${article.title} - Guide | tsconv.com`}
+          description={article.description}
+          canonical={`https://tsconv.com/guide/${articleId}`}
+          ogTitle={`${article.title} - Guide`}
+          ogDescription={article.description}
+          keywords={`timestamp guide, ${article.title.toLowerCase()}, unix timestamp, date conversion`}
+        />
         <Header />
         <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
           <button
@@ -100,6 +109,14 @@ export default function Guide() {
     <div className={`min-h-screen flex flex-col transition-colors duration-200 ${
       isDark ? 'bg-slate-900 text-white' : 'bg-white text-slate-900'
     }`}>
+      <SEO
+        title="Developer Guides - Timestamp Converter | tsconv.com"
+        description="Comprehensive guides for working with timestamps in different programming languages and frameworks. Learn best practices for timestamp handling."
+        canonical="https://tsconv.com/guide"
+        ogTitle="Developer Guides - Timestamp Converter"
+        ogDescription="Comprehensive guides for working with timestamps in different programming languages and frameworks. Learn best practices for timestamp handling."
+        keywords="timestamp guides, unix timestamp tutorial, date conversion guide, programming timestamps"
+      />
       <Header />
       <div className="flex-1 max-w-4xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
         <h1 className="text-2xl sm:text-3xl font-bold mb-3 sm:mb-4">Developer Guides</h1>

@@ -1,6 +1,7 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { Clock, Code, Calculator, Globe, Database, Zap } from 'lucide-react';
 import { useTheme } from '../contexts/ThemeContext';
+import { SEO } from './SEO';
 import Header from './Header';
 import Footer from './Footer';
 
@@ -75,6 +76,14 @@ export default function HowTo() {
       <div className={`min-h-screen transition-colors duration-200 ${
         isDark ? 'bg-slate-900 text-white' : 'bg-white text-slate-900'
       }`}>
+        <SEO
+          title={`${article.title} - How To | tsconv.com`}
+          description={article.description}
+          canonical={`https://tsconv.com/how-to/${articleId}`}
+          ogTitle={`${article.title} - How To`}
+          ogDescription={article.description}
+          keywords={`timestamp how to, ${article.title.toLowerCase()}, unix timestamp tutorial, date conversion`}
+        />
         <Header />
         <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
           <button
@@ -97,6 +106,14 @@ export default function HowTo() {
     <div className={`min-h-screen flex flex-col transition-colors duration-200 ${
       isDark ? 'bg-slate-900 text-white' : 'bg-white text-slate-900'
     }`}>
+      <SEO
+        title="How To Guides - Timestamp Converter | tsconv.com"
+        description="Quick reference guides for common timestamp operations across different programming languages. Learn how to work with timestamps effectively."
+        canonical="https://tsconv.com/how-to"
+        ogTitle="How To Guides - Timestamp Converter"
+        ogDescription="Quick reference guides for common timestamp operations across different programming languages. Learn how to work with timestamps effectively."
+        keywords="timestamp how to, unix timestamp tutorial, date conversion tutorial, programming timestamps"
+      />
       <Header />
       <div className="flex-1 max-w-4xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
         <h1 className="text-2xl sm:text-3xl font-bold mb-3 sm:mb-4">How To</h1>
