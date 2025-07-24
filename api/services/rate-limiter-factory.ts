@@ -1,6 +1,6 @@
-import { RateLimiter } from '../types/api';
-import config from '../config/config';
-import { UpstashRateLimiter, MemoryRateLimiter } from './upstash-rate-limiter';
+import { RateLimiter } from '../types/api.js';
+import config from '../config/config.js';
+import { UpstashRateLimiter, MemoryRateLimiter } from '../upstash-rate-limiter.js';
 
 /**
  * Factory function to create the appropriate rate limiter based on configuration

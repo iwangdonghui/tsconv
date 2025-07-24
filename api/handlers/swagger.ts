@@ -1,5 +1,5 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
-import { withCors } from './utils/response';
+import { withCors } from '../utils/response.js';
 import fs from 'fs';
 import path from 'path';
 

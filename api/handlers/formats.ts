@@ -1,8 +1,8 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
-import { APIErrorHandler, ResponseBuilder, withCors } from './utils/response';
-import { createCacheMiddleware } from './middleware/cache';
-import { createRateLimitMiddleware } from './middleware/rate-limit';
-import formatService from './services/format-service';
+import { APIErrorHandler, ResponseBuilder, withCors } from '../utils/response.js.js';
+import { createCacheMiddleware } from '../middleware/cache.js.js';
+import { createRateLimitMiddleware } from '../middleware/rate-limit.js.js';
+import formatService from '../services/format-service.js.js';
 
 /**
  * API endpoint for retrieving information about supported date/time formats

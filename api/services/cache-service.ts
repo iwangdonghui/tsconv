@@ -1,5 +1,5 @@
-import { CacheService, CacheStats, CacheableRequest } from '../types/api';
-import config from '../config/config';
+import { CacheService, CacheStats, CacheableRequest } from '../types/api.js';
+import config from '../config/config.js';
 
 class MemoryCacheService implements CacheService {
   private cache = new Map<string, { value: any; expires: number; lastAccess: number }>();

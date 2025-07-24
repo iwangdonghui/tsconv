@@ -1,7 +1,7 @@
-import { CacheService } from '../types/api';
-import config from '../config/config';
-import { MemoryCacheService } from './cache-service';
-import { UpstashCacheService } from './upstash-cache-service';
+import { CacheService } from '../types/api.js';
+import config from '../config/config.js';
+import { MemoryCacheService } from '../cache-service.js';
+import { UpstashCacheService } from '../upstash-cache-service.js';
 
 /**
  * Factory function to create the appropriate cache service based on configuration

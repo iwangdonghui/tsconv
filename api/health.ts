@@ -1,12 +1,12 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
-import { APIErrorHandler, ResponseBuilder, withCors } from './utils/response';
-import { createCacheMiddleware } from './middleware/cache';
-import { createRateLimitMiddleware } from './middleware/rate-limit';
-import { createPerformanceMonitoringMiddleware } from './middleware/performance-monitoring';
-import { ErrorHandler } from './middleware/error-handler';
-import { getHealthService } from './services/health-service';
-import { getCacheService } from './services/cache-factory';
-import { getRateLimiter } from './services/rate-limiter-factory';
+import { APIErrorHandler, ResponseBuilder, withCors } from './utils/response.js';
+import { createCacheMiddleware } from './middleware/cache.js';
+import { createRateLimitMiddleware } from './middleware/rate-limit.js';
+import { createPerformanceMonitoringMiddleware } from './middleware/performance-monitoring.js';
+import { ErrorHandler } from './middleware/error-handler.js';
+import { getHealthService } from './services/health-service.js';
+import { getCacheService } from './services/cache-factory.js';
+import { getRateLimiter } from './services/rate-limiter-factory.js';
 
 interface SystemStatus {
   status: 'healthy' | 'degraded' | 'unhealthy';

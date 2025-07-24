@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { RateLimiterFactory } from '../rate-limiter';
-import { RateLimitRule } from '../../types/api';
+import { RateLimiterFactory } from '../rate-limiter.js';
+import { RateLimitRule } from '../../types/api.js';
 
 describe('Rate Limiter Service', () => {
   const rateLimiter = RateLimiterFactory.create();

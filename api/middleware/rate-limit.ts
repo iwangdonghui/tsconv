@@ -1,7 +1,7 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
-import rateLimiter from '../services/rate-limiter';
-import config from '../config/config';
-import { APIErrorHandler } from '../utils/response';
+import rateLimiter from '../services/rate-limiter.js';
+import config from '../config/config.js';
+import { APIErrorHandler } from '../utils/response.js';
 
 interface RateLimitOptions {
   windowMs?: number;

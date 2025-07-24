@@ -1,7 +1,7 @@
 import { Redis } from '@upstash/redis';
-import { CacheService, CacheStats, CacheableRequest } from '../types/api';
-import config from '../config/config';
-import { MemoryCacheService } from './cache-service';
+import { CacheService, CacheStats, CacheableRequest } from '../types/api.js';
+import config from '../config/config.js';
+import { MemoryCacheService } from '../cache-service.js';
 
 class UpstashCacheService implements CacheService {
   private redis: Redis;

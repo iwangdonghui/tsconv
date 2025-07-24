@@ -1,5 +1,5 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
-import { APIError, ErrorContext } from '../types/api';
+import { APIError, ErrorContext } from '../types/api.js';
 
 // Generate a consistent request ID format
 function generateRequestId(): string {

@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { UpstashCacheService } from '../upstash-cache-service';
+import { UpstashCacheService } from '../upstash-cache-service.js';
 
 // Mock Upstash Redis
 vi.mock('@upstash/redis', () => ({

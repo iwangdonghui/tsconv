@@ -1,9 +1,9 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
-import { CommonTimezone } from '../types/api';
-import timezoneService from '../services/timezone-service';
-import { APIErrorHandler, withCors, ResponseBuilder } from '../utils/response';
-import { createCacheMiddleware } from '../middleware/cache';
-import { createRateLimitMiddleware } from '../middleware/rate-limit';
+import { CommonTimezone } from '../types/api.js';
+import timezoneService from '../services/timezone-service.js';
+import { APIErrorHandler, withCors, ResponseBuilder } from '../utils/response.js';
+import { createCacheMiddleware } from '../middleware/cache.js';
+import { createRateLimitMiddleware } from '../middleware/rate-limit.js';
 
 interface TimezoneInfoRequest {
   timezone: string;

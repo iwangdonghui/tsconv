@@ -1,7 +1,7 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
-import { APIErrorHandler, ResponseBuilder, withCors } from './utils/response';
-import { createRateLimitMiddleware } from './middleware/rate-limit';
-import { createRedisClient } from './services/redis-client';
+import { APIErrorHandler, ResponseBuilder, withCors } from '../utils/response.js';
+import { createRateLimitMiddleware } from '../middleware/rate-limit.js';
+import { createRedisClient } from '../services/redis-client.js';
 
 /**
  * Redis Admin API

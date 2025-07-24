@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { timezoneService } from '../timezone-service';
+import { timezoneService } from '../timezone-service.js';
 
 describe('Timezone Service', () => {
   describe('Basic Timezone Operations', () => {

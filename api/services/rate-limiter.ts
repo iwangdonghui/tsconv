@@ -1,5 +1,5 @@
-import { RateLimiter, RateLimitRule, RateLimitResult, RateLimitStats } from '../types/api';
-import config from '../config/config';
+import { RateLimiter, RateLimitRule, RateLimitResult, RateLimitStats } from '../types/api.js';
+import config from '../config/config.js';
 
 class MemoryRateLimiter implements RateLimiter {
   private storage = new Map<string, { count: number; resetTime: number }>();

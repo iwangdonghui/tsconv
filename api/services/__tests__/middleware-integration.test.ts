@@ -1,10 +1,10 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { VercelRequest, VercelResponse } from '@vercel/node';
-import cacheService from '../cache-service';
-import { rateLimiter } from '../rate-limiter';
-import { ErrorHandler } from '../../middleware/error-handler';
-import { createCacheMiddleware } from '../../middleware/cache';
-import { createRateLimitMiddleware } from '../../middleware/rate-limit';
+import cacheService from '../cache-service.js';
+import { rateLimiter } from '../rate-limiter.js';
+import { ErrorHandler } from '../../middleware/error-handler.js';
+import { createCacheMiddleware } from '../../middleware/cache.js';
+import { createRateLimitMiddleware } from '../../middleware/rate-limit.js';
 
 // Create middleware instances for testing
 const cacheMiddlewareFactory = createCacheMiddleware();
