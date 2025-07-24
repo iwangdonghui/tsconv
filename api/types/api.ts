@@ -273,6 +273,7 @@ export interface APIConfiguration {
       password?: string;
       maxRetries: number;
       fallbackToMemory?: boolean;
+      useUpstash?: boolean;
     };
   };
   timezone: {
