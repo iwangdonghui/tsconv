@@ -333,10 +333,10 @@ async function healthHandler(req: VercelRequest, res: VercelResponse) {
 }
 
 // Enhanced health API with caching, rate limiting, and performance monitoring
-const enhancedHealthHandler = performanceMonitoringMiddleware({
-  collectMemoryMetrics: true,
-  collectDetailedMetrics: true,
-  logMetrics: true
+const enhancedHealthHandler = createPerformanceMonitoringMiddleware({
+  enableMetricsCollection: true,
+  enableCacheHitTracking: true,
+  enableRateLimitTracking: true
 })(
   createRateLimitMiddleware({
     max: 60, // 60 requests per minute for health checks

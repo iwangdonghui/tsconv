@@ -250,7 +250,7 @@ async function testRateLimitingService(): Promise<ServiceHealth> {
   
   try {
     const { createRedisClient } = await import('../services/redis-client');
-    const redis = createRedisClient('rateLimiting');
+    const redis = createRedisClient('rate-limit');
     
     // Test with timeout
     const testPromise = (async () => {

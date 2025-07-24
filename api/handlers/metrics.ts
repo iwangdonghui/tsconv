@@ -112,12 +112,11 @@ async function getCacheMetrics() {
     const keys = await redis.keys('tsconv:cache:*');
     const dbSize = await redis.dbsize();
 
-    // Try to get Redis info (may not be available in Upstash)
+    // Upstash Redis doesn't support INFO command, use default values
     let memoryUsage = '0B';
     try {
-      const info = await redis.info();
-      const lines = info.split('\n');
-      memoryUsage = extractInfoValue(lines, 'used_memory_human') || '0B';
+      // Upstash doesn't provide memory info, so we'll use a placeholder
+      memoryUsage = 'N/A (Upstash)';
     } catch (error) {
       console.warn('Redis INFO not available, using default memory usage');
     }
