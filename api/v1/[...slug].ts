@@ -1,15 +1,15 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
-import { APIErrorHandler, withCors } from '../utils/response.js';
+import { APIErrorHandler, withCors } from '../utils/response';
 
 // Import handlers
-import batchConvertHandler from '../handlers/batch-convert.js';
-import enhancedBatchHandler from '../handlers/enhanced-batch.js';
-import formatsHandler from '../handlers/formats.js';
-import timezoneConvertHandler from '../handlers/timezone-convert.js';
-import timezoneDifferenceHandler from '../handlers/timezone-difference.js';
-import timezoneInfoHandler from '../handlers/timezone-info.js';
-import timezoneHandler from '../handlers/timezone.js';
-import visualizationHandler from '../handlers/visualization.js';
+import batchConvertHandler from '../handlers/batch-convert';
+import enhancedBatchHandler from '../handlers/enhanced-batch';
+import formatsHandler from '../handlers/formats';
+import timezoneConvertHandler from '../handlers/timezone-convert';
+import timezoneDifferenceHandler from '../handlers/timezone-difference';
+import timezoneInfoHandler from '../handlers/timezone-info';
+import timezoneHandler from '../handlers/timezone';
+import visualizationHandler from '../handlers/visualization';
 
 // Import simple handlers
 async function simpleConvertHandler(req: VercelRequest, res: VercelResponse) {

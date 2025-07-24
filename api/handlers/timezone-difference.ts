@@ -1,8 +1,8 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
-import { APIErrorHandler, ResponseBuilder, withCors } from '../utils/response.js';
-import { createCacheMiddleware } from '../middleware/cache.js';
-import { createRateLimitMiddleware } from '../middleware/rate-limit.js';
-import timezoneService from '../services/timezone-service.js';
+import { APIErrorHandler, ResponseBuilder, withCors } from '../utils/response';
+import { createCacheMiddleware } from '../middleware/cache';
+import { createRateLimitMiddleware } from '../middleware/rate-limit';
+import timezoneService from '../services/timezone-service';
 
 interface TimezoneDifferenceData {
   fromTimezone: string;

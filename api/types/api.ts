@@ -272,6 +272,7 @@ export interface APIConfiguration {
       url: string;
       password?: string;
       maxRetries: number;
+      fallbackToMemory?: boolean;
     };
   };
   timezone: {

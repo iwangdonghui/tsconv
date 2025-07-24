@@ -1,10 +1,10 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
-import { ResponseBuilder, withCors, APIErrorHandler } from '../utils/response.js.js';
-import { createCacheMiddleware } from '../middleware/cache.js.js';
-import { createRateLimitMiddleware } from '../middleware/rate-limit.js.js';
-import cacheService from '../services/cache-service.js.js';
-import formatService from '../services/format-service.js.js';
-import { formatDate, parseTimestamp } from '../utils/conversion-utils.js.js';
+import { ResponseBuilder, withCors, APIErrorHandler } from '../utils/response.js';
+import { createCacheMiddleware } from '../middleware/cache.js';
+import { createRateLimitMiddleware } from '../middleware/rate-limit.js';
+import cacheService from '../services/cache-service.js';
+import formatService from '../services/format-service.js';
+import { formatDate, parseTimestamp } from '../utils/conversion-utils.js';
 
 // 基础时间戳转换处理
 async function handleConvert(req: VercelRequest, res: VercelResponse) {
@@ -144,3 +144,6 @@ const createAPIHandler = (handler: Function) => {
 export const convertAPI = createAPIHandler(handleConvert);
 export const formatsAPI = createAPIHandler(handleFormats);
 export const healthAPI = createAPIHandler(handleHealth);
+
+// 默认导出主要的转换处理器
+export default convertAPI;

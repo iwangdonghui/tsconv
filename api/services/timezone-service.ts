@@ -1,4 +1,4 @@
-import { TimezoneInfo, CommonTimezone, DSTTransition } from '../types/api.js';
+import { TimezoneInfo, CommonTimezone, DSTTransition } from '../types/api';
 
 class TimezoneService {
   private timezones: Map<string, TimezoneInfo> = new Map();

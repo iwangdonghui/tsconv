@@ -1,10 +1,10 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
-import { BatchConversionRequest, BatchConversionResponse, BatchConversionResult, ConversionData } from '../types/api.js';
-import { APIErrorHandler, ResponseBuilder, withCors } from '../utils/response.js';
-import { createCacheMiddleware } from '../middleware/cache.js';
-import { createBatchRateLimit } from '../middleware/rate-limit.js';
-import { validateBatchRequest } from '../utils/validation.js';
-import { convertTimestamp, convertDate } from '../utils/conversion-utils.js';
+import { BatchConversionRequest, BatchConversionResponse, BatchConversionResult, ConversionData } from '../types/api';
+import { APIErrorHandler, ResponseBuilder, withCors } from '../utils/response';
+import { createCacheMiddleware } from '../middleware/cache';
+import { createBatchRateLimit } from '../middleware/rate-limit';
+import { validateBatchRequest } from '../utils/validation';
+import { convertTimestamp, convertDate } from '../utils/conversion-utils';
 
 interface ProcessedItem {
   input: string | number;

@@ -1,9 +1,9 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
-import { APIErrorHandler, ResponseBuilder, withCors } from '../utils/response.js';
-import { createRateLimitMiddleware } from '../middleware/rate-limit.js';
-import { getPerformanceMetrics, getCacheHitRatio } from '../middleware/performance-monitoring.js';
-import { getCacheService } from '../services/cache-factory.js';
-import { getRateLimiter } from '../services/rate-limiter-factory.js';
+import { APIErrorHandler, ResponseBuilder, withCors } from '../utils/response';
+import { createRateLimitMiddleware } from '../middleware/rate-limit';
+import { getPerformanceMetrics, getCacheHitRatio } from '../middleware/performance-monitoring';
+import { getCacheService } from '../services/cache-factory';
+import { getRateLimiter } from '../services/rate-limiter-factory';
 
 /**
  * API endpoint for retrieving performance metrics and monitoring data

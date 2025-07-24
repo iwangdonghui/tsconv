@@ -1,7 +1,7 @@
 import { Redis } from '@upstash/redis';
-import { RateLimiter, RateLimitRule, RateLimitResult, RateLimitStats } from '../types/api.js';
-import config from '../config/config.js';
-import { MemoryRateLimiter } from '../rate-limiter.js';
+import { RateLimiter, RateLimitRule, RateLimitResult, RateLimitStats } from '../types/api';
+import config from '../config/config';
+import { MemoryRateLimiter } from '../rate-limiter';
 
 class UpstashRateLimiter implements RateLimiter {
   private redis: Redis;

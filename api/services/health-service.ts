@@ -1,6 +1,6 @@
-import { getCacheService, getCacheServiceHealth } from '../cache-factory.js';
-import { getRateLimiter, getRateLimiterHealth } from '../rate-limiter-factory.js';
-import { getPerformanceMetrics } from '../middleware/performance-monitoring.js';
+import { getCacheService, getCacheServiceHealth } from '../cache-factory';
+import { getRateLimiter, getRateLimiterHealth } from '../rate-limiter-factory';
+import { getPerformanceMetrics } from '../middleware/performance-monitoring';
 
 interface HealthCheckResult {
   status: 'healthy' | 'degraded' | 'unhealthy';

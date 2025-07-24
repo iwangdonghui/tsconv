@@ -1,9 +1,9 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
-import { APIErrorHandler, ResponseBuilder, withCors } from '../utils/response.js.js';
-import { createCacheMiddleware } from '../middleware/cache.js.js';
-import { createRateLimitMiddleware } from '../middleware/rate-limit.js.js';
-import formatService from '../services/format-service.js.js';
-import { parseTimestamp, convertTimezone, formatRelativeTime } from '../utils/conversion-utils.js.js';
+import { APIErrorHandler, ResponseBuilder, withCors } from '../utils/response.js';
+import { createCacheMiddleware } from '../middleware/cache.js';
+import { createRateLimitMiddleware } from '../middleware/rate-limit.js';
+import formatService from '../services/format-service.js';
+import { parseTimestamp, convertTimezone, formatRelativeTime } from '../utils/conversion-utils.js';
 
 interface BatchConversionItem {
   input: string | number;

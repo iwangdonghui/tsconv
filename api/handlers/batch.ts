@@ -1,8 +1,8 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
-import { ResponseBuilder, withCors } from '../utils/response.js';
-import { createCacheMiddleware } from '../middleware/cache.js';
-import { createRateLimitMiddleware } from '../middleware/rate-limit.js';
-import formatService from '../services/format-service.js';
+import { ResponseBuilder, withCors } from '../utils/response';
+import { createCacheMiddleware } from '../middleware/cache';
+import { createRateLimitMiddleware } from '../middleware/rate-limit';
+import formatService from '../services/format-service';
 
 async function batchHandler(req: VercelRequest, res: VercelResponse) {
   try {

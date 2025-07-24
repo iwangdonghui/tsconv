@@ -186,14 +186,18 @@ export class APIErrorHandler {
     this.sendError(res, error, 400);
   }
 
-  static handleBadRequest(res: VercelResponse, message: string) {
-    res.status(400).json({
-      success: false,
-      error: {
-        code: 'BAD_REQUEST',
-        message
-      }
-    });
+  static handleUnauthorized(
+    res: VercelResponse,
+    message: string = 'Unauthorized access',
+    details?: Record<string, any>
+  ): void {
+    const error = this.createError(
+      'UNAUTHORIZED',
+      message,
+      401,
+      details
+    );
+    this.sendError(res, error);
   }
 
   static handleMethodNotAllowed(res: VercelResponse, message: string) {
@@ -202,16 +206,6 @@ export class APIErrorHandler {
       error: {
         code: 'METHOD_NOT_ALLOWED',
         message
-      }
-    });
-  }
-
-  static handleServerError(res: VercelResponse, error: Error) {
-    res.status(500).json({
-      success: false,
-      error: {
-        code: 'INTERNAL_ERROR',
-        message: error.message
       }
     });
   }

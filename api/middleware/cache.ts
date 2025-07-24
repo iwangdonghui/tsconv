@@ -1,6 +1,6 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
-import cacheService from '../services/cache-service.js.js';
-import { CacheableRequest } from '../types/api.js.js';
+import cacheService from '../services/cache-service.js';
+import { CacheableRequest } from '../types/api.js';
 
 interface CacheOptions {
   ttl?: number;

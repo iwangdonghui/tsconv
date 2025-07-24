@@ -1,5 +1,5 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
-import { APIErrorHandler, withCors } from '../utils/response.js';
+import { APIErrorHandler, withCors } from '../utils/response';
 
 // Import documentation handlers
 async function docsHandler(req: VercelRequest, res: VercelResponse) {

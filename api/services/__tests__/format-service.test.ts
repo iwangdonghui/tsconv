@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { formatService } from '../format-service.js';
-import { FormatValidationResult } from '../../types/api.js';
+import { formatService } from '../format-service';
+import { FormatValidationResult } from '../../types/api';
 
 describe('Format Service', () => {
   describe('Format Validation', () => {

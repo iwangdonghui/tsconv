@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { formatService } from '../format-service.js';
+import { formatService } from '../format-service';
 
 describe('Regex Pattern Compilation - Comprehensive Tests', () => {
   describe('Pattern Validation Edge Cases', () => {

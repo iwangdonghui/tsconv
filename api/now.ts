@@ -1,7 +1,7 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
-import { ResponseBuilder, withCors } from './utils/response.js';
-import { createCacheMiddleware } from './middleware/cache.js';
-import { createRateLimitMiddleware } from './middleware/rate-limit.js';
+import { ResponseBuilder, withCors } from './utils/response';
+import { createCacheMiddleware } from './middleware/cache';
+import { createRateLimitMiddleware } from './middleware/rate-limit';
 
 async function nowHandler(req: VercelRequest, res: VercelResponse) {
   withCors(res);

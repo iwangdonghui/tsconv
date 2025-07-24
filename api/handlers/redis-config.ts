@@ -1,7 +1,7 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
-import { APIErrorHandler, ResponseBuilder, withCors } from '../utils/response.js';
-import { createRateLimitMiddleware } from '../middleware/rate-limit.js';
-import config from '../config/config.js';
+import { APIErrorHandler, ResponseBuilder, withCors } from '../utils/response';
+import { createRateLimitMiddleware } from '../middleware/rate-limit';
+import config from '../config/config';
 
 /**
  * API endpoint for Redis configuration and status

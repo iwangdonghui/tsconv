@@ -1,6 +1,6 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
-import { getCacheService } from '../services/cache-factory.js';
-import { getRateLimiter } from '../services/rate-limiter-factory.js';
+import { getCacheService } from '../services/cache-factory';
+import { getRateLimiter } from '../services/rate-limiter-factory';
 
 interface PerformanceMetrics {
   endpoint: string;

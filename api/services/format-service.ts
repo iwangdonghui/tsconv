@@ -1,4 +1,4 @@
-import { CustomFormat, FormatValidationResult, SupportedFormat, FormattedResult, FormatService } from '../types/api.js';
+import { CustomFormat, FormatValidationResult, SupportedFormat, FormattedResult, FormatService } from '../types/api';
 
 class FormatServiceImpl implements FormatService {
   private customFormats: Map<string, CustomFormat> = new Map();

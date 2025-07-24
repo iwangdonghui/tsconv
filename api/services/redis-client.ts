@@ -4,7 +4,7 @@
  * In a real application, you would use a Redis client library like ioredis
  */
 
-import config from '../config/config.js';
+import config from '../config/config';
 
 // Mock Redis client implementation
 class MockRedisClient {

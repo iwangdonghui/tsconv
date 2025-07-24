@@ -1,12 +1,12 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
-import { APIErrorHandler, ResponseBuilder, withCors } from './utils/response.js';
-import { createCacheMiddleware } from './middleware/cache.js';
-import { createRateLimitMiddleware } from './middleware/rate-limit.js';
-import { createPerformanceMonitoringMiddleware } from './middleware/performance-monitoring.js';
-import { ErrorHandler } from './middleware/error-handler.js';
-import { getHealthService } from './services/health-service.js';
-import { getCacheService } from './services/cache-factory.js';
-import { getRateLimiter } from './services/rate-limiter-factory.js';
+import { APIErrorHandler, ResponseBuilder, withCors } from './utils/response';
+import { createCacheMiddleware } from './middleware/cache';
+import { createRateLimitMiddleware } from './middleware/rate-limit';
+import { createPerformanceMonitoringMiddleware } from './middleware/performance-monitoring';
+import { ErrorHandler } from './middleware/error-handler';
+import { getHealthService } from './services/health-service';
+import { getCacheService } from './services/cache-factory';
+import { getRateLimiter } from './services/rate-limiter-factory';
 
 interface SystemStatus {
   status: 'healthy' | 'degraded' | 'unhealthy';
@@ -113,6 +113,7 @@ class MonitoringService {
   private async checkCacheService(): Promise<ServiceStatus> {
     const start = Date.now();
     try {
+      const cacheService = getCacheService();
       const stats = await cacheService.stats();
       return {
         status: 'healthy',
@@ -133,6 +134,7 @@ class MonitoringService {
   private async checkRateLimitService(): Promise<ServiceStatus> {
     const start = Date.now();
     try {
+      const rateLimiter = getRateLimiter();
       const testRule = { identifier: 'health-check', limit: 100, window: 60000, type: 'ip' as const };
       await rateLimiter.checkLimit('health-check', testRule);
       return {
@@ -344,7 +346,7 @@ const enhancedHealthHandler = createPerformanceMonitoringMiddleware({
     createCacheMiddleware({
       ttl: 30 * 1000, // 30 seconds for health checks
       cacheControlHeader: 'public, max-age=30, stale-while-revalidate=60',
-      skipCache: (req) => req.query.detailed === 'true' // Don't cache detailed health checks
+      skipCache: (req: VercelRequest) => req.query.detailed === 'true' // Don't cache detailed health checks
     })(healthHandler)
   )
 );

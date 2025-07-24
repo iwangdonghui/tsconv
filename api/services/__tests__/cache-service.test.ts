@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import cacheService from '../cache-service.js';
-import { CacheableRequest } from '../../types/api.js';
+import cacheService from '../cache-service';
+import { CacheableRequest } from '../../types/api';
 
 describe('Cache Service', () => {
   

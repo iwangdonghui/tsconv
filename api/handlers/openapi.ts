@@ -1,2 +1,2 @@
-import { openApiJsonHandler } from '../swagger.js';
+import { openApiJsonHandler } from '../swagger';
 export default openApiJsonHandler;

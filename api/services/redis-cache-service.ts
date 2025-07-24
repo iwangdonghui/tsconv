@@ -3,9 +3,9 @@
  * This service uses Redis for caching instead of in-memory storage
  */
 
-import { CacheService, CacheStats, CacheableRequest } from '../types/api.js';
-import config from '../config/config.js';
-import { createRedisClient } from '../redis-client.js';
+import { CacheService, CacheStats, CacheableRequest } from '../types/api';
+import config from '../config/config';
+import { createRedisClient } from '../redis-client';
 
 export class RedisCacheService implements CacheService {
   private redis: any; // Redis client
