@@ -2,7 +2,7 @@ import { VercelRequest, VercelResponse } from '@vercel/node';
 import { APIErrorHandler, ResponseBuilder, withCors } from './utils/response';
 import { createCacheMiddleware } from './middleware/cache';
 import { createRateLimitMiddleware } from './middleware/rate-limit';
-import { performanceMonitoringMiddleware } from './middleware/performance-monitoring';
+import { createPerformanceMonitoring } from './middleware/performance-monitoring';
 import { errorHandlerMiddleware } from './middleware/error-handler';
 import { getHealthService } from './services/health-service';
 import { CacheFactory } from './services/cache-factory';
@@ -332,22 +332,16 @@ async function healthHandler(req: VercelRequest, res: VercelResponse) {
   }
 }
 
-// Enhanced health API with caching, rate limiting, and performance monitoring
-const enhancedHealthHandler = createPerformanceMonitoringMiddleware({
-  enableMetricsCollection: true,
-  enableCacheHitTracking: true,
-  enableRateLimitTracking: true
+// Enhanced health API with caching and rate limiting
+const enhancedHealthHandler = createRateLimitMiddleware({
+  max: 60, // 60 requests per minute for health checks
+  windowMs: 60 * 1000
 })(
-  createRateLimitMiddleware({
-    max: 60, // 60 requests per minute for health checks
-    windowMs: 60 * 1000
-  })(
-    createCacheMiddleware({
-      ttl: 30 * 1000, // 30 seconds for health checks
-      cacheControlHeader: 'public, max-age=30, stale-while-revalidate=60',
-      skipCache: (req: VercelRequest) => req.query.detailed === 'true' // Don't cache detailed health checks
-    })(healthHandler)
-  )
+  createCacheMiddleware({
+    ttl: 30 * 1000, // 30 seconds for health checks
+    cacheControlHeader: 'public, max-age=30, stale-while-revalidate=60',
+    skipCache: (req: VercelRequest) => req.query.detailed === 'true' // Don't cache detailed health checks
+  })(healthHandler)
 );
 
 export default enhancedHealthHandler;
