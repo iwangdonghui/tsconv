@@ -139,6 +139,41 @@ export function getCommonTimezones(): Array<{ identifier: string; displayName: s
   });
 }
 
+export function formatDate(date: Date, format?: string, timezone?: string): string {
+  try {
+    if (format) {
+      // Handle custom format strings
+      switch (format.toLowerCase()) {
+        case 'iso':
+          return date.toISOString();
+        case 'utc':
+          return date.toUTCString();
+        case 'unix':
+          return Math.floor(date.getTime() / 1000).toString();
+        case 'milliseconds':
+          return date.getTime().toString();
+        case 'relative':
+          return formatRelativeTime(date);
+        default:
+          // Try to use as locale format
+          if (timezone) {
+            return date.toLocaleString('en-US', { timeZone: timezone });
+          }
+          return date.toLocaleString('en-US');
+      }
+    }
+    
+    // Default format
+    if (timezone) {
+      return date.toLocaleString('en-US', { timeZone: timezone });
+    }
+    return date.toLocaleString('en-US');
+  } catch (error) {
+    console.warn('Date formatting error:', error);
+    return date.toString();
+  }
+}
+
 export function detectTimestampFormat(input: string): 'unix' | 'milliseconds' | 'iso' | 'unknown' {
   // Check if it's a number (unix timestamp)
   if (/^\d+$/.test(input)) {
@@ -177,12 +212,17 @@ export async function convertTimestamp(
   // Add timezone conversion if specified
   if (timezone && targetTimezone) {
     try {
-      const convertedDate = convertTimezone(date, timezone, targetTimezone);
-      data.converted = {
-        timestamp: Math.floor(convertedDate.getTime() / 1000),
-        iso: convertedDate.toISOString(),
-        local: convertedDate.toLocaleString()
-      };
+      // Check if timezones are valid first
+      if (!isValidTimezone(timezone) || !isValidTimezone(targetTimezone)) {
+        data.conversionError = 'Invalid timezone conversion';
+      } else {
+        const convertedDate = convertTimezone(date, timezone, targetTimezone);
+        data.converted = {
+          timestamp: Math.floor(convertedDate.getTime() / 1000),
+          iso: convertedDate.toISOString(),
+          local: convertedDate.toLocaleString()
+        };
+      }
     } catch (error) {
       data.conversionError = 'Invalid timezone conversion';
     }

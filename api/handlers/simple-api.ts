@@ -57,11 +57,9 @@ async function handleConvert(req: VercelRequest, res: VercelResponse) {
         utc: targetDate.toUTCString(),
         local: targetDate.toLocaleString()
       })
-      .setMeta({
-        timezone,
-        formats: formatsToUse,
-        timestamp: new Date().toISOString()
-      });
+      .addMetadata('timezone', timezone)
+      .addMetadata('formats', formatsToUse)
+      .addMetadata('timestamp', new Date().toISOString());
 
     response.send(res);
   } catch (error) {
@@ -123,20 +121,25 @@ async function handleHealth(req: VercelRequest, res: VercelResponse) {
 
 // 创建统一的API处理器
 const createAPIHandler = (handler: Function) => {
-  return withCors(
-    createRateLimitMiddleware()(
-      createCacheMiddleware({
-        ttl: 300 * 1000, // 5 minutes
-        cacheControlHeader: 'public, max-age=300'
-      })(async (req: VercelRequest, res: VercelResponse) => {
-        try {
-          await handler(req, res);
-        } catch (error) {
-          console.error('API handler error:', error);
-          APIErrorHandler.handleServerError(res, error as Error);
-        }
-      })
-    )
+  return createRateLimitMiddleware()(
+    createCacheMiddleware({
+      ttl: 300 * 1000, // 5 minutes
+      cacheControlHeader: 'public, max-age=300'
+    })(async (req: VercelRequest, res: VercelResponse) => {
+      withCors(res);
+
+      if (req.method === 'OPTIONS') {
+        res.status(200).end();
+        return;
+      }
+
+      try {
+        await handler(req, res);
+      } catch (error) {
+        console.error('API handler error:', error);
+        APIErrorHandler.handleServerError(res, error as Error);
+      }
+    })
   );
 };
 

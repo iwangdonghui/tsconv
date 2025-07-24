@@ -1,271 +1,294 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
-import { APIErrorHandler, ResponseBuilder, withCors } from '../utils/response';
-import { createRateLimitMiddleware } from '../middleware/rate-limit';
-import { getPerformanceMetrics, getCacheHitRatio } from '../middleware/performance-monitoring';
-import { getCacheService } from '../services/cache-factory';
-import { getRateLimiter } from '../services/rate-limiter-factory';
+import { APIErrorHandler, createCorsHeaders } from '../utils/response';
+import { createRedisClient } from '../services/redis-client';
 
-/**
- * API endpoint for retrieving performance metrics and monitoring data
- */
-async function metricsHandler(req: VercelRequest, res: VercelResponse) {
+interface SystemMetrics {
+  timestamp: number;
+  uptime: number;
+  memory: {
+    used: number;
+    total: number;
+    percentage: number;
+    heapUsed: number;
+    heapTotal: number;
+  };
+  cache: {
+    hits: number;
+    misses: number;
+    hitRatio: number;
+    totalKeys: number;
+    memoryUsage: string;
+  };
+  rateLimits: {
+    totalRequests: number;
+    rateLimitedRequests: number;
+    blockedPercentage: number;
+  };
+  api: {
+    totalRequests: number;
+    averageResponseTime: number;
+    errorRate: number;
+    endpointStats: Record<string, EndpointMetrics>;
+  };
+  redis: {
+    connected: boolean;
+    responseTime: number;
+    commandsProcessed: number;
+    keyspaceHits: number;
+    keyspaceMisses: number;
+  };
+}
+
+interface EndpointMetrics {
+  requests: number;
+  averageResponseTime: number;
+  errorCount: number;
+  lastAccessed: number;
+}
+
+export default async function handler(req: VercelRequest, res: VercelResponse) {
+  // Set CORS headers
+  const corsHeaders = createCorsHeaders(req.headers.origin as string);
+  Object.entries(corsHeaders).forEach(([key, value]) => {
+    res.setHeader(key, value);
+  });
+
+  // Handle preflight requests
   if (req.method === 'OPTIONS') {
-    res.status(200).end();
-    return;
+    return res.status(200).end();
   }
 
+  // Only allow GET requests for metrics
   if (req.method !== 'GET') {
-    return APIErrorHandler.handleBadRequest(res, 'Only GET method is allowed');
+    return APIErrorHandler.handleMethodNotAllowed(res, 'Only GET method is allowed for metrics');
   }
 
   try {
-    const { type, timeRange, endpoint } = req.query;
-    
-    switch (type) {
-      case 'performance':
-        await handlePerformanceMetrics(req, res, { timeRange: timeRange as string, endpoint: endpoint as string });
-        break;
-        
-      case 'cache':
-        await handleCacheMetrics(req, res, { timeRange: timeRange as string });
-        break;
-        
-      case 'ratelimit':
-        await handleRateLimitMetrics(req, res);
-        break;
-        
-      case 'system':
-        await handleSystemMetrics(req, res);
-        break;
-        
-      default:
-        await handleOverviewMetrics(req, res);
-        break;
-    }
-
-  } catch (error) {
-    console.error('Metrics API error:', error);
-    if (error instanceof Error) {
-      APIErrorHandler.handleServerError(res, error);
-    } else {
-      APIErrorHandler.handleServerError(res, new Error('Unknown error'));
-    }
-  }
-}
-
-/**
- * Handle performance metrics request
- */
-async function handlePerformanceMetrics(
-  req: VercelRequest, 
-  res: VercelResponse, 
-  options: { timeRange?: string; endpoint?: string }
-) {
-  const { timeRange = 'hour', endpoint } = options;
-  
-  const metrics = await getPerformanceMetrics({
-    timeRange: timeRange as 'hour' | 'day',
-    endpoint
-  });
-  
-  const builder = new ResponseBuilder().setData({
-    type: 'performance',
-    timeRange,
-    endpoint: endpoint || 'all',
-    ...metrics
-  });
-  
-  builder.send(res);
-}
-
-/**
- * Handle cache metrics request
- */
-async function handleCacheMetrics(
-  req: VercelRequest, 
-  res: VercelResponse, 
-  options: { timeRange?: string }
-) {
-  const { timeRange = 'hour' } = options;
-  
-  const [cacheHitRatio, cacheStats] = await Promise.all([
-    getCacheHitRatio(timeRange as 'hour' | 'day'),
-    getCacheServiceStats()
-  ]);
-  
-  const builder = new ResponseBuilder().setData({
-    type: 'cache',
-    timeRange,
-    hitRatio: cacheHitRatio,
-    stats: cacheStats
-  });
-  
-  builder.send(res);
-}
-
-/**
- * Handle rate limit metrics request
- */
-async function handleRateLimitMetrics(req: VercelRequest, res: VercelResponse) {
-  const rateLimiter = getRateLimiter();
-  
-  // Get sample rate limit stats
-  const sampleIdentifiers = ['anonymous', 'test-user', 'api-key-123'];
-  const stats = await Promise.all(
-    sampleIdentifiers.map(async (id) => {
-      try {
-        return await rateLimiter.getStats(id);
-      } catch (error) {
-        return {
-          identifier: id,
-          currentCount: 0,
-          limit: 0,
-          window: 0,
-          resetTime: Date.now(),
-          error: error instanceof Error ? error.message : 'Unknown error'
-        };
-      }
-    })
-  );
-  
-  const builder = new ResponseBuilder().setData({
-    type: 'ratelimit',
-    stats,
-    summary: {
-      totalActiveUsers: stats.filter(s => s.currentCount > 0).length,
-      averageUsage: stats.reduce((sum, s) => sum + (s.currentCount / Math.max(s.limit, 1)), 0) / stats.length,
-      highestUsage: Math.max(...stats.map(s => s.currentCount / Math.max(s.limit, 1)))
-    }
-  });
-  
-  builder.send(res);
-}
-
-/**
- * Handle system metrics request
- */
-async function handleSystemMetrics(req: VercelRequest, res: VercelResponse) {
-  const memoryUsage = process.memoryUsage();
-  const cpuUsage = process.cpuUsage();
-  
-  const systemMetrics = {
-    memory: {
-      heapUsed: memoryUsage.heapUsed,
-      heapTotal: memoryUsage.heapTotal,
-      external: memoryUsage.external,
-      rss: memoryUsage.rss,
-      heapUsedMB: Math.round(memoryUsage.heapUsed / 1024 / 1024 * 100) / 100,
-      heapTotalMB: Math.round(memoryUsage.heapTotal / 1024 / 1024 * 100) / 100,
-      usagePercentage: Math.round((memoryUsage.heapUsed / memoryUsage.heapTotal) * 100 * 100) / 100
-    },
-    cpu: {
-      user: cpuUsage.user,
-      system: cpuUsage.system
-    },
-    process: {
-      pid: process.pid,
+    const startTime = Date.now();
+    const metrics: SystemMetrics = {
+      timestamp: Date.now(),
       uptime: process.uptime(),
-      version: process.version,
-      platform: process.platform,
-      arch: process.arch
-    },
-    environment: {
-      nodeEnv: process.env.NODE_ENV,
-      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
-    }
-  };
-  
-  const builder = new ResponseBuilder().setData({
-    type: 'system',
-    metrics: systemMetrics,
-    timestamp: Date.now()
-  });
-  
-  builder.send(res);
+      memory: getMemoryMetrics(),
+      cache: await getCacheMetrics(),
+      rateLimits: await getRateLimitMetrics(),
+      api: await getApiMetrics(),
+      redis: await getRedisMetrics()
+    };
+
+    APIErrorHandler.sendSuccess(res, metrics, {
+      processingTime: Date.now() - startTime,
+      itemCount: 1,
+      cacheHit: false
+    });
+
+  } catch (error) {
+    console.error('Metrics error:', error);
+    APIErrorHandler.handleServerError(res, error as Error, {
+      endpoint: 'metrics'
+    });
+  }
 }
 
-/**
- * Handle overview metrics request (default)
- */
-async function handleOverviewMetrics(req: VercelRequest, res: VercelResponse) {
-  const [performanceMetrics, cacheHitRatio, systemInfo] = await Promise.all([
-    getPerformanceMetrics({ timeRange: 'hour' }),
-    getCacheHitRatio('hour'),
-    getSystemOverview()
-  ]);
-  
-  const overview = {
-    performance: {
-      averageResponseTime: performanceMetrics.summary.averageResponseTime,
-      totalRequests: performanceMetrics.summary.totalRequests,
-      errorRate: performanceMetrics.summary.errorRate,
-      rateLimitRate: performanceMetrics.summary.rateLimitRate
-    },
-    cache: {
-      hitRatio: cacheHitRatio.hitRatio,
-      totalRequests: cacheHitRatio.totalRequests,
-      cacheHits: cacheHitRatio.cacheHits
-    },
-    system: systemInfo,
-    timestamp: Date.now()
+function getMemoryMetrics() {
+  const memUsage = process.memoryUsage();
+  const totalMemory = require('os').totalmem();
+  const usedMemory = memUsage.rss;
+
+  return {
+    used: usedMemory,
+    total: totalMemory,
+    percentage: (usedMemory / totalMemory) * 100,
+    heapUsed: memUsage.heapUsed,
+    heapTotal: memUsage.heapTotal
   };
-  
-  const builder = new ResponseBuilder().setData({
-    type: 'overview',
-    metrics: overview
-  });
-  
-  builder.send(res);
 }
 
-/**
- * Get cache service statistics
- */
-async function getCacheServiceStats() {
+async function getCacheMetrics() {
   try {
-    const cacheService = getCacheService();
-    const stats = await cacheService.stats();
-    const health = await cacheService.healthCheck();
+    const redis = createRedisClient('cache');
+    // Upstash Redis doesn't require explicit connection
     
+    // Get cache keys and basic stats
+    const keys = await redis.keys('tsconv:cache:*');
+    const dbSize = await redis.dbsize();
+
+    // Try to get Redis info (may not be available in Upstash)
+    let memoryUsage = '0B';
+    try {
+      const info = await redis.info();
+      const lines = info.split('\n');
+      memoryUsage = extractInfoValue(lines, 'used_memory_human') || '0B';
+    } catch (error) {
+      console.warn('Redis INFO not available, using default memory usage');
+    }
+
+    // Since Upstash doesn't provide detailed info, we'll use basic metrics
+    const keyspaceHits = 0; // Would need to track this separately
+    const keyspaceMisses = 0; // Would need to track this separately
+    const totalRequests = keyspaceHits + keyspaceMisses;
+    const hitRatio = totalRequests > 0 ? (keyspaceHits / totalRequests) * 100 : 0;
+
+    // No need to disconnect with Upstash
+
     return {
-      ...stats,
-      health: health.status,
-      type: health.type,
-      details: health.details
+      hits: keyspaceHits,
+      misses: keyspaceMisses,
+      hitRatio: Math.round(hitRatio * 100) / 100,
+      totalKeys: keys.length,
+      memoryUsage
     };
   } catch (error) {
+    console.warn('Failed to get cache metrics:', error);
     return {
-      error: error instanceof Error ? error.message : 'Unknown error',
-      health: 'unhealthy'
+      hits: 0,
+      misses: 0,
+      hitRatio: 0,
+      totalKeys: 0,
+      memoryUsage: '0B'
     };
   }
 }
 
-/**
- * Get system overview information
- */
-async function getSystemOverview() {
-  const memoryUsage = process.memoryUsage();
-  
-  return {
-    memory: {
-      usedMB: Math.round(memoryUsage.heapUsed / 1024 / 1024 * 100) / 100,
-      totalMB: Math.round(memoryUsage.heapTotal / 1024 / 1024 * 100) / 100,
-      usagePercentage: Math.round((memoryUsage.heapUsed / memoryUsage.heapTotal) * 100 * 100) / 100
-    },
-    uptime: process.uptime(),
-    nodeVersion: process.version,
-    platform: process.platform
-  };
+async function getRateLimitMetrics() {
+  try {
+    const redis = createRedisClient('rate-limit');
+    // Upstash Redis doesn't require explicit connection
+
+    // Get rate limit keys
+    const rateLimitKeys = await redis.keys('tsconv:ratelimit:*');
+    let totalRequests = 0;
+    let rateLimitedRequests = 0;
+
+    // Sample some rate limit data
+    for (const key of rateLimitKeys.slice(0, 100)) { // Limit to avoid performance issues
+      try {
+        const value = await redis.get(key);
+        if (value) {
+          const data = JSON.parse(String(value));
+          totalRequests += data.count || 0;
+          if (data.blocked) {
+            rateLimitedRequests += data.blocked;
+          }
+        }
+      } catch (error) {
+        // Skip invalid entries
+      }
+    }
+
+    // No need to disconnect with Upstash
+
+    const blockedPercentage = totalRequests > 0 ? (rateLimitedRequests / totalRequests) * 100 : 0;
+
+    return {
+      totalRequests,
+      rateLimitedRequests,
+      blockedPercentage: Math.round(blockedPercentage * 100) / 100
+    };
+  } catch (error) {
+    console.warn('Failed to get rate limit metrics:', error);
+    return {
+      totalRequests: 0,
+      rateLimitedRequests: 0,
+      blockedPercentage: 0
+    };
+  }
 }
 
-// Enhanced metrics API with rate limiting
-const enhancedMetricsHandler = withCors(
-  createRateLimitMiddleware({
-    max: 30, // 30 requests per minute for metrics
-    windowMs: 60 * 1000,
-    message: 'Too many metrics requests, please try again later.'
-  })(metricsHandler)
-);
+async function getApiMetrics() {
+  try {
+    const redis = createRedisClient('general');
+    // Upstash Redis doesn't require explicit connection
 
-export default enhancedMetricsHandler;
+    // Get API metrics from Redis
+    const metricsKeys = await redis.keys('tsconv:metrics:*');
+    let totalRequests = 0;
+    let totalResponseTime = 0;
+    let errorCount = 0;
+    const endpointStats: Record<string, EndpointMetrics> = {};
+
+    for (const key of metricsKeys) {
+      try {
+        const value = await redis.get(key);
+        if (value) {
+          const data = JSON.parse(String(value));
+          totalRequests += data.requests || 0;
+          totalResponseTime += (data.responseTime || 0) * (data.requests || 0);
+          errorCount += data.errors || 0;
+
+          // Extract endpoint from key
+          const endpoint = key.replace('tsconv:metrics:', '');
+          endpointStats[endpoint] = {
+            requests: data.requests || 0,
+            averageResponseTime: data.responseTime || 0,
+            errorCount: data.errors || 0,
+            lastAccessed: data.lastAccessed || 0
+          };
+        }
+      } catch (error) {
+        // Skip invalid entries
+      }
+    }
+
+    // No need to disconnect with Upstash
+
+    const averageResponseTime = totalRequests > 0 ? totalResponseTime / totalRequests : 0;
+    const errorRate = totalRequests > 0 ? (errorCount / totalRequests) * 100 : 0;
+
+    return {
+      totalRequests,
+      averageResponseTime: Math.round(averageResponseTime * 100) / 100,
+      errorRate: Math.round(errorRate * 100) / 100,
+      endpointStats
+    };
+  } catch (error) {
+    console.warn('Failed to get API metrics:', error);
+    return {
+      totalRequests: 0,
+      averageResponseTime: 0,
+      errorRate: 0,
+      endpointStats: {}
+    };
+  }
+}
+
+async function getRedisMetrics() {
+  const startTime = Date.now();
+  
+  try {
+    const redis = createRedisClient('general');
+    // Upstash Redis doesn't require explicit connection
+
+    // Test connection with ping and get basic stats
+    await redis.ping();
+    const dbSize = await redis.dbsize();
+    
+    const responseTime = Date.now() - startTime;
+    // Upstash doesn't provide detailed info, use basic metrics
+    const commandsProcessed = 0; // Would need to track separately
+    const keyspaceHits = 0; // Would need to track separately
+    const keyspaceMisses = 0; // Would need to track separately
+
+    // No need to disconnect with Upstash
+
+    return {
+      connected: true,
+      responseTime,
+      commandsProcessed,
+      keyspaceHits,
+      keyspaceMisses
+    };
+  } catch (error) {
+    return {
+      connected: false,
+      responseTime: Date.now() - startTime,
+      commandsProcessed: 0,
+      keyspaceHits: 0,
+      keyspaceMisses: 0
+    };
+  }
+}
+
+function extractInfoValue(lines: string[], key: string): string | null {
+  const line = lines.find(l => l.startsWith(`${key}:`));
+  return line ? line.split(':')[1]?.trim() : null;
+}

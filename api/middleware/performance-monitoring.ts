@@ -1,412 +1,530 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
-import { getCacheService } from '../services/cache-factory';
-import { getRateLimiter } from '../services/rate-limiter-factory';
+import config from '../config/config';
 
-interface PerformanceMetrics {
+// Performance metrics interface
+export interface PerformanceMetrics {
+  requestId: string;
   endpoint: string;
   method: string;
-  duration: number;
-  timestamp: number;
   statusCode: number;
-  cacheHit?: boolean;
-  rateLimited?: boolean;
+  responseTime: number;
+  memoryUsage: {
+    heapUsed: number;
+    heapTotal: number;
+    external: number;
+    rss: number;
+  };
+  timestamp: number;
   userAgent?: string;
   ip?: string;
-}
-
-interface RequestTimingData {
-  startTime: number;
-  endTime?: number;
   cacheHit?: boolean;
   rateLimited?: boolean;
+  errorCode?: string;
 }
 
-// Store timing data in request object
-declare global {
-  namespace Express {
-    interface Request {
-      timingData?: RequestTimingData;
+// Performance monitoring options
+export interface PerformanceMonitoringOptions {
+  collectMemoryMetrics?: boolean;
+  collectDetailedMetrics?: boolean;
+  logMetrics?: boolean;
+  logLevel?: 'debug' | 'info' | 'warn' | 'error';
+  metricsCollector?: (metrics: PerformanceMetrics) => void;
+  slowRequestThreshold?: number;
+  onSlowRequest?: (metrics: PerformanceMetrics) => void;
+  includeHeaders?: boolean;
+  includeQuery?: boolean;
+  excludeEndpoints?: string[];
+}
+
+// Metrics storage (in-memory for simplicity, could be extended to use Redis)
+class MetricsStore {
+  private metrics: PerformanceMetrics[] = [];
+  private readonly maxSize = 1000;
+
+  add(metric: PerformanceMetrics): void {
+    this.metrics.push(metric);
+    
+    // Keep only the most recent metrics
+    if (this.metrics.length > this.maxSize) {
+      this.metrics = this.metrics.slice(-this.maxSize);
     }
+  }
+
+  getMetrics(limit: number = 100): PerformanceMetrics[] {
+    return this.metrics.slice(-limit);
+  }
+
+  getAverageResponseTime(endpoint?: string, timeWindow?: number): number {
+    let filteredMetrics = this.metrics;
+    
+    if (endpoint) {
+      filteredMetrics = filteredMetrics.filter(m => m.endpoint === endpoint);
+    }
+    
+    if (timeWindow) {
+      const cutoff = Date.now() - timeWindow;
+      filteredMetrics = filteredMetrics.filter(m => m.timestamp > cutoff);
+    }
+    
+    if (filteredMetrics.length === 0) return 0;
+    
+    const total = filteredMetrics.reduce((sum, m) => sum + m.responseTime, 0);
+    return total / filteredMetrics.length;
+  }
+
+  getErrorRate(endpoint?: string, timeWindow?: number): number {
+    let filteredMetrics = this.metrics;
+    
+    if (endpoint) {
+      filteredMetrics = filteredMetrics.filter(m => m.endpoint === endpoint);
+    }
+    
+    if (timeWindow) {
+      const cutoff = Date.now() - timeWindow;
+      filteredMetrics = filteredMetrics.filter(m => m.timestamp > cutoff);
+    }
+    
+    if (filteredMetrics.length === 0) return 0;
+    
+    const errorCount = filteredMetrics.filter(m => m.statusCode >= 400).length;
+    return (errorCount / filteredMetrics.length) * 100;
+  }
+
+  getRequestCount(endpoint?: string, timeWindow?: number): number {
+    let filteredMetrics = this.metrics;
+    
+    if (endpoint) {
+      filteredMetrics = filteredMetrics.filter(m => m.endpoint === endpoint);
+    }
+    
+    if (timeWindow) {
+      const cutoff = Date.now() - timeWindow;
+      filteredMetrics = filteredMetrics.filter(m => m.timestamp > cutoff);
+    }
+    
+    return filteredMetrics.length;
+  }
+
+  clear(): void {
+    this.metrics = [];
+  }
+
+  getTopEndpoints(limit: number = 10, timeWindow?: number): Array<{
+    endpoint: string;
+    count: number;
+    averageResponseTime: number;
+    errorRate: number;
+  }> {
+    let filteredMetrics = this.metrics;
+    
+    if (timeWindow) {
+      const cutoff = Date.now() - timeWindow;
+      filteredMetrics = filteredMetrics.filter(m => m.timestamp > cutoff);
+    }
+    
+    const endpointStats = new Map<string, {
+      count: number;
+      totalResponseTime: number;
+      errorCount: number;
+    }>();
+    
+    filteredMetrics.forEach(metric => {
+      const stats = endpointStats.get(metric.endpoint) || {
+        count: 0,
+        totalResponseTime: 0,
+        errorCount: 0
+      };
+      
+      stats.count++;
+      stats.totalResponseTime += metric.responseTime;
+      if (metric.statusCode >= 400) {
+        stats.errorCount++;
+      }
+      
+      endpointStats.set(metric.endpoint, stats);
+    });
+    
+    return Array.from(endpointStats.entries())
+      .map(([endpoint, stats]) => ({
+        endpoint,
+        count: stats.count,
+        averageResponseTime: stats.totalResponseTime / stats.count,
+        errorRate: (stats.errorCount / stats.count) * 100
+      }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, limit);
   }
 }
 
-/**
- * Middleware to track API response times and performance metrics
- */
-export function createPerformanceMonitoringMiddleware(options: {
-  enableMetricsCollection?: boolean;
-  enableCacheHitTracking?: boolean;
-  enableRateLimitTracking?: boolean;
-  metricsRetentionHours?: number;
-} = {}) {
+// Global metrics store
+const metricsStore = new MetricsStore();
+
+// Default metrics collector
+const defaultMetricsCollector = (metrics: PerformanceMetrics): void => {
+  metricsStore.add(metrics);
+};
+
+// Default slow request handler
+const defaultSlowRequestHandler = (metrics: PerformanceMetrics): void => {
+  console.warn(`Slow request detected: ${metrics.method} ${metrics.endpoint} took ${metrics.responseTime}ms`);
+};
+
+// Performance monitoring middleware
+export const performanceMonitoringMiddleware = (options: PerformanceMonitoringOptions = {}) => {
   const {
-    enableMetricsCollection = true,
-    enableCacheHitTracking = true,
-    enableRateLimitTracking = true,
-    metricsRetentionHours = 24
+    collectMemoryMetrics = true,
+    collectDetailedMetrics = false,
+    logMetrics = config.monitoring.metricsEnabled,
+    logLevel = config.monitoring.logLevel,
+    metricsCollector = defaultMetricsCollector,
+    slowRequestThreshold = 1000, // 1 second
+    onSlowRequest = defaultSlowRequestHandler,
+    includeHeaders = false,
+    includeQuery = false,
+    excludeEndpoints = []
   } = options;
 
-  return function performanceMonitoringMiddleware(handler: Function) {
-    return async (req: VercelRequest, res: VercelResponse) => {
-      if (!enableMetricsCollection) {
-        return handler(req, res);
-      }
+  return async (
+    req: VercelRequest,
+    res: VercelResponse,
+    next: () => Promise<void>
+  ): Promise<void> => {
+    const startTime = Date.now();
+    const startMemory = collectMemoryMetrics ? process.memoryUsage() : null;
+    
+    // Generate request ID if not present
+    const requestId = req.headers['x-request-id'] as string || `req-${startTime}-${Math.random().toString(36).substr(2, 9)}`;
+    
+    // Skip monitoring for excluded endpoints
+    if (excludeEndpoints.some(pattern => req.url?.includes(pattern))) {
+      await next();
+      return;
+    }
 
-      const startTime = Date.now();
-      const timingData: RequestTimingData = { startTime };
+    // Store start time in request for other middleware
+    (req as any).startTime = startTime;
+    (req as any).requestId = requestId;
+
+    // Override response methods to capture metrics
+    const originalJson = res.json;
+    const originalSend = res.send;
+    const originalEnd = res.end;
+    
+    let responseSize = 0;
+    let cacheHit = false;
+    let rateLimited = false;
+    let errorCode: string | undefined;
+
+    // Capture response data
+    res.json = function(data: any) {
+      responseSize = JSON.stringify(data).length;
       
-      // Store timing data in request for other middleware to access
-      (req as any).timingData = timingData;
-
-      // Intercept response to capture metrics
-      const originalJson = res.json;
-      const originalStatus = res.status;
-      const originalEnd = res.end;
+      // Check for cache hit
+      if (data.cache?.hit) {
+        cacheHit = true;
+      }
       
-      let statusCode = 200;
-      let responseData: any;
-
-      // Override status method to capture status code
-      res.status = function(code: number) {
-        statusCode = code;
-        return originalStatus.call(this, code);
-      };
-
-      // Override json method to capture response data and timing
-      res.json = function(data: any) {
-        responseData = data;
-        timingData.endTime = Date.now();
-        
-        // Extract cache hit information from response metadata
-        if (enableCacheHitTracking && data?.metadata?.cacheHit !== undefined) {
-          timingData.cacheHit = data.metadata.cacheHit;
-        }
-        
-        // Check if request was rate limited
-        if (enableRateLimitTracking) {
-          timingData.rateLimited = statusCode === 429;
-        }
-        
-        // Record metrics asynchronously
-        recordMetrics(req, statusCode, timingData, metricsRetentionHours).catch(error => {
-          console.warn('Failed to record performance metrics:', error);
-        });
-        
-        return originalJson.call(this, data);
-      };
-
-      // Override end method for non-JSON responses
-      res.end = function(chunk?: any) {
-        if (!timingData.endTime) {
-          timingData.endTime = Date.now();
-          
-          // Record metrics for non-JSON responses
-          recordMetrics(req, statusCode, timingData, metricsRetentionHours).catch(error => {
-            console.warn('Failed to record performance metrics:', error);
-          });
-        }
-        
-        return originalEnd.call(this, chunk);
-      };
-
-      try {
-        return await handler(req, res);
-      } catch (error) {
-        // Record metrics for error cases
-        timingData.endTime = Date.now();
-        statusCode = 500;
-        
-        recordMetrics(req, statusCode, timingData, metricsRetentionHours).catch(metricsError => {
-          console.warn('Failed to record performance metrics for error case:', metricsError);
-        });
-        
-        throw error;
+      // Check for rate limiting
+      if (data.error?.code === 'RATE_LIMIT_EXCEEDED') {
+        rateLimited = true;
+        errorCode = data.error.code;
       }
-    };
-  };
-}
-
-/**
- * Record performance metrics to cache/storage
- */
-async function recordMetrics(
-  req: VercelRequest, 
-  statusCode: number, 
-  timingData: RequestTimingData,
-  retentionHours: number
-): Promise<void> {
-  if (!timingData.endTime) {
-    return;
-  }
-
-  const duration = timingData.endTime - timingData.startTime;
-  const timestamp = Date.now();
-  
-  const metrics: PerformanceMetrics = {
-    endpoint: req.url?.split('?')[0] || 'unknown',
-    method: req.method || 'GET',
-    duration,
-    timestamp,
-    statusCode,
-    cacheHit: timingData.cacheHit,
-    rateLimited: timingData.rateLimited,
-    userAgent: req.headers['user-agent'],
-    ip: getClientIP(req)
-  };
-
-  try {
-    const cacheService = getCacheService();
-    
-    // Store individual metric
-    const metricKey = `metrics:${timestamp}:${Math.random().toString(36).substring(7)}`;
-    const ttl = retentionHours * 60 * 60 * 1000; // Convert hours to milliseconds
-    
-    await cacheService.set(metricKey, metrics, ttl);
-    
-    // Update aggregated metrics
-    await updateAggregatedMetrics(metrics, cacheService);
-    
-  } catch (error) {
-    console.warn('Failed to store performance metrics:', error);
-  }
-}
-
-/**
- * Update aggregated performance metrics
- */
-async function updateAggregatedMetrics(
-  metrics: PerformanceMetrics, 
-  cacheService: any
-): Promise<void> {
-  const now = Date.now();
-  const hourKey = Math.floor(now / (60 * 60 * 1000)); // Hour bucket
-  const minuteKey = Math.floor(now / (60 * 1000)); // Minute bucket
-  
-  try {
-    // Update hourly aggregates
-    const hourlyKey = `metrics:hourly:${hourKey}`;
-    const hourlyData = await cacheService.get(hourlyKey) || {
-      timestamp: hourKey * 60 * 60 * 1000,
-      totalRequests: 0,
-      totalDuration: 0,
-      averageDuration: 0,
-      errorCount: 0,
-      cacheHits: 0,
-      rateLimitedRequests: 0,
-      endpointStats: {}
-    };
-    
-    // Update hourly stats
-    hourlyData.totalRequests++;
-    hourlyData.totalDuration += metrics.duration;
-    hourlyData.averageDuration = hourlyData.totalDuration / hourlyData.totalRequests;
-    
-    if (metrics.statusCode >= 400) {
-      hourlyData.errorCount++;
-    }
-    
-    if (metrics.cacheHit) {
-      hourlyData.cacheHits++;
-    }
-    
-    if (metrics.rateLimited) {
-      hourlyData.rateLimitedRequests++;
-    }
-    
-    // Update endpoint-specific stats
-    if (!hourlyData.endpointStats[metrics.endpoint]) {
-      hourlyData.endpointStats[metrics.endpoint] = {
-        requests: 0,
-        totalDuration: 0,
-        averageDuration: 0,
-        errors: 0
-      };
-    }
-    
-    const endpointStats = hourlyData.endpointStats[metrics.endpoint];
-    endpointStats.requests++;
-    endpointStats.totalDuration += metrics.duration;
-    endpointStats.averageDuration = endpointStats.totalDuration / endpointStats.requests;
-    
-    if (metrics.statusCode >= 400) {
-      endpointStats.errors++;
-    }
-    
-    // Store updated hourly data (24 hour TTL)
-    await cacheService.set(hourlyKey, hourlyData, 24 * 60 * 60 * 1000);
-    
-    // Update minute-level data for real-time monitoring
-    const minutelyKey = `metrics:minute:${minuteKey}`;
-    const minutelyData = await cacheService.get(minutelyKey) || {
-      timestamp: minuteKey * 60 * 1000,
-      requests: 0,
-      averageDuration: 0,
-      errors: 0
-    };
-    
-    const prevTotal = minutelyData.requests * minutelyData.averageDuration;
-    minutelyData.requests++;
-    minutelyData.averageDuration = (prevTotal + metrics.duration) / minutelyData.requests;
-    
-    if (metrics.statusCode >= 400) {
-      minutelyData.errors++;
-    }
-    
-    // Store minute data (2 hour TTL)
-    await cacheService.set(minutelyKey, minutelyData, 2 * 60 * 60 * 1000);
-    
-  } catch (error) {
-    console.warn('Failed to update aggregated metrics:', error);
-  }
-}
-
-/**
- * Get client IP address from request
- */
-function getClientIP(req: VercelRequest): string {
-  const forwarded = req.headers['x-forwarded-for'];
-  if (forwarded) {
-    return String(forwarded).split(',')[0].trim();
-  }
-  
-  return req.headers['x-real-ip'] as string || 
-         req.connection?.remoteAddress || 
-         'unknown';
-}
-
-/**
- * Get performance metrics for monitoring dashboard
- */
-export async function getPerformanceMetrics(options: {
-  timeRange?: 'hour' | 'day';
-  endpoint?: string;
-} = {}): Promise<{
-  summary: any;
-  hourlyData: any[];
-  recentMetrics: any[];
-}> {
-  const { timeRange = 'hour', endpoint } = options;
-  const cacheService = getCacheService();
-  
-  try {
-    const now = Date.now();
-    const currentHour = Math.floor(now / (60 * 60 * 1000));
-    
-    // Get hourly data
-    const hoursToFetch = timeRange === 'day' ? 24 : 1;
-    const hourlyData = [];
-    
-    for (let i = 0; i < hoursToFetch; i++) {
-      const hourKey = currentHour - i;
-      const data = await cacheService.get(`metrics:hourly:${hourKey}`);
-      if (data) {
-        hourlyData.push(data);
-      }
-    }
-    
-    // Get recent minute-level data for real-time view
-    const currentMinute = Math.floor(now / (60 * 1000));
-    const recentMetrics = [];
-    
-    for (let i = 0; i < 10; i++) { // Last 10 minutes
-      const minuteKey = currentMinute - i;
-      const data = await cacheService.get(`metrics:minute:${minuteKey}`);
-      if (data) {
-        recentMetrics.push(data);
-      }
-    }
-    
-    // Calculate summary
-    const summary = {
-      totalRequests: hourlyData.reduce((sum, h) => sum + (h.totalRequests || 0), 0),
-      averageResponseTime: hourlyData.length > 0 
-        ? hourlyData.reduce((sum, h) => sum + (h.averageDuration || 0), 0) / hourlyData.length 
-        : 0,
-      errorRate: hourlyData.reduce((sum, h) => sum + (h.errorCount || 0), 0) / 
-                 Math.max(hourlyData.reduce((sum, h) => sum + (h.totalRequests || 0), 0), 1),
-      cacheHitRate: hourlyData.reduce((sum, h) => sum + (h.cacheHits || 0), 0) / 
-                    Math.max(hourlyData.reduce((sum, h) => sum + (h.totalRequests || 0), 0), 1),
-      rateLimitRate: hourlyData.reduce((sum, h) => sum + (h.rateLimitedRequests || 0), 0) / 
-                     Math.max(hourlyData.reduce((sum, h) => sum + (h.totalRequests || 0), 0), 1)
-    };
-    
-    return {
-      summary,
-      hourlyData: hourlyData.reverse(), // Most recent first
-      recentMetrics: recentMetrics.reverse()
-    };
-    
-  } catch (error) {
-    console.error('Failed to get performance metrics:', error);
-    return {
-      summary: {
-        totalRequests: 0,
-        averageResponseTime: 0,
-        errorRate: 0,
-        cacheHitRate: 0,
-        rateLimitRate: 0
-      },
-      hourlyData: [],
-      recentMetrics: []
-    };
-  }
-}
-
-/**
- * Get cache hit ratio tracking
- */
-export async function getCacheHitRatio(timeRange: 'hour' | 'day' = 'hour'): Promise<{
-  hitRatio: number;
-  totalRequests: number;
-  cacheHits: number;
-  trend: number[];
-}> {
-  const cacheService = getCacheService();
-  
-  try {
-    const now = Date.now();
-    const currentHour = Math.floor(now / (60 * 60 * 1000));
-    const hoursToFetch = timeRange === 'day' ? 24 : 1;
-    
-    let totalRequests = 0;
-    let totalCacheHits = 0;
-    const trend: number[] = [];
-    
-    for (let i = hoursToFetch - 1; i >= 0; i--) {
-      const hourKey = currentHour - i;
-      const data = await cacheService.get(`metrics:hourly:${hourKey}`);
       
-      if (data) {
-        totalRequests += data.totalRequests || 0;
-        totalCacheHits += data.cacheHits || 0;
-        
-        const hourlyHitRatio = data.totalRequests > 0 
-          ? (data.cacheHits || 0) / data.totalRequests 
-          : 0;
-        trend.push(hourlyHitRatio);
+      return originalJson.call(this, data);
+    };
+
+    res.send = function(data: any) {
+      if (typeof data === 'string') {
+        responseSize = data.length;
       } else {
-        trend.push(0);
+        responseSize = JSON.stringify(data).length;
+      }
+      
+      return originalSend.call(this, data);
+    };
+
+    res.end = function(chunk?: any) {
+      if (chunk) {
+        responseSize = typeof chunk === 'string' ? chunk.length : JSON.stringify(chunk).length;
+      }
+      
+      return originalEnd.call(this, chunk);
+    };
+
+    try {
+      // Execute the request
+      await next();
+    } catch (error) {
+      // Capture error information
+      if (error instanceof Error) {
+        errorCode = (error as any).code || 'UNKNOWN_ERROR';
+      }
+      throw error;
+    } finally {
+      // Calculate metrics
+      const endTime = Date.now();
+      const responseTime = endTime - startTime;
+      const endMemory = collectMemoryMetrics ? process.memoryUsage() : null;
+
+      // Extract client information
+      const userAgent = req.headers['user-agent'];
+      const ip = req.headers['x-forwarded-for'] || req.headers['x-real-ip'] || 'unknown';
+
+      // Build metrics object
+      const metrics: PerformanceMetrics = {
+        requestId,
+        endpoint: req.url || 'unknown',
+        method: req.method || 'GET',
+        statusCode: res.statusCode || 200,
+        responseTime,
+        memoryUsage: endMemory || {
+          heapUsed: 0,
+          heapTotal: 0,
+          external: 0,
+          rss: 0
+        },
+        timestamp: endTime,
+        userAgent: includeHeaders ? userAgent : undefined,
+        ip: collectDetailedMetrics ? (Array.isArray(ip) ? ip[0] : ip.toString().split(',')[0].trim()) : undefined,
+        cacheHit,
+        rateLimited,
+        errorCode
+      };
+
+      // Add detailed metrics if enabled
+      if (collectDetailedMetrics) {
+        (metrics as any).requestSize = JSON.stringify(req.body || {}).length;
+        (metrics as any).responseSize = responseSize;
+        (metrics as any).memoryDelta = startMemory && endMemory ? {
+          heapUsed: endMemory.heapUsed - startMemory.heapUsed,
+          heapTotal: endMemory.heapTotal - startMemory.heapTotal,
+          external: endMemory.external - startMemory.external,
+          rss: endMemory.rss - startMemory.rss
+        } : undefined;
+        
+        if (includeQuery) {
+          (metrics as any).queryParams = req.query;
+        }
+        
+        if (includeHeaders) {
+          (metrics as any).headers = req.headers;
+        }
+      }
+
+      // Log metrics if enabled
+      if (logMetrics) {
+        const logData = {
+          requestId,
+          method: metrics.method,
+          endpoint: metrics.endpoint,
+          statusCode: metrics.statusCode,
+          responseTime: metrics.responseTime,
+          memoryUsage: metrics.memoryUsage.heapUsed,
+          cacheHit,
+          rateLimited,
+          errorCode
+        };
+
+        switch (logLevel) {
+          case 'debug':
+            console.debug('Request metrics:', JSON.stringify(logData, null, 2));
+            break;
+          case 'info':
+            console.info('Request metrics:', JSON.stringify(logData));
+            break;
+          case 'warn':
+            if (metrics.statusCode >= 400 || responseTime > slowRequestThreshold) {
+              console.warn('Request metrics:', JSON.stringify(logData));
+            }
+            break;
+          case 'error':
+            if (metrics.statusCode >= 500) {
+              console.error('Request metrics:', JSON.stringify(logData));
+            }
+            break;
+        }
+      }
+
+      // Check for slow requests
+      if (responseTime > slowRequestThreshold && onSlowRequest) {
+        onSlowRequest(metrics);
+      }
+
+      // Collect metrics
+      if (metricsCollector) {
+        try {
+          metricsCollector(metrics);
+        } catch (error) {
+          console.error('Error in metrics collector:', error);
+        }
+      }
+
+      // Set performance headers
+      res.setHeader('X-Response-Time', `${responseTime}ms`);
+      res.setHeader('X-Request-ID', requestId);
+      
+      if (collectMemoryMetrics && endMemory) {
+        res.setHeader('X-Memory-Usage', `${Math.round(endMemory.heapUsed / 1024 / 1024)}MB`);
       }
     }
-    
-    const hitRatio = totalRequests > 0 ? totalCacheHits / totalRequests : 0;
-    
+  };
+};
+
+// Convenience function for creating performance monitoring middleware
+export const createPerformanceMonitoring = (options?: PerformanceMonitoringOptions) => {
+  return performanceMonitoringMiddleware(options);
+};
+
+// Metrics reporting utilities
+export const getMetricsReport = (timeWindow?: number) => {
+  const now = Date.now();
+  const windowStart = timeWindow ? now - timeWindow : 0;
+  
+  return {
+    timestamp: now,
+    timeWindow: timeWindow || 'all-time',
+    summary: {
+      totalRequests: metricsStore.getRequestCount(undefined, timeWindow),
+      averageResponseTime: metricsStore.getAverageResponseTime(undefined, timeWindow),
+      errorRate: metricsStore.getErrorRate(undefined, timeWindow)
+    },
+    topEndpoints: metricsStore.getTopEndpoints(10, timeWindow),
+    recentMetrics: metricsStore.getMetrics(50).filter(m => m.timestamp > windowStart)
+  };
+};
+
+// Health check for performance monitoring
+export const performanceHealthCheck = () => {
+  const recentMetrics = metricsStore.getMetrics(100);
+  const last5Minutes = 5 * 60 * 1000;
+  const recentRequests = recentMetrics.filter(m => Date.now() - m.timestamp < last5Minutes);
+  
+  const avgResponseTime = recentRequests.length > 0 
+    ? recentRequests.reduce((sum, m) => sum + m.responseTime, 0) / recentRequests.length
+    : 0;
+  
+  const errorRate = recentRequests.length > 0
+    ? (recentRequests.filter(m => m.statusCode >= 400).length / recentRequests.length) * 100
+    : 0;
+
+  const memoryUsage = process.memoryUsage();
+  const memoryUsagePercent = (memoryUsage.heapUsed / memoryUsage.heapTotal) * 100;
+
+  let status: 'healthy' | 'degraded' | 'unhealthy' = 'healthy';
+  
+  if (avgResponseTime > 2000 || errorRate > 10 || memoryUsagePercent > 90) {
+    status = 'unhealthy';
+  } else if (avgResponseTime > 1000 || errorRate > 5 || memoryUsagePercent > 75) {
+    status = 'degraded';
+  }
+
+  return {
+    status,
+    metrics: {
+      requestCount: recentRequests.length,
+      averageResponseTime: Math.round(avgResponseTime),
+      errorRate: Math.round(errorRate * 100) / 100,
+      memoryUsage: {
+        used: Math.round(memoryUsage.heapUsed / 1024 / 1024),
+        total: Math.round(memoryUsage.heapTotal / 1024 / 1024),
+        percentage: Math.round(memoryUsagePercent * 100) / 100
+      }
+    },
+    thresholds: {
+      responseTime: { warning: 1000, critical: 2000 },
+      errorRate: { warning: 5, critical: 10 },
+      memoryUsage: { warning: 75, critical: 90 }
+    }
+  };
+};
+
+// Clear metrics (useful for testing)
+export const clearMetrics = () => {
+  metricsStore.clear();
+};
+
+// Get metrics store for advanced usage
+export const getMetricsStore = () => metricsStore;
+
+/**
+ * Gets performance metrics for a specific time range
+ */
+export async function getPerformanceMetrics(options?: {
+  timeRange?: 'minute' | 'hour' | 'day';
+  endpoint?: string;
+}): Promise<{
+  totalRequests: number;
+  averageResponseTime: number;
+  errorRate: number;
+  slowRequests: number;
+  endpoints: Record<string, {
+    requests: number;
+    averageTime: number;
+    errors: number;
+  }>;
+}> {
+  const now = Date.now();
+  const timeRanges = {
+    minute: 60 * 1000,
+    hour: 60 * 60 * 1000,
+    day: 24 * 60 * 60 * 1000
+  };
+  
+  const timeRange = timeRanges[options?.timeRange || 'hour'];
+  const cutoffTime = now - timeRange;
+  
+  // Filter metrics by time range
+  const recentMetrics = Array.from(metricsStore.values()).filter(
+    metric => metric.timestamp >= cutoffTime
+  );
+  
+  if (recentMetrics.length === 0) {
     return {
-      hitRatio,
-      totalRequests,
-      cacheHits: totalCacheHits,
-      trend
-    };
-    
-  } catch (error) {
-    console.error('Failed to get cache hit ratio:', error);
-    return {
-      hitRatio: 0,
       totalRequests: 0,
-      cacheHits: 0,
-      trend: []
+      averageResponseTime: 0,
+      errorRate: 0,
+      slowRequests: 0,
+      endpoints: {}
     };
   }
+  
+  // Calculate aggregate metrics
+  const totalRequests = recentMetrics.length;
+  const totalResponseTime = recentMetrics.reduce((sum, m) => sum + m.responseTime, 0);
+  const averageResponseTime = totalResponseTime / totalRequests;
+  const errorCount = recentMetrics.filter(m => m.statusCode >= 400).length;
+  const errorRate = (errorCount / totalRequests) * 100;
+  const slowRequests = recentMetrics.filter(m => m.responseTime > 1000).length;
+  
+  // Group by endpoint
+  const endpoints: Record<string, { requests: number; averageTime: number; errors: number }> = {};
+  
+  for (const metric of recentMetrics) {
+    const endpoint = metric.endpoint || 'unknown';
+    if (!endpoints[endpoint]) {
+      endpoints[endpoint] = { requests: 0, averageTime: 0, errors: 0 };
+    }
+    
+    endpoints[endpoint].requests++;
+    endpoints[endpoint].averageTime += metric.responseTime;
+    if (metric.statusCode >= 400) {
+      endpoints[endpoint].errors++;
+    }
+  }
+  
+  // Calculate average times for each endpoint
+  for (const endpoint in endpoints) {
+    endpoints[endpoint].averageTime = endpoints[endpoint].averageTime / endpoints[endpoint].requests;
+  }
+  
+  return {
+    totalRequests,
+    averageResponseTime,
+    errorRate,
+    slowRequests,
+    endpoints
+  };
 }
 
-export default createPerformanceMonitoringMiddleware;
+// Export types for external use
+export type { PerformanceMetrics, PerformanceMonitoringOptions };

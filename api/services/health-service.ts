@@ -1,5 +1,5 @@
-import { getCacheService, getCacheServiceHealth } from '../cache-factory';
-import { getRateLimiter, getRateLimiterHealth } from '../rate-limiter-factory';
+import { getCacheService, getCacheServiceHealth } from './cache-factory';
+import { getRateLimiter, getRateLimiterHealth } from './rate-limiter-factory';
 import { getPerformanceMetrics } from '../middleware/performance-monitoring';
 
 interface HealthCheckResult {

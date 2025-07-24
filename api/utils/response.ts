@@ -399,3 +399,27 @@ export function withCors(res: VercelResponse) {
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   return res;
 }
+
+// Simple response utilities as specified in the design document
+export interface ApiResponse<T = any> {
+  success: boolean;
+  data?: T;
+  error?: string;
+  timestamp: number;
+}
+
+export function createResponse<T>(data: T): ApiResponse<T> {
+  return {
+    success: true,
+    data,
+    timestamp: Date.now()
+  };
+}
+
+export function createErrorResponse(error: string): ApiResponse {
+  return {
+    success: false,
+    error,
+    timestamp: Date.now()
+  };
+}

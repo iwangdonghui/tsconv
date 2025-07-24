@@ -1,356 +1,488 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
-import { APIErrorHandler, ResponseBuilder, withCors } from '../utils/response';
-import { createCacheMiddleware } from '../middleware/cache';
-import { createRateLimitMiddleware } from '../middleware/rate-limit';
-import timezoneService from '../services/timezone-service';
-import formatService from '../services/format-service';
+import { APIErrorHandler, createCorsHeaders, validateRequest } from '../utils/response';
 
-interface VisualizationData {
-  type: string;
-  data: any;
-  metadata: {
-    generatedAt: string;
-    timezone: string;
-    format: string;
+interface VisualizationRequest {
+  type: 'timeline' | 'chart' | 'calendar' | 'comparison';
+  data: Array<{
+    timestamp: number;
+    label?: string;
+    value?: number;
+    category?: string;
+  }>;
+  options?: {
+    timezone?: string;
+    format?: string;
+    groupBy?: 'hour' | 'day' | 'week' | 'month';
+    theme?: 'light' | 'dark';
+    width?: number;
+    height?: number;
   };
 }
 
-interface ChartData {
-  labels: string[];
-  datasets: Array<{
-    label: string;
-    data: number[];
-    borderColor: string;
-    backgroundColor: string;
-    fill?: boolean;
-  }>;
-}
-
-interface HeatmapData {
-  days: string[];
-  hours: number[];
-  data: Array<{
-    day: string;
-    hour: number;
-    value: number;
-    label: string;
-  }>;
-}
-
-class VisualizationService {
-  generateTimezoneChart(
-    fromTimezone: string,
-    toTimezone: string,
-    days: number = 30
-  ): ChartData {
-    const resolvedFrom = timezoneService.resolveTimezone(fromTimezone);
-    const resolvedTo = timezoneService.resolveTimezone(toTimezone);
-
-    const labels: string[] = [];
-    const offsetData: number[] = [];
-    const dstData: number[] = [];
-
-    for (let i = -days; i <= days; i++) {
-      const date = new Date();
-      date.setDate(date.getDate() + i);
-      
-      labels.push(date.toISOString().split('T')[0]);
-      
-      const fromOffset = timezoneService.getTimezoneOffset(date, resolvedFrom);
-      const toOffset = timezoneService.getTimezoneOffset(date, resolvedTo);
-      offsetData.push(toOffset - fromOffset);
-      
-      const fromDST = timezoneService.isDST(date, resolvedFrom) ? 60 : 0;
-      const toDST = timezoneService.isDST(date, resolvedTo) ? 60 : 0;
-      dstData.push(toDST - fromDST);
-    }
-
-    return {
-      labels,
-      datasets: [
-        {
-          label: 'Timezone Offset Difference (minutes)',
-          data: offsetData,
-          borderColor: 'rgb(75, 192, 192)',
-          backgroundColor: 'rgba(75, 192, 192, 0.2)',
-          fill: false
-        },
-        {
-          label: 'DST Difference (minutes)',
-          data: dstData,
-          borderColor: 'rgb(255, 99, 132)',
-          backgroundColor: 'rgba(255, 99, 132, 0.2)',
-          fill: false
-        }
-      ]
-    };
-  }
-
-  generateBusinessHoursHeatmap(
-    timezone1: string,
-    timezone2: string,
-    businessHours: { start: number; end: number } = { start: 9, end: 17 }
-  ): HeatmapData {
-    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-    const hours = Array.from({ length: 24 }, (_, i) => i);
-    const data: Array<{
-      day: string;
-      hour: number;
-      value: number;
-      label: string;
-    }> = [];
-
-    const resolved1 = timezoneService.resolveTimezone(timezone1);
-    const resolved2 = timezoneService.resolveTimezone(timezone2);
-
-    days.forEach((day, dayIndex) => {
-      hours.forEach(hour => {
-        const date = new Date();
-        date.setDay(dayIndex);
-        date.setHours(hour, 0, 0, 0);
-
-        const tz1Hour = date.getHours();
-        const tz2Hour = date.getHours();
-
-        const isBusiness1 = tz1Hour >= businessHours.start && tz1Hour < businessHours.end;
-        const isBusiness2 = tz2Hour >= businessHours.start && tz2Hour < businessHours.end;
-
-        let value = 0;
-        let label = 'Outside business hours';
-
-        if (isBusiness1 && isBusiness2) {
-          value = 2;
-          label = 'Both timezones in business hours';
-        } else if (isBusiness1 || isBusiness2) {
-          value = 1;
-          label = 'One timezone in business hours';
-        }
-
-        data.push({
-          day,
-          hour,
-          value,
-          label
-        });
-      });
-    });
-
-    return {
-      days,
-      hours,
-      data
-    };
-  }
-
-  generateTimestampDistribution(
-    timestamps: number[],
-    timezone: string = 'UTC',
-    format: string = 'iso8601'
-  ): {
-    hourly: Array<{ hour: number; count: number; percentage: number }>;
-    daily: Array<{ day: string; count: number; percentage: number }>;
-    monthly: Array<{ month: string; count: number; percentage: number }>;
-  } {
-    const hourly = Array.from({ length: 24 }, (_, i) => ({ hour: i, count: 0, percentage: 0 }));
-    const daily = [
-      'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'
-    ].map(day => ({ day, count: 0, percentage: 0 }));
-    const monthly = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
-    ].map(month => ({ month, count: 0, percentage: 0 }));
-
-    timestamps.forEach(timestamp => {
-      const date = new Date(timestamp * 1000);
-      const localDate = timezoneService.getCurrentTimeInTimezone(timezone);
-      const localHour = new Date(localDate.timestamp * 1000).getHours();
-      const localDay = new Date(localDate.timestamp * 1000).getDay();
-      const localMonth = new Date(localDate.timestamp * 1000).getMonth();
-
-      hourly[localHour].count++;
-      daily[localDay].count++;
-      monthly[localMonth].count++;
-    });
-
-    // Calculate percentages
-    const total = timestamps.length;
-    if (total > 0) {
-      hourly.forEach(h => h.percentage = Math.round((h.count / total) * 100 * 100) / 100);
-      daily.forEach(d => d.percentage = Math.round((d.count / total) * 100 * 100) / 100);
-      monthly.forEach(m => m.percentage = Math.round((m.count / total) * 100 * 100) / 100);
-    }
-
-    return { hourly, daily, monthly };
-  }
-
-  generateConversionTimeline(
-    timestamps: number[],
-    targetTimezone: string,
-    sourceTimezone: string = 'UTC'
-  ): Array<{
-    original: number;
-    converted: number;
-    formatted: string;
-    offset: number;
-  }> {
-    return timestamps.map(timestamp => {
-      const converted = timezoneService.convertTimestamp(timestamp, sourceTimezone, targetTimezone);
-      const formatted = formatService.formatDate(
-        new Date(converted.convertedTimestamp * 1000),
-        'iso8601',
-        targetTimezone
-      );
-
-      return {
-        original: timestamp,
-        converted: converted.convertedTimestamp,
-        formatted,
-        offset: converted.offsetDifference
+interface VisualizationResponse {
+  success: boolean;
+  data: {
+    type: string;
+    visualization: any;
+    metadata: {
+      dataPoints: number;
+      timeRange: {
+        start: number;
+        end: number;
+        duration: number;
       };
-    });
-  }
-
-  createTimezoneMapData(): Array<{
-    timezone: string;
-    offset: number;
-    label: string;
-    coordinates: { lat: number; lng: number };
-  }> {
-    // Simplified timezone coordinates for mapping
-    const timezoneCoordinates: Record<string, { lat: number; lng: number }> = {
-      'UTC': { lat: 51.5074, lng: -0.1278 },
-      'America/New_York': { lat: 40.7128, lng: -74.0060 },
-      'America/Los_Angeles': { lat: 34.0522, lng: -118.2437 },
-      'America/Chicago': { lat: 41.8781, lng: -87.6298 },
-      'Europe/London': { lat: 51.5074, lng: -0.1278 },
-      'Europe/Paris': { lat: 48.8566, lng: 2.3522 },
-      'Asia/Tokyo': { lat: 35.6762, lng: 139.6503 },
-      'Asia/Shanghai': { lat: 31.2304, lng: 121.4737 },
-      'Australia/Sydney': { lat: -33.8688, lng: 151.2093 },
-      'Asia/Kolkata': { lat: 19.0760, lng: 72.8777 }
+      timezone: string;
+      generatedAt: number;
     };
-
-    const commonTimezones = timezoneService.getCommonTimezones();
-    
-    return commonTimezones.map(tz => ({
-      timezone: tz.identifier,
-      offset: tz.offset,
-      label: tz.displayName,
-      coordinates: timezoneCoordinates[tz.identifier] || { lat: 0, lng: 0 }
-    }));
-  }
+  };
 }
 
-const visualizationService = new VisualizationService();
+export default async function handler(req: VercelRequest, res: VercelResponse) {
+  // Set CORS headers
+  const corsHeaders = createCorsHeaders(req.headers.origin as string);
+  Object.entries(corsHeaders).forEach(([key, value]) => {
+    res.setHeader(key, value);
+  });
 
-async function visualizationHandler(req: VercelRequest, res: VercelResponse) {
+  // Handle preflight requests
   if (req.method === 'OPTIONS') {
-    res.status(200).end();
-    return;
+    return res.status(200).end();
   }
 
-  if (req.method !== 'GET' && req.method !== 'POST') {
-    return APIErrorHandler.handleBadRequest(res, 'Only GET and POST methods are allowed');
+  // Only allow POST requests for visualization
+  if (req.method !== 'POST') {
+    return APIErrorHandler.handleMethodNotAllowed(res, 'Only POST method is allowed for visualization');
   }
 
   try {
-    const params = req.method === 'GET' ? req.query : req.body;
-    const {
-      type,
-      fromTimezone,
-      toTimezone,
-      timestamps,
-      timezone = 'UTC',
-      format = 'iso8601',
-      days = '30'
-    } = params;
+    const startTime = Date.now();
 
-    if (!type) {
-      return APIErrorHandler.handleBadRequest(res, 'type parameter is required');
+    // Validate request
+    const validation = validateRequest(req);
+    if (!validation.valid) {
+      return APIErrorHandler.handleValidationError(res, validation);
     }
 
-    let response: any;
+    const vizRequest: VisualizationRequest = req.body;
 
-    switch (type) {
-      case 'timezone-chart':
-        if (!fromTimezone || !toTimezone) {
-          return APIErrorHandler.handleBadRequest(res, 'fromTimezone and toTimezone are required for timezone-chart');
-        }
-        response = visualizationService.generateTimezoneChart(
-          String(fromTimezone),
-          String(toTimezone),
-          parseInt(String(days))
-        );
-        break;
-
-      case 'business-heatmap':
-        if (!fromTimezone || !toTimezone) {
-          return APIErrorHandler.handleBadRequest(res, 'fromTimezone and toTimezone are required for business-heatmap');
-        }
-        response = visualizationService.generateBusinessHoursHeatmap(
-          String(fromTimezone),
-          String(toTimezone)
-        );
-        break;
-
-      case 'timestamp-distribution':
-        if (!timestamps) {
-          return APIErrorHandler.handleBadRequest(res, 'timestamps parameter is required for timestamp-distribution');
-        }
-        const timestampArray = Array.isArray(timestamps) 
-          ? timestamps.map(Number) 
-          : String(timestamps).split(',').map(Number);
-        response = visualizationService.generateTimestampDistribution(
-          timestampArray,
-          String(timezone),
-          String(format)
-        );
-        break;
-
-      case 'conversion-timeline':
-        if (!timestamps || !toTimezone) {
-          return APIErrorHandler.handleBadRequest(res, 'timestamps and toTimezone are required for conversion-timeline');
-        }
-        const convTimestamps = Array.isArray(timestamps)
-          ? timestamps.map(Number)
-          : String(timestamps).split(',').map(Number);
-        response = visualizationService.generateConversionTimeline(
-          convTimestamps,
-          String(toTimezone),
-          String(params.sourceTimezone || 'UTC')
-        );
-        break;
-
-      case 'timezone-map':
-        response = visualizationService.createTimezoneMapData();
-        break;
-
-      default:
-        return APIErrorHandler.handleBadRequest(res, `Unsupported visualization type: ${type}`);
+    // Validate visualization request
+    const validationResult = validateVisualizationRequest(vizRequest);
+    if (!validationResult.valid) {
+      return APIErrorHandler.handleBadRequest(res, validationResult.message, validationResult.details);
     }
 
-    const builder = new ResponseBuilder().setData(response);
-    builder.send(res);
+    // Generate visualization
+    const visualization = await generateVisualization(vizRequest);
+
+    const response: VisualizationResponse = {
+      success: true,
+      data: visualization
+    };
+
+    APIErrorHandler.sendSuccess(res, response, {
+      processingTime: Date.now() - startTime,
+      itemCount: vizRequest.data.length,
+      cacheHit: false
+    });
 
   } catch (error) {
-    console.error('Visualization API error:', error);
-    if (error instanceof Error) {
-      APIErrorHandler.handleServerError(res, error);
-    } else {
-      APIErrorHandler.handleServerError(res, new Error('Unknown error'));
-    }
+    console.error('Visualization error:', error);
+    APIErrorHandler.handleServerError(res, error as Error, {
+      endpoint: 'visualization'
+    });
   }
 }
 
-// Enhanced visualization API with caching and rate limiting
-const enhancedVisualizationHandler = withCors(
-  createRateLimitMiddleware()(
-    createCacheMiddleware({
-      ttl: 5 * 60 * 1000, // 5 minutes for visualization data
-      cacheControlHeader: 'public, max-age=300, stale-while-revalidate=600'
-    })(visualizationHandler)
-  )
-);
+function validateVisualizationRequest(request: VisualizationRequest): { valid: boolean; message?: string; details?: any } {
+  const validTypes = ['timeline', 'chart', 'calendar', 'comparison'];
+  
+  if (!request.type || !validTypes.includes(request.type)) {
+    return {
+      valid: false,
+      message: 'Invalid or missing visualization type',
+      details: {
+        validTypes,
+        received: request.type
+      }
+    };
+  }
 
-export default enhancedVisualizationHandler;
-export { visualizationService };
+  if (!request.data || !Array.isArray(request.data)) {
+    return {
+      valid: false,
+      message: 'Data array is required',
+      details: {
+        expected: 'Array of data points with timestamp property',
+        received: typeof request.data
+      }
+    };
+  }
+
+  if (request.data.length === 0) {
+    return {
+      valid: false,
+      message: 'Data array cannot be empty',
+      details: { minDataPoints: 1 }
+    };
+  }
+
+  if (request.data.length > 1000) {
+    return {
+      valid: false,
+      message: 'Too many data points for visualization',
+      details: {
+        maxDataPoints: 1000,
+        received: request.data.length
+      }
+    };
+  }
+
+  // Validate data points
+  for (let i = 0; i < request.data.length; i++) {
+    const point = request.data[i];
+    if (!point.timestamp || typeof point.timestamp !== 'number') {
+      return {
+        valid: false,
+        message: `Invalid timestamp at data point ${i}`,
+        details: {
+          index: i,
+          expected: 'number',
+          received: typeof point.timestamp
+        }
+      };
+    }
+  }
+
+  // Validate options
+  if (request.options) {
+    const { groupBy, theme, width, height } = request.options;
+    
+    if (groupBy && !['hour', 'day', 'week', 'month'].includes(groupBy)) {
+      return {
+        valid: false,
+        message: 'Invalid groupBy option',
+        details: {
+          validOptions: ['hour', 'day', 'week', 'month'],
+          received: groupBy
+        }
+      };
+    }
+
+    if (theme && !['light', 'dark'].includes(theme)) {
+      return {
+        valid: false,
+        message: 'Invalid theme option',
+        details: {
+          validOptions: ['light', 'dark'],
+          received: theme
+        }
+      };
+    }
+
+    if (width && (width < 100 || width > 2000)) {
+      return {
+        valid: false,
+        message: 'Width must be between 100 and 2000 pixels',
+        details: { min: 100, max: 2000, received: width }
+      };
+    }
+
+    if (height && (height < 100 || height > 1000)) {
+      return {
+        valid: false,
+        message: 'Height must be between 100 and 1000 pixels',
+        details: { min: 100, max: 1000, received: height }
+      };
+    }
+  }
+
+  return { valid: true };
+}
+
+async function generateVisualization(request: VisualizationRequest): Promise<any> {
+  const { type, data, options = {} } = request;
+  const timezone = options.timezone || 'UTC';
+  const theme = options.theme || 'light';
+  const width = options.width || 800;
+  const height = options.height || 400;
+
+  // Calculate time range
+  const timestamps = data.map(d => d.timestamp);
+  const startTime = Math.min(...timestamps);
+  const endTime = Math.max(...timestamps);
+  const duration = endTime - startTime;
+
+  // Process data based on visualization type
+  let visualization: any;
+
+  switch (type) {
+    case 'timeline':
+      visualization = generateTimeline(data, options, timezone);
+      break;
+    case 'chart':
+      visualization = generateChart(data, options, timezone);
+      break;
+    case 'calendar':
+      visualization = generateCalendar(data, options, timezone);
+      break;
+    case 'comparison':
+      visualization = generateComparison(data, options, timezone);
+      break;
+    default:
+      throw new Error(`Unsupported visualization type: ${type}`);
+  }
+
+  return {
+    type,
+    visualization: {
+      ...visualization,
+      config: {
+        theme,
+        width,
+        height,
+        timezone
+      }
+    },
+    metadata: {
+      dataPoints: data.length,
+      timeRange: {
+        start: startTime,
+        end: endTime,
+        duration
+      },
+      timezone,
+      generatedAt: Date.now()
+    }
+  };
+}
+
+function generateTimeline(data: any[], options: any, timezone: string): any {
+  // Sort data by timestamp
+  const sortedData = [...data].sort((a, b) => a.timestamp - b.timestamp);
+  
+  // Group data if requested
+  const groupBy = options.groupBy;
+  let processedData = sortedData;
+
+  if (groupBy) {
+    processedData = groupDataByTime(sortedData, groupBy, timezone);
+  }
+
+  // Format data for timeline visualization
+  const timelineData = processedData.map(point => ({
+    x: point.timestamp * 1000, // Convert to milliseconds for JavaScript Date
+    y: point.value || 1,
+    label: point.label || formatTimestamp(point.timestamp, timezone),
+    category: point.category || 'default',
+    timestamp: point.timestamp
+  }));
+
+  return {
+    type: 'timeline',
+    data: timelineData,
+    axes: {
+      x: {
+        type: 'time',
+        label: 'Time',
+        timezone
+      },
+      y: {
+        type: 'linear',
+        label: 'Value'
+      }
+    },
+    groupBy: groupBy || null
+  };
+}
+
+function generateChart(data: any[], options: any, timezone: string): any {
+  const groupBy = options.groupBy || 'day';
+  const groupedData = groupDataByTime(data, groupBy, timezone);
+
+  // Aggregate values for each group
+  const chartData = groupedData.map(group => ({
+    x: formatTimestamp(group.timestamp, timezone, groupBy),
+    y: group.value || group.count || 1,
+    timestamp: group.timestamp,
+    label: group.label || formatTimestamp(group.timestamp, timezone, groupBy)
+  }));
+
+  return {
+    type: 'chart',
+    chartType: 'line', // Could be extended to support bar, pie, etc.
+    data: chartData,
+    axes: {
+      x: {
+        type: 'category',
+        label: `Time (${groupBy})`,
+        timezone
+      },
+      y: {
+        type: 'linear',
+        label: 'Count/Value'
+      }
+    },
+    groupBy
+  };
+}
+
+function generateCalendar(data: any[], options: any, timezone: string): any {
+  // Group data by date
+  const dateGroups: Record<string, any[]> = {};
+  
+  data.forEach(point => {
+    const date = new Date(point.timestamp * 1000);
+    const dateKey = date.toLocaleDateString('en-CA', { timeZone: timezone }); // YYYY-MM-DD format
+    
+    if (!dateGroups[dateKey]) {
+      dateGroups[dateKey] = [];
+    }
+    dateGroups[dateKey].push(point);
+  });
+
+  // Create calendar data
+  const calendarData = Object.entries(dateGroups).map(([date, points]) => ({
+    date,
+    count: points.length,
+    value: points.reduce((sum, p) => sum + (p.value || 1), 0),
+    points: points.map(p => ({
+      timestamp: p.timestamp,
+      label: p.label,
+      value: p.value
+    }))
+  }));
+
+  // Sort by date
+  calendarData.sort((a, b) => a.date.localeCompare(b.date));
+
+  return {
+    type: 'calendar',
+    data: calendarData,
+    dateRange: {
+      start: calendarData[0]?.date,
+      end: calendarData[calendarData.length - 1]?.date
+    },
+    timezone,
+    summary: {
+      totalDays: calendarData.length,
+      totalEvents: data.length,
+      averagePerDay: data.length / calendarData.length
+    }
+  };
+}
+
+function generateComparison(data: any[], options: any, timezone: string): any {
+  // Group data by category if available
+  const categories = [...new Set(data.map(d => d.category || 'default'))];
+  
+  const comparisonData = categories.map(category => {
+    const categoryData = data.filter(d => (d.category || 'default') === category);
+    const values = categoryData.map(d => d.value || 1);
+    
+    return {
+      category,
+      count: categoryData.length,
+      total: values.reduce((sum, v) => sum + v, 0),
+      average: values.length > 0 ? values.reduce((sum, v) => sum + v, 0) / values.length : 0,
+      min: values.length > 0 ? Math.min(...values) : 0,
+      max: values.length > 0 ? Math.max(...values) : 0,
+      timestamps: categoryData.map(d => d.timestamp)
+    };
+  });
+
+  return {
+    type: 'comparison',
+    data: comparisonData,
+    summary: {
+      totalCategories: categories.length,
+      totalDataPoints: data.length,
+      timeRange: {
+        start: Math.min(...data.map(d => d.timestamp)),
+        end: Math.max(...data.map(d => d.timestamp))
+      }
+    },
+    timezone
+  };
+}
+
+function groupDataByTime(data: any[], groupBy: string, timezone: string): any[] {
+  const groups: Record<string, any[]> = {};
+  
+  data.forEach(point => {
+    const date = new Date(point.timestamp * 1000);
+    let groupKey: string;
+    
+    switch (groupBy) {
+      case 'hour':
+        groupKey = date.toISOString().substring(0, 13); // YYYY-MM-DDTHH
+        break;
+      case 'day':
+        groupKey = date.toLocaleDateString('en-CA', { timeZone: timezone }); // YYYY-MM-DD
+        break;
+      case 'week':
+        const weekStart = new Date(date);
+        weekStart.setDate(date.getDate() - date.getDay());
+        groupKey = weekStart.toLocaleDateString('en-CA', { timeZone: timezone });
+        break;
+      case 'month':
+        groupKey = date.toLocaleDateString('en-CA', { timeZone: timezone }).substring(0, 7); // YYYY-MM
+        break;
+      default:
+        groupKey = point.timestamp.toString();
+    }
+    
+    if (!groups[groupKey]) {
+      groups[groupKey] = [];
+    }
+    groups[groupKey].push(point);
+  });
+
+  // Convert groups to array and aggregate
+  return Object.entries(groups).map(([key, points]) => {
+    const firstPoint = points[0];
+    const values = points.map(p => p.value || 1);
+    
+    return {
+      timestamp: firstPoint.timestamp,
+      groupKey: key,
+      count: points.length,
+      value: values.reduce((sum, v) => sum + v, 0),
+      average: values.reduce((sum, v) => sum + v, 0) / values.length,
+      points
+    };
+  }).sort((a, b) => a.timestamp - b.timestamp);
+}
+
+function formatTimestamp(timestamp: number, timezone: string, groupBy?: string): string {
+  const date = new Date(timestamp * 1000);
+  
+  switch (groupBy) {
+    case 'hour':
+      return date.toLocaleString('en-US', { 
+        timeZone: timezone,
+        month: 'short',
+        day: 'numeric',
+        hour: 'numeric'
+      });
+    case 'day':
+      return date.toLocaleDateString('en-US', { 
+        timeZone: timezone,
+        month: 'short',
+        day: 'numeric'
+      });
+    case 'week':
+      return `Week of ${date.toLocaleDateString('en-US', { 
+        timeZone: timezone,
+        month: 'short',
+        day: 'numeric'
+      })}`;
+    case 'month':
+      return date.toLocaleDateString('en-US', { 
+        timeZone: timezone,
+        year: 'numeric',
+        month: 'long'
+      });
+    default:
+      return date.toLocaleString('en-US', { timeZone: timezone });
+  }
+}

@@ -5,7 +5,7 @@
 
 import { CacheService, CacheStats, CacheableRequest } from '../types/api';
 import config from '../config/config';
-import { createRedisClient } from '../redis-client';
+import { createRedisClient } from './redis-client';
 
 export class RedisCacheService implements CacheService {
   private redis: any; // Redis client

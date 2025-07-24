@@ -142,8 +142,15 @@ async function openApiHandler(req: VercelRequest, res: VercelResponse) {
 }
 
 // Export handlers with CORS support
-export const swaggerUiHandler = withCors(swaggerHandler);
-export const openApiJsonHandler = withCors(openApiHandler);
+export const swaggerUiHandler = async (req: VercelRequest, res: VercelResponse) => {
+  withCors(res);
+  return swaggerHandler(req, res);
+};
+
+export const openApiJsonHandler = async (req: VercelRequest, res: VercelResponse) => {
+  withCors(res);
+  return openApiHandler(req, res);
+};
 
 // Default export for /api/swagger
 export default swaggerUiHandler;

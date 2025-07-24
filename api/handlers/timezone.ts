@@ -1,300 +1,486 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
-import { CommonTimezone } from '../types/api';
-import timezoneService from '../services/timezone-service';
-import { APIErrorHandler, withCors, ResponseBuilder } from '../utils/response';
-import { createCacheMiddleware } from '../middleware/cache';
-import { createRateLimitMiddleware } from '../middleware/rate-limit';
+import { APIErrorHandler, createCorsHeaders, validateRequest } from '../utils/response';
 
-interface TimezoneInfoRequest {
-  timezone: string;
-  includeTransitions?: boolean;
-  includeAliases?: boolean;
-}
-
-interface TimezoneListRequest {
+interface TimezoneRequest {
+  action: 'convert' | 'info' | 'list' | 'difference' | 'current';
+  timezone?: string;
+  timestamp?: number;
+  fromTimezone?: string;
+  toTimezone?: string;
   region?: string;
   search?: string;
-  limit?: number;
-  offset?: number;
 }
 
-interface TimezoneConversionRequest {
-  timestamp: number;
-  fromTimezone: string;
-  toTimezone: string;
-  includeInfo?: boolean;
-}
+export default async function handler(req: VercelRequest, res: VercelResponse) {
+  // Set CORS headers
+  const corsHeaders = createCorsHeaders(req.headers.origin as string);
+  Object.entries(corsHeaders).forEach(([key, value]) => {
+    res.setHeader(key, value);
+  });
 
-async function timezoneInfoHandler(req: VercelRequest, res: VercelResponse) {
-  if (req.method === 'GET') {
-    return await getTimezoneInfo(req, res);
-  } else if (req.method === 'POST') {
-    return await processTimezoneConversion(req, res);
+  // Handle preflight requests
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
   }
-  return APIErrorHandler.handleBadRequest(res, 'Only GET and POST methods are allowed');
-}
 
-async function getTimezoneInfo(req: VercelRequest, res: VercelResponse) {
+  // Allow both GET and POST requests
+  if (req.method !== 'GET' && req.method !== 'POST') {
+    return APIErrorHandler.handleMethodNotAllowed(res, 'Only GET and POST methods are allowed');
+  }
+
   try {
-    const timezone = req.query.timezone as string;
-    const includeTransitions = req.query.includeTransitions === 'true';
-    const includeAliases = req.query.includeAliases === 'true';
+    const startTime = Date.now();
 
-    if (!timezone) {
-      return APIErrorHandler.handleBadRequest(res, 'timezone parameter is required');
+    // Parse request parameters
+    let timezoneRequest: TimezoneRequest;
+
+    if (req.method === 'GET') {
+      timezoneRequest = {
+        action: (['info', 'current', 'list', 'convert', 'difference'].includes(req.query.action as string)) 
+          ? req.query.action as 'info' | 'current' | 'list' | 'convert' | 'difference' 
+          : 'current',
+        timezone: req.query.timezone as string,
+        timestamp: req.query.timestamp ? parseInt(req.query.timestamp as string) : undefined,
+        fromTimezone: req.query.from as string,
+        toTimezone: req.query.to as string,
+        region: req.query.region as string,
+        search: req.query.search as string
+      };
+    } else {
+      // Validate request body for POST
+      const validation = validateRequest(req);
+      if (!validation.valid) {
+        return APIErrorHandler.handleValidationError(res, validation);
+      }
+
+      timezoneRequest = req.body;
     }
 
-    const resolvedTimezone = timezoneService.resolveTimezone(timezone);
-    if (!timezoneService.validateTimezone(resolvedTimezone)) {
-      const suggestions = timezoneService.getTimezoneSuggestions(timezone);
-      return APIErrorHandler.handleBadRequest(res, 'Invalid timezone', {
-        suggestions: suggestions.slice(0, 3).map(tz => tz.identifier),
-        provided: timezone
-      });
+    // Validate timezone request
+    const validationResult = validateTimezoneRequest(timezoneRequest);
+    if (!validationResult.valid) {
+      return APIErrorHandler.handleBadRequest(res, validationResult.message, validationResult.details);
     }
 
-    const info = timezoneService.getTimezoneInfo(resolvedTimezone);
-    if (!includeTransitions) delete info.dstTransitions;
-    if (!includeAliases) delete info.aliases;
+    // Process timezone request based on action
+    const result = await processTimezoneRequest(timezoneRequest);
 
-    const builder = new ResponseBuilder()
-      .setData(info);
-    builder.send(res);
+    APIErrorHandler.sendSuccess(res, result, {
+      processingTime: Date.now() - startTime,
+      itemCount: Array.isArray(result.data) ? result.data.length : 1,
+      cacheHit: false
+    });
 
   } catch (error) {
-    if (error instanceof Error) {
-      APIErrorHandler.handleServerError(res, error);
-    } else {
-      APIErrorHandler.handleServerError(res, new Error('Unknown error'));
-    }
+    console.error('Timezone handler error:', error);
+    APIErrorHandler.handleServerError(res, error as Error, {
+      endpoint: 'timezone',
+      action: req.body?.action || req.query?.action
+    });
   }
 }
 
-async function listTimezonesHandler(req: VercelRequest, res: VercelResponse) {
-  try {
-    const region = req.query.region as string;
-    const search = req.query.search as string;
-    const limit = parseInt(req.query.limit as string) || 50;
-    const offset = parseInt(req.query.offset as string) || 0;
-
-    let timezones: CommonTimezone[];
-
-    if (search) {
-      timezones = timezoneService.searchTimezones(search);
-    } else if (region) {
-      timezones = timezoneService.getCommonTimezonesByRegion(region);
-    } else {
-      timezones = timezoneService.getCommonTimezones();
-    }
-
-    const paginatedTimezones = timezones.slice(offset, offset + limit);
-    const total = timezones.length;
-
-    const response = {
-      timezones: paginatedTimezones,
-      pagination: {
-        total,
-        limit,
-        offset,
-        hasMore: offset + limit < total
+function validateTimezoneRequest(request: TimezoneRequest): { valid: boolean; message?: string; details?: any } {
+  const validActions = ['convert', 'info', 'list', 'difference', 'current'];
+  
+  if (!request.action || !validActions.includes(request.action)) {
+    return {
+      valid: false,
+      message: 'Invalid or missing action',
+      details: {
+        validActions,
+        received: request.action
       }
     };
-
-    const builder = new ResponseBuilder()
-      .setData(response)
-      .setRateLimit({
-        limit: 100,
-        remaining: 100 - response.timezones.length,
-        resetTime: Date.now() + 60000,
-        window: 60000
-      });
-    builder.send(res);
-
-  } catch (error) {
-    if (error instanceof Error) {
-      APIErrorHandler.handleServerError(res, error);
-    } else {
-      APIErrorHandler.handleServerError(res, new Error('Unknown error'));
-    }
   }
-}
 
-async function processTimezoneConversion(req: VercelRequest, res: VercelResponse) {
-  try {
-    const body = req.body as TimezoneConversionRequest;
-    const { timestamp, fromTimezone, toTimezone, includeInfo = false } = body;
+  // Validate action-specific requirements
+  switch (request.action) {
+    case 'convert':
+      if (!request.fromTimezone || !request.toTimezone) {
+        return {
+          valid: false,
+          message: 'Convert action requires fromTimezone and toTimezone',
+          details: {
+            required: ['fromTimezone', 'toTimezone'],
+            received: {
+              fromTimezone: !!request.fromTimezone,
+              toTimezone: !!request.toTimezone
+            }
+          }
+        };
+      }
+      break;
 
-    if (typeof timestamp !== 'number' || timestamp < 0) {
-      return APIErrorHandler.handleBadRequest(res, 'timestamp must be a positive number');
-    }
+    case 'info':
+      if (!request.timezone) {
+        return {
+          valid: false,
+          message: 'Info action requires timezone parameter',
+          details: { required: ['timezone'] }
+        };
+      }
+      break;
 
-    if (!fromTimezone || typeof fromTimezone !== 'string') {
-      return APIErrorHandler.handleBadRequest(res, 'fromTimezone must be provided as a string');
-    }
+    case 'difference':
+      if (!request.fromTimezone || !request.toTimezone) {
+        return {
+          valid: false,
+          message: 'Difference action requires fromTimezone and toTimezone',
+          details: {
+            required: ['fromTimezone', 'toTimezone'],
+            received: {
+              fromTimezone: !!request.fromTimezone,
+              toTimezone: !!request.toTimezone
+            }
+          }
+        };
+      }
+      break;
+  }
 
-    if (!toTimezone || typeof toTimezone !== 'string') {
-      return APIErrorHandler.handleBadRequest(res, 'toTimezone must be provided as a string');
-    }
-
-    const resolvedFrom = timezoneService.resolveTimezone(fromTimezone);
-    const resolvedTo = timezoneService.resolveTimezone(toTimezone);
-
-    if (!timezoneService.validateTimezone(resolvedFrom)) {
-      const suggestions = timezoneService.getTimezoneSuggestions(fromTimezone);
-      return APIErrorHandler.handleBadRequest(res, 'Invalid fromTimezone', {
-        suggestions: suggestions.slice(0, 3).map(tz => tz.identifier),
-        provided: fromTimezone
-      });
-    }
-
-    if (!timezoneService.validateTimezone(resolvedTo)) {
-      const suggestions = timezoneService.getTimezoneSuggestions(toTimezone);
-      return APIErrorHandler.handleBadRequest(res, 'Invalid toTimezone', {
-        suggestions: suggestions.slice(0, 3).map(tz => tz.identifier),
-        provided: toTimezone
-      });
-    }
-
-    const conversion = timezoneService.convertTimestamp(timestamp, resolvedFrom, resolvedTo);
-
-    const response: any = {
-      originalTimestamp: conversion.originalTimestamp,
-      convertedTimestamp: conversion.convertedTimestamp,
-      offsetDifference: conversion.offsetDifference,
-      formattedResults: formatTimezoneResults(conversion.convertedTimestamp, resolvedTo)
+  // Validate timestamp if provided
+  if (request.timestamp && (typeof request.timestamp !== 'number' || isNaN(request.timestamp) || !isFinite(request.timestamp))) {
+    return {
+      valid: false,
+      message: 'timestamp must be a valid number',
+      details: {
+        field: 'timestamp',
+        received: typeof request.timestamp,
+        value: request.timestamp
+      }
     };
+  }
 
-    if (includeInfo) {
-      response.fromTimezone = conversion.fromTimezone;
-      response.toTimezone = conversion.toTimezone;
-    }
+  return { valid: true };
+}
 
-    const builder = new ResponseBuilder()
-      .setData(response);
-    builder.send(res);
+async function processTimezoneRequest(request: TimezoneRequest): Promise<any> {
+  const timestamp = request.timestamp || Math.floor(Date.now() / 1000);
+  const date = new Date(timestamp * 1000);
 
-  } catch (error) {
-    if (error instanceof Error) {
-      APIErrorHandler.handleServerError(res, error);
-    } else {
-      APIErrorHandler.handleServerError(res, new Error('Unknown error'));
-    }
+  switch (request.action) {
+    case 'current':
+      return await getCurrentTimezoneInfo(date);
+
+    case 'info':
+      return await getTimezoneInfo(request.timezone!, date);
+
+    case 'list':
+      return await getTimezoneList(request.region, request.search);
+
+    case 'convert':
+      return await convertBetweenTimezones(
+        timestamp,
+        request.fromTimezone!,
+        request.toTimezone!
+      );
+
+    case 'difference':
+      return await calculateTimezoneDifference(
+        request.fromTimezone!,
+        request.toTimezone!,
+        timestamp
+      );
+
+    default:
+      throw new Error(`Unsupported action: ${request.action}`);
   }
 }
 
-function formatTimezoneResults(timestamp: number, timezone: string) {
-  const date = new Date(timestamp * 1000);
+async function getCurrentTimezoneInfo(date: Date): Promise<any> {
+  // Get system timezone
+  const systemTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  
   return {
-    iso8601: date.toISOString(),
-    utc: date.toUTCString(),
-    local: date.toLocaleString('en-US', { timeZone: timezone }),
-    shortTime: date.toLocaleTimeString('en-US', { timeZone: timezone }),
-    shortDate: date.toLocaleDateString('en-US', { timeZone: timezone })
+    action: 'current',
+    data: {
+      systemTimezone,
+      utcTime: date.toISOString(),
+      localTime: date.toLocaleString(),
+      timestamp: Math.floor(date.getTime() / 1000),
+      offset: -date.getTimezoneOffset(), // Convert to minutes from UTC
+      offsetString: formatOffset(-date.getTimezoneOffset())
+    }
   };
 }
 
-async function getCurrentTimeHandler(req: VercelRequest, res: VercelResponse) {
+async function getTimezoneInfo(timezone: string, date: Date): Promise<any> {
   try {
-    const timezone = req.query.timezone as string;
-    if (!timezone) {
-      return APIErrorHandler.handleBadRequest(res, 'timezone parameter is required');
-    }
+    const normalizedTimezone = normalizeTimezone(timezone);
+    const offset = getTimezoneOffset(normalizedTimezone, date);
+    const isDST = isDaylightSavingTime(normalizedTimezone, date);
+    const displayName = getTimezoneDisplayName(normalizedTimezone);
 
-    const resolvedTimezone = timezoneService.resolveTimezone(timezone);
-    if (!timezoneService.validateTimezone(resolvedTimezone)) {
-      const suggestions = timezoneService.getTimezoneSuggestions(timezone);
-      return APIErrorHandler.handleBadRequest(res, 'Invalid timezone', {
-        suggestions: suggestions.slice(0, 3).map(tz => tz.identifier),
-        provided: timezone
-      });
-    }
+    const tzTime = date.toLocaleString('en-US', { 
+      timeZone: normalizedTimezone,
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      timeZoneName: 'short'
+    });
 
-    const currentTime = timezoneService.getCurrentTimeInTimezone(resolvedTimezone);
-    const builder = new ResponseBuilder().setData(currentTime);
-    builder.send(res);
-
+    return {
+      action: 'info',
+      data: {
+        timezone: normalizedTimezone,
+        displayName,
+        currentTime: tzTime,
+        offset,
+        offsetString: formatOffset(offset),
+        isDST,
+        utcTime: date.toISOString(),
+        timestamp: Math.floor(date.getTime() / 1000)
+      }
+    };
   } catch (error) {
-    if (error instanceof Error) {
-      APIErrorHandler.handleServerError(res, error);
-    } else {
-      APIErrorHandler.handleServerError(res, new Error('Unknown error'));
-    }
+    throw new Error(`Invalid timezone: ${timezone}`);
   }
 }
 
-async function timezoneSuggestionsHandler(req: VercelRequest, res: VercelResponse) {
-  try {
-    const query = req.query.query as string;
-    if (!query || query.length < 2) {
-      return APIErrorHandler.handleBadRequest(res, 'query parameter must be at least 2 characters');
-    }
+async function getTimezoneList(region?: string, search?: string): Promise<any> {
+  // Common timezones grouped by region
+  const timezones = {
+    'North America': [
+      'America/New_York',
+      'America/Chicago',
+      'America/Denver',
+      'America/Los_Angeles',
+      'America/Phoenix',
+      'America/Anchorage',
+      'Pacific/Honolulu'
+    ],
+    'Europe': [
+      'Europe/London',
+      'Europe/Paris',
+      'Europe/Berlin',
+      'Europe/Rome',
+      'Europe/Madrid',
+      'Europe/Amsterdam',
+      'Europe/Moscow'
+    ],
+    'Asia': [
+      'Asia/Tokyo',
+      'Asia/Shanghai',
+      'Asia/Kolkata',
+      'Asia/Dubai',
+      'Asia/Singapore',
+      'Asia/Seoul'
+    ],
+    'Australia': [
+      'Australia/Sydney',
+      'Australia/Melbourne',
+      'Australia/Perth'
+    ],
+    'UTC': ['UTC']
+  };
 
-    const suggestions = timezoneService.getTimezoneSuggestions(query);
-    const builder = new ResponseBuilder().setData({ suggestions });
-    builder.send(res);
+  let filteredTimezones = { ...timezones };
 
-  } catch (error) {
-    if (error instanceof Error) {
-      APIErrorHandler.handleServerError(res, error);
+  // Filter by region
+  if (region) {
+    const regionKey = Object.keys(timezones).find(
+      key => key.toLowerCase().includes(region.toLowerCase())
+    );
+    if (regionKey && regionKey in timezones) {
+      filteredTimezones = { 
+        [regionKey]: timezones[regionKey as keyof typeof timezones] 
+      } as typeof timezones;
     } else {
-      APIErrorHandler.handleServerError(res, new Error('Unknown error'));
+      filteredTimezones = {
+        'North America': [],
+        'Europe': [],
+        'Asia': [],
+        'Australia': [],
+        'UTC': []
+      };
     }
+  }
+
+  // Filter by search term
+  if (search) {
+    const searchLower = search.toLowerCase();
+    Object.keys(filteredTimezones).forEach(regionKey => {
+      filteredTimezones[regionKey as keyof typeof filteredTimezones] = 
+        filteredTimezones[regionKey as keyof typeof filteredTimezones].filter(tz =>
+          tz.toLowerCase().includes(searchLower)
+        );
+      
+      // Remove empty regions
+      if (filteredTimezones[regionKey as keyof typeof filteredTimezones].length === 0) {
+        delete filteredTimezones[regionKey as keyof typeof filteredTimezones];
+      }
+    });
+  }
+
+  // Add current time for each timezone
+  const now = new Date();
+  const enrichedTimezones: any = {};
+
+  for (const [regionKey, tzList] of Object.entries(filteredTimezones)) {
+    enrichedTimezones[regionKey] = tzList.map(tz => ({
+      identifier: tz,
+      displayName: getTimezoneDisplayName(tz),
+      currentTime: now.toLocaleString('en-US', { timeZone: tz }),
+      offset: getTimezoneOffset(tz, now),
+      offsetString: formatOffset(getTimezoneOffset(tz, now)),
+      isDST: isDaylightSavingTime(tz, now)
+    }));
+  }
+
+  return {
+    action: 'list',
+    data: enrichedTimezones,
+    metadata: {
+      totalRegions: Object.keys(enrichedTimezones).length,
+      totalTimezones: Object.values(enrichedTimezones).reduce((sum, tzList) => sum + (Array.isArray(tzList) ? tzList.length : 0), 0),
+      filters: { region, search }
+    }
+  };
+}
+
+async function convertBetweenTimezones(timestamp: number, fromTimezone: string, toTimezone: string): Promise<any> {
+  const date = new Date(timestamp * 1000);
+  const normalizedFrom = normalizeTimezone(fromTimezone);
+  const normalizedTo = normalizeTimezone(toTimezone);
+
+  const fromTime = date.toLocaleString('en-US', { timeZone: normalizedFrom });
+  const toTime = date.toLocaleString('en-US', { timeZone: normalizedTo });
+
+  const fromOffset = getTimezoneOffset(normalizedFrom, date);
+  const toOffset = getTimezoneOffset(normalizedTo, date);
+  const offsetDifference = toOffset - fromOffset;
+
+  return {
+    action: 'convert',
+    data: {
+      originalTimestamp: timestamp,
+      fromTimezone: {
+        identifier: normalizedFrom,
+        time: fromTime,
+        offset: fromOffset,
+        offsetString: formatOffset(fromOffset)
+      },
+      toTimezone: {
+        identifier: normalizedTo,
+        time: toTime,
+        offset: toOffset,
+        offsetString: formatOffset(toOffset)
+      },
+      difference: {
+        minutes: offsetDifference,
+        hours: Math.floor(Math.abs(offsetDifference) / 60),
+        description: offsetDifference === 0 
+          ? 'Same timezone'
+          : offsetDifference > 0 
+            ? `${Math.floor(Math.abs(offsetDifference) / 60)}h ${Math.abs(offsetDifference) % 60}m ahead`
+            : `${Math.floor(Math.abs(offsetDifference) / 60)}h ${Math.abs(offsetDifference) % 60}m behind`
+      }
+    }
+  };
+}
+
+async function calculateTimezoneDifference(timezone1: string, timezone2: string, timestamp: number): Promise<any> {
+  const date = new Date(timestamp * 1000);
+  const tz1 = normalizeTimezone(timezone1);
+  const tz2 = normalizeTimezone(timezone2);
+
+  const offset1 = getTimezoneOffset(tz1, date);
+  const offset2 = getTimezoneOffset(tz2, date);
+  const difference = offset2 - offset1;
+
+  return {
+    action: 'difference',
+    data: {
+      timezone1: {
+        identifier: tz1,
+        offset: offset1,
+        offsetString: formatOffset(offset1)
+      },
+      timezone2: {
+        identifier: tz2,
+        offset: offset2,
+        offsetString: formatOffset(offset2)
+      },
+      difference: {
+        minutes: difference,
+        hours: Math.floor(Math.abs(difference) / 60),
+        description: difference === 0 
+          ? 'Same timezone'
+          : difference > 0 
+            ? `${tz2} is ${Math.floor(Math.abs(difference) / 60)}h ${Math.abs(difference) % 60}m ahead of ${tz1}`
+            : `${tz2} is ${Math.floor(Math.abs(difference) / 60)}h ${Math.abs(difference) % 60}m behind ${tz1}`
+      },
+      timestamp
+    }
+  };
+}
+
+// Helper functions
+function normalizeTimezone(timezone: string): string {
+  const aliases: Record<string, string> = {
+    'EST': 'America/New_York',
+    'PST': 'America/Los_Angeles',
+    'CST': 'America/Chicago',
+    'MST': 'America/Denver',
+    'GMT': 'UTC',
+    'BST': 'Europe/London',
+    'CET': 'Europe/Paris',
+    'JST': 'Asia/Tokyo',
+    'IST': 'Asia/Kolkata',
+    'AEST': 'Australia/Sydney'
+  };
+
+  return aliases[timezone.toUpperCase()] || timezone;
+}
+
+function getTimezoneOffset(timezone: string, date: Date): number {
+  try {
+    const utcDate = new Date(date.toLocaleString('en-US', { timeZone: 'UTC' }));
+    const tzDate = new Date(date.toLocaleString('en-US', { timeZone: timezone }));
+    return (tzDate.getTime() - utcDate.getTime()) / (1000 * 60);
+  } catch (error) {
+    return 0;
   }
 }
 
-// Enhanced timezone API endpoints with caching and rate limiting
-const enhancedTimezoneInfoHandler = withCors(
-  createRateLimitMiddleware()(
-    createCacheMiddleware({
-      ttl: 24 * 60 * 60 * 1000, // 24 hours for timezone data
-      cacheControlHeader: 'public, max-age=86400, stale-while-revalidate=172800'
-    })(timezoneInfoHandler)
-  )
-);
+function isDaylightSavingTime(timezone: string, date: Date): boolean {
+  try {
+    const januaryOffset = getTimezoneOffset(timezone, new Date(date.getFullYear(), 0, 1));
+    const julyOffset = getTimezoneOffset(timezone, new Date(date.getFullYear(), 6, 1));
+    const currentOffset = getTimezoneOffset(timezone, date);
+    
+    return currentOffset !== Math.max(januaryOffset, julyOffset);
+  } catch (error) {
+    return false;
+  }
+}
 
-const enhancedListTimezonesHandler = withCors(
-  createRateLimitMiddleware()(
-    createCacheMiddleware({
-      ttl: 24 * 60 * 60 * 1000, // 24 hours for timezone list
-      cacheControlHeader: 'public, max-age=86400, stale-while-revalidate=172800'
-    })(listTimezonesHandler)
-  )
-);
+function getTimezoneDisplayName(timezone: string): string {
+  try {
+    const formatter = new Intl.DateTimeFormat('en', {
+      timeZone: timezone,
+      timeZoneName: 'long'
+    });
+    
+    const parts = formatter.formatToParts(new Date());
+    const timeZonePart = parts.find(part => part.type === 'timeZoneName');
+    
+    return timeZonePart?.value || timezone;
+  } catch (error) {
+    return timezone;
+  }
+}
 
-const enhancedTimezoneConversionHandler = withCors(
-  createRateLimitMiddleware()(
-    createCacheMiddleware({
-      ttl: 5 * 60 * 1000, // 5 minutes for conversions
-      cacheControlHeader: 'public, max-age=300, stale-while-revalidate=600'
-    })(processTimezoneConversion)
-  )
-);
-
-const enhancedCurrentTimeHandler = withCors(
-  createRateLimitMiddleware()(
-    createCacheMiddleware({
-      ttl: 60 * 1000, // 1 minute for current time
-      cacheControlHeader: 'public, max-age=60, stale-while-revalidate=300'
-    })(getCurrentTimeHandler)
-  )
-);
-
-const enhancedTimezoneSuggestionsHandler = withCors(
-  createRateLimitMiddleware()(
-    createCacheMiddleware({
-      ttl: 24 * 60 * 60 * 1000, // 24 hours for suggestions
-      cacheControlHeader: 'public, max-age=86400, stale-while-revalidate=172800'
-    })(timezoneSuggestionsHandler)
-  )
-);
-
-export {
-  enhancedTimezoneInfoHandler,
-  enhancedListTimezonesHandler,
-  enhancedTimezoneConversionHandler,
-  enhancedCurrentTimeHandler,
-  enhancedTimezoneSuggestionsHandler
-};
-
-// 默认导出主要的时区信息处理器
-export default enhancedTimezoneInfoHandler;
+function formatOffset(offsetMinutes: number): string {
+  const sign = offsetMinutes >= 0 ? '+' : '-';
+  const absOffset = Math.abs(offsetMinutes);
+  const hours = Math.floor(absOffset / 60);
+  const minutes = absOffset % 60;
+  
+  return `${sign}${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+}

@@ -1,237 +1,167 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
-import { APIErrorHandler, ResponseBuilder, withCors } from '../utils/response';
-import { createCacheMiddleware } from '../middleware/cache';
-import { createRateLimitMiddleware } from '../middleware/rate-limit';
-import formatService from '../services/format-service';
-import { parseTimestamp, convertTimezone, formatRelativeTime } from '../utils/conversion-utils';
+import { APIErrorHandler, createCorsHeaders, validateRequest } from '../utils/response';
+import { convertTimestamp } from '../utils/conversion-utils';
+import { BatchConversionRequest, BatchConversionResponse, BatchConversionResult } from '../types/api';
 
-interface BatchConversionItem {
-  input: string | number;
-  success: boolean;
-  data?: {
-    timestamp: number;
-    formats: Record<string, string>;
-    timezone?: {
-      original: string;
-      target: string;
-      offset?: number;
-    };
-  };
-  error?: {
-    code: string;
-    message: string;
-  };
-}
+const MAX_BATCH_SIZE = 100;
+const DEFAULT_OUTPUT_FORMATS = ['iso', 'unix', 'human'];
 
-async function batchConvertHandler(req: VercelRequest, res: VercelResponse) {
-  withCors(res);
-  const startTime = Date.now();
+export default async function handler(req: VercelRequest, res: VercelResponse) {
+  // Set CORS headers
+  const corsHeaders = createCorsHeaders(req.headers.origin as string);
+  Object.entries(corsHeaders).forEach(([key, value]) => {
+    res.setHeader(key, value);
+  });
 
+  // Handle preflight requests
   if (req.method === 'OPTIONS') {
-    res.status(200).end();
-    return;
+    return res.status(200).end();
   }
 
+  // Only allow POST requests for batch conversion
   if (req.method !== 'POST') {
-    return APIErrorHandler.handleBadRequest(res, 'Only POST method is allowed');
+    return APIErrorHandler.handleMethodNotAllowed(res, 'Only POST method is allowed for batch conversion');
   }
 
   try {
-    const { 
-      items, 
-      outputFormats = ['iso8601', 'timestamp', 'utc'], 
-      timezone, 
-      targetTimezone,
-      options = { continueOnError: true, maxItems: 100 }
-    } = req.body;
+    const startTime = Date.now();
 
     // Validate request
-    if (!items || !Array.isArray(items)) {
-      return APIErrorHandler.handleBadRequest(res, 'Request must include an items array');
+    const validation = validateRequest(req);
+    if (!validation.valid) {
+      return APIErrorHandler.handleValidationError(res, validation);
     }
 
-    if (items.length === 0) {
-      return APIErrorHandler.handleBadRequest(res, 'Items array cannot be empty');
+    const batchRequest: BatchConversionRequest = req.body;
+
+    // Validate batch request
+    if (!batchRequest.items || !Array.isArray(batchRequest.items)) {
+      return APIErrorHandler.handleBadRequest(res, 'Items array is required', {
+        expected: 'Array of timestamps (numbers or strings)',
+        received: typeof batchRequest.items
+      });
     }
 
-    if (items.length > options.maxItems) {
-      return APIErrorHandler.handleBadRequest(
-        res, 
-        `Too many items. Maximum allowed: ${options.maxItems}`
-      );
+    if (batchRequest.items.length === 0) {
+      return APIErrorHandler.handleBadRequest(res, 'Items array cannot be empty', {
+        minItems: 1,
+        maxItems: MAX_BATCH_SIZE
+      });
     }
 
-    // Process each item in the batch
-    const results: BatchConversionItem[] = [];
-    let successCount = 0;
-    let errorCount = 0;
-
-    for (const item of items) {
-      try {
-        const result = await processConversionItem(
-          item, 
-          outputFormats, 
-          timezone, 
-          targetTimezone
-        );
-        
-        results.push(result);
-        
-        if (result.success) {
-          successCount++;
-        } else {
-          errorCount++;
-          if (!options.continueOnError && errorCount > 0) {
-            break;
-          }
-        }
-      } catch (error) {
-        const errorItem: BatchConversionItem = {
-          input: item,
-          success: false,
-          error: {
-            code: 'PROCESSING_ERROR',
-            message: error instanceof Error ? error.message : 'Unknown error'
-          }
-        };
-        
-        results.push(errorItem);
-        errorCount++;
-        
-        if (!options.continueOnError && errorCount > 0) {
-          break;
-        }
-      }
+    if (batchRequest.items.length > MAX_BATCH_SIZE) {
+      return APIErrorHandler.handleBadRequest(res, `Batch size exceeds maximum limit`, {
+        maxItems: MAX_BATCH_SIZE,
+        receivedItems: batchRequest.items.length,
+        suggestion: `Split your request into smaller batches of ${MAX_BATCH_SIZE} items or less`
+      });
     }
 
-    // Build response
-    const processingTime = Date.now() - startTime;
+    // Process batch conversion
+    const results = await processBatchConversion(batchRequest);
     
-    const builder = new ResponseBuilder()
-      .setData({
-        results,
-        summary: {
-          total: items.length,
-          processed: results.length,
-          successful: successCount,
-          failed: errorCount
-        }
-      })
-      .setProcessingTime(processingTime)
-      .addMetadata('batchSize', items.length);
+    const response: BatchConversionResponse = {
+      success: true,
+      data: results,
+      metadata: {
+        totalItems: batchRequest.items.length,
+        successCount: results.filter(r => r.success).length,
+        errorCount: results.filter(r => !r.success).length,
+        processingTime: Date.now() - startTime
+      }
+    };
 
-    builder.send(res);
+    APIErrorHandler.sendSuccess(res, response, {
+      processingTime: Date.now() - startTime,
+      itemCount: results.length,
+      cacheHit: false
+    });
 
   } catch (error) {
     console.error('Batch conversion error:', error);
-    if (error instanceof Error) {
-      APIErrorHandler.handleServerError(res, error);
-    } else {
-      APIErrorHandler.handleServerError(res, new Error('Unknown error'));
-    }
+    APIErrorHandler.handleServerError(res, error as Error, {
+      endpoint: 'batch-convert'
+    });
   }
 }
 
-async function processConversionItem(
-  item: string | number,
-  outputFormats: string[],
-  timezone?: string,
-  targetTimezone?: string
-): Promise<BatchConversionItem> {
-  // Parse the input
-  const { timestamp, isValid } = parseTimestamp(item);
-  
-  if (!isValid) {
-    return {
-      input: item,
-      success: false,
-      error: {
-        code: 'INVALID_INPUT',
-        message: `Could not parse "${item}" as a valid timestamp or date`
-      }
-    };
-  }
+async function processBatchConversion(request: BatchConversionRequest): Promise<BatchConversionResult[]> {
+  const results: BatchConversionResult[] = [];
+  const outputFormats = request.outputFormat || DEFAULT_OUTPUT_FORMATS;
+  const continueOnError = request.options?.continueOnError ?? true;
 
-  // Create date object
-  let date = new Date(timestamp * 1000);
-  
-  // Apply timezone conversion if needed
-  if (timezone && targetTimezone) {
+  for (const item of request.items) {
     try {
-      date = convertTimezone(date, timezone, targetTimezone);
+      // Validate individual item
+      if (item === null || item === undefined) {
+        results.push({
+          input: item,
+          success: false,
+          error: APIErrorHandler.createError(
+            'INVALID_INPUT',
+            'Timestamp cannot be null or undefined',
+            400
+          )
+        });
+        continue;
+      }
+
+      // Convert the timestamp
+      const timestamp = typeof item === 'string' ? parseInt(item, 10) : item;
+      const conversionResult = await convertTimestamp(
+        timestamp,
+        outputFormats,
+        request.timezone,
+        request.targetTimezone
+      );
+
+      results.push({
+        input: item,
+        success: true,
+        data: conversionResult
+      });
+
     } catch (error) {
-      return {
+      const conversionError = APIErrorHandler.createError(
+        'CONVERSION_ERROR',
+        `Failed to convert timestamp: ${(error as Error).message}`,
+        400,
+        { originalInput: item }
+      );
+
+      results.push({
         input: item,
         success: false,
-        error: {
-          code: 'TIMEZONE_ERROR',
-          message: `Timezone conversion failed: ${error instanceof Error ? error.message : error}`
-        }
-      };
-    }
-  }
+        error: conversionError
+      });
 
-  // Generate formats
-  const formats: Record<string, string> = {};
-  
-  for (const format of outputFormats) {
-    try {
-      switch (format.toLowerCase()) {
-        case 'iso8601':
-          formats.iso8601 = date.toISOString();
-          break;
-        case 'timestamp':
-          formats.timestamp = Math.floor(date.getTime() / 1000).toString();
-          break;
-        case 'utc':
-          formats.utc = date.toUTCString();
-          break;
-        case 'local':
-          formats.local = date.toLocaleString();
-          break;
-        case 'relative':
-          formats.relative = formatRelativeTime(date);
-          break;
-        default:
-          // Try to use format service for custom formats
-          try {
-            formats[format] = formatService.formatDate(date, format, targetTimezone || timezone);
-          } catch (formatError) {
-            formats[format] = `Error: ${formatError instanceof Error ? formatError.message : 'Invalid format'}`;
-          }
+      // If continueOnError is false, stop processing
+      if (!continueOnError) {
+        break;
       }
-    } catch (formatError) {
-      formats[format] = `Error: ${formatError instanceof Error ? formatError.message : 'Format error'}`;
     }
   }
 
-  // Build result
-  return {
-    input: item,
-    success: true,
-    data: {
-      timestamp: Math.floor(date.getTime() / 1000),
-      formats,
-      ...(timezone || targetTimezone ? {
-        timezone: {
-          original: timezone || 'UTC',
-          target: targetTimezone || timezone || 'UTC'
-        }
-      } : {})
-    }
-  };
+  return results;
 }
 
-// Enhanced batch convert API with caching and rate limiting
-const enhancedBatchConvertHandler = createRateLimitMiddleware({
-  windowMs: 60 * 1000, // 1 minute
-  max: 10, // Lower limit for batch operations
-  message: 'Too many batch requests, please try again later.'
-})(
-  createCacheMiddleware({
-    ttl: 5 * 60 * 1000, // 5 minutes
-    cacheControlHeader: 'public, max-age=300, stale-while-revalidate=600'
-  })(batchConvertHandler)
-);
-
-export default enhancedBatchConvertHandler;
+// Helper function to validate timestamp input
+function isValidTimestamp(input: any): boolean {
+  if (typeof input === 'number') {
+    return !isNaN(input) && isFinite(input);
+  }
+  
+  if (typeof input === 'string') {
+    // Check if it's a valid date string or numeric string
+    const asNumber = parseFloat(input);
+    if (!isNaN(asNumber) && isFinite(asNumber)) {
+      return true;
+    }
+    
+    // Check if it's a valid date string
+    const date = new Date(input);
+    return !isNaN(date.getTime());
+  }
+  
+  return false;
+}

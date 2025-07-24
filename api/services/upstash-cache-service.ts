@@ -1,7 +1,7 @@
 import { Redis } from '@upstash/redis';
 import { CacheService, CacheStats, CacheableRequest } from '../types/api';
 import config from '../config/config';
-import { MemoryCacheService } from '../cache-service';
+import { MemoryCacheService } from './cache-service';
 
 class UpstashCacheService implements CacheService {
   private redis: Redis;
@@ -151,7 +151,7 @@ class UpstashCacheService implements CacheService {
     
     do {
       const result = await this.redis.scan(cursor, { match: pattern, count: 100 });
-      cursor = result[0];
+      cursor = parseInt(String(result[0]));
       keys.push(...result[1]);
     } while (cursor !== 0);
     
@@ -162,12 +162,11 @@ class UpstashCacheService implements CacheService {
     try {
       if (this.isConnected) {
         // Get Redis info and key count
-        const info = await this.redis.info('memory');
+        // Upstash doesn't have info(), use dbsize instead
         const dbsize = await this.redis.dbsize();
         
-        // Parse memory info (simplified)
-        const memoryMatch = info.match(/used_memory:(\d+)/);
-        const memoryUsed = memoryMatch ? parseInt(memoryMatch[1]) : 0;
+        // Memory info not available in Upstash
+        const memoryUsed = 0; // Not available in Upstash
         
         // Get sample keys for debugging
         const sampleKeys = await this.scanKeys('*');
@@ -176,9 +175,7 @@ class UpstashCacheService implements CacheService {
           hits: this.cacheStats.hits,
           misses: this.cacheStats.misses,
           size: dbsize,
-          keys: sampleKeys.slice(0, 100), // Limit to first 100 keys
-          memoryUsed,
-          redisInfo: info
+          keys: sampleKeys.slice(0, 100) // Limit to first 100 keys
         };
       }
     } catch (error) {
@@ -195,7 +192,8 @@ class UpstashCacheService implements CacheService {
     try {
       if (this.isConnected) {
         const pingResult = await this.redis.ping();
-        const info = await this.redis.info('server');
+        // Upstash doesn't have info(), use ping instead
+        await this.redis.ping();
         
         return {
           status: 'healthy',

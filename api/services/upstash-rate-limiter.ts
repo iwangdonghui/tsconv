@@ -1,7 +1,7 @@
 import { Redis } from '@upstash/redis';
 import { RateLimiter, RateLimitRule, RateLimitResult, RateLimitStats } from '../types/api';
 import config from '../config/config';
-import { MemoryRateLimiter } from '../rate-limiter';
+import { MemoryRateLimiter } from './rate-limiter';
 
 class UpstashRateLimiter implements RateLimiter {
   private redis: Redis;
@@ -18,7 +18,10 @@ class UpstashRateLimiter implements RateLimiter {
     });
     
     // Initialize fallback memory rate limiter
-    this.fallbackLimiter = new MemoryRateLimiter();
+    this.fallbackLimiter = new MemoryRateLimiter({
+      windowMs: 60000, // 1 minute
+      maxRequests: 100
+    });
     
     // Test connection on initialization
     this.testConnection();
@@ -124,7 +127,7 @@ class UpstashRateLimiter implements RateLimiter {
     pipeline.zremrangebyscore(key, 0, windowStart - 1);
     
     // Add current request
-    pipeline.zadd(key, now, `${now}-${Math.random()}`);
+    pipeline.zadd(key, { score: now, member: `${now}-${Math.random()}` });
     
     // Count current entries
     pipeline.zcard(key);

@@ -1,109 +1,229 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
+import { APIErrorHandler, createCorsHeaders } from '../utils/response';
 
-export default function handler(req: VercelRequest, res: VercelResponse) {
-  // 设置CORS头
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+interface SimpleConvertRequest {
+  timestamp: number | string;
+  format?: string;
+  timezone?: string;
+}
 
+interface SimpleConvertResponse {
+  success: boolean;
+  data: {
+    input: number | string;
+    timestamp: number;
+    formats: {
+      unix: string;
+      iso: string;
+      human: string;
+      date: string;
+      time: string;
+    };
+    timezone: string;
+  };
+}
+
+export default async function handler(req: VercelRequest, res: VercelResponse) {
+  // Set CORS headers
+  const corsHeaders = createCorsHeaders(req.headers.origin as string);
+  Object.entries(corsHeaders).forEach(([key, value]) => {
+    res.setHeader(key, value);
+  });
+
+  // Handle preflight requests
   if (req.method === 'OPTIONS') {
-    res.status(200).end();
-    return;
+    return res.status(200).end();
+  }
+
+  // Allow both GET and POST requests
+  if (req.method !== 'GET' && req.method !== 'POST') {
+    return APIErrorHandler.handleMethodNotAllowed(res, 'Only GET and POST methods are allowed');
   }
 
   try {
-    const { timestamp, date } = req.query;
+    const startTime = Date.now();
 
-    if (!timestamp && !date) {
-      return res.status(400).json({
-        success: false,
-        error: {
-          code: 'BAD_REQUEST',
-          message: 'Please provide either timestamp or date parameter'
-        }
-      });
-    }
+    // Parse request parameters
+    let convertRequest: SimpleConvertRequest;
 
-    let inputDate: Date;
-    let inputTimestamp: number;
-
-    if (timestamp) {
-      const ts = parseInt(String(timestamp));
-      if (isNaN(ts)) {
-        return res.status(400).json({
-          success: false,
-          error: {
-            code: 'BAD_REQUEST',
-            message: 'Invalid timestamp format'
-          }
+    if (req.method === 'GET') {
+      const { timestamp, format, timezone } = req.query;
+      
+      if (!timestamp) {
+        return APIErrorHandler.handleBadRequest(res, 'Timestamp parameter is required', {
+          parameter: 'timestamp',
+          examples: ['1705315845', '2024-01-15T10:30:45Z', 'now']
         });
       }
-      inputTimestamp = ts;
-      inputDate = new Date(ts * 1000);
+
+      convertRequest = {
+        timestamp: timestamp === 'now' ? Date.now() / 1000 : timestamp as string,
+        format: format as string,
+        timezone: timezone as string
+      };
     } else {
-      inputDate = new Date(String(date));
-      if (isNaN(inputDate.getTime())) {
-        return res.status(400).json({
-          success: false,
-          error: {
-            code: 'BAD_REQUEST',
-            message: 'Invalid date format'
-          }
-        });
-      }
-      inputTimestamp = Math.floor(inputDate.getTime() / 1000);
+      convertRequest = req.body;
     }
 
-    // 生成各种格式
-    const formats = {
-      iso8601: inputDate.toISOString(),
-      utc: inputDate.toUTCString(),
-      timestamp: inputTimestamp,
-      local: inputDate.toLocaleString(),
-      date: inputDate.toLocaleDateString(),
-      time: inputDate.toLocaleTimeString(),
-      relative: getRelativeTime(inputDate)
-    };
+    // Validate and convert
+    const result = await performSimpleConversion(convertRequest);
 
-    const response = {
+    const response: SimpleConvertResponse = {
       success: true,
-      data: {
-        input: timestamp || date,
-        timestamp: inputTimestamp,
-        formats: formats
-      },
-      metadata: {
-        processingTime: Date.now() - Date.now(),
-        itemCount: 1,
-        cacheHit: false
-      }
+      data: result
     };
 
-    res.status(200).json(response);
+    APIErrorHandler.sendSuccess(res, response, {
+      processingTime: Date.now() - startTime,
+      itemCount: 1,
+      cacheHit: false
+    });
 
   } catch (error) {
     console.error('Simple convert error:', error);
-    res.status(500).json({
-      success: false,
-      error: {
-        code: 'INTERNAL_ERROR',
-        message: 'An unexpected error occurred'
-      }
+    
+    // Handle specific error types
+    if ((error as Error).message.includes('Invalid timestamp')) {
+      return APIErrorHandler.handleBadRequest(res, (error as Error).message, {
+        supportedFormats: [
+          'Unix timestamp (seconds): 1705315845',
+          'Unix timestamp (milliseconds): 1705315845123',
+          'ISO string: 2024-01-15T10:30:45Z',
+          'Date string: 2024-01-15',
+          'Special value: now'
+        ]
+      });
+    }
+
+    APIErrorHandler.handleServerError(res, error as Error, {
+      endpoint: 'simple-convert'
     });
   }
 }
 
-function getRelativeTime(date: Date): string {
-  const now = new Date();
-  const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+async function performSimpleConversion(request: SimpleConvertRequest): Promise<any> {
+  // Parse and validate timestamp
+  const timestamp = parseTimestamp(request.timestamp);
+  const timezone = request.timezone || 'UTC';
   
-  const absDiff = Math.abs(diffInSeconds);
-  const prefix = diffInSeconds < 0 ? 'in' : '';
-  const suffix = diffInSeconds > 0 ? 'ago' : '';
+  // Create date object
+  const date = new Date(timestamp * 1000);
+  
+  // Validate date
+  if (isNaN(date.getTime())) {
+    throw new Error(`Invalid timestamp: ${request.timestamp}`);
+  }
 
-  if (absDiff < 60) return `${prefix} ${absDiff} seconds ${suffix}`.trim();
-  if (absDiff < 3600) return `${prefix} ${Math.floor(absDiff / 60)} minutes ${suffix}`.trim();
-  if (absDiff < 86400) return `${prefix} ${Math.floor(absDiff / 3600)} hours ${suffix}`.trim();
-  if (absDiff < 2592000) return `${prefix} ${Math.floor(absDiff / 86400)} days ${suffix}`.trim();
-  return `${prefix} ${Math.floor(absDiff / 2592000)} months ${suffix}`.trim();
+  // Generate all common formats
+  const formats = {
+    unix: timestamp.toString(),
+    iso: date.toISOString(),
+    human: formatHumanReadable(date, timezone),
+    date: formatDate(date, timezone),
+    time: formatTime(date, timezone)
+  };
+
+  return {
+    input: request.timestamp,
+    timestamp,
+    formats,
+    timezone
+  };
+}
+
+function parseTimestamp(input: number | string): number {
+  if (typeof input === 'number') {
+    // Handle both seconds and milliseconds
+    return input > 1e10 ? Math.floor(input / 1000) : input;
+  }
+
+  if (typeof input === 'string') {
+    // Handle special values
+    if (input.toLowerCase() === 'now') {
+      return Math.floor(Date.now() / 1000);
+    }
+
+    // Try parsing as number first
+    const asNumber = parseFloat(input);
+    if (!isNaN(asNumber) && isFinite(asNumber)) {
+      return asNumber > 1e10 ? Math.floor(asNumber / 1000) : asNumber;
+    }
+
+    // Try parsing as date string
+    const date = new Date(input);
+    if (!isNaN(date.getTime())) {
+      return Math.floor(date.getTime() / 1000);
+    }
+
+    throw new Error(`Invalid timestamp format: ${input}`);
+  }
+
+  throw new Error(`Invalid timestamp type: ${typeof input}`);
+}
+
+function formatHumanReadable(date: Date, timezone: string): string {
+  try {
+    return date.toLocaleString('en-US', {
+      timeZone: timezone,
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      timeZoneName: 'short'
+    });
+  } catch (error) {
+    // Fallback to UTC if timezone is invalid
+    return date.toLocaleString('en-US', {
+      timeZone: 'UTC',
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      timeZoneName: 'short'
+    });
+  }
+}
+
+function formatDate(date: Date, timezone: string): string {
+  try {
+    return date.toLocaleDateString('en-US', {
+      timeZone: timezone,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit'
+    });
+  } catch (error) {
+    return date.toLocaleDateString('en-US', {
+      timeZone: 'UTC',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit'
+    });
+  }
+}
+
+function formatTime(date: Date, timezone: string): string {
+  try {
+    return date.toLocaleTimeString('en-US', {
+      timeZone: timezone,
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false
+    });
+  } catch (error) {
+    return date.toLocaleTimeString('en-US', {
+      timeZone: 'UTC',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false
+    });
+  }
 }
