@@ -23,7 +23,7 @@
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true
   },
-  "include": ["src", "api"],
-  "exclude": ["**/*.test.ts", "**/*.spec.ts"],
+  "include": ["src"],
+  "exclude": ["api", "**/*.test.ts", "**/*.spec.ts"],
   "references": [{ "path": "./tsconfig.node.json" }]
 }

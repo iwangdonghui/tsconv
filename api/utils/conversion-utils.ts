@@ -157,3 +157,67 @@ export function detectTimestampFormat(input: string): 'unix' | 'milliseconds' | 
   
   return 'unknown';
 }
+
+export async function convertTimestamp(
+  timestamp: number,
+  outputFormats: string[] = [],
+  timezone?: string,
+  targetTimezone?: string
+): Promise<any> {
+  const date = new Date(timestamp * 1000);
+
+  // Basic conversion data
+  const data: any = {
+    timestamp,
+    iso: date.toISOString(),
+    utc: date.toUTCString(),
+    local: date.toLocaleString()
+  };
+
+  // Add timezone conversion if specified
+  if (timezone && targetTimezone) {
+    try {
+      const convertedDate = convertTimezone(date, timezone, targetTimezone);
+      data.converted = {
+        timestamp: Math.floor(convertedDate.getTime() / 1000),
+        iso: convertedDate.toISOString(),
+        local: convertedDate.toLocaleString()
+      };
+    } catch (error) {
+      data.conversionError = 'Invalid timezone conversion';
+    }
+  }
+
+  // Add custom formats if specified
+  if (outputFormats.length > 0) {
+    data.formats = {};
+    for (const format of outputFormats) {
+      try {
+        switch (format.toLowerCase()) {
+          case 'iso':
+            data.formats.iso = date.toISOString();
+            break;
+          case 'utc':
+            data.formats.utc = date.toUTCString();
+            break;
+          case 'local':
+            data.formats.local = date.toLocaleString();
+            break;
+          case 'unix':
+            data.formats.unix = timestamp;
+            break;
+          case 'milliseconds':
+            data.formats.milliseconds = timestamp * 1000;
+            break;
+          default:
+            // Try to use as locale string format
+            data.formats[format] = date.toLocaleString('en-US', { timeZone: format });
+        }
+      } catch (error) {
+        data.formats[format] = 'Invalid format';
+      }
+    }
+  }
+
+  return data;
+}

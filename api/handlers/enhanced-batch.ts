@@ -2,9 +2,9 @@ import { VercelRequest, VercelResponse } from '@vercel/node';
 import { BatchConversionRequest, BatchConversionResponse, BatchConversionResult, ConversionData } from '../types/api';
 import { APIErrorHandler, ResponseBuilder, withCors } from '../utils/response';
 import { createCacheMiddleware } from '../middleware/cache';
-import { createBatchRateLimit } from '../middleware/rate-limit';
+import { createRateLimitMiddleware } from '../middleware/rate-limit';
 import { validateBatchRequest } from '../utils/validation';
-import { convertTimestamp, convertDate } from '../utils/conversion-utils';
+import { parseTimestamp, convertTimezone, convertTimestamp } from '../utils/conversion-utils';
 
 interface ProcessedItem {
   input: string | number;

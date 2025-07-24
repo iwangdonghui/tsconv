@@ -16,6 +16,8 @@ interface APIEndpoint {
 }
 
 async function apiDocsHandler(req: VercelRequest, res: VercelResponse) {
+  withCors(res);
+
   if (req.method === 'OPTIONS') {
     res.status(200).end();
     return;
@@ -197,13 +199,11 @@ async function apiDocsHandler(req: VercelRequest, res: VercelResponse) {
 }
 
 // Enhanced API docs with caching and rate limiting
-const enhancedApiDocsHandler = withCors(
-  createRateLimitMiddleware()(
-    createCacheMiddleware({
-      ttl: 24 * 60 * 60 * 1000, // 24 hours
-      cacheControlHeader: 'public, max-age=86400, stale-while-revalidate=172800'
-    })(apiDocsHandler)
-  )
+const enhancedApiDocsHandler = createRateLimitMiddleware()(
+  createCacheMiddleware({
+    ttl: 24 * 60 * 60 * 1000, // 24 hours
+    cacheControlHeader: 'public, max-age=86400, stale-while-revalidate=172800'
+  })(apiDocsHandler)
 );
 
 export default enhancedApiDocsHandler;
