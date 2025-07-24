@@ -5,6 +5,13 @@ import { createRateLimitMiddleware } from '../middleware/rate-limit';
 import formatService from '../services/format-service';
 
 async function batchHandler(req: VercelRequest, res: VercelResponse) {
+  withCors(res);
+
+  if (req.method === 'OPTIONS') {
+    res.status(200).end();
+    return;
+  }
+
   try {
     const { items, format, timezone } = req.body;
 
@@ -117,13 +124,11 @@ async function batchHandler(req: VercelRequest, res: VercelResponse) {
   }
 }
 
-const enhancedBatchHandler = withCors(
-  createRateLimitMiddleware()(
-    createCacheMiddleware({
-      ttl: 60 * 1000, // 1 minute
-      cacheControlHeader: 'public, max-age=60, stale-while-revalidate=120'
-    })(batchHandler)
-  )
+const enhancedBatchHandler = createRateLimitMiddleware()(
+  createCacheMiddleware({
+    ttl: 60 * 1000, // 1 minute
+    cacheControlHeader: 'public, max-age=60, stale-while-revalidate=120'
+  })(batchHandler)
 );
 
 export default enhancedBatchHandler;

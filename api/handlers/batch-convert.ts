@@ -24,6 +24,7 @@ interface BatchConversionItem {
 }
 
 async function batchConvertHandler(req: VercelRequest, res: VercelResponse) {
+  withCors(res);
   const startTime = Date.now();
 
   if (req.method === 'OPTIONS') {
@@ -222,17 +223,15 @@ async function processConversionItem(
 }
 
 // Enhanced batch convert API with caching and rate limiting
-const enhancedBatchConvertHandler = withCors(
-  createRateLimitMiddleware({
-    windowMs: 60 * 1000, // 1 minute
-    max: 10, // Lower limit for batch operations
-    message: 'Too many batch requests, please try again later.'
-  })(
-    createCacheMiddleware({
-      ttl: 5 * 60 * 1000, // 5 minutes
-      cacheControlHeader: 'public, max-age=300, stale-while-revalidate=600'
-    })(batchConvertHandler)
-  )
+const enhancedBatchConvertHandler = createRateLimitMiddleware({
+  windowMs: 60 * 1000, // 1 minute
+  max: 10, // Lower limit for batch operations
+  message: 'Too many batch requests, please try again later.'
+})(
+  createCacheMiddleware({
+    ttl: 5 * 60 * 1000, // 5 minutes
+    cacheControlHeader: 'public, max-age=300, stale-while-revalidate=600'
+  })(batchConvertHandler)
 );
 
 export default enhancedBatchConvertHandler;
