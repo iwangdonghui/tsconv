@@ -1,0 +1,18 @@
+name = "tsconv"
+compatibility_date = "2024-01-15"
+pages_build_output_dir = "dist"
+
+[env.production]
+vars = { NODE_ENV = "production" }
+
+[env.preview]
+vars = { NODE_ENV = "development" }
+
+# Cloudflare Pages Functions configuration
+[[env.production.services]]
+binding = "CACHE"
+service = "cache-service"
+
+[[env.production.services]]
+binding = "RATE_LIMITER"
+service = "rate-limiter-service"
