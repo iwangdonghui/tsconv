@@ -1,11 +1,7 @@
-import {
-  VercelRequest,
-  VercelResponse,
-  ResponseBuilder,
-  withCors,
-  createCacheMiddleware,
-  createRateLimitMiddleware
-} from './_shared';
+import { VercelRequest, VercelResponse } from '@vercel/node';
+import { ResponseBuilder, withCors } from './utils/response';
+import { createCacheMiddleware } from './middleware/cache';
+import { createRateLimitMiddleware } from './middleware/rate-limit';
 
 async function nowHandler(req: VercelRequest, res: VercelResponse) {
   withCors(res);
