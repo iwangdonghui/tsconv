@@ -203,7 +203,7 @@ class UpstashCacheService implements CacheService {
             ping: pingResult,
             fallbackAvailable: true,
             connectionAttempts: this.connectionAttempts,
-            serverInfo: info.split('\r\n').slice(0, 5).join('\n'), // First 5 lines
+            serverInfo: 'Upstash Redis (info not available)', // Upstash doesn't support info command
             stats: {
               hits: this.cacheStats.hits,
               misses: this.cacheStats.misses,

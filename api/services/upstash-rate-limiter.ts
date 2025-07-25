@@ -1,7 +1,7 @@
 import { Redis } from '@upstash/redis';
 import { RateLimiter, RateLimitRule, RateLimitResult, RateLimitStats } from '../types/api';
 import config from '../config/config';
-import { MemoryRateLimiter } from './rate-limiter';
+// Note: MemoryRateLimiter is defined locally in this file
 
 class UpstashRateLimiter implements RateLimiter {
   private redis: Redis;
@@ -18,10 +18,7 @@ class UpstashRateLimiter implements RateLimiter {
     });
     
     // Initialize fallback memory rate limiter
-    this.fallbackLimiter = new MemoryRateLimiter({
-      windowMs: 60000, // 1 minute
-      maxRequests: 100
-    });
+    this.fallbackLimiter = new MemoryRateLimiter();
     
     // Test connection on initialization
     this.testConnection();
@@ -369,7 +366,7 @@ class UpstashRateLimiter implements RateLimiter {
     
     do {
       const result = await this.redis.scan(cursor, { match: pattern, count: 100 });
-      cursor = result[0];
+      cursor = parseInt(result[0] as string, 10);
       keys.push(...result[1]);
     } while (cursor !== 0);
     

@@ -526,5 +526,4 @@ export async function getPerformanceMetrics(options?: {
   };
 }
 
-// Export types for external use
-export type { PerformanceMetrics, PerformanceMonitoringOptions };
+// Types are already exported above with their definitions

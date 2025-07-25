@@ -301,5 +301,4 @@ export const createEndpointRateLimit = (
   });
 };
 
-// Export types for external use
-export type { RateLimitMiddlewareOptions };
+// Types are already exported above with their definitions

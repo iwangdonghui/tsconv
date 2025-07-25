@@ -469,5 +469,4 @@ export class CircuitBreaker {
   }
 }
 
-// Export types for external use
-export type { ErrorHandlerOptions, ErrorContext };
+// Types are already exported above with their definitions
