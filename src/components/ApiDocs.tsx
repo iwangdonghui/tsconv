@@ -60,7 +60,7 @@ export default function ApiDocs() {
             <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4">Base URL</h2>
             <div className="w-full overflow-hidden">
               <CodeBlock 
-                code="https://api.tsconv.com" 
+                code="https://tsconv.com/api"
                 copyKey="baseUrl"
               />
             </div>
@@ -134,7 +134,7 @@ export default function ApiDocs() {
                   <h3 className="font-medium mb-2 text-sm sm:text-base">Example</h3>
                   <div className="w-full overflow-hidden">
                     <CodeBlock 
-                      code={`curl -X GET "https://api.tsconv.com/api/convert?timestamp=1640995200"`}
+                      code={`curl -X GET "https://tsconv.com/api/convert?timestamp=1640995200"`}
                       copyKey="example1"
                     />
                   </div>
@@ -200,7 +200,7 @@ export default function ApiDocs() {
                 <div>
                   <h3 className="font-medium mb-2 text-sm sm:text-base">Example</h3>
                   <CodeBlock 
-                    code={`curl -X GET "https://api.tsconv.com/api/convert?date=2022-01-01"`}
+                    code={`curl -X GET "https://tsconv.com/api/convert?date=2022-01-01"`}
                     copyKey="example2"
                   />
                 </div>
@@ -242,7 +242,7 @@ export default function ApiDocs() {
                 <div>
                   <h3 className="font-medium mb-2 text-sm sm:text-base">Example</h3>
                   <CodeBlock 
-                    code={`curl -X GET "https://api.tsconv.com/api/now"`}
+                    code={`curl -X GET "https://tsconv.com/api/now"`}
                     copyKey="example3"
                   />
                 </div>
@@ -323,12 +323,12 @@ export default function ApiDocs() {
                   <h3 className="font-medium mb-2 text-sm sm:text-base">JavaScript</h3>
                   <CodeBlock 
                     code={`// Convert timestamp to date
-const response = await fetch('https://api.tsconv.com/api/convert?timestamp=1640995200');
+const response = await fetch('https://tsconv.com/api/convert?timestamp=1640995200');
 const data = await response.json();
 console.log(data.data.utc);
 
 // Convert date to timestamp
-const response2 = await fetch('https://api.tsconv.com/api/convert?date=2022-01-01');
+const response2 = await fetch('https://tsconv.com/api/convert?date=2022-01-01');
 const data2 = await response2.json();
 console.log(data2.data.timestamp);`}
                     language="javascript"
@@ -342,12 +342,12 @@ console.log(data2.data.timestamp);`}
                     code={`import requests
 
 # Convert timestamp to date
-response = requests.get('https://api.tsconv.com/api/convert?timestamp=1640995200')
+response = requests.get('https://tsconv.com/api/convert?timestamp=1640995200')
 data = response.json()
 print(data['data']['utc'])
 
 # Convert date to timestamp
-response2 = requests.get('https://api.tsconv.com/api/convert?date=2022-01-01')
+response2 = requests.get('https://tsconv.com/api/convert?date=2022-01-01')
 data2 = response2.json()
 print(data2['data']['timestamp'])`}
                     language="python"
@@ -360,12 +360,12 @@ print(data2['data']['timestamp'])`}
                   <CodeBlock 
                     code={`<?php
 // Convert timestamp to date
-$response = file_get_contents('https://api.tsconv.com/api/convert?timestamp=1640995200');
+$response = file_get_contents('https://tsconv.com/api/convert?timestamp=1640995200');
 $data = json_decode($response, true);
 echo $data['data']['utc'];
 
 // Convert date to timestamp
-$response2 = file_get_contents('https://api.tsconv.com/api/convert?date=2022-01-01');
+$response2 = file_get_contents('https://tsconv.com/api/convert?date=2022-01-01');
 $data2 = json_decode($response2, true);
 echo $data2['data']['timestamp'];
 ?>`}

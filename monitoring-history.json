@@ -1,0 +1,39 @@
+{
+  "checks": [
+    {
+      "timestamp": "2025-07-25T06:14:55.364Z",
+      "endpoint": "Homepage",
+      "success": true,
+      "responseTime": 208,
+      "status": 200
+    },
+    {
+      "timestamp": "2025-07-25T06:14:55.422Z",
+      "endpoint": "Health Check",
+      "success": true,
+      "responseTime": 58,
+      "status": 200
+    },
+    {
+      "timestamp": "2025-07-25T06:14:55.537Z",
+      "endpoint": "Current Time API",
+      "success": true,
+      "responseTime": 115,
+      "status": 200
+    },
+    {
+      "timestamp": "2025-07-25T06:14:56.121Z",
+      "endpoint": "Convert API",
+      "success": true,
+      "responseTime": 584,
+      "status": 200
+    }
+  ],
+  "summary": {
+    "lastCheck": "2025-07-25T06:14:56.122Z",
+    "totalChecks": 4,
+    "successRate": 100,
+    "avgResponseTime": 241,
+    "recentSuccessRate": 100
+  }
+}

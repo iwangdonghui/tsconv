@@ -37,41 +37,91 @@ export async function handleConvert(request: Request, env: Env): Promise<Respons
     if (request.method === 'GET') {
       const url = new URL(request.url);
       const timestampParam = url.searchParams.get('timestamp');
-      
-      if (!timestampParam) {
+      const dateParam = url.searchParams.get('date');
+
+      if (!timestampParam && !dateParam) {
         return new Response(JSON.stringify({
           error: 'Bad Request',
-          message: 'timestamp parameter is required'
+          message: 'Either timestamp or date parameter is required'
         }), {
           status: 400,
           headers: { 'Content-Type': 'application/json' }
         });
       }
 
-      timestamp = parseInt(timestampParam, 10);
+      if (timestampParam) {
+        timestamp = parseInt(timestampParam, 10);
+        if (isNaN(timestamp)) {
+          return new Response(JSON.stringify({
+            error: 'Bad Request',
+            message: 'Invalid timestamp format'
+          }), {
+            status: 400,
+            headers: { 'Content-Type': 'application/json' }
+          });
+        }
+      } else if (dateParam) {
+        // Parse date string to timestamp
+        const parsedDate = new Date(dateParam);
+        if (isNaN(parsedDate.getTime())) {
+          return new Response(JSON.stringify({
+            error: 'Bad Request',
+            message: 'Invalid date format. Use ISO format like 2021-03-02 or 2021-03-02T10:30:00Z'
+          }), {
+            status: 400,
+            headers: { 'Content-Type': 'application/json' }
+          });
+        }
+        timestamp = Math.floor(parsedDate.getTime() / 1000);
+      }
+
       timezone = url.searchParams.get('timezone') || undefined;
       targetTimezone = url.searchParams.get('targetTimezone') || undefined;
-      
+
       const formatsParam = url.searchParams.get('formats');
       if (formatsParam) {
         outputFormats = formatsParam.split(',');
       }
     } else {
       const body = await request.json();
-      timestamp = body.timestamp;
+
+      if (body.timestamp) {
+        timestamp = body.timestamp;
+        if (isNaN(timestamp)) {
+          return new Response(JSON.stringify({
+            error: 'Bad Request',
+            message: 'Invalid timestamp format'
+          }), {
+            status: 400,
+            headers: { 'Content-Type': 'application/json' }
+          });
+        }
+      } else if (body.date) {
+        // Parse date string to timestamp
+        const parsedDate = new Date(body.date);
+        if (isNaN(parsedDate.getTime())) {
+          return new Response(JSON.stringify({
+            error: 'Bad Request',
+            message: 'Invalid date format. Use ISO format like 2021-03-02 or 2021-03-02T10:30:00Z'
+          }), {
+            status: 400,
+            headers: { 'Content-Type': 'application/json' }
+          });
+        }
+        timestamp = Math.floor(parsedDate.getTime() / 1000);
+      } else {
+        return new Response(JSON.stringify({
+          error: 'Bad Request',
+          message: 'Either timestamp or date field is required'
+        }), {
+          status: 400,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+
       timezone = body.timezone;
       targetTimezone = body.targetTimezone;
       outputFormats = body.outputFormats || [];
-    }
-
-    if (!timestamp || isNaN(timestamp)) {
-      return new Response(JSON.stringify({
-        error: 'Bad Request',
-        message: 'Valid timestamp is required'
-      }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json' }
-      });
     }
 
     // Perform conversion

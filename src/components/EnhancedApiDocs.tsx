@@ -36,7 +36,7 @@ const EnhancedApiDocs = () => {
       method: 'GET',
       path: '/api/convert',
       description: t.api.convertDescription,
-      example: 'https://api.tsconv.com/api/convert?timestamp=1640995200'
+      example: 'https://tsconv.com/api/convert?timestamp=1640995200'
     },
     {
       id: 'batch',
@@ -44,7 +44,7 @@ const EnhancedApiDocs = () => {
       method: 'POST',
       path: '/api/enhanced-batch',
       description: 'Convert multiple timestamps/dates in a single request',
-      example: 'https://api.tsconv.com/api/enhanced-batch'
+      example: 'https://tsconv.com/api/enhanced-batch'
     },
     {
       id: 'timezone',
@@ -52,7 +52,7 @@ const EnhancedApiDocs = () => {
       method: 'GET',
       path: '/api/timezone-difference',
       description: 'Calculate timezone differences and conversions',
-      example: 'https://api.tsconv.com/api/timezone-difference?from=UTC&to=America/New_York'
+      example: 'https://tsconv.com/api/timezone-difference?from=UTC&to=America/New_York'
     },
     {
       id: 'formats',
@@ -60,7 +60,7 @@ const EnhancedApiDocs = () => {
       method: 'GET',
       path: '/api/formats',
       description: 'Discover and use custom date/time formats',
-      example: 'https://api.tsconv.com/api/formats'
+      example: 'https://tsconv.com/api/formats'
     },
     {
       id: 'visualization',
@@ -68,7 +68,7 @@ const EnhancedApiDocs = () => {
       method: 'GET',
       path: '/api/visualization',
       description: 'Generate charts and visualization data',
-      example: 'https://api.tsconv.com/api/visualization?type=timezone-chart'
+      example: 'https://tsconv.com/api/visualization?type=timezone-chart'
     },
     {
       id: 'health',
@@ -76,7 +76,7 @@ const EnhancedApiDocs = () => {
       method: 'GET',
       path: '/api/health',
       description: 'Monitor system health and performance',
-      example: 'https://api.tsconv.com/api/health'
+      example: 'https://tsconv.com/api/health'
     }
   ];
 

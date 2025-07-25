@@ -15,6 +15,8 @@
     "preview:cloudflare": "wrangler pages dev dist",
     "test:migration": "node scripts/test-migration.js",
     "verify:migration": "node scripts/verify-migration.js",
+    "test:api-docs": "node scripts/test-api-docs.js",
+    "monitor:production": "node scripts/monitor-production.js",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
     "test": "vitest",
