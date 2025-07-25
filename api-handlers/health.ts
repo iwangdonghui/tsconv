@@ -1,5 +1,7 @@
 // Cloudflare Pages adapter for health API
 
+import { CacheManager } from './cache-utils';
+
 interface Env {
   UPSTASH_REDIS_REST_URL?: string;
   UPSTASH_REDIS_REST_TOKEN?: string;
@@ -21,6 +23,7 @@ export async function handleHealth(request: Request, env: Env): Promise<Response
     const detailed = url.searchParams.get('detailed') === 'true';
 
     const startTime = Date.now();
+    const cacheManager = new CacheManager(env);
     
     // Basic health check
     const health = {
@@ -32,27 +35,9 @@ export async function handleHealth(request: Request, env: Env): Promise<Response
       responseTime: 0
     };
 
-    // Test Redis connection if configured
-    let redisStatus = 'not-configured';
-    if (env.UPSTASH_REDIS_REST_URL && env.UPSTASH_REDIS_REST_TOKEN) {
-      try {
-        const redisResponse = await fetch(`${env.UPSTASH_REDIS_REST_URL}/ping`, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${env.UPSTASH_REDIS_REST_TOKEN}`,
-            'Content-Type': 'application/json'
-          }
-        });
-        
-        if (redisResponse.ok) {
-          redisStatus = 'healthy';
-        } else {
-          redisStatus = 'unhealthy';
-        }
-      } catch (error) {
-        redisStatus = 'error';
-      }
-    }
+    // Test cache system (Redis + fallback)
+    const cacheHealth = await cacheManager.healthCheck();
+    const redisStatus = cacheHealth.redis ? 'healthy' : 'degraded';
 
     const responseTime = Date.now() - startTime;
     health.responseTime = responseTime;
@@ -61,6 +46,7 @@ export async function handleHealth(request: Request, env: Env): Promise<Response
       ...health,
       services: {
         api: 'healthy',
+        cache: cacheHealth.status,
         redis: redisStatus
       }
     };
@@ -78,6 +64,10 @@ export async function handleHealth(request: Request, env: Env): Promise<Response
         performance: {
           responseTime: `${responseTime}ms`,
           requestsPerSecond: 'N/A'
+        },
+        cache: {
+          ...cacheHealth.stats,
+          enabled: cacheManager.getRedisStats().enabled
         }
       };
     }

@@ -1,5 +1,7 @@
 // Cloudflare Pages adapter for admin API routes
 
+import { handleCacheAdmin } from './cache-admin';
+
 interface Env {
   UPSTASH_REDIS_REST_URL?: string;
   UPSTASH_REDIS_REST_TOKEN?: string;
@@ -24,7 +26,8 @@ export async function handleAdminRoutes(request: Request, env: Env, path: string
     case 'stats':
       return handleAdminStats(request, env);
     case 'cache':
-      return handleAdminCache(request, env);
+      // Handle cache admin with sub-paths
+      return handleCacheAdmin(request, env, path.slice(1));
     case 'health':
       return handleAdminHealth(request, env);
     default:

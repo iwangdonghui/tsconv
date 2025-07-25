@@ -17,6 +17,7 @@
     "verify:migration": "node scripts/verify-migration.js",
     "test:api-docs": "node scripts/test-api-docs.js",
     "monitor:production": "node scripts/monitor-production.js",
+    "test:cache": "node scripts/test-cache.js",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
     "test": "vitest",

@@ -1,5 +1,7 @@
 // Cloudflare Pages adapter for convert API
 
+import { CacheManager } from './cache-utils';
+
 // Simple timezone conversion function
 function convertTimezone(date: Date, fromTz: string, toTz: string): Date {
   // Basic timezone conversion using Intl API
@@ -27,6 +29,9 @@ export async function handleConvert(request: Request, env: Env): Promise<Respons
       headers: { 'Content-Type': 'application/json' }
     });
   }
+
+  const cacheManager = new CacheManager(env);
+  const startTime = Date.now();
 
   try {
     let timestamp: number;
@@ -124,9 +129,28 @@ export async function handleConvert(request: Request, env: Env): Promise<Respons
       outputFormats = body.outputFormats || [];
     }
 
+    // Generate cache key based on input parameters
+    const cacheKey = `${timestamp}_${outputFormats.join(',')}_${timezone || 'none'}_${targetTimezone || 'none'}`;
+
+    // Try to get cached result
+    const cachedResult = await cacheManager.get('CONVERT_API', cacheKey);
+    if (cachedResult) {
+      return new Response(JSON.stringify({
+        success: true,
+        data: cachedResult,
+        metadata: {
+          timestamp: new Date().toISOString(),
+          processingTime: Date.now() - startTime + 'ms',
+          cached: true
+        }
+      }), {
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
     // Perform conversion
     const date = new Date(timestamp * 1000);
-    
+
     const result = {
       timestamp,
       iso: date.toISOString(),
@@ -170,12 +194,18 @@ export async function handleConvert(request: Request, env: Env): Promise<Respons
       }
     }
 
+    // Cache the result for future requests
+    cacheManager.set('CONVERT_API', cacheKey, result).catch(error => {
+      console.error('Failed to cache convert result:', error);
+    });
+
     return new Response(JSON.stringify({
       success: true,
       data: result,
       metadata: {
         timestamp: new Date().toISOString(),
-        processingTime: Date.now() % 1000 + 'ms'
+        processingTime: Date.now() - startTime + 'ms',
+        cached: false
       }
     }), {
       headers: { 'Content-Type': 'application/json' }
