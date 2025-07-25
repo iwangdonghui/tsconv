@@ -223,12 +223,12 @@ async function performWorkingConversion(request: WorkingConvertRequest, startTim
   }
 
   // Perform the conversion using existing utility
-  const conversionResult = await convertTimestamp(timestamp, {
-    outputFormats: outputFormats,
+  const conversionResult = await convertTimestamp(
+    timestamp,
+    outputFormats,
     timezone,
-    targetTimezone,
-    includeMetadata
-  });
+    targetTimezone
+  );
 
   // Add relative time if requested
   let relative: string | undefined;

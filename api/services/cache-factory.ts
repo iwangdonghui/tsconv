@@ -239,14 +239,14 @@ export async function getCacheServiceHealth(): Promise<{
     
     await cacheService.set(testKey, testValue, 10); // 10 second TTL
     const retrieved = await cacheService.get(testKey);
-    await cacheService.delete(testKey);
+    await cacheService.del(testKey);
     
     const latency = Date.now() - startTime;
     
     // Get cache stats if available
     let stats;
     try {
-      stats = await cacheService.getStats();
+      stats = await cacheService.stats();
     } catch (error) {
       // Stats not available for all cache providers
     }

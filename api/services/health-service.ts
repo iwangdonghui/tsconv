@@ -117,7 +117,17 @@ class HealthService {
     details: any;
   }> {
     try {
-      return await getCacheServiceHealth();
+      const cacheHealth = await getCacheServiceHealth();
+      return {
+        status: cacheHealth.status,
+        type: 'cache',
+        details: {
+          provider: cacheHealth.provider,
+          latency: cacheHealth.latency,
+          error: cacheHealth.error,
+          stats: cacheHealth.stats
+        }
+      };
     } catch (error) {
       return {
         status: 'unhealthy',
@@ -138,7 +148,17 @@ class HealthService {
     details: any;
   }> {
     try {
-      return await getRateLimiterHealth();
+      const rateLimiterHealth = await getRateLimiterHealth();
+      return {
+        status: rateLimiterHealth.status,
+        type: 'rate-limiter',
+        details: {
+          provider: rateLimiterHealth.provider,
+          responseTime: rateLimiterHealth.responseTime,
+          error: rateLimiterHealth.error,
+          details: rateLimiterHealth.details
+        }
+      };
     } catch (error) {
       return {
         status: 'unhealthy',
@@ -164,11 +184,11 @@ class HealthService {
       const metrics = await getPerformanceMetrics({ timeRange: 'hour' });
       
       return {
-        responseTime: metrics.summary.averageResponseTime || 0,
-        errorRate: metrics.summary.errorRate || 0,
-        cacheHitRate: metrics.summary.cacheHitRate || 0,
-        rateLimitRate: metrics.summary.rateLimitRate || 0,
-        recentMetrics: metrics.recentMetrics.slice(0, 5) // Last 5 minutes
+        responseTime: metrics.averageResponseTime || 0,
+        errorRate: metrics.errorRate || 0,
+        cacheHitRate: 0, // Not available in current metrics
+        rateLimitRate: 0, // Not available in current metrics
+        recentMetrics: [] // Not available in current metrics
       };
     } catch (error) {
       console.warn('Failed to get performance metrics for health check:', error);

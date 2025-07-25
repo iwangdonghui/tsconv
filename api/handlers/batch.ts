@@ -348,12 +348,12 @@ async function processBatchItem(item: any, index: number, globalOptions: any): P
     }
 
     // Perform conversion
-    const conversionResult = await convertTimestamp(item.timestamp, {
-      outputFormats: outputFormats,
+    const conversionResult = await convertTimestamp(
+      item.timestamp,
+      outputFormats,
       timezone,
-      targetTimezone,
-      includeMetadata: globalOptions.includeMetadata
-    });
+      targetTimezone
+    );
 
     return {
       id: item.id,

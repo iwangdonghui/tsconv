@@ -337,7 +337,7 @@ async function getTimezoneList(region?: string, search?: string): Promise<any> {
     data: enrichedTimezones,
     metadata: {
       totalRegions: Object.keys(enrichedTimezones).length,
-      totalTimezones: Object.values(enrichedTimezones).reduce((sum, tzList) => sum + (Array.isArray(tzList) ? tzList.length : 0), 0),
+      totalTimezones: Object.values(enrichedTimezones).reduce((sum: number, tzList) => sum + (Array.isArray(tzList) ? tzList.length : 0), 0),
       filters: { region, search }
     }
   };
