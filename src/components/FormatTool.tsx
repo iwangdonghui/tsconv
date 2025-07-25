@@ -1,5 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Type, Clock, Copy, CheckCircle, AlertCircle, Palette } from 'lucide-react';
+import { useTheme } from '../contexts/ThemeContext';
+import { useLanguage } from '../contexts/LanguageContext';
+import { SEO } from './SEO';
+import Header from './Header';
+import Footer from './Footer';
 
 interface FormatResult {
   input: {
@@ -47,6 +52,9 @@ export default function FormatTool() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [copied, setCopied] = useState(false);
+
+  const { isDark } = useTheme();
+  const { t } = useLanguage();
 
   // Load format templates on component mount
   useEffect(() => {
@@ -165,7 +173,23 @@ export default function FormatTool() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto p-6 bg-white rounded-lg shadow-lg">
+    <div
+      className={`min-h-screen flex flex-col transition-colors duration-200 ${
+        isDark ? "bg-slate-900 text-white" : "bg-white text-slate-900"
+      }`}
+    >
+      <SEO
+        title="Date Format Tool - Custom Date Formatting | tsconv.com"
+        description="Format dates and timestamps with custom patterns. Choose from predefined templates or create your own date format patterns."
+        canonical="https://tsconv.com/format"
+        ogTitle="Date Format Tool - Custom Date Formatting"
+        ogDescription="Format dates and timestamps with custom patterns. Choose from predefined templates or create your own date format patterns."
+        keywords="date format, timestamp format, date formatting, custom date format, date patterns"
+      />
+      <Header />
+
+      <main className="flex-1 container mx-auto px-4 py-8">
+        <div className="max-w-4xl mx-auto p-6 bg-white dark:bg-slate-800 rounded-lg shadow-lg">
       <div className="flex items-center gap-3 mb-6">
         <Palette className="h-8 w-8 text-indigo-600" />
         <h2 className="text-2xl font-bold text-gray-900">Date Format Tool</h2>
@@ -412,6 +436,10 @@ export default function FormatTool() {
           )}
         </div>
       </div>
+        </div>
+      </main>
+
+      <Footer />
     </div>
   );
 }

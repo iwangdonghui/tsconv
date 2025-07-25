@@ -1,5 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Globe, Search, Filter, Clock, MapPin, AlertCircle } from 'lucide-react';
+import { useTheme } from '../contexts/ThemeContext';
+import { useLanguage } from '../contexts/LanguageContext';
+import { SEO } from './SEO';
+import Header from './Header';
+import Footer from './Footer';
 
 interface TimezoneInfo {
   id: string;
@@ -51,6 +56,9 @@ export default function TimezoneExplorer() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [currentTime, setCurrentTime] = useState(new Date());
+
+  const { isDark } = useTheme();
+  const { t } = useLanguage();
 
   // Update current time every second
   useEffect(() => {
@@ -144,7 +152,23 @@ export default function TimezoneExplorer() {
   };
 
   return (
-    <div className="max-w-6xl mx-auto p-6 bg-white rounded-lg shadow-lg">
+    <div
+      className={`min-h-screen flex flex-col transition-colors duration-200 ${
+        isDark ? "bg-slate-900 text-white" : "bg-white text-slate-900"
+      }`}
+    >
+      <SEO
+        title="Timezone Explorer - World Time Zones | tsconv.com"
+        description="Explore world timezones with search and filtering. View current time in different timezones and get detailed timezone information."
+        canonical="https://tsconv.com/timezones"
+        ogTitle="Timezone Explorer - World Time Zones"
+        ogDescription="Explore world timezones with search and filtering. View current time in different timezones and get detailed timezone information."
+        keywords="timezone explorer, world timezones, time zones, world clock, timezone search, timezone converter"
+      />
+      <Header />
+
+      <main className="flex-1 container mx-auto px-4 py-8">
+        <div className="max-w-6xl mx-auto p-6 bg-white dark:bg-slate-800 rounded-lg shadow-lg">
       <div className="flex items-center gap-3 mb-6">
         <Globe className="h-8 w-8 text-emerald-600" />
         <h2 className="text-2xl font-bold text-gray-900">Timezone Explorer</h2>
@@ -340,6 +364,10 @@ export default function TimezoneExplorer() {
           </button>
         </div>
       )}
+        </div>
+      </main>
+
+      <Footer />
     </div>
   );
 }

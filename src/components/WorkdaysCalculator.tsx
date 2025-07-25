@@ -1,5 +1,10 @@
 import React, { useState } from 'react';
 import { Calendar, Clock, Calculator, AlertCircle, CheckCircle } from 'lucide-react';
+import { useTheme } from '../contexts/ThemeContext';
+import { useLanguage } from '../contexts/LanguageContext';
+import { SEO } from './SEO';
+import Header from './Header';
+import Footer from './Footer';
 
 interface WorkdaysResult {
   startDate: string;
@@ -33,6 +38,9 @@ export default function WorkdaysCalculator() {
   const [result, setResult] = useState<WorkdaysResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  const { isDark } = useTheme();
+  const { t } = useLanguage();
 
   const calculateWorkdays = async () => {
     if (!startDate) {
@@ -90,7 +98,23 @@ export default function WorkdaysCalculator() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto p-6 bg-white rounded-lg shadow-lg">
+    <div
+      className={`min-h-screen flex flex-col transition-colors duration-200 ${
+        isDark ? "bg-slate-900 text-white" : "bg-white text-slate-900"
+      }`}
+    >
+      <SEO
+        title="Workdays Calculator - Business Days Counter | tsconv.com"
+        description="Calculate workdays and business days between dates. Exclude weekends and holidays for accurate business day calculations."
+        canonical="https://tsconv.com/workdays"
+        ogTitle="Workdays Calculator - Business Days Counter"
+        ogDescription="Calculate workdays and business days between dates. Exclude weekends and holidays for accurate business day calculations."
+        keywords="workdays calculator, business days, working days, date calculator, holiday calculator"
+      />
+      <Header />
+
+      <main className="flex-1 container mx-auto px-4 py-8">
+        <div className="max-w-4xl mx-auto p-6 bg-white dark:bg-slate-800 rounded-lg shadow-lg">
       <div className="flex items-center gap-3 mb-6">
         <Calculator className="h-8 w-8 text-blue-600" />
         <h2 className="text-2xl font-bold text-gray-900">Workdays Calculator</h2>
@@ -341,6 +365,10 @@ export default function WorkdaysCalculator() {
           )}
         </div>
       </div>
+        </div>
+      </main>
+
+      <Footer />
     </div>
   );
 }
