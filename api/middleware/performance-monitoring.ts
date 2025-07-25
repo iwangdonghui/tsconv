@@ -474,8 +474,8 @@ export async function getPerformanceMetrics(options?: {
   const cutoffTime = now - timeRange;
   
   // Filter metrics by time range
-  const recentMetrics = Array.from(metricsStore.values()).filter(
-    metric => metric.timestamp >= cutoffTime
+  const recentMetrics = metricsStore.getMetrics(1000).filter(
+    (metric: PerformanceMetrics) => metric.timestamp >= cutoffTime
   );
   
   if (recentMetrics.length === 0) {

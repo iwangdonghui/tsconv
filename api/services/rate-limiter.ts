@@ -45,7 +45,7 @@ export class MemoryRateLimiter implements RateLimiter {
       allowed,
       remaining,
       resetTime: entry.resetTime,
-      totalRequests: entry.count
+      totalLimit: rule.limit
     };
   }
 
@@ -67,7 +67,7 @@ export class MemoryRateLimiter implements RateLimiter {
         allowed: true,
         remaining: rule.limit - 1,
         resetTime: entry.resetTime,
-        totalRequests: 1
+        totalLimit: rule.limit
       };
     }
     
@@ -81,7 +81,7 @@ export class MemoryRateLimiter implements RateLimiter {
       allowed,
       remaining,
       resetTime: entry.resetTime,
-      totalRequests: entry.count
+      totalLimit: rule.limit
     };
   }
 
@@ -98,19 +98,19 @@ export class MemoryRateLimiter implements RateLimiter {
     if (!entry || entry.resetTime <= now) {
       return {
         identifier,
-        currentRequests: 0,
-        remainingRequests: this.config.maxRequests,
-        resetTime: now + this.config.windowMs,
-        windowMs: this.config.windowMs
+        currentCount: 0,
+        limit: this.config.maxRequests,
+        window: this.config.windowMs,
+        resetTime: now + this.config.windowMs
       };
     }
     
     return {
       identifier,
-      currentRequests: entry.count,
-      remainingRequests: Math.max(0, this.config.maxRequests - entry.count),
-      resetTime: entry.resetTime,
-      windowMs: this.config.windowMs
+      currentCount: entry.count,
+      limit: this.config.maxRequests,
+      window: this.config.windowMs,
+      resetTime: entry.resetTime
     };
   }
 
