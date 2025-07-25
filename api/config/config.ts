@@ -1,4 +1,4 @@
-import { APIConfiguration, RateLimitRule } from '../types/api';
+import { APIConfiguration, RateLimitRule } from '../_shared';
 
 // Load environment variables with fallbacks
 const config: APIConfiguration = {

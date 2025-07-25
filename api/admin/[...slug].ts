@@ -1,5 +1,9 @@
-import { VercelRequest, VercelResponse } from '@vercel/node';
-import { APIErrorHandler, withCors } from '../utils/response';
+import {
+  VercelRequest,
+  VercelResponse,
+  APIErrorHandler,
+  withCors
+} from '../_shared';
 
 // Import admin handlers
 async function redisAdminHandler(req: VercelRequest, res: VercelResponse) {

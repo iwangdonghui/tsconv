@@ -1,5 +1,9 @@
-import { VercelRequest, VercelResponse } from '@vercel/node';
-import { APIErrorHandler, withCors } from '../utils/response';
+import {
+  VercelRequest,
+  VercelResponse,
+  APIErrorHandler,
+  withCors
+} from '../_shared';
 
 // Import handlers
 import batchConvertHandler from '../handlers/batch-convert';
