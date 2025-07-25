@@ -8,7 +8,7 @@ interface Env {
   CACHING_ENABLED?: string;
 }
 
-// Import core handlers (we'll need to adapt these for Cloudflare)
+// Import core handlers
 import { handleConvert } from '../../api-handlers/convert';
 import { handleNow } from '../../api-handlers/now';
 import { handleHealth } from '../../api-handlers/health';

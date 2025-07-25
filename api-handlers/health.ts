@@ -26,7 +26,7 @@ export async function handleHealth(request: Request, env: Env): Promise<Response
     const health = {
       status: 'healthy',
       timestamp: new Date().toISOString(),
-      uptime: process.uptime ? Math.floor(process.uptime()) : 0,
+      uptime: 0, // Not available in Cloudflare Workers
       version: '1.0.0',
       environment: env.NODE_ENV || 'production',
       responseTime: 0

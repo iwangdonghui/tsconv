@@ -7,12 +7,3 @@ vars = { NODE_ENV = "production" }
 
 [env.preview]
 vars = { NODE_ENV = "development" }
-
-# Cloudflare Pages Functions configuration
-[[env.production.services]]
-binding = "CACHE"
-service = "cache-service"
-
-[[env.production.services]]
-binding = "RATE_LIMITER"
-service = "rate-limiter-service"
