@@ -180,11 +180,11 @@ export default function FormatTool() {
     >
       <SEO
         title="Date Format Tool - Custom Date Formatting | tsconv.com"
-        description="Format dates and timestamps with custom patterns. Choose from predefined templates or create your own date format patterns."
+        description="Format dates and timestamps with custom patterns. Choose from 17 predefined templates or create your own date format patterns. Support for ISO, US, EU, and custom formats."
         canonical="https://tsconv.com/format"
         ogTitle="Date Format Tool - Custom Date Formatting"
-        ogDescription="Format dates and timestamps with custom patterns. Choose from predefined templates or create your own date format patterns."
-        keywords="date format, timestamp format, date formatting, custom date format, date patterns"
+        ogDescription="Format dates and timestamps with custom patterns. Choose from 17 predefined templates or create your own date format patterns. Support for ISO, US, EU, and custom formats."
+        keywords="date format, timestamp format, date formatting, custom date format, date patterns, ISO format, date template, time formatting"
       />
       <Header />
 
@@ -192,7 +192,7 @@ export default function FormatTool() {
         <div className="max-w-4xl mx-auto p-6 bg-white dark:bg-slate-800 rounded-lg shadow-lg">
       <div className="flex items-center gap-3 mb-6">
         <Palette className="h-8 w-8 text-indigo-600" />
-        <h2 className="text-2xl font-bold text-gray-900">Date Format Tool</h2>
+        <h2 className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>Date Format Tool</h2>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -200,7 +200,7 @@ export default function FormatTool() {
         <div className="space-y-6">
           {/* Input Type */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
               Input Type
             </label>
             <div className="flex gap-4">
@@ -209,6 +209,7 @@ export default function FormatTool() {
                   type="radio"
                   value="timestamp"
                   checked={inputType === 'timestamp'}
+                  aria-label="Use timestamp as input"
                   onChange={(e) => setInputType(e.target.value as 'timestamp')}
                   className="mr-2"
                 />
@@ -219,6 +220,7 @@ export default function FormatTool() {
                   type="radio"
                   value="date"
                   checked={inputType === 'date'}
+                  aria-label="Use date as input"
                   onChange={(e) => setInputType(e.target.value as 'date')}
                   className="mr-2"
                 />
@@ -230,11 +232,12 @@ export default function FormatTool() {
           {/* Input Fields */}
           {inputType === 'timestamp' ? (
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
                 Timestamp (Unix seconds)
               </label>
               <input
                 type="number"
+                  aria-label="Enter number of days"
                 value={timestamp}
                 onChange={(e) => setTimestamp(e.target.value)}
                 placeholder="e.g., 1640995200"
@@ -242,7 +245,7 @@ export default function FormatTool() {
               />
               <button
                 onClick={useCurrentTimestamp}
-                className="mt-1 text-sm text-indigo-600 hover:text-indigo-800"
+                className={`mt-1 text-sm transition-colors ${isDark ? 'text-indigo-400 hover:text-indigo-300' : 'text-indigo-600 hover:text-indigo-800'}`}
               >
                 Use current timestamp
               </button>
@@ -250,36 +253,38 @@ export default function FormatTool() {
           ) : (
             <>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
                   Date
                 </label>
                 <input
                   type="date"
+                  aria-label="Select date"
                   value={date}
                   onChange={(e) => setDate(e.target.value)}
                   className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                 />
                 <button
                   onClick={useTodayDate}
-                  className="mt-1 text-sm text-indigo-600 hover:text-indigo-800"
+                  className={`mt-1 text-sm transition-colors ${isDark ? 'text-indigo-400 hover:text-indigo-300' : 'text-indigo-600 hover:text-indigo-800'}`}
                 >
                   Use today
                 </button>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
                   Time (optional)
                 </label>
                 <input
                   type="time"
+                  aria-label="Select time"
                   value={time}
                   onChange={(e) => setTime(e.target.value)}
                   className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                 />
                 <button
                   onClick={useCurrentTime}
-                  className="mt-1 text-sm text-indigo-600 hover:text-indigo-800"
+                  className={`mt-1 text-sm transition-colors ${isDark ? 'text-indigo-400 hover:text-indigo-300' : 'text-indigo-600 hover:text-indigo-800'}`}
                 >
                   Use current time
                 </button>
@@ -289,7 +294,7 @@ export default function FormatTool() {
 
           {/* Format Selection */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
               Format Template
             </label>
             <select
@@ -316,7 +321,7 @@ export default function FormatTool() {
           {/* Custom Format */}
           {format === 'custom' && (
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
                 Custom Format Pattern
               </label>
               <input
@@ -324,6 +329,7 @@ export default function FormatTool() {
                 value={customFormat}
                 onChange={(e) => setCustomFormat(e.target.value)}
                 placeholder="e.g., YYYY-MM-DD HH:mm:ss"
+                  aria-label="Enter custom date format pattern"
                 className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
               />
               <div className="mt-1 text-xs text-gray-500">
@@ -334,7 +340,7 @@ export default function FormatTool() {
 
           {/* Error Display */}
           {error && (
-            <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-md">
+            <div className={`flex items-center gap-2 p-3 rounded-md border ${isDark ? 'bg-red-900/20 border-red-800 text-red-200' : 'bg-red-50 border-red-200 text-red-700'}`} role="alert" aria-live="polite">
               <AlertCircle className="h-4 w-4 text-red-500" />
               <span className="text-sm text-red-700">{error}</span>
             </div>
@@ -346,6 +352,7 @@ export default function FormatTool() {
               onClick={formatDateTime}
               disabled={loading}
               className="flex-1 bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              aria-label="Format date with selected pattern"
             >
               {loading ? (
                 <>
@@ -361,7 +368,8 @@ export default function FormatTool() {
             </button>
             <button
               onClick={resetForm}
-              className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50"
+              aria-label="Reset form to default values"
+              className={`px-4 py-2 border rounded-md transition-colors ${isDark ? 'border-slate-600 hover:bg-slate-700 text-white' : 'border-gray-300 hover:bg-gray-50 text-gray-900'}`}
             >
               Reset
             </button>
@@ -369,12 +377,12 @@ export default function FormatTool() {
         </div>
 
         {/* Results */}
-        <div className="space-y-4">
+        <div className="space-y-4" role="region" aria-label="Formatted date results">
           {result && (
             <>
               <div className="flex items-center gap-2 mb-4">
                 <CheckCircle className="h-5 w-5 text-green-500" />
-                <h3 className="text-lg font-semibold text-gray-900">Formatted Result</h3>
+                <h3 className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>Formatted Result</h3>
                 {result.metadata.cached && (
                   <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">
                     Cached
@@ -383,25 +391,26 @@ export default function FormatTool() {
               </div>
 
               {/* Main Result */}
-              <div className="bg-gradient-to-r from-indigo-50 to-purple-50 p-4 rounded-lg border">
+              <div className={`p-4 rounded-lg border ${isDark ? 'bg-gradient-to-r from-indigo-900/20 to-purple-900/20 border-slate-600' : 'bg-gradient-to-r from-indigo-50 to-purple-50 border-gray-200'}`}>
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-sm font-medium text-gray-700">Formatted Output:</span>
                   <button
                     onClick={() => copyToClipboard(result.data.output.formatted)}
-                    className="flex items-center gap-1 text-sm text-indigo-600 hover:text-indigo-800"
+                    aria-label="Copy result to clipboard"
+                    className={`flex items-center gap-1 text-sm transition-colors ${isDark ? 'text-indigo-400 hover:text-indigo-300' : 'text-indigo-600 hover:text-indigo-800'}`}
                   >
                     {copied ? <CheckCircle className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
                     {copied ? 'Copied!' : 'Copy'}
                   </button>
                 </div>
-                <div className="text-xl font-mono bg-white p-3 rounded border">
+                <div className={`text-xl font-mono p-3 rounded border ${isDark ? 'bg-slate-700 border-slate-600 text-white' : 'bg-white border-gray-200 text-gray-900'}`}>
                   {result.data.output.formatted}
                 </div>
               </div>
 
               {/* Template Info */}
               {result.data.template && (
-                <div className="bg-blue-50 p-4 rounded-lg">
+                <div className={`p-4 rounded-lg ${isDark ? 'bg-blue-900/20 border border-blue-800' : 'bg-blue-50'}`}>
                   <h4 className="font-medium text-blue-800 mb-2">Template Used:</h4>
                   <div className="text-sm text-blue-700">
                     <div><strong>Name:</strong> {result.data.template.name}</div>
@@ -411,7 +420,7 @@ export default function FormatTool() {
               )}
 
               {/* Input Details */}
-              <div className="bg-gray-50 p-4 rounded-lg">
+              <div className={`p-4 rounded-lg ${isDark ? 'bg-slate-700' : 'bg-gray-50'}`}>
                 <h4 className="font-medium text-gray-800 mb-2">Input Details:</h4>
                 <div className="text-sm text-gray-600 space-y-1">
                   {result.data.input.timestamp && (
@@ -429,7 +438,7 @@ export default function FormatTool() {
           )}
 
           {!result && !loading && (
-            <div className="text-center text-gray-500 py-8">
+            <div className={`text-center py-8 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
               <Type className="h-12 w-12 mx-auto mb-4 text-gray-300" />
               <p>Enter a timestamp or date and select a format to see the result</p>
             </div>

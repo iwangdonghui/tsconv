@@ -242,9 +242,8 @@ function formatDate(params: FormatRequest): any {
 }
 
 function applyFormat(date: Date, format: string, timezone?: string, locale?: string): string {
-  // This is a simplified implementation
-  // In a real application, you'd use a library like moment.js or date-fns
-  
+  // Enhanced implementation with proper month names and ordinals
+
   const year = date.getFullYear();
   const month = date.getMonth() + 1;
   const day = date.getDate();
@@ -253,24 +252,80 @@ function applyFormat(date: Date, format: string, timezone?: string, locale?: str
   const seconds = date.getSeconds();
   const milliseconds = date.getMilliseconds();
 
-  // Basic replacements
-  let result = format
-    .replace(/YYYY/g, year.toString())
-    .replace(/MM/g, month.toString().padStart(2, '0'))
-    .replace(/DD/g, day.toString().padStart(2, '0'))
-    .replace(/HH/g, hours.toString().padStart(2, '0'))
-    .replace(/mm/g, minutes.toString().padStart(2, '0'))
-    .replace(/ss/g, seconds.toString().padStart(2, '0'))
-    .replace(/SSS/g, milliseconds.toString().padStart(3, '0'))
-    .replace(/sss/g, milliseconds.toString().padStart(3, '0'));
+  // Month names
+  const monthNames = [
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December'
+  ];
 
-  // Handle special cases
+  const monthNamesShort = [
+    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+  ];
+
+  // Day names
+  const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  const dayNamesShort = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+  // Ordinal suffix
+  const getOrdinalSuffix = (day: number): string => {
+    if (day >= 11 && day <= 13) return 'th';
+    switch (day % 10) {
+      case 1: return 'st';
+      case 2: return 'nd';
+      case 3: return 'rd';
+      default: return 'th';
+    }
+  };
+
+  // Handle special cases first
   if (format === 'X') {
     return Math.floor(date.getTime() / 1000).toString();
   }
   if (format === 'x') {
     return date.getTime().toString();
   }
+
+  // Advanced replacements - order matters! Longer patterns first
+  let result = format
+    // Year
+    .replace(/YYYY/g, year.toString())
+    .replace(/YY/g, year.toString().slice(-2))
+
+    // Month - longer patterns first to avoid conflicts
+    .replace(/MMMM/g, monthNames[month - 1])
+    .replace(/MMM/g, monthNamesShort[month - 1])
+    .replace(/MM/g, month.toString().padStart(2, '0'))
+    .replace(/\bM\b/g, month.toString()) // Use word boundary to avoid conflicts
+
+    // Day - longer patterns first
+    .replace(/dddd/g, dayNames[date.getDay()])
+    .replace(/ddd/g, dayNamesShort[date.getDay()])
+    .replace(/Do/g, day.toString() + getOrdinalSuffix(day))
+    .replace(/DD/g, day.toString().padStart(2, '0'))
+    .replace(/\bD\b/g, day.toString()) // Use word boundary
+
+    // Hour - longer patterns first
+    .replace(/HH/g, hours.toString().padStart(2, '0'))
+    .replace(/hh/g, (hours % 12 || 12).toString().padStart(2, '0'))
+    .replace(/\bH\b/g, hours.toString()) // Use word boundary
+    .replace(/\bh\b/g, (hours % 12 || 12).toString())
+
+    // Minute - longer patterns first
+    .replace(/mm/g, minutes.toString().padStart(2, '0'))
+    .replace(/\bm\b/g, minutes.toString()) // Use word boundary
+
+    // Second - longer patterns first
+    .replace(/ss/g, seconds.toString().padStart(2, '0'))
+    .replace(/\bs\b/g, seconds.toString()) // Use word boundary
+
+    // Millisecond
+    .replace(/SSS/g, milliseconds.toString().padStart(3, '0'))
+    .replace(/sss/g, milliseconds.toString().padStart(3, '0'))
+
+    // AM/PM
+    .replace(/A/g, hours >= 12 ? 'PM' : 'AM')
+    .replace(/a/g, hours >= 12 ? 'pm' : 'am');
 
   // Handle timezone offset
   if (result.includes('Z')) {

@@ -159,11 +159,11 @@ export default function TimezoneExplorer() {
     >
       <SEO
         title="Timezone Explorer - World Time Zones | tsconv.com"
-        description="Explore world timezones with search and filtering. View current time in different timezones and get detailed timezone information."
+        description="Explore world timezones with search and filtering. View current time in different timezones and get detailed timezone information. Real-time world clock with IANA timezone support."
         canonical="https://tsconv.com/timezones"
         ogTitle="Timezone Explorer - World Time Zones"
-        ogDescription="Explore world timezones with search and filtering. View current time in different timezones and get detailed timezone information."
-        keywords="timezone explorer, world timezones, time zones, world clock, timezone search, timezone converter"
+        ogDescription="Explore world timezones with search and filtering. View current time in different timezones and get detailed timezone information. Real-time world clock with IANA timezone support."
+        keywords="timezone explorer, world timezones, time zones, world clock, timezone search, timezone converter, IANA timezones, UTC offset, GMT"
       />
       <Header />
 
@@ -171,7 +171,7 @@ export default function TimezoneExplorer() {
         <div className="max-w-6xl mx-auto p-6 bg-white dark:bg-slate-800 rounded-lg shadow-lg">
       <div className="flex items-center gap-3 mb-6">
         <Globe className="h-8 w-8 text-emerald-600" />
-        <h2 className="text-2xl font-bold text-gray-900">Timezone Explorer</h2>
+        <h2 className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>Timezone Explorer</h2>
       </div>
 
       {/* Filters */}
@@ -179,12 +179,13 @@ export default function TimezoneExplorer() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
           {/* Search */}
           <div className="relative">
-            <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+            <Search className={`absolute left-3 top-3 h-4 w-4 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search timezones..."
+                  aria-label="Search timezones by name or region"
               className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
             />
           </div>
@@ -286,26 +287,28 @@ export default function TimezoneExplorer() {
       {!loading && timezones.length > 0 && (
         <div className="space-y-4">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-900">
+            <h3 className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
               Timezones ({timezones.length} shown)
             </h3>
-            <div className="text-sm text-gray-600">
+            <div className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
               Current UTC time: {currentTime.toUTCString()}
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" role="list" aria-label="Timezone list">
             {timezones.map((timezone) => (
               <div
                 key={timezone.id}
-                className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
+                className={`border rounded-lg p-4 hover:shadow-md transition-shadow ${isDark ? 'bg-slate-700 border-slate-600' : 'bg-white border-gray-200'}`}
+                role="listitem"
+                aria-label={`${timezone.name} timezone information`}
               >
                 <div className="flex items-start justify-between mb-2">
                   <div className="flex items-center gap-2">
                     <span className="text-lg">{getRegionIcon(timezone.region)}</span>
                     <div>
                       <h4 className="font-medium text-gray-900">{timezone.city || timezone.name}</h4>
-                      <p className="text-sm text-gray-600">{timezone.id}</p>
+                      <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>{timezone.id}</p>
                     </div>
                   </div>
                   <div className={`text-sm font-mono ${getOffsetColor(timezone.offset)}`}>
@@ -315,7 +318,7 @@ export default function TimezoneExplorer() {
 
                 <div className="space-y-2">
                   <div className="flex items-center gap-2">
-                    <Clock className="h-4 w-4 text-gray-400" />
+                    <Clock className={`h-4 w-4 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />
                     <span className="font-mono text-lg">
                       {getTimeInTimezone(timezone)}
                     </span>
@@ -324,13 +327,13 @@ export default function TimezoneExplorer() {
                   {format === 'detailed' && (
                     <>
                       <div className="flex items-center gap-2">
-                        <MapPin className="h-4 w-4 text-gray-400" />
-                        <span className="text-sm text-gray-600">
+                        <MapPin className={`h-4 w-4 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />
+                        <span className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
                           {timezone.region} {timezone.country && `• ${timezone.country}`}
                         </span>
                       </div>
 
-                      <div className="text-sm text-gray-600">
+                      <div className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
                         <span className="font-medium">{timezone.abbreviation}</span>
                         {timezone.isDST && (
                           <span className="ml-2 text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded">
@@ -339,7 +342,7 @@ export default function TimezoneExplorer() {
                         )}
                       </div>
 
-                      <div className="text-xs text-gray-500">
+                      <div className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
                         {timezone.utcOffset} • {timezone.offsetMinutes > 0 ? '+' : ''}{timezone.offsetMinutes} minutes
                       </div>
                     </>
@@ -353,7 +356,7 @@ export default function TimezoneExplorer() {
 
       {/* No Results */}
       {!loading && timezones.length === 0 && (
-        <div className="text-center text-gray-500 py-8">
+        <div className={`text-center py-8 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
           <Globe className="h-12 w-12 mx-auto mb-4 text-gray-300" />
           <p>No timezones found matching your criteria</p>
           <button
