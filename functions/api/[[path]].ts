@@ -22,7 +22,12 @@ export async function onRequest(context: {
 }): Promise<Response> {
   const { request, env, params } = context;
   const url = new URL(request.url);
+  const hostname = url.hostname;
   const path = params.path || [];
+
+  // Handle api.tsconv.com subdomain - remove /api prefix from path
+  const isApiSubdomain = hostname === 'api.tsconv.com';
+  const apiPath = isApiSubdomain ? path : path;
   
   // Add CORS headers
   const corsHeaders = {
@@ -40,29 +45,36 @@ export async function onRequest(context: {
     let response: Response;
 
     // Route to appropriate handler based on path
-    if (path.length === 0) {
+    if (apiPath.length === 0) {
       // Root API endpoint
       response = new Response(JSON.stringify({
         message: 'Timestamp Converter API',
         version: '1.0.0',
-        endpoints: ['/convert', '/now', '/health', '/v1/*', '/admin/*']
+        domain: hostname,
+        endpoints: isApiSubdomain
+          ? ['/convert', '/now', '/health', '/v1/*', '/admin/*']
+          : ['/api/convert', '/api/now', '/api/health', '/api/v1/*', '/api/admin/*']
       }), {
         headers: { 'Content-Type': 'application/json' }
       });
-    } else if (path[0] === 'convert') {
+    } else if (apiPath[0] === 'convert') {
       response = await handleConvert(request, env);
-    } else if (path[0] === 'now') {
+    } else if (apiPath[0] === 'now') {
       response = await handleNow(request, env);
-    } else if (path[0] === 'health') {
+    } else if (apiPath[0] === 'health') {
       response = await handleHealth(request, env);
-    } else if (path[0] === 'v1') {
-      response = await handleV1Routes(request, env, path.slice(1));
-    } else if (path[0] === 'admin') {
-      response = await handleAdminRoutes(request, env, path.slice(1));
+    } else if (apiPath[0] === 'v1') {
+      response = await handleV1Routes(request, env, apiPath.slice(1));
+    } else if (apiPath[0] === 'admin') {
+      response = await handleAdminRoutes(request, env, apiPath.slice(1));
     } else {
       response = new Response(JSON.stringify({
         error: 'Not Found',
-        message: `API endpoint /${path.join('/')} not found`
+        message: `API endpoint /${apiPath.join('/')} not found`,
+        domain: hostname,
+        availableEndpoints: isApiSubdomain
+          ? ['/convert', '/now', '/health', '/v1/*', '/admin/*']
+          : ['/api/convert', '/api/now', '/api/health', '/api/v1/*', '/api/admin/*']
       }), {
         status: 404,
         headers: { 'Content-Type': 'application/json' }

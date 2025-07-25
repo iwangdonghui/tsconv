@@ -7,3 +7,6 @@ vars = { NODE_ENV = "production" }
 
 [env.preview]
 vars = { NODE_ENV = "development" }
+
+# Custom domains will be configured in Cloudflare Dashboard
+# This supports both tsconv.com and api.tsconv.com
