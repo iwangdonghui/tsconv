@@ -14,6 +14,12 @@ const Guide = lazy(() => import('./components/Guide'));
 const HowTo = lazy(() => import('./components/HowTo'));
 const HealthPage = lazy(() => import('./components/HealthPage'));
 
+// 新功能组件
+const WorkdaysCalculator = lazy(() => import('./components/WorkdaysCalculator'));
+const DateDiffCalculator = lazy(() => import('./components/DateDiffCalculator'));
+const FormatTool = lazy(() => import('./components/FormatTool'));
+const TimezoneExplorer = lazy(() => import('./components/TimezoneExplorer'));
+
 function App() {
   return (
     <ErrorBoundary>
@@ -30,6 +36,12 @@ function App() {
                 <Route path="/guide/:articleId" element={<Guide />} />
                 <Route path="/how-to" element={<HowTo />} />
                 <Route path="/how-to/:articleId" element={<HowTo />} />
+
+                {/* 新功能页面 */}
+                <Route path="/workdays" element={<WorkdaysCalculator />} />
+                <Route path="/date-diff" element={<DateDiffCalculator />} />
+                <Route path="/format" element={<FormatTool />} />
+                <Route path="/timezones" element={<TimezoneExplorer />} />
               </Routes>
             </Suspense>
           </Router>
