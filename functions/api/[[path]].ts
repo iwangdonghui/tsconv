@@ -15,6 +15,12 @@ import { handleHealth } from '../../api-handlers/health';
 import { handleV1Routes } from '../../api-handlers/v1-router';
 import { handleAdminRoutes } from '../../api-handlers/admin-router';
 
+// Import new API handlers
+import { handleWorkdays } from '../../api-handlers/workdays';
+import { handleDateDiff } from '../../api-handlers/date-diff';
+import { handleFormat } from '../../api-handlers/format';
+import { handleTimezonesEnhanced } from '../../api-handlers/timezones-enhanced';
+
 export async function onRequest(context: {
   request: Request;
   env: Env;
@@ -52,8 +58,8 @@ export async function onRequest(context: {
         version: '1.0.0',
         domain: hostname,
         endpoints: isApiSubdomain
-          ? ['/convert', '/now', '/health', '/v1/*', '/admin/*']
-          : ['/api/convert', '/api/now', '/api/health', '/api/v1/*', '/api/admin/*']
+          ? ['/convert', '/now', '/health', '/workdays', '/date-diff', '/format', '/timezones', '/v1/*', '/admin/*']
+          : ['/api/convert', '/api/now', '/api/health', '/api/workdays', '/api/date-diff', '/api/format', '/api/timezones', '/api/v1/*', '/api/admin/*']
       }), {
         headers: { 'Content-Type': 'application/json' }
       });
@@ -67,6 +73,14 @@ export async function onRequest(context: {
       response = await handleV1Routes(request, env, apiPath.slice(1));
     } else if (apiPath[0] === 'admin') {
       response = await handleAdminRoutes(request, env, apiPath.slice(1));
+    } else if (apiPath[0] === 'workdays') {
+      response = await handleWorkdays(request, env);
+    } else if (apiPath[0] === 'date-diff') {
+      response = await handleDateDiff(request, env);
+    } else if (apiPath[0] === 'format') {
+      response = await handleFormat(request, env);
+    } else if (apiPath[0] === 'timezones') {
+      response = await handleTimezonesEnhanced(request, env);
     } else {
       response = new Response(JSON.stringify({
         error: 'Not Found',
