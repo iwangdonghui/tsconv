@@ -81,6 +81,22 @@ export default function TimezoneExplorer() {
     return () => clearTimeout(debounceTimer);
   }, [searchQuery, selectedRegion, selectedCountry, selectedOffset, format]);
 
+  // Reset dependent filters when parent filter changes
+  useEffect(() => {
+    if (selectedRegion) {
+      // Reset country and offset when region changes
+      setSelectedCountry('');
+      setSelectedOffset('');
+    }
+  }, [selectedRegion]);
+
+  useEffect(() => {
+    if (selectedCountry) {
+      // Reset offset when country changes
+      setSelectedOffset('');
+    }
+  }, [selectedCountry]);
+
   const loadTimezones = async () => {
     setLoading(true);
     setError('');
@@ -122,11 +138,27 @@ export default function TimezoneExplorer() {
 
   const getTimeInTimezone = (timezone: TimezoneInfo): string => {
     try {
-      // Simple calculation (in real app, use proper timezone library)
-      const utcTime = currentTime.getTime() + (currentTime.getTimezoneOffset() * 60000);
+      // Get current UTC time
+      const now = new Date();
+      const utcTime = now.getTime() + (now.getTimezoneOffset() * 60000);
+
+      // Calculate timezone time
       const timezoneTime = new Date(utcTime + (timezone.offsetMinutes * 60000));
-      return timezoneTime.toLocaleTimeString();
-    } catch {
+
+      // Validate the date
+      if (isNaN(timezoneTime.getTime())) {
+        return 'Invalid time';
+      }
+
+      // Format time
+      return timezoneTime.toLocaleTimeString('en-US', {
+        hour12: false,
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+      });
+    } catch (error) {
+      console.error('Error calculating timezone time:', error);
       return 'N/A';
     }
   };
@@ -219,6 +251,38 @@ export default function TimezoneExplorer() {
       <div className="flex items-center gap-3 mb-6">
         <Globe className="h-8 w-8 text-blue-600" />
         <h2 className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>Timezone Explorer</h2>
+      </div>
+
+      {/* SEO Content */}
+      <div className={`mb-8 p-6 rounded-lg ${isDark ? 'bg-slate-800' : 'bg-blue-50'}`}>
+        <h3 className={`text-lg font-semibold mb-3 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+          Explore World Time Zones in Real-Time
+        </h3>
+        <p className={`mb-4 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
+          Navigate through global time zones with our comprehensive timezone explorer. View current times across
+          different regions, search by location, and filter by continent, country, or UTC offset.
+          Essential for international business, travel planning, and global team coordination.
+        </p>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <h4 className={`font-medium mb-2 ${isDark ? 'text-blue-400' : 'text-blue-600'}`}>Features:</h4>
+            <ul className={`text-sm space-y-1 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
+              <li>• Real-time clock updates</li>
+              <li>• IANA timezone database</li>
+              <li>• Advanced filtering options</li>
+              <li>• Detailed timezone information</li>
+            </ul>
+          </div>
+          <div>
+            <h4 className={`font-medium mb-2 ${isDark ? 'text-blue-400' : 'text-blue-600'}`}>Ideal for:</h4>
+            <ul className={`text-sm space-y-1 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
+              <li>• International meeting scheduling</li>
+              <li>• Global team coordination</li>
+              <li>• Travel time planning</li>
+              <li>• Timestamp conversion reference</li>
+            </ul>
+          </div>
+        </div>
       </div>
 
       {/* Filters */}

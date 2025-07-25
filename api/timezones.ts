@@ -201,10 +201,25 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const limitNum = parseInt(limit);
     const limited = filtered.slice(0, limitNum);
     
-    // Get unique values for filters
+    // Get unique values for filters with cascading logic
     const regions = [...new Set(TIMEZONE_DATA.map(tz => tz.region))].sort();
-    const countries = [...new Set(TIMEZONE_DATA.map(tz => tz.country))].sort();
-    const offsets = [...new Set(TIMEZONE_DATA.map(tz => tz.offset))].sort();
+
+    // Filter countries based on selected region
+    let availableCountries = TIMEZONE_DATA;
+    if (region) {
+      availableCountries = TIMEZONE_DATA.filter(tz => tz.region === region);
+    }
+    const countries = [...new Set(availableCountries.map(tz => tz.country))].sort();
+
+    // Filter offsets based on selected region and country
+    let availableOffsets = TIMEZONE_DATA;
+    if (region) {
+      availableOffsets = availableOffsets.filter(tz => tz.region === region);
+    }
+    if (country) {
+      availableOffsets = availableOffsets.filter(tz => tz.country === country);
+    }
+    const offsets = [...new Set(availableOffsets.map(tz => tz.offset))].sort();
     
     const result = {
       timezones: limited,

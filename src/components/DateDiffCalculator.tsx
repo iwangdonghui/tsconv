@@ -151,6 +151,24 @@ export default function DateDiffCalculator() {
             filter: ${isDark ? 'invert(1)' : 'none'};
             cursor: pointer;
           }
+
+          /* Enhanced dark mode support */
+          ${isDark ? `
+            input[type="date"]::-webkit-datetime-edit-fields-wrapper,
+            input[type="time"]::-webkit-datetime-edit-fields-wrapper {
+              background: transparent;
+            }
+
+            input[type="date"]::-webkit-datetime-edit-text,
+            input[type="time"]::-webkit-datetime-edit-text,
+            input[type="date"]::-webkit-datetime-edit-month-field,
+            input[type="date"]::-webkit-datetime-edit-day-field,
+            input[type="date"]::-webkit-datetime-edit-year-field,
+            input[type="time"]::-webkit-datetime-edit-hour-field,
+            input[type="time"]::-webkit-datetime-edit-minute-field {
+              color: white;
+            }
+          ` : ''}
         `
       }} />
 
@@ -159,6 +177,38 @@ export default function DateDiffCalculator() {
       <div className="flex items-center gap-3 mb-6">
         <TrendingUp className="h-8 w-8 text-blue-600" />
         <h2 className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>Date Difference Calculator</h2>
+      </div>
+
+      {/* SEO Content */}
+      <div className={`mb-8 p-6 rounded-lg ${isDark ? 'bg-slate-800' : 'bg-blue-50'}`}>
+        <h3 className={`text-lg font-semibold mb-3 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+          Precise Time Difference Calculations
+        </h3>
+        <p className={`mb-4 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
+          Calculate the exact difference between two dates and times with our advanced date difference calculator.
+          Get results in multiple formats including years, months, weeks, days, hours, minutes, and seconds.
+          Perfect for age calculations, event planning, and timestamp analysis.
+        </p>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <h4 className={`font-medium mb-2 ${isDark ? 'text-blue-400' : 'text-blue-600'}`}>Calculation Options:</h4>
+            <ul className={`text-sm space-y-1 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
+              <li>• Include or exclude time components</li>
+              <li>• Absolute or directional differences</li>
+              <li>• Human-readable format output</li>
+              <li>• Multiple time unit breakdowns</li>
+            </ul>
+          </div>
+          <div>
+            <h4 className={`font-medium mb-2 ${isDark ? 'text-blue-400' : 'text-blue-600'}`}>Use Cases:</h4>
+            <ul className={`text-sm space-y-1 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
+              <li>• Age and anniversary calculations</li>
+              <li>• Project duration analysis</li>
+              <li>• Event countdown timers</li>
+              <li>• Historical date comparisons</li>
+            </ul>
+          </div>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">

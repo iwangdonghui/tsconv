@@ -123,6 +123,35 @@ export default function WorkdaysCalculator() {
           input[type="time"]::-webkit-datetime-edit {
             color: ${isDark ? 'white' : 'inherit'};
           }
+
+          /* Enhanced dark mode support for date picker popup */
+          @media (prefers-color-scheme: dark) {
+            input[type="date"]::-webkit-calendar-picker-indicator,
+            input[type="time"]::-webkit-calendar-picker-indicator {
+              filter: invert(1);
+            }
+          }
+
+          /* Force dark mode styles */
+          ${isDark ? `
+            input[type="date"]::-webkit-datetime-edit-fields-wrapper,
+            input[type="time"]::-webkit-datetime-edit-fields-wrapper {
+              background: transparent;
+            }
+
+            input[type="date"]::-webkit-datetime-edit-text,
+            input[type="time"]::-webkit-datetime-edit-text {
+              color: white;
+            }
+
+            input[type="date"]::-webkit-datetime-edit-month-field,
+            input[type="date"]::-webkit-datetime-edit-day-field,
+            input[type="date"]::-webkit-datetime-edit-year-field,
+            input[type="time"]::-webkit-datetime-edit-hour-field,
+            input[type="time"]::-webkit-datetime-edit-minute-field {
+              color: white;
+            }
+          ` : ''}
         `
       }} />
       <SEO
@@ -140,6 +169,38 @@ export default function WorkdaysCalculator() {
       <div className="flex items-center gap-3 mb-6">
         <Calculator className="h-8 w-8 text-blue-600" />
         <h2 className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>Workdays Calculator</h2>
+      </div>
+
+      {/* SEO Content */}
+      <div className={`mb-8 p-6 rounded-lg ${isDark ? 'bg-slate-800' : 'bg-blue-50'}`}>
+        <h3 className={`text-lg font-semibold mb-3 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+          Calculate Business Days with Precision
+        </h3>
+        <p className={`mb-4 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
+          Our workdays calculator helps you determine the exact number of business days between any two dates.
+          Whether you're planning project timelines, calculating delivery dates, or managing business schedules,
+          this tool provides accurate workday calculations while excluding weekends and holidays.
+        </p>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <h4 className={`font-medium mb-2 ${isDark ? 'text-blue-400' : 'text-blue-600'}`}>Key Features:</h4>
+            <ul className={`text-sm space-y-1 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
+              <li>• Exclude weekends (Saturday & Sunday)</li>
+              <li>• Support for US, UK, and China holidays</li>
+              <li>• Two calculation modes: date range or day count</li>
+              <li>• Real-time timestamp conversion</li>
+            </ul>
+          </div>
+          <div>
+            <h4 className={`font-medium mb-2 ${isDark ? 'text-blue-400' : 'text-blue-600'}`}>Perfect for:</h4>
+            <ul className={`text-sm space-y-1 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
+              <li>• Project management and planning</li>
+              <li>• Business timeline calculations</li>
+              <li>• Delivery and shipping schedules</li>
+              <li>• Contract and deadline management</li>
+            </ul>
+          </div>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">

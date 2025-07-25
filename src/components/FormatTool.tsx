@@ -196,6 +196,20 @@ export default function FormatTool() {
             filter: ${isDark ? 'invert(1)' : 'none'};
             cursor: pointer;
           }
+
+          /* Enhanced dark mode support */
+          ${isDark ? `
+            input[type="date"]::-webkit-datetime-edit-fields-wrapper {
+              background: transparent;
+            }
+
+            input[type="date"]::-webkit-datetime-edit-text,
+            input[type="date"]::-webkit-datetime-edit-month-field,
+            input[type="date"]::-webkit-datetime-edit-day-field,
+            input[type="date"]::-webkit-datetime-edit-year-field {
+              color: white;
+            }
+          ` : ''}
         `
       }} />
 
@@ -204,6 +218,38 @@ export default function FormatTool() {
       <div className="flex items-center gap-3 mb-6">
         <Palette className="h-8 w-8 text-blue-600" />
         <h2 className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>Date Format Tool</h2>
+      </div>
+
+      {/* SEO Content */}
+      <div className={`mb-8 p-6 rounded-lg ${isDark ? 'bg-slate-800' : 'bg-blue-50'}`}>
+        <h3 className={`text-lg font-semibold mb-3 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+          Professional Date and Time Formatting
+        </h3>
+        <p className={`mb-4 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
+          Transform timestamps and dates into any format you need with our comprehensive date formatting tool.
+          Choose from 17 predefined templates or create custom patterns using standard formatting tokens.
+          Essential for developers, data analysts, and anyone working with timestamp conversion.
+        </p>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <h4 className={`font-medium mb-2 ${isDark ? 'text-blue-400' : 'text-blue-600'}`}>Format Options:</h4>
+            <ul className={`text-sm space-y-1 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
+              <li>• ISO 8601 standard formats</li>
+              <li>• US and European date styles</li>
+              <li>• Human-readable formats</li>
+              <li>• Custom pattern support</li>
+            </ul>
+          </div>
+          <div>
+            <h4 className={`font-medium mb-2 ${isDark ? 'text-blue-400' : 'text-blue-600'}`}>Perfect for:</h4>
+            <ul className={`text-sm space-y-1 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
+              <li>• API response formatting</li>
+              <li>• Database timestamp conversion</li>
+              <li>• Report generation</li>
+              <li>• Log file processing</li>
+            </ul>
+          </div>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
