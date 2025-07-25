@@ -1,6 +1,8 @@
 // Cloudflare Pages adapter for admin API routes
 
 import { handleCacheAdmin } from './cache-admin';
+import { handleEnvDebug } from './env-debug';
+import { handleCacheTest } from './cache-test';
 
 interface Env {
   UPSTASH_REDIS_REST_URL?: string;
@@ -30,11 +32,15 @@ export async function handleAdminRoutes(request: Request, env: Env, path: string
       return handleCacheAdmin(request, env, path.slice(1));
     case 'health':
       return handleAdminHealth(request, env);
+    case 'env-debug':
+      return handleEnvDebug(request, env);
+    case 'cache-test':
+      return handleCacheTest(request, env);
     default:
       return new Response(JSON.stringify({
         error: 'Not Found',
         message: `Admin endpoint /${path.join('/')} not found`,
-        availableEndpoints: ['stats', 'cache', 'health']
+        availableEndpoints: ['stats', 'cache', 'health', 'env-debug', 'cache-test']
       }), {
         status: 404,
         headers: { 'Content-Type': 'application/json' }

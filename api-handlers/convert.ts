@@ -195,9 +195,11 @@ export async function handleConvert(request: Request, env: Env): Promise<Respons
     }
 
     // Cache the result for future requests
-    cacheManager.set('CONVERT_API', cacheKey, result).catch(error => {
+    try {
+      await cacheManager.set('CONVERT_API', cacheKey, result);
+    } catch (error) {
       console.error('Failed to cache convert result:', error);
-    });
+    }
 
     return new Response(JSON.stringify({
       success: true,
