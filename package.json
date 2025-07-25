@@ -25,6 +25,7 @@
     "fix:dark-mode": "node scripts/fix-dark-mode-styles.js",
     "fix:accessibility": "node scripts/fix-accessibility.js",
     "fix:dark-mode-comprehensive": "node scripts/fix-dark-mode-comprehensive.js",
+    "fix:color-scheme": "node scripts/fix-color-scheme-and-dropdowns.js",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
     "test": "vitest",

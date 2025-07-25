@@ -7,14 +7,21 @@ import Header from './Header';
 import Footer from './Footer';
 
 interface WorkdaysResult {
+  mode: string;
   startDate: string;
-  endDate: string;
-  totalDays: number;
-  workdays: number;
-  weekends: number;
-  holidays: number;
-  excludedDates: string[];
-  businessDaysOnly: number;
+  endDate?: string;
+  targetDate?: string;
+  requestedDays?: number;
+  totalDays?: number;
+  workdays?: number;
+  weekends?: number;
+  holidays?: number;
+  excludedDates?: Array<{date: string, reason: string, name?: string}>;
+  settings?: {
+    excludeWeekends: boolean;
+    excludeHolidays: boolean;
+    country: string;
+  };
 }
 
 interface WorkdaysResponse {
@@ -103,6 +110,21 @@ export default function WorkdaysCalculator() {
         isDark ? "bg-slate-900 text-white" : "bg-white text-slate-900"
       }`}
     >
+      {/* Custom styles for date picker in dark mode */}
+      <style dangerouslySetInnerHTML={{
+        __html: `
+          input[type="date"]::-webkit-calendar-picker-indicator,
+          input[type="time"]::-webkit-calendar-picker-indicator {
+            filter: ${isDark ? 'invert(1)' : 'none'};
+            cursor: pointer;
+          }
+
+          input[type="date"]::-webkit-datetime-edit,
+          input[type="time"]::-webkit-datetime-edit {
+            color: ${isDark ? 'white' : 'inherit'};
+          }
+        `
+      }} />
       <SEO
         title="Workdays Calculator - Business Days Counter | tsconv.com"
         description="Calculate workdays and business days between dates. Exclude weekends and holidays for accurate business day calculations. Support for US, UK, and China holidays."
@@ -247,7 +269,7 @@ export default function WorkdaysCalculator() {
                   value={country}
                   aria-label="Select country for holidays"
                   onChange={(e) => setCountry(e.target.value)}
-                  className="w-32 px-3 py-1 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className={`w-32 px-3 py-1 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent ${isDark ? 'bg-slate-700 border-slate-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
                 >
                   <option value="US">United States</option>
                   <option value="UK">United Kingdom</option>
@@ -345,10 +367,10 @@ export default function WorkdaysCalculator() {
                   <strong>Period:</strong> {result.data.startDate} to {result.data.endDate}
                 </div>
                 <div className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-                  <strong>Business Days Only:</strong> {result.data.businessDaysOnly}
+                  <strong>Exclude Weekends:</strong> {result.data.settings?.excludeWeekends ? 'Yes' : 'No'}
                 </div>
                 <div className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-                  <strong>Processing Time:</strong> {result.metadata.processingTime}
+                  <strong>Exclude Holidays:</strong> {result.data.settings?.excludeHolidays ? 'Yes' : 'No'}
                 </div>
               </div>
 
@@ -356,10 +378,12 @@ export default function WorkdaysCalculator() {
                 <div className={`p-4 rounded-lg ${isDark ? 'bg-yellow-900/20 border border-yellow-800' : 'bg-yellow-50'}`}>
                   <h4 className={`font-medium mb-2 ${isDark ? 'text-yellow-300' : 'text-yellow-800'}`}>Excluded Dates:</h4>
                   <div className={`text-sm max-h-32 overflow-y-auto ${isDark ? 'text-yellow-200' : 'text-yellow-700'}`}>
-                    {result.data.excludedDates.slice(0, 10).map((date, index) => (
-                      <div key={index}>{date}</div>
+                    {result.data.excludedDates?.slice(0, 10).map((dateInfo, index) => (
+                      <div key={index}>
+                        {typeof dateInfo === 'string' ? dateInfo : `${dateInfo.date} (${dateInfo.reason}${dateInfo.name ? ` - ${dateInfo.name}` : ''})`}
+                      </div>
                     ))}
-                    {result.data.excludedDates.length > 10 && (
+                    {result.data.excludedDates && result.data.excludedDates.length > 10 && (
                       <div className={`mt-1 ${isDark ? 'text-yellow-400' : 'text-yellow-600'}`}>
                         ... and {result.data.excludedDates.length - 10} more
                       </div>

@@ -188,10 +188,21 @@ export default function FormatTool() {
       />
       <Header />
 
+      {/* Custom styles for date picker in dark mode */}
+      <style dangerouslySetInnerHTML={{
+        __html: `
+          input[type="date"]::-webkit-calendar-picker-indicator,
+          input[type="time"]::-webkit-calendar-picker-indicator {
+            filter: ${isDark ? 'invert(1)' : 'none'};
+            cursor: pointer;
+          }
+        `
+      }} />
+
       <main className="flex-1 container mx-auto px-4 py-8">
         <div className="max-w-4xl mx-auto p-6 bg-white dark:bg-slate-800 rounded-lg shadow-lg">
       <div className="flex items-center gap-3 mb-6">
-        <Palette className="h-8 w-8 text-indigo-600" />
+        <Palette className="h-8 w-8 text-blue-600" />
         <h2 className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>Date Format Tool</h2>
       </div>
 
@@ -241,11 +252,11 @@ export default function FormatTool() {
                 value={timestamp}
                 onChange={(e) => setTimestamp(e.target.value)}
                 placeholder="e.g., 1640995200"
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                className={`w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent ${isDark ? 'bg-slate-700 border-slate-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
               />
               <button
                 onClick={useCurrentTimestamp}
-                className={`mt-1 text-sm transition-colors ${isDark ? 'text-indigo-400 hover:text-indigo-300' : 'text-indigo-600 hover:text-indigo-800'}`}
+                className={`mt-1 text-sm transition-colors ${isDark ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-800'}`}
               >
                 Use current timestamp
               </button>
@@ -261,11 +272,11 @@ export default function FormatTool() {
                   aria-label="Select date"
                   value={date}
                   onChange={(e) => setDate(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  className={`w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent ${isDark ? 'bg-slate-700 border-slate-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
                 />
                 <button
                   onClick={useTodayDate}
-                  className={`mt-1 text-sm transition-colors ${isDark ? 'text-indigo-400 hover:text-indigo-300' : 'text-indigo-600 hover:text-indigo-800'}`}
+                  className={`mt-1 text-sm transition-colors ${isDark ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-800'}`}
                 >
                   Use today
                 </button>
@@ -280,11 +291,11 @@ export default function FormatTool() {
                   aria-label="Select time"
                   value={time}
                   onChange={(e) => setTime(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  className={`w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent ${isDark ? 'bg-slate-700 border-slate-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
                 />
                 <button
                   onClick={useCurrentTime}
-                  className={`mt-1 text-sm transition-colors ${isDark ? 'text-indigo-400 hover:text-indigo-300' : 'text-indigo-600 hover:text-indigo-800'}`}
+                  className={`mt-1 text-sm transition-colors ${isDark ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-800'}`}
                 >
                   Use current time
                 </button>
@@ -300,7 +311,7 @@ export default function FormatTool() {
             <select
               value={format}
               onChange={(e) => setFormat(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+              className={`w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent ${isDark ? 'bg-slate-700 border-slate-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
             >
               {templates && Object.keys(templates.templates).map(templateName => (
                 <option key={templateName} value={templateName}>
@@ -310,10 +321,9 @@ export default function FormatTool() {
               <option value="custom">Custom Format</option>
             </select>
             
-            {templates && format !== 'custom' && (
-              <div className="mt-2 p-2 bg-gray-50 rounded text-sm">
-                <strong>Pattern:</strong> {templates.templates[format]}<br />
-                <strong>Example:</strong> {templates.examples[format]}
+            {templates && format !== 'custom' && templates.templates[format] && (
+              <div className={`mt-2 p-2 rounded text-sm ${isDark ? 'bg-slate-700' : 'bg-gray-50'}`}>
+                <strong>Pattern:</strong> {templates.templates[format]}
               </div>
             )}
           </div>
@@ -330,7 +340,7 @@ export default function FormatTool() {
                 onChange={(e) => setCustomFormat(e.target.value)}
                 placeholder="e.g., YYYY-MM-DD HH:mm:ss"
                   aria-label="Enter custom date format pattern"
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                className={`w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent ${isDark ? 'bg-slate-700 border-slate-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
               />
               <div className="mt-1 text-xs text-gray-500">
                 Use YYYY (year), MM (month), DD (day), HH (hour), mm (minute), ss (second)
@@ -351,7 +361,7 @@ export default function FormatTool() {
             <button
               onClick={formatDateTime}
               disabled={loading}
-              className="flex-1 bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               aria-label="Format date with selected pattern"
             >
               {loading ? (
@@ -391,13 +401,13 @@ export default function FormatTool() {
               </div>
 
               {/* Main Result */}
-              <div className={`p-4 rounded-lg border ${isDark ? 'bg-gradient-to-r from-indigo-900/20 to-purple-900/20 border-slate-600' : 'bg-gradient-to-r from-indigo-50 to-purple-50 border-gray-200'}`}>
+              <div className={`p-4 rounded-lg border ${isDark ? 'bg-gradient-to-r from-blue-900/20 to-indigo-900/20 border-slate-600' : 'bg-gradient-to-r from-blue-50 to-indigo-50 border-gray-200'}`}>
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-sm font-medium text-gray-700">Formatted Output:</span>
                   <button
                     onClick={() => copyToClipboard(result.data.output.formatted)}
                     aria-label="Copy result to clipboard"
-                    className={`flex items-center gap-1 text-sm transition-colors ${isDark ? 'text-indigo-400 hover:text-indigo-300' : 'text-indigo-600 hover:text-indigo-800'}`}
+                    className={`flex items-center gap-1 text-sm transition-colors ${isDark ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-800'}`}
                   >
                     {copied ? <CheckCircle className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
                     {copied ? 'Copied!' : 'Copy'}

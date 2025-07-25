@@ -167,15 +167,62 @@ export default function TimezoneExplorer() {
       />
       <Header />
 
+      {/* Custom styles for select elements in dark mode */}
+      <style dangerouslySetInnerHTML={{
+        __html: `
+          select option {
+            background-color: ${isDark ? '#334155' : 'white'};
+            color: ${isDark ? 'white' : 'black'};
+          }
+
+          select::-webkit-scrollbar {
+            width: 8px;
+          }
+
+          select::-webkit-scrollbar-track {
+            background: ${isDark ? '#1e293b' : '#f1f5f9'};
+          }
+
+          select::-webkit-scrollbar-thumb {
+            background: ${isDark ? '#475569' : '#cbd5e1'};
+            border-radius: 4px;
+          }
+
+          /* Custom dropdown arrow for better dark mode visibility */
+          select {
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='${isDark ? 'white' : 'currentColor'}' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 8px center;
+            background-size: 16px;
+            padding-right: 32px;
+          }
+
+          /* Custom dropdown arrow for dark mode */
+          select {
+            background-image: ${isDark ?
+              'url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'white\' stroke-width=\'2\' stroke-linecap=\'round\' stroke-linejoin=\'round\'%3e%3cpolyline points=\'6,9 12,15 18,9\'%3e%3c/polyline%3e%3c/svg%3e")' :
+              'url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'currentColor\' stroke-width=\'2\' stroke-linecap=\'round\' stroke-linejoin=\'round\'%3e%3cpolyline points=\'6,9 12,15 18,9\'%3e%3c/polyline%3e%3c/svg%3e")'
+            };
+            background-repeat: no-repeat;
+            background-position: right 8px center;
+            background-size: 16px;
+            padding-right: 32px;
+          }
+        `
+      }} />
+
       <main className="flex-1 container mx-auto px-4 py-8">
         <div className="max-w-6xl mx-auto p-6 bg-white dark:bg-slate-800 rounded-lg shadow-lg">
       <div className="flex items-center gap-3 mb-6">
-        <Globe className="h-8 w-8 text-emerald-600" />
+        <Globe className="h-8 w-8 text-blue-600" />
         <h2 className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>Timezone Explorer</h2>
       </div>
 
       {/* Filters */}
-      <div className="bg-gray-50 p-4 rounded-lg mb-6">
+      <div className={`p-4 rounded-lg mb-6 ${isDark ? 'bg-slate-800' : 'bg-gray-50'}`}>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
           {/* Search */}
           <div className="relative">
@@ -186,7 +233,7 @@ export default function TimezoneExplorer() {
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search timezones..."
                   aria-label="Search timezones by name or region"
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+              className={`w-full pl-10 pr-4 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors ${isDark ? 'bg-slate-700 border-slate-600 text-white placeholder-slate-400' : 'bg-white border-gray-300 text-gray-900'}`}
             />
           </div>
 
@@ -194,7 +241,7 @@ export default function TimezoneExplorer() {
           <select
             value={selectedRegion}
             onChange={(e) => setSelectedRegion(e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+            className={`px-4 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors ${isDark ? 'bg-slate-700 border-slate-600 text-white [&>option]:bg-slate-700 [&>option]:text-white' : 'bg-white border-gray-300 text-gray-900'}`}
           >
             <option value="">All Regions</option>
             {regions.map(region => (
@@ -208,7 +255,7 @@ export default function TimezoneExplorer() {
           <select
             value={selectedCountry}
             onChange={(e) => setSelectedCountry(e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+            className={`px-4 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors ${isDark ? 'bg-slate-700 border-slate-600 text-white [&>option]:bg-slate-700 [&>option]:text-white' : 'bg-white border-gray-300 text-gray-900'}`}
           >
             <option value="">All Countries</option>
             {countries.map(country => (
@@ -222,7 +269,7 @@ export default function TimezoneExplorer() {
           <select
             value={selectedOffset}
             onChange={(e) => setSelectedOffset(e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+            className={`px-4 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors ${isDark ? 'bg-slate-700 border-slate-600 text-white [&>option]:bg-slate-700 [&>option]:text-white' : 'bg-white border-gray-300 text-gray-900'}`}
           >
             <option value="">All Offsets</option>
             {offsets.map(offset => (
@@ -269,9 +316,9 @@ export default function TimezoneExplorer() {
 
       {/* Error Display */}
       {error && (
-        <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-md mb-6">
+        <div className={`flex items-center gap-2 p-3 rounded-md mb-6 border ${isDark ? 'bg-red-900/20 border-red-800 text-red-200' : 'bg-red-50 border-red-200 text-red-700'}`} role="alert" aria-live="polite">
           <AlertCircle className="h-4 w-4 text-red-500" />
-          <span className="text-sm text-red-700">{error}</span>
+          <span className={`text-sm ${isDark ? 'text-red-200' : 'text-red-700'}`}>{error}</span>
         </div>
       )}
 
@@ -361,7 +408,7 @@ export default function TimezoneExplorer() {
           <p>No timezones found matching your criteria</p>
           <button
             onClick={resetFilters}
-            className="mt-2 text-emerald-600 hover:text-emerald-800"
+            className="mt-2 text-blue-600 hover:text-blue-800"
           >
             Reset filters to see all timezones
           </button>

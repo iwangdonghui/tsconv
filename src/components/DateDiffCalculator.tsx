@@ -9,6 +9,8 @@ import Footer from './Footer';
 interface DateDiffResult {
   startDate: string;
   endDate: string;
+  includeTime: boolean;
+  absolute: boolean;
   difference: {
     milliseconds: number;
     seconds: number;
@@ -18,10 +20,19 @@ interface DateDiffResult {
     weeks: number;
     months: number;
     years: number;
+    humanReadable: string;
+    isNegative: boolean;
+    direction: 'future' | 'past';
   };
-  humanReadable: string;
-  direction: 'future' | 'past';
-  absolute: boolean;
+  formatted: {
+    years: string;
+    months: string;
+    weeks: string;
+    days: string;
+    hours: string;
+    minutes: string;
+    seconds: string;
+  };
 }
 
 interface DateDiffResponse {
@@ -132,10 +143,21 @@ export default function DateDiffCalculator() {
       />
       <Header />
 
+      {/* Custom styles for date picker in dark mode */}
+      <style dangerouslySetInnerHTML={{
+        __html: `
+          input[type="date"]::-webkit-calendar-picker-indicator,
+          input[type="time"]::-webkit-calendar-picker-indicator {
+            filter: ${isDark ? 'invert(1)' : 'none'};
+            cursor: pointer;
+          }
+        `
+      }} />
+
       <main className="flex-1 container mx-auto px-4 py-8">
         <div className="max-w-4xl mx-auto p-6 bg-white dark:bg-slate-800 rounded-lg shadow-lg">
       <div className="flex items-center gap-3 mb-6">
-        <TrendingUp className="h-8 w-8 text-purple-600" />
+        <TrendingUp className="h-8 w-8 text-blue-600" />
         <h2 className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>Date Difference Calculator</h2>
       </div>
 
@@ -154,12 +176,12 @@ export default function DateDiffCalculator() {
                   aria-label="Select date"
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                className={`w-full pl-10 pr-4 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent ${isDark ? 'bg-slate-700 border-slate-600 text-white placeholder-slate-400' : 'bg-white border-gray-300 text-gray-900'}`}
               />
             </div>
             <button
               onClick={() => setStartDate(getTodayDate())}
-              className={`mt-1 text-sm transition-colors ${isDark ? 'text-purple-400 hover:text-purple-300' : 'text-purple-600 hover:text-purple-800'}`}
+              className={`mt-1 text-sm transition-colors ${isDark ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-800'}`}
             >
               Use today
             </button>
@@ -178,12 +200,12 @@ export default function DateDiffCalculator() {
                   aria-label="Select time"
                   value={startTime}
                   onChange={(e) => setStartTime(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  className={`w-full pl-10 pr-4 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent ${isDark ? 'bg-slate-700 border-slate-600 text-white placeholder-slate-400' : 'bg-white border-gray-300 text-gray-900'}`}
                 />
               </div>
               <button
                 onClick={() => setStartTime(getCurrentTime())}
-                className={`mt-1 text-sm transition-colors ${isDark ? 'text-purple-400 hover:text-purple-300' : 'text-purple-600 hover:text-purple-800'}`}
+                className={`mt-1 text-sm transition-colors ${isDark ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-800'}`}
               >
                 Use current time
               </button>
@@ -202,7 +224,7 @@ export default function DateDiffCalculator() {
                   aria-label="Select date"
                 value={endDate}
                 onChange={(e) => setEndDate(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                className={`w-full pl-10 pr-4 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent ${isDark ? 'bg-slate-700 border-slate-600 text-white placeholder-slate-400' : 'bg-white border-gray-300 text-gray-900'}`}
               />
             </div>
           </div>
@@ -220,7 +242,7 @@ export default function DateDiffCalculator() {
                   aria-label="Select time"
                   value={endTime}
                   onChange={(e) => setEndTime(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  className={`w-full pl-10 pr-4 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent ${isDark ? 'bg-slate-700 border-slate-600 text-white placeholder-slate-400' : 'bg-white border-gray-300 text-gray-900'}`}
                 />
               </div>
             </div>
@@ -264,7 +286,7 @@ export default function DateDiffCalculator() {
             <button
               onClick={calculateDifference}
               disabled={loading}
-              className="flex-1 bg-purple-600 text-white py-2 px-4 rounded-md hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               aria-label="Calculate difference between selected dates"
             >
               {loading ? (
@@ -304,13 +326,13 @@ export default function DateDiffCalculator() {
               </div>
 
               {/* Human Readable */}
-              <div className={`p-4 rounded-lg border ${isDark ? 'bg-gradient-to-r from-purple-900/20 to-blue-900/20 border-slate-600' : 'bg-gradient-to-r from-purple-50 to-blue-50 border-gray-200'}`}>
+              <div className={`p-4 rounded-lg border ${isDark ? 'bg-gradient-to-r from-blue-900/20 to-indigo-900/20 border-slate-600' : 'bg-gradient-to-r from-blue-50 to-indigo-50 border-gray-200'}`}>
                 <div className="text-center">
-                  <div className={`text-2xl font-bold ${getDirectionColor(result.data.direction)} mb-2`}>
-                    {!absolute && getDirectionIcon(result.data.direction)} {result.data.humanReadable}
+                  <div className={`text-2xl font-bold ${getDirectionColor(result.data.difference.direction)} mb-2`}>
+                    {!absolute && getDirectionIcon(result.data.difference.direction)} {result.data.difference.humanReadable}
                   </div>
                   <div className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-                    {result.data.direction === 'future' ? 'In the future' : 'In the past'}
+                    {result.data.difference.direction === 'future' ? 'In the future' : 'In the past'}
                   </div>
                 </div>
               </div>
@@ -338,11 +360,11 @@ export default function DateDiffCalculator() {
                   <div className="text-sm text-yellow-800">Days</div>
                 </div>
 
-                <div className={`p-3 rounded-lg ${isDark ? 'bg-purple-900/20 border border-purple-800' : 'bg-purple-50'}`}>
-                  <div className={`text-lg font-bold ${isDark ? 'text-purple-400' : 'text-purple-600'}`}>
+                <div className={`p-3 rounded-lg ${isDark ? 'bg-blue-900/20 border border-blue-800' : 'bg-blue-50'}`}>
+                  <div className={`text-lg font-bold ${isDark ? 'text-blue-400' : 'text-blue-600'}`}>
                     {formatNumber(result.data.difference.hours)}
                   </div>
-                  <div className={`text-sm ${isDark ? 'text-purple-300' : 'text-purple-800'}`}>Hours</div>
+                  <div className={`text-sm ${isDark ? 'text-blue-300' : 'text-blue-800'}`}>Hours</div>
                 </div>
 
                 <div className={`p-3 rounded-lg ${isDark ? 'bg-indigo-900/20 border border-indigo-800' : 'bg-indigo-50'}`}>
