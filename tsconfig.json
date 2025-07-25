@@ -18,8 +18,8 @@
     "noImplicitAny": false,
     "baseUrl": ".",
     "paths": {
-      "@/*": ["/src/*"],
-      "@api/*": ["/api/*"]
+      "@/*": ["./src/*"],
+      "@api/*": ["./api/*"]
     },
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true

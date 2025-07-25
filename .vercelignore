@@ -6,18 +6,14 @@
 **/test/**
 **/__tests__/**
 
-# Config files that shouldn't be functions
+# Only ignore compiled JS files in config, not the TypeScript source
 api/config/**/*.js
 api/config/**/*.mjs
 
-# Handler files (not direct functions)
-api/handlers/**
-
-# Middleware, services, utils, types (not functions)
-api/middleware/**
-api/services/**
-api/utils/**
-api/types/**
+# Note: We need handlers, middleware, services, utils, and types for imports
+# Only ignore specific files that shouldn't be serverless functions
+api/handlers/**/*.js
+api/handlers/**/*.mjs
 
 # Development files
 *.md
