@@ -18,6 +18,7 @@
     "test:api-docs": "node scripts/test-api-docs.js",
     "monitor:production": "node scripts/monitor-production.js",
     "test:cache": "node scripts/test-cache.js",
+    "test:production": "node scripts/test-production-optimization.js",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
     "test": "vitest",

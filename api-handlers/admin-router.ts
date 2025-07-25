@@ -3,6 +3,7 @@
 import { handleCacheAdmin } from './cache-admin';
 import { handleEnvDebug } from './env-debug';
 import { handleCacheTest } from './cache-test';
+import { handleAnalytics } from './analytics-api';
 
 interface Env {
   UPSTASH_REDIS_REST_URL?: string;
@@ -36,11 +37,14 @@ export async function handleAdminRoutes(request: Request, env: Env, path: string
       return handleEnvDebug(request, env);
     case 'cache-test':
       return handleCacheTest(request, env);
+    case 'analytics':
+      // Handle analytics with sub-paths
+      return handleAnalytics(request, env, path.slice(1));
     default:
       return new Response(JSON.stringify({
         error: 'Not Found',
         message: `Admin endpoint /${path.join('/')} not found`,
-        availableEndpoints: ['stats', 'cache', 'health', 'env-debug', 'cache-test']
+        availableEndpoints: ['stats', 'cache', 'health', 'env-debug', 'cache-test', 'analytics']
       }), {
         status: 404,
         headers: { 'Content-Type': 'application/json' }
