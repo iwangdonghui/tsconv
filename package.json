@@ -13,6 +13,7 @@
     "build:cloudflare": "tsc --noEmit && vite build",
     "deploy:cloudflare": "npm run build:cloudflare && wrangler pages deploy dist",
     "preview:cloudflare": "wrangler pages dev dist",
+    "test:migration": "node scripts/test-migration.js",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
     "test": "vitest",
