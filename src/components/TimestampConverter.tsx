@@ -11,6 +11,17 @@ import Footer from "./Footer";
 import { HistoryPanel } from "./HistoryPanel";
 import { ValidationIndicator } from "./ui/validation-indicator";
 import { ErrorMessage } from "./ui/error-message";
+
+// Type for manual date that allows string values during input
+type ManualDateField = string | number;
+type ManualDateType = {
+  year: ManualDateField;
+  month: ManualDateField;
+  day: ManualDateField;
+  hour: ManualDateField;
+  minute: ManualDateField;
+  second: ManualDateField;
+};
 import { RecoverySuggestions } from "./ui/recovery-suggestions";
 
 export default function TimestampConverter() {
@@ -24,7 +35,7 @@ export default function TimestampConverter() {
   const [batchInput, setBatchInput] = useState("");
   const [showBatchConverter, setShowBatchConverter] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
-  const [manualDate, setManualDate] = useState({
+  const [manualDate, setManualDate] = useState<ManualDateType>({
     year: new Date().getFullYear(),
     month: new Date().getMonth() + 1,
     day: new Date().getDate(),
@@ -53,14 +64,15 @@ export default function TimestampConverter() {
   } = useInputValidation({
     debounceMs: 100,
     validator: () => {
-      const date = new Date(
-        manualDate.year,
-        manualDate.month - 1,
-        manualDate.day,
-        manualDate.hour,
-        manualDate.minute,
-        manualDate.second
-      );
+      const now = new Date();
+      const year = getNumericValue(manualDate.year, now.getFullYear());
+      const month = getNumericValue(manualDate.month, now.getMonth() + 1);
+      const day = getNumericValue(manualDate.day, now.getDate());
+      const hour = getNumericValue(manualDate.hour, now.getHours());
+      const minute = getNumericValue(manualDate.minute, now.getMinutes());
+      const second = getNumericValue(manualDate.second, now.getSeconds());
+
+      const date = new Date(year, month - 1, day, hour, minute, second);
       if (isNaN(date.getTime())) {
         return {
           isValid: false,
@@ -310,18 +322,30 @@ export default function TimestampConverter() {
 
   // 手动日期转换
   const getManualTimestamp = () => {
-    const date = new Date(
-      manualDate.year,
-      manualDate.month - 1,
-      manualDate.day,
-      manualDate.hour,
-      manualDate.minute,
-      manualDate.second
-    );
+    const now = new Date();
+    const year = getNumericValue(manualDate.year, now.getFullYear());
+    const month = getNumericValue(manualDate.month, now.getMonth() + 1);
+    const day = getNumericValue(manualDate.day, now.getDate());
+    const hour = getNumericValue(manualDate.hour, now.getHours());
+    const minute = getNumericValue(manualDate.minute, now.getMinutes());
+    const second = getNumericValue(manualDate.second, now.getSeconds());
+
+    const date = new Date(year, month - 1, day, hour, minute, second);
     return Math.floor(date.getTime() / 1000);
   };
 
-  const updateManualDate = (field: string, value: number) => {
+  // Helper function to get numeric value with fallback
+  const getNumericValue = (value: ManualDateField, fallback: number): number => {
+    if (typeof value === 'number') return value;
+    if (typeof value === 'string') {
+      if (value === '') return fallback;
+      const parsed = parseInt(value);
+      return isNaN(parsed) ? fallback : parsed;
+    }
+    return fallback;
+  };
+
+  const updateManualDate = (field: string, value: ManualDateField) => {
     setManualDate((prev) => ({ ...prev, [field]: value }));
     setTimeout(() => validateManualDateInput(""), 0);
   };
@@ -745,13 +769,20 @@ export default function TimestampConverter() {
                 <input
                   id="manual-year"
                   type="number"
+                  min="1970"
+                  max="3000"
                   value={manualDate.year}
-                  onChange={(e) =>
-                    updateManualDate(
-                      "year",
-                      parseInt(e.target.value) || new Date().getFullYear()
-                    )
-                  }
+                  placeholder="YYYY"
+                  onChange={(e) => updateManualDate("year", e.target.value)}
+                  onBlur={(e) => {
+                    const value = e.target.value;
+                    if (value === '' || isNaN(parseInt(value))) {
+                      updateManualDate("year", new Date().getFullYear());
+                    } else {
+                      const numValue = parseInt(value);
+                      updateManualDate("year", Math.max(1970, Math.min(3000, numValue)));
+                    }
+                  }}
                   className={`w-full p-2 text-sm border rounded ${
                     isDark
                       ? "bg-slate-700 border-slate-600 text-white"
@@ -773,9 +804,6 @@ export default function TimestampConverter() {
                   aria-describedby={
                     manualDateValidation ? "manual-date-validation" : undefined
                   }
-                  min="1970"
-                  max="3000"
-                  step="1"
                 />
               </div>
               <div>
@@ -792,16 +820,16 @@ export default function TimestampConverter() {
                   type="number"
                   min="1"
                   max="12"
-                  value={manualDate.month.toString().padStart(2, '0')}
-                  onChange={(e) => {
+                  value={manualDate.month}
+                  placeholder="MM"
+                  onChange={(e) => updateManualDate("month", e.target.value)}
+                  onBlur={(e) => {
                     const value = e.target.value;
-                    // Allow empty input or valid numbers
-                    if (value === '' || /^\d{1,2}$/.test(value)) {
-                      const numValue = parseInt(value) || 1;
-                      updateManualDate(
-                        "month",
-                        Math.max(1, Math.min(12, numValue))
-                      );
+                    if (value === '' || isNaN(parseInt(value))) {
+                      updateManualDate("month", new Date().getMonth() + 1);
+                    } else {
+                      const numValue = parseInt(value);
+                      updateManualDate("month", Math.max(1, Math.min(12, numValue)));
                     }
                   }}
                   className={`w-full p-2 text-sm border rounded ${
@@ -832,16 +860,16 @@ export default function TimestampConverter() {
                   type="number"
                   min="1"
                   max="31"
-                  value={manualDate.day.toString().padStart(2, '0')}
-                  onChange={(e) => {
+                  value={manualDate.day}
+                  placeholder="DD"
+                  onChange={(e) => updateManualDate("day", e.target.value)}
+                  onBlur={(e) => {
                     const value = e.target.value;
-                    // Allow empty input or valid numbers
-                    if (value === '' || /^\d{1,2}$/.test(value)) {
-                      const numValue = parseInt(value) || 1;
-                      updateManualDate(
-                        "day",
-                        Math.max(1, Math.min(31, numValue))
-                      );
+                    if (value === '' || isNaN(parseInt(value))) {
+                      updateManualDate("day", new Date().getDate());
+                    } else {
+                      const numValue = parseInt(value);
+                      updateManualDate("day", Math.max(1, Math.min(31, numValue)));
                     }
                   }}
                   className={`w-full p-2 text-sm border rounded ${
@@ -865,15 +893,16 @@ export default function TimestampConverter() {
                   type="number"
                   min="0"
                   max="23"
-                  value={manualDate.hour.toString().padStart(2, '0')}
-                  onChange={(e) => {
+                  value={manualDate.hour}
+                  placeholder="HH"
+                  onChange={(e) => updateManualDate("hour", e.target.value)}
+                  onBlur={(e) => {
                     const value = e.target.value;
-                    if (value === '' || /^\d{1,2}$/.test(value)) {
-                      const numValue = parseInt(value) || 0;
-                      updateManualDate(
-                        "hour",
-                        Math.max(0, Math.min(23, numValue))
-                      );
+                    if (value === '' || isNaN(parseInt(value))) {
+                      updateManualDate("hour", new Date().getHours());
+                    } else {
+                      const numValue = parseInt(value);
+                      updateManualDate("hour", Math.max(0, Math.min(23, numValue)));
                     }
                   }}
                   className={`w-full p-2 text-sm border rounded ${
@@ -897,15 +926,16 @@ export default function TimestampConverter() {
                   type="number"
                   min="0"
                   max="59"
-                  value={manualDate.minute.toString().padStart(2, '0')}
-                  onChange={(e) => {
+                  value={manualDate.minute}
+                  placeholder="MM"
+                  onChange={(e) => updateManualDate("minute", e.target.value)}
+                  onBlur={(e) => {
                     const value = e.target.value;
-                    if (value === '' || /^\d{1,2}$/.test(value)) {
-                      const numValue = parseInt(value) || 0;
-                      updateManualDate(
-                        "minute",
-                        Math.max(0, Math.min(59, numValue))
-                      );
+                    if (value === '' || isNaN(parseInt(value))) {
+                      updateManualDate("minute", new Date().getMinutes());
+                    } else {
+                      const numValue = parseInt(value);
+                      updateManualDate("minute", Math.max(0, Math.min(59, numValue)));
                     }
                   }}
                   className={`w-full p-2 text-sm border rounded ${
@@ -929,15 +959,16 @@ export default function TimestampConverter() {
                   type="number"
                   min="0"
                   max="59"
-                  value={manualDate.second.toString().padStart(2, '0')}
-                  onChange={(e) => {
+                  value={manualDate.second}
+                  placeholder="SS"
+                  onChange={(e) => updateManualDate("second", e.target.value)}
+                  onBlur={(e) => {
                     const value = e.target.value;
-                    if (value === '' || /^\d{1,2}$/.test(value)) {
-                      const numValue = parseInt(value) || 0;
-                      updateManualDate(
-                        "second",
-                        Math.max(0, Math.min(59, numValue))
-                      );
+                    if (value === '' || isNaN(parseInt(value))) {
+                      updateManualDate("second", new Date().getSeconds());
+                    } else {
+                      const numValue = parseInt(value);
+                      updateManualDate("second", Math.max(0, Math.min(59, numValue)));
                     }
                   }}
                   className={`w-full p-2 text-sm border rounded ${
@@ -948,6 +979,75 @@ export default function TimestampConverter() {
                 />
               </div>
             </div>
+
+            {/* Manual Date Controls */}
+            <div className="flex gap-2 mb-4">
+              <button
+                type="button"
+                onClick={() => {
+                  const now = new Date();
+                  setManualDate({
+                    year: now.getFullYear(),
+                    month: now.getMonth() + 1,
+                    day: now.getDate(),
+                    hour: now.getHours(),
+                    minute: now.getMinutes(),
+                    second: now.getSeconds()
+                  });
+                }}
+                className={`px-3 py-2 text-sm rounded transition-colors ${
+                  isDark
+                    ? "bg-slate-600 hover:bg-slate-500 text-white"
+                    : "bg-slate-200 hover:bg-slate-300 text-slate-700"
+                }`}
+                title="Set to current date and time"
+              >
+                📅 Now
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setManualDate({
+                    year: '',
+                    month: '',
+                    day: '',
+                    hour: '',
+                    minute: '',
+                    second: ''
+                  });
+                }}
+                className={`px-3 py-2 text-sm rounded transition-colors ${
+                  isDark
+                    ? "bg-red-600 hover:bg-red-700 text-white"
+                    : "bg-red-500 hover:bg-red-600 text-white"
+                }`}
+                title="Clear all fields"
+              >
+                🗑️ Clear
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setManualDate({
+                    year: 2000,
+                    month: 1,
+                    day: 1,
+                    hour: 0,
+                    minute: 0,
+                    second: 0
+                  });
+                }}
+                className={`px-3 py-2 text-sm rounded transition-colors ${
+                  isDark
+                    ? "bg-slate-600 hover:bg-slate-500 text-white"
+                    : "bg-slate-200 hover:bg-slate-300 text-slate-700"
+                }`}
+                title="Reset to default values"
+              >
+                🔄 Reset
+              </button>
+            </div>
+
             <div>
               <ValidationIndicator
                 state={
