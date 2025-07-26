@@ -39,35 +39,91 @@ const EnhancedApiDocs = () => {
       example: 'https://tsconv.com/api/convert?timestamp=1640995200'
     },
     {
-      id: 'batch',
-      name: 'Batch',
-      method: 'POST',
-      path: '/api/enhanced-batch',
-      description: 'Convert multiple timestamps/dates in a single request',
-      example: 'https://tsconv.com/api/enhanced-batch'
+      id: 'now',
+      name: 'Current Time',
+      method: 'GET',
+      path: '/api/now',
+      description: 'Get current timestamp in multiple formats',
+      example: 'https://tsconv.com/api/now?timezone=America/New_York'
     },
     {
-      id: 'timezone',
-      name: 'Timezone',
+      id: 'workdays',
+      name: 'Workdays',
+      method: 'GET',
+      path: '/api/workdays',
+      description: 'Calculate business days between dates or add workdays to a date',
+      example: 'https://tsconv.com/api/workdays?startDate=2022-01-01&endDate=2022-01-31&excludeWeekends=true'
+    },
+    {
+      id: 'date-diff',
+      name: 'Date Difference',
+      method: 'GET',
+      path: '/api/date-diff',
+      description: 'Calculate the difference between two dates in various units',
+      example: 'https://tsconv.com/api/date-diff?startDate=2022-01-01&endDate=2022-12-31&includeTime=false'
+    },
+    {
+      id: 'format',
+      name: 'Format',
+      method: 'GET',
+      path: '/api/format',
+      description: 'Format timestamps using predefined or custom patterns',
+      example: 'https://tsconv.com/api/format?timestamp=1642248600&format=us-datetime&timezone=America/New_York'
+    },
+    {
+      id: 'timezones',
+      name: 'Timezones',
+      method: 'GET',
+      path: '/api/timezones',
+      description: 'Search and filter world timezones with real-time information',
+      example: 'https://tsconv.com/api/timezones?region=America&country=United%20States'
+    },
+    {
+      id: 'timezone-difference',
+      name: 'Timezone Difference',
       method: 'GET',
       path: '/api/timezone-difference',
-      description: 'Calculate timezone differences and conversions',
-      example: 'https://tsconv.com/api/timezone-difference?from=UTC&to=America/New_York'
+      description: 'Calculate time difference between two timezones',
+      example: 'https://tsconv.com/api/timezone-difference?from=UTC&to=America/New_York&details=true'
+    },
+    {
+      id: 'timezone-convert',
+      name: 'Timezone Convert',
+      method: 'GET',
+      path: '/api/timezone-convert',
+      description: 'Convert timestamps between different timezones',
+      example: 'https://tsconv.com/api/timezone-convert?timestamp=1640995200&from=UTC&to=America/New_York'
+    },
+    {
+      id: 'timezone-info',
+      name: 'Timezone Info',
+      method: 'GET',
+      path: '/api/timezone-info',
+      description: 'Get detailed information about a specific timezone',
+      example: 'https://tsconv.com/api/timezone-info?timezone=America/New_York&includeHistory=true'
+    },
+    {
+      id: 'batch-convert',
+      name: 'Batch Convert',
+      method: 'POST',
+      path: '/api/batch-convert',
+      description: 'Convert multiple timestamps or dates in a single request (max 100 items)',
+      example: 'https://tsconv.com/api/batch-convert (POST with JSON body)'
     },
     {
       id: 'formats',
       name: 'Formats',
       method: 'GET',
       path: '/api/formats',
-      description: 'Discover and use custom date/time formats',
-      example: 'https://tsconv.com/api/formats'
+      description: 'Get available date/time formats and format timestamps',
+      example: 'https://tsconv.com/api/formats?timestamp=1640995200&format=iso'
     },
     {
       id: 'visualization',
       name: 'Visualization',
       method: 'GET',
       path: '/api/visualization',
-      description: 'Generate charts and visualization data',
+      description: 'Generate data for charts and visualizations',
       example: 'https://tsconv.com/api/visualization?type=timezone-chart'
     },
     {
@@ -76,7 +132,7 @@ const EnhancedApiDocs = () => {
       method: 'GET',
       path: '/api/health',
       description: 'Monitor system health and performance',
-      example: 'https://tsconv.com/api/health'
+      example: 'https://tsconv.com/api/health?detailed=true'
     }
   ];
 

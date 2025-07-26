@@ -58,8 +58,8 @@ export async function onRequest(context: {
         version: '1.0.0',
         domain: hostname,
         endpoints: isApiSubdomain
-          ? ['/convert', '/now', '/health', '/workdays', '/date-diff', '/format', '/timezones', '/v1/*', '/admin/*']
-          : ['/api/convert', '/api/now', '/api/health', '/api/workdays', '/api/date-diff', '/api/format', '/api/timezones', '/api/v1/*', '/api/admin/*']
+          ? ['/convert', '/now', '/health', '/workdays', '/date-diff', '/format', '/timezones', '/timezone-convert', '/timezone-difference', '/timezone-info', '/batch-convert', '/formats', '/visualization', '/v1/*', '/admin/*']
+          : ['/api/convert', '/api/now', '/api/health', '/api/workdays', '/api/date-diff', '/api/format', '/api/timezones', '/api/timezone-convert', '/api/timezone-difference', '/api/timezone-info', '/api/batch-convert', '/api/formats', '/api/visualization', '/api/v1/*', '/api/admin/*']
       }), {
         headers: { 'Content-Type': 'application/json' }
       });
