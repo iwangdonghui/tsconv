@@ -82,7 +82,7 @@ placeholder="SS"    // 秒钟
     second: now.getSeconds()
   });
 }}>
-  📅 Now
+  Now
 </button>
 
 {/* 重置为默认值 */}

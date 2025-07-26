@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Calendar, Clock, TrendingUp, AlertCircle, CheckCircle } from 'lucide-react';
 import { useTheme } from '../contexts/ThemeContext';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -57,7 +57,7 @@ export default function DateDiffCalculator() {
   const [error, setError] = useState('');
 
   const { isDark } = useTheme();
-  const { t } = useLanguage();
+  const { t: _t } = useLanguage();
 
   const calculateDifference = async () => {
     if (!startDate || !endDate) {

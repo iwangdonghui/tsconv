@@ -1002,7 +1002,7 @@ export default function TimestampConverter() {
                 }`}
                 title="Set to current date and time"
               >
-                📅 Now
+                Now
               </button>
               <button
                 type="button"
@@ -1018,12 +1018,12 @@ export default function TimestampConverter() {
                 }}
                 className={`px-3 py-2 text-sm rounded transition-colors ${
                   isDark
-                    ? "bg-red-600 hover:bg-red-700 text-white"
-                    : "bg-red-500 hover:bg-red-600 text-white"
+                    ? "bg-slate-600 hover:bg-slate-500 text-white"
+                    : "bg-slate-200 hover:bg-slate-300 text-slate-700"
                 }`}
                 title="Clear all fields"
               >
-                🗑️ Clear
+                Clear
               </button>
               <button
                 type="button"
@@ -1044,7 +1044,7 @@ export default function TimestampConverter() {
                 }`}
                 title="Reset to default values"
               >
-                🔄 Reset
+                Reset
               </button>
             </div>
 

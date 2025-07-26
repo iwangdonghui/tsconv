@@ -21,53 +21,53 @@ export class UnifiedHealthHandler extends BaseHandler {
   }
 
   protected async execute(_context: HandlerContext): Promise<any> {
-    // Parse health check options
-    const _options = this.parseHealthOptions(context);
+    // Parse health check _options
+    const _options = this.parseHealthOptions(_context);
 
     // Perform health check based on mode
-    const _healthData = await this.performHealthCheck(options, context);
+    const _healthData = await this.performHealthCheck(_options, _context);
 
     // Set appropriate HTTP status based on health
-    const _httpStatus = healthData.status === 'healthy' ? 200 : 
-                      healthData.status === 'degraded' ? 200 : 503;
+    const _httpStatus = _healthData.status === 'healthy' ? 200 :
+                      _healthData.status === 'degraded' ? 200 : 503;
 
     // Return health data with status for response handling
     return {
-      ...healthData,
-      _httpStatus: httpStatus
+      ..._healthData,
+      httpStatus: _httpStatus
     };
   }
 
   private parseHealthOptions(_context: HandlerContext): HealthCheckOptions {
-    const { services, metrics, dependencies, mode, timeout } = context.query;
+    const { _services, metrics, dependencies, mode, timeout } = _context.query;
 
     const _parsedOptions: HealthCheckOptions = {
-      includeServices: services !== 'false',
+      includeServices: _services !== 'false',
       includeMetrics: metrics !== 'false',
       includeDependencies: dependencies === 'true',
-      _mode: (mode as 'simple' | 'working' | 'standalone') || 'working',
-      _timeout: timeout ? parseInt(timeout as string) : 5000
+      mode: (mode as 'simple' | 'working' | 'standalone') || 'working',
+      timeout: timeout ? parseInt(timeout as string) : 5000
     };
 
     // Validate timeout
-    if (parsedOptions.timeout && (parsedOptions.timeout < 1000 || parsedOptions.timeout > 30000)) {
+    if (_parsedOptions.timeout && (_parsedOptions.timeout < 1000 || _parsedOptions.timeout > 30000)) {
       throw new Error('Timeout must be between 1000ms and 30000ms');
     }
 
-    return parsedOptions;
+    return _parsedOptions;
   }
 
   private async performHealthCheck(_options: HealthCheckOptions, _context: HandlerContext): Promise<any> {
-    const _mode = options.mode || 'working';
+    const _mode = _options.mode || 'working';
 
-    switch (mode) {
+    switch (_mode) {
       case 'simple':
-        return this.performSimpleHealthCheck(options);
+        return this.performSimpleHealthCheck(_options);
       case 'standalone':
-        return this.performStandaloneHealthCheck(options);
+        return this.performStandaloneHealthCheck(_options);
       case 'working':
       default:
-        return this.performWorkingHealthCheck(options, context);
+        return this.performWorkingHealthCheck(_options, _context);
     }
   }
 
@@ -78,63 +78,63 @@ export class UnifiedHealthHandler extends BaseHandler {
     const environment = process.env.NODE_ENV || 'development';
 
     let status: 'healthy' | 'degraded' | 'unhealthy' = 'healthy';
-    let services: any = undefined;
+    let _services: any = undefined;
 
     // Basic API health is always true if we reach this point
     const _apiHealth = true;
 
-    if (options.includeServices) {
-      services = { api: apiHealth };
+    if (_options.includeServices) {
+      _services = { api: _apiHealth };
 
       // Test cache service if available
       try {
         const _cacheHealth = await this.testCacheService();
-        services.cache = cacheHealth;
-        
-        if (!cacheHealth) {
+        _services.cache = _cacheHealth;
+
+        if (!_cacheHealth) {
           status = 'degraded';
         }
       } catch (error) {
-        services.cache = false;
+        _services.cache = false;
         status = 'degraded';
       }
 
       // Test core conversion functionality
       try {
         const _conversionHealth = await this.testConversionService();
-        services.conversion = conversionHealth;
-        
-        if (!conversionHealth) {
+        _services.conversion = _conversionHealth;
+
+        if (!_conversionHealth) {
           status = status === 'healthy' ? 'degraded' : 'unhealthy';
         }
       } catch (error) {
-        services.conversion = false;
+        _services.conversion = false;
         status = status === 'healthy' ? 'degraded' : 'unhealthy';
       }
     }
 
     // Check system resources
     const _memoryUsage = process.memoryUsage();
-    const _memoryUsagePercent = (memoryUsage.heapUsed / memoryUsage.heapTotal) * 100;
-    
+    const _memoryUsagePercent = (_memoryUsage.heapUsed / _memoryUsage.heapTotal) * 100;
+
     // If memory usage is very high, mark as degraded
-    if (memoryUsagePercent > 90) {
+    if (_memoryUsagePercent > 90) {
       status = status === 'healthy' ? 'degraded' : status;
     }
 
     const _healthResponse = {
       status,
-      timestamp,
-      uptime,
+      timestamp: _timestamp,
+      uptime: _uptime,
       version,
       environment
     };
 
-    if (services) {
-      (healthResponse as any).services = services;
+    if (_services) {
+      (_healthResponse as any).services = _services;
     }
 
-    return healthResponse;
+    return _healthResponse;
   }
 
   private async performStandaloneHealthCheck(_options: HealthCheckOptions): Promise<any> {
@@ -147,38 +147,38 @@ export class UnifiedHealthHandler extends BaseHandler {
     // Perform health checks
     const _checks = {
       api: true, // If we reach this point, API is working
-      _conversion: await this.testBasicConversionFunction(),
-      _memory: this.testMemoryUsage()
+      conversion: await this.testBasicConversionFunction(),
+      memory: this.testMemoryUsage()
     };
 
     // Determine overall status
     let status: 'healthy' | 'degraded' | 'unhealthy' = 'healthy';
-    
-    if (!checks.conversion) {
+
+    if (!_checks.conversion) {
       status = 'degraded';
     }
-    
-    if (!checks.memory) {
+
+    if (!_checks.memory) {
       status = status === 'healthy' ? 'degraded' : 'unhealthy';
     }
 
     // Additional system checks
-    if (system.memory.percentage > 90) {
+    if (_system.memory.percentage > 90) {
       status = status === 'healthy' ? 'degraded' : status;
     }
 
-    if (uptime < 30) { // Less than 30 seconds uptime might indicate issues
+    if (_uptime < 30) { // Less than 30 seconds uptime might indicate issues
       status = status === 'healthy' ? 'degraded' : status;
     }
 
     return {
       status,
-      timestamp,
-      uptime,
+      timestamp: _timestamp,
+      uptime: _uptime,
       version,
       environment,
-      system,
-      checks,
+      system: _system,
+      checks: _checks,
       metadata: {
         standalone: true
       }
@@ -192,42 +192,42 @@ export class UnifiedHealthHandler extends BaseHandler {
     // Initialize health data
     let overallStatus: 'healthy' | 'degraded' | 'unhealthy' = 'healthy';
     const _services: HealthCheckResponse['services'] = {
-      cache: { status: 'healthy', responseTime: 0, lastCheck: timestamp },
-      rateLimiting: { status: 'healthy', responseTime: 0, lastCheck: timestamp },
-      timezone: { status: 'healthy', responseTime: 0, lastCheck: timestamp },
-      conversion: { status: 'healthy', responseTime: 0, lastCheck: timestamp }
+      cache: { status: 'healthy', responseTime: 0, lastCheck: _timestamp },
+      rateLimiting: { status: 'healthy', responseTime: 0, lastCheck: _timestamp },
+      timezone: { status: 'healthy', responseTime: 0, lastCheck: _timestamp },
+      conversion: { status: 'healthy', responseTime: 0, lastCheck: _timestamp }
     };
 
     // Test services if requested
-    if (options.includeServices) {
+    if (_options.includeServices) {
       // Test cache service
-      services.cache = await this.testCacheServiceDetailed();
-      if (services.cache.status !== 'healthy') {
+      _services.cache = await this.testCacheServiceDetailed();
+      if (_services.cache.status !== 'healthy') {
         overallStatus = overallStatus === 'healthy' ? 'degraded' : 'unhealthy';
       }
 
       // Test rate limiting service
-      services.rateLimiting = await this.testRateLimitingService();
-      if (services.rateLimiting.status !== 'healthy') {
+      _services.rateLimiting = await this.testRateLimitingService();
+      if (_services.rateLimiting.status !== 'healthy') {
         overallStatus = overallStatus === 'healthy' ? 'degraded' : overallStatus;
       }
 
       // Test timezone service
-      services.timezone = await this.testTimezoneService();
-      if (services.timezone.status !== 'healthy') {
+      _services.timezone = await this.testTimezoneService();
+      if (_services.timezone.status !== 'healthy') {
         overallStatus = overallStatus === 'healthy' ? 'degraded' : overallStatus;
       }
 
       // Test conversion service
-      services.conversion = await this.testConversionServiceDetailed();
-      if (services.conversion.status !== 'healthy') {
+      _services.conversion = await this.testConversionServiceDetailed();
+      if (_services.conversion.status !== 'healthy') {
         overallStatus = 'unhealthy'; // Conversion is critical
       }
     }
 
     // Get metrics if requested
     let metrics: HealthCheckResponse['metrics'] = {
-      uptime,
+      uptime: _uptime,
       memory: {
         used: 0,
         total: 0,
@@ -245,14 +245,14 @@ export class UnifiedHealthHandler extends BaseHandler {
       }
     };
 
-    if (options.includeMetrics) {
+    if (_options.includeMetrics) {
       metrics = await this.getHealthMetrics();
-      
+
       // Check if metrics indicate problems
       if (metrics.memory.percentage > 90) {
         overallStatus = overallStatus === 'healthy' ? 'degraded' : overallStatus;
       }
-      
+
       if (metrics.rateLimits.blockedPercentage > 50) {
         overallStatus = overallStatus === 'healthy' ? 'degraded' : overallStatus;
       }
@@ -260,8 +260,8 @@ export class UnifiedHealthHandler extends BaseHandler {
 
     return {
       status: overallStatus,
-      timestamp,
-      services,
+      timestamp: _timestamp,
+      services: _services,
       metrics
     };
   }
@@ -273,7 +273,7 @@ export class UnifiedHealthHandler extends BaseHandler {
       const _redis = createRedisClient('cache');
       
       const _testPromise = (async () => {
-        await redis.ping();
+        await _redis.ping();
         return true;
       })();
 
@@ -281,7 +281,7 @@ export class UnifiedHealthHandler extends BaseHandler {
         setTimeout(() => reject(new Error('Cache test timeout')), 2000);
       });
 
-      return await Promise.race([testPromise, timeoutPromise]);
+      return await Promise.race([_testPromise, timeoutPromise]);
     } catch (error) {
       return false;
     }
@@ -296,29 +296,29 @@ export class UnifiedHealthHandler extends BaseHandler {
       
       const _testPromise = (async () => {
         const _testKey = `health-_check:${Date.now()}`;
-        await redis.set(testKey, 'test-value', { _ex: 5 });
-        const _value = await redis.get(testKey);
-        await redis.del(testKey);
+        await _redis.set(_testKey, 'test-_value', { ex: 5 });
+        const _value = await _redis.get(_testKey);
+        await _redis.del(_testKey);
         
-        return value === 'test-value';
+        return _value === 'test-_value';
       })();
 
       const timeoutPromise = new Promise<boolean>((_, reject) => {
         setTimeout(() => reject(new Error('Cache test timeout')), 3000);
       });
 
-      const _success = await Promise.race([testPromise, timeoutPromise]);
+      const _success = await Promise.race([_testPromise, timeoutPromise]);
       
       return {
-        status: success ? 'healthy' : 'degraded',
-        _responseTime: Date.now() - startTime,
-        _lastCheck: Date.now()
+        status: _success ? 'healthy' : 'degraded',
+        responseTime: Date.now() - _startTime,
+        lastCheck: Date.now()
       };
     } catch (error) {
       return {
         status: 'unhealthy',
-        _responseTime: Date.now() - startTime,
-        _lastCheck: Date.now(),
+        responseTime: Date.now() - _startTime,
+        lastCheck: Date.now(),
         error: (error as Error).message
       };
     }
@@ -333,29 +333,29 @@ export class UnifiedHealthHandler extends BaseHandler {
       
       const _testPromise = (async () => {
         const _testKey = `_ratelimit:health-check:${Date.now()}`;
-        await redis.setex(testKey, 60, '1');
-        const _exists = await redis.exists(testKey);
-        await redis.del(testKey);
+        await _redis.setex(_testKey, 60, '1');
+        const _exists = await _redis.exists(_testKey);
+        await _redis.del(_testKey);
         
-        return exists === 1;
+        return _exists === 1;
       })();
 
       const timeoutPromise = new Promise<boolean>((_, reject) => {
         setTimeout(() => reject(new Error('Rate limiting test timeout')), 2000);
       });
 
-      const _success = await Promise.race([testPromise, timeoutPromise]);
+      const _success = await Promise.race([_testPromise, timeoutPromise]);
       
       return {
-        status: success ? 'healthy' : 'degraded',
-        _responseTime: Date.now() - startTime,
-        _lastCheck: Date.now()
+        status: _success ? 'healthy' : 'degraded',
+        responseTime: Date.now() - _startTime,
+        lastCheck: Date.now()
       };
     } catch (error) {
       return {
         status: 'degraded',
-        _responseTime: Date.now() - startTime,
-        _lastCheck: Date.now(),
+        responseTime: Date.now() - _startTime,
+        lastCheck: Date.now(),
         error: (error as Error).message
       };
     }
@@ -366,24 +366,24 @@ export class UnifiedHealthHandler extends BaseHandler {
     
     try {
       const _testDate = new Date();
-      const _utcTime = testDate.toISOString();
-      const localTime = testDate.toLocaleString('en-US', { timeZone: 'America/New_York' });
-      const _offset = testDate.getTimezoneOffset();
+      const _utcTime = _testDate.toISOString();
+      const localTime = _testDate.toLocaleString('en-US', { timeZone: 'America/New_York' });
+      const _offset = _testDate.getTimezoneOffset();
       
-      if (!utcTime || !localTime || isNaN(offset)) {
+      if (!_utcTime || !localTime || isNaN(_offset)) {
         throw new Error('Timezone operations failed');
       }
 
       return {
         status: 'healthy',
-        _responseTime: Date.now() - startTime,
-        _lastCheck: Date.now()
+        responseTime: Date.now() - _startTime,
+        lastCheck: Date.now()
       };
     } catch (error) {
       return {
         status: 'degraded',
-        _responseTime: Date.now() - startTime,
-        _lastCheck: Date.now(),
+        responseTime: Date.now() - _startTime,
+        lastCheck: Date.now(),
         error: (error as Error).message
       };
     }
@@ -395,12 +395,12 @@ export class UnifiedHealthHandler extends BaseHandler {
       
       const _testTimestamp = Math.floor(Date.now() / 1000);
       const _result = await convertTimestamp(
-        testTimestamp,
+        _testTimestamp,
         ['iso', 'unix'],
         'UTC'
       );
 
-      return !!(result && result.formats && result.formats.iso);
+      return !!(_result && _result.formats && _result.formats.iso);
     } catch (error) {
       return false;
     }
@@ -414,25 +414,25 @@ export class UnifiedHealthHandler extends BaseHandler {
       
       const _testTimestamp = Math.floor(Date.now() / 1000);
       const _result = await convertTimestamp(
-        testTimestamp,
+        _testTimestamp,
         ['iso', 'unix', 'human'],
         'UTC'
       );
 
-      if (!result || !result.formats || !result.formats.iso || !result.formats.unix) {
-        throw new Error('Conversion service returned invalid result');
+      if (!_result || !_result.formats || !_result.formats.iso || !_result.formats.unix) {
+        throw new Error('Conversion service returned invalid _result');
       }
 
       return {
         status: 'healthy',
-        _responseTime: Date.now() - startTime,
-        _lastCheck: Date.now()
+        responseTime: Date.now() - _startTime,
+        lastCheck: Date.now()
       };
     } catch (error) {
       return {
         status: 'unhealthy',
-        _responseTime: Date.now() - startTime,
-        _lastCheck: Date.now(),
+        responseTime: Date.now() - _startTime,
+        lastCheck: Date.now(),
         error: (error as Error).message
       };
     }
@@ -441,23 +441,23 @@ export class UnifiedHealthHandler extends BaseHandler {
   private async testBasicConversionFunction(): Promise<boolean> {
     try {
       const _testTimestamp = Math.floor(Date.now() / 1000);
-      const _testDate = new Date(testTimestamp * 1000);
+      const _testDate = new Date(_testTimestamp * 1000);
       
-      const _isoString = testDate.toISOString();
-      const _unixTimestamp = Math.floor(testDate.getTime() / 1000);
-      const _humanReadable = testDate.toLocaleString();
+      const _isoString = _testDate.toISOString();
+      const _unixTimestamp = Math.floor(_testDate.getTime() / 1000);
+      const _humanReadable = _testDate.toLocaleString();
       
-      if (!isoString || !unixTimestamp || !humanReadable) {
+      if (!_isoString || !_unixTimestamp || !_humanReadable) {
         return false;
       }
 
-      const _parsedDate = new Date(isoString);
-      if (isNaN(parsedDate.getTime())) {
+      const _parsedDate = new Date(_isoString);
+      if (isNaN(_parsedDate.getTime())) {
         return false;
       }
 
-      const _timestampFromString = Math.floor(parsedDate.getTime() / 1000);
-      if (Math.abs(timestampFromString - testTimestamp) > 1) {
+      const _timestampFromString = Math.floor(_parsedDate.getTime() / 1000);
+      if (Math.abs(_timestampFromString - _testTimestamp) > 1) {
         return false;
       }
 
@@ -470,10 +470,10 @@ export class UnifiedHealthHandler extends BaseHandler {
   private testMemoryUsage(): boolean {
     try {
       const _memUsage = process.memoryUsage();
-      const _heapUsedMB = memUsage.heapUsed / 1024 / 1024;
-      const _heapUsagePercent = (memUsage.heapUsed / memUsage.heapTotal) * 100;
+      const _heapUsedMB = _memUsage.heapUsed / 1024 / 1024;
+      const _heapUsagePercent = (_memUsage.heapUsed / _memUsage.heapTotal) * 100;
       
-      if (heapUsedMB > 500 || heapUsagePercent > 95) {
+      if (_heapUsedMB > 500 || _heapUsagePercent > 95) {
         return false;
       }
 
@@ -488,9 +488,9 @@ export class UnifiedHealthHandler extends BaseHandler {
     
     return {
       memory: {
-        used: memUsage.heapUsed,
-        total: memUsage.heapTotal,
-        _percentage: (memUsage.heapUsed / memUsage.heapTotal) * 100
+        used: _memUsage.heapUsed,
+        total: _memUsage.heapTotal,
+        percentage: (_memUsage.heapUsed / _memUsage.heapTotal) * 100
       },
       node: {
         version: process.version,
@@ -514,18 +514,18 @@ export class UnifiedHealthHandler extends BaseHandler {
       const { createRedisClient } = await import('../services/redis-client');
       const _redis = createRedisClient('general');
       
-      await redis.ping();
-      const _dbSize = await redis.dbsize();
+      await _redis.ping();
+      const _dbSize = await _redis.dbsize();
       
       // Since Upstash doesn't provide detailed info, use basic metrics
       const _keyspaceHits = 0;
       const _keyspaceMisses = 0;
-      const _totalRequests = keyspaceHits + keyspaceMisses;
+      const _totalRequests = _keyspaceHits + _keyspaceMisses;
       
       cacheMetrics = {
-        hits: keyspaceHits,
-        misses: keyspaceMisses,
-        _hitRatio: totalRequests > 0 ? (keyspaceHits / totalRequests) * 100 : 0
+        hits: _keyspaceHits,
+        misses: _keyspaceMisses,
+        hitRatio: _totalRequests > 0 ? (_keyspaceHits / _totalRequests) * 100 : 0
       };
     } catch (error) {
       console.warn('Failed to get cache _metrics:', error);
@@ -533,20 +533,20 @@ export class UnifiedHealthHandler extends BaseHandler {
 
     // Get rate limit metrics (simplified)
     const _rateLimitMetrics = {
-      _totalRequests: Math.floor(Math.random() * 1000),
-      _rateLimitedRequests: Math.floor(Math.random() * 50),
-      _blockedPercentage: Math.random() * 10
+      totalRequests: Math.floor(Math.random() * 1000),
+      rateLimitedRequests: Math.floor(Math.random() * 50),
+      blockedPercentage: Math.random() * 10
     };
 
     return {
-      _uptime: process.uptime(),
+      uptime: process.uptime(),
       memory: {
-        used: memUsage.heapUsed,
-        total: memUsage.heapTotal,
-        _percentage: (memUsage.heapUsed / memUsage.heapTotal) * 100
+        used: _memUsage.heapUsed,
+        total: _memUsage.heapTotal,
+        percentage: (_memUsage.heapUsed / _memUsage.heapTotal) * 100
       },
       cache: cacheMetrics,
-      rateLimits: rateLimitMetrics
+      rateLimits: _rateLimitMetrics
     };
   }
 }
@@ -554,5 +554,5 @@ export class UnifiedHealthHandler extends BaseHandler {
 // Export the handler function for Vercel
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   const _healthHandler = new UnifiedHealthHandler();
-  await healthHandler.handle(req, res);
+  await _healthHandler.handle(req, res);
 }
