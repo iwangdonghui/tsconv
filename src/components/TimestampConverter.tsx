@@ -792,13 +792,18 @@ export default function TimestampConverter() {
                   type="number"
                   min="1"
                   max="12"
-                  value={manualDate.month}
-                  onChange={(e) =>
-                    updateManualDate(
-                      "month",
-                      Math.max(1, Math.min(12, parseInt(e.target.value) || 1))
-                    )
-                  }
+                  value={manualDate.month.toString().padStart(2, '0')}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    // Allow empty input or valid numbers
+                    if (value === '' || /^\d{1,2}$/.test(value)) {
+                      const numValue = parseInt(value) || 1;
+                      updateManualDate(
+                        "month",
+                        Math.max(1, Math.min(12, numValue))
+                      );
+                    }
+                  }}
                   className={`w-full p-2 text-sm border rounded ${
                     isDark
                       ? "bg-slate-700 border-slate-600 text-white"
@@ -827,13 +832,18 @@ export default function TimestampConverter() {
                   type="number"
                   min="1"
                   max="31"
-                  value={manualDate.day}
-                  onChange={(e) =>
-                    updateManualDate(
-                      "day",
-                      Math.max(1, Math.min(31, parseInt(e.target.value) || 1))
-                    )
-                  }
+                  value={manualDate.day.toString().padStart(2, '0')}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    // Allow empty input or valid numbers
+                    if (value === '' || /^\d{1,2}$/.test(value)) {
+                      const numValue = parseInt(value) || 1;
+                      updateManualDate(
+                        "day",
+                        Math.max(1, Math.min(31, numValue))
+                      );
+                    }
+                  }}
                   className={`w-full p-2 text-sm border rounded ${
                     isDark
                       ? "bg-slate-700 border-slate-600 text-white"
@@ -855,13 +865,17 @@ export default function TimestampConverter() {
                   type="number"
                   min="0"
                   max="23"
-                  value={manualDate.hour}
-                  onChange={(e) =>
-                    updateManualDate(
-                      "hour",
-                      Math.max(0, Math.min(23, parseInt(e.target.value) || 0))
-                    )
-                  }
+                  value={manualDate.hour.toString().padStart(2, '0')}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    if (value === '' || /^\d{1,2}$/.test(value)) {
+                      const numValue = parseInt(value) || 0;
+                      updateManualDate(
+                        "hour",
+                        Math.max(0, Math.min(23, numValue))
+                      );
+                    }
+                  }}
                   className={`w-full p-2 text-sm border rounded ${
                     isDark
                       ? "bg-slate-700 border-slate-600 text-white"
@@ -883,13 +897,17 @@ export default function TimestampConverter() {
                   type="number"
                   min="0"
                   max="59"
-                  value={manualDate.minute}
-                  onChange={(e) =>
-                    updateManualDate(
-                      "minute",
-                      Math.max(0, Math.min(59, parseInt(e.target.value) || 0))
-                    )
-                  }
+                  value={manualDate.minute.toString().padStart(2, '0')}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    if (value === '' || /^\d{1,2}$/.test(value)) {
+                      const numValue = parseInt(value) || 0;
+                      updateManualDate(
+                        "minute",
+                        Math.max(0, Math.min(59, numValue))
+                      );
+                    }
+                  }}
                   className={`w-full p-2 text-sm border rounded ${
                     isDark
                       ? "bg-slate-700 border-slate-600 text-white"
@@ -911,13 +929,17 @@ export default function TimestampConverter() {
                   type="number"
                   min="0"
                   max="59"
-                  value={manualDate.second}
-                  onChange={(e) =>
-                    updateManualDate(
-                      "second",
-                      Math.max(0, Math.min(59, parseInt(e.target.value) || 0))
-                    )
-                  }
+                  value={manualDate.second.toString().padStart(2, '0')}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    if (value === '' || /^\d{1,2}$/.test(value)) {
+                      const numValue = parseInt(value) || 0;
+                      updateManualDate(
+                        "second",
+                        Math.max(0, Math.min(59, numValue))
+                      );
+                    }
+                  }}
                   className={`w-full p-2 text-sm border rounded ${
                     isDark
                       ? "bg-slate-700 border-slate-600 text-white"

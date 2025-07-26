@@ -153,7 +153,7 @@ const EnhancedApiDocs = () => {
       />
       <Header />
       <main className="flex-grow">
-        <div className="container mx-auto px-4 py-8 max-w-7xl">
+        <div className="container mx-auto px-4 py-8 max-w-7xl overflow-hidden">
           <div className="text-center mb-8">
             <h1 className="text-3xl md:text-4xl font-bold mb-4">{t.api.title}</h1>
             <p className="text-lg text-slate-600 dark:text-slate-400 max-w-2xl mx-auto">
@@ -162,7 +162,7 @@ const EnhancedApiDocs = () => {
           </div>
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid grid-cols-3 lg:grid-cols-6 mb-8">
+            <TabsList className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 mb-8 overflow-x-auto">
               <TabsTrigger value="overview">{t.api.overview}</TabsTrigger>
               <TabsTrigger value="endpoints">{t.api.endpoints}</TabsTrigger>
               <TabsTrigger value="testing">{t.api.testing}</TabsTrigger>
@@ -172,7 +172,7 @@ const EnhancedApiDocs = () => {
             </TabsList>
 
             <TabsContent value="overview" className="space-y-6">
-              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
                 {endpoints.map((endpoint) => (
                   <Card key={endpoint.id} className={isDark ? 'bg-slate-800 border-slate-700' : 'bg-white'}>
                     <CardHeader>
@@ -186,8 +186,10 @@ const EnhancedApiDocs = () => {
                     </CardHeader>
                     <CardContent>
                       <p className="text-sm mb-4">{endpoint.description}</p>
-                      <div className="text-xs bg-slate-100 dark:bg-slate-700 p-2 rounded font-mono overflow-x-auto">
-                        {endpoint.example}
+                      <div className="text-xs bg-slate-100 dark:bg-slate-700 p-2 rounded font-mono sm:overflow-visible overflow-x-auto">
+                        <div className="sm:whitespace-normal sm:break-words whitespace-nowrap">
+                          {endpoint.example}
+                        </div>
                       </div>
                     </CardContent>
                   </Card>
@@ -200,13 +202,13 @@ const EnhancedApiDocs = () => {
                 {endpoints.map((endpoint) => (
                   <Card key={endpoint.id} className={isDark ? 'bg-slate-800 border-slate-700' : 'bg-white'}>
                     <CardHeader>
-                      <div className="flex items-center justify-between">
-                        <CardTitle>{endpoint.name}</CardTitle>
-                        <div className="flex gap-2">
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                        <CardTitle className="text-base sm:text-lg">{endpoint.name}</CardTitle>
+                        <div className="flex flex-wrap gap-2">
                           <Badge variant={endpoint.method === 'GET' ? 'default' : 'secondary'}>
                             {endpoint.method}
                           </Badge>
-                          <Badge variant="outline">{endpoint.path}</Badge>
+                          <Badge variant="outline" className="text-xs break-all">{endpoint.path}</Badge>
                         </div>
                       </div>
                     </CardHeader>
@@ -223,8 +225,8 @@ const EnhancedApiDocs = () => {
                         
                         <div>
                           <h4 className="font-semibold mb-2">Response Example</h4>
-                          <div className="bg-slate-100 dark:bg-slate-700 p-3 rounded text-xs font-mono overflow-x-auto">
-                            <pre>{JSON.stringify({
+                          <div className="bg-slate-100 dark:bg-slate-700 p-3 rounded text-xs font-mono sm:overflow-visible overflow-x-auto">
+                            <pre className="sm:whitespace-pre-wrap sm:break-words whitespace-pre">{JSON.stringify({
                               success: true,
                               data: { timestamp: 1640995200, utc: "Sat, 01 Jan 2022 00:00:00 GMT" },
                               metadata: { processingTime: 25 }
@@ -248,7 +250,7 @@ const EnhancedApiDocs = () => {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    <div className="grid md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
                         <label className="text-sm font-medium mb-2 block">Timestamp</label>
                         <Input
@@ -271,7 +273,7 @@ const EnhancedApiDocs = () => {
                       </div>
                     </div>
                     
-                    <div className="grid md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
                         <label className="text-sm font-medium mb-2 block">Source Timezone</label>
                         <Select 
@@ -329,14 +331,49 @@ const EnhancedApiDocs = () => {
                       </Select>
                     </div>
 
-                    <Button 
-                      className="w-full" 
+                    <Button
+                      className="w-full"
                       onClick={() => {
-                        const baseUrl = window.location.origin;
-                        const url = testingData.timestamp 
-                          ? `${baseUrl}/api/convert?timestamp=${testingData.timestamp}`
-                          : `${baseUrl}/api/convert?date=${testingData.date}`;
-                        window.open(url, '_blank');
+                        const isDev = window.location.hostname === 'localhost';
+
+                        if (isDev) {
+                          // In development, use /api/now with timezone parameter
+                          const params = new URLSearchParams();
+                          if (testingData.targetTimezone && testingData.targetTimezone !== 'UTC') {
+                            params.append('timezone', testingData.targetTimezone);
+                          }
+                          const url = `/api/now${params.toString() ? '?' + params.toString() : ''}`;
+                          window.open(url, '_blank');
+                        } else {
+                          // In production, use /api/convert with all parameters
+                          const params = new URLSearchParams();
+
+                          // Add timestamp or date
+                          if (testingData.timestamp) {
+                            params.append('timestamp', testingData.timestamp);
+                          } else if (testingData.date) {
+                            params.append('date', testingData.date);
+                          } else {
+                            // Default to current timestamp if nothing is provided
+                            params.append('timestamp', Math.floor(Date.now() / 1000).toString());
+                          }
+
+                          // Add timezone parameters if they're not default
+                          if (testingData.timezone && testingData.timezone !== 'UTC') {
+                            params.append('timezone', testingData.timezone);
+                          }
+                          if (testingData.targetTimezone && testingData.targetTimezone !== 'UTC') {
+                            params.append('targetTimezone', testingData.targetTimezone);
+                          }
+
+                          // Add format if it's not default
+                          if (testingData.format && testingData.format !== 'iso8601') {
+                            params.append('format', testingData.format);
+                          }
+
+                          const url = `/api/convert?${params.toString()}`;
+                          window.open(url, '_blank');
+                        }
                       }}
                     >
                       Test API
@@ -347,7 +384,7 @@ const EnhancedApiDocs = () => {
             </TabsContent>
 
             <TabsContent value="formats" className="space-y-6">
-              <div className="grid md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                 {['standard', 'human', 'regional', 'technical'].map(category => (
                   <Card key={category} className={isDark ? 'bg-slate-800 border-slate-700' : 'bg-white'}>
                     <CardHeader>
@@ -371,14 +408,14 @@ const EnhancedApiDocs = () => {
             </TabsContent>
 
             <TabsContent value="examples" className="space-y-6">
-              <div className="grid md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                 <Card className={isDark ? 'bg-slate-800 border-slate-700' : 'bg-white'}>
                   <CardHeader>
                     <CardTitle>JavaScript</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="bg-slate-100 dark:bg-slate-700 p-3 rounded text-sm font-mono overflow-x-auto">
-                      <pre>{`// Basic conversion
+                    <div className="bg-slate-100 dark:bg-slate-700 p-3 rounded text-sm font-mono sm:overflow-visible overflow-x-auto">
+                      <pre className="sm:whitespace-pre-wrap sm:break-words whitespace-pre text-xs sm:text-sm">{`// Basic conversion
 const response = await fetch('/api/convert?timestamp=1640995200');
 const data = await response.json();
 console.log(data.data.utc);
@@ -396,8 +433,8 @@ console.log(data2.data.formats.local);`}</pre>
                     <CardTitle>Python</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="bg-slate-100 dark:bg-slate-700 p-3 rounded text-sm font-mono overflow-x-auto">
-                      <pre>{`import requests
+                    <div className="bg-slate-100 dark:bg-slate-700 p-3 rounded text-sm font-mono sm:overflow-visible overflow-x-auto">
+                      <pre className="sm:whitespace-pre-wrap sm:break-words whitespace-pre text-xs sm:text-sm">{`import requests
 
 # Convert timestamp
 response = requests.get('/api/convert', params={
@@ -424,12 +461,15 @@ print(data['data']['formats']['local'])`}</pre>
                   <div className="space-y-4">
                     <div className="flex justify-between items-center p-3 bg-slate-100 dark:bg-slate-700 rounded">
                       <span>Health Check</span>
-                      <Button 
-                        variant="outline" 
+                      <Button
+                        variant="outline"
                         size="sm"
-                        onClick={() => window.open('/api', '_blank')}
+                        onClick={() => {
+                          // Use health endpoint as API root since /api is intercepted by frontend routing
+                          window.open('/api/health', '_blank');
+                        }}
                       >
-                        API Root
+                        API Health
                       </Button>
                     </div>
                     
@@ -454,7 +494,7 @@ print(data['data']['formats']['local'])`}</pre>
           </Tabs>
 
           {/* Quick Links */}
-          <div className="mt-8 grid md:grid-cols-3 gap-4">
+          <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4">
             <Card className={isDark ? 'bg-slate-800 border-slate-700' : 'bg-white'}>
               <CardHeader>
                 <CardTitle className="text-lg">{t.api.quickStart}</CardTitle>
