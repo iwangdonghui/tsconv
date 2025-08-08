@@ -68,7 +68,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // Validate visualization request
     const validationResult = validateVisualizationRequest(vizRequest);
     if (!validationResult.valid) {
-      return APIErrorHandler.handleBadRequest(res, validationResult.message, validationResult.details);
+      return APIErrorHandler.handleBadRequest(res, validationResult.message || 'Invalid request', validationResult.details);
     }
 
     // Generate visualization

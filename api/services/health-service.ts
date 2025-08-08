@@ -339,7 +339,7 @@ class HealthService {
     const heapTotalMB = memoryUsage.heapTotal / 1024 / 1024;
     const usagePercentage = (heapUsedMB / heapTotalMB) * 100;
 
-    const alerts = [];
+    const alerts: any[] = [];
 
     if (usagePercentage > 90) {
       alerts.push({

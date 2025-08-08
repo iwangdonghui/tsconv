@@ -39,7 +39,7 @@ function calculateDateDifference(start: Date, end: Date, absolute: boolean = fal
   const remainingSecondsAfterMinutes = seconds - (minutes * 60);
   
   // Human readable format
-  const parts = [];
+  const parts: string[] = [];
   if (years > 0) parts.push(`${years} year${years !== 1 ? 's' : ''}`);
   if (months % 12 > 0) parts.push(`${months % 12} month${months % 12 !== 1 ? 's' : ''}`);
   if (days % 30 > 0) parts.push(`${Math.floor(days % 30)} day${Math.floor(days % 30) !== 1 ? 's' : ''}`);

@@ -90,7 +90,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // Validate batch request
     const validationResult = validateBatchRequest(batchRequest);
     if (!validationResult.valid) {
-      return APIErrorHandler.handleBadRequest(res, validationResult.message, validationResult.details);
+      return APIErrorHandler.handleBadRequest(res, validationResult.message || 'Invalid request', validationResult.details);
     }
 
     // Set timeout for the entire batch operation

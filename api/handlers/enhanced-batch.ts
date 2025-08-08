@@ -54,7 +54,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // Validate enhanced batch request
     const validationResult = validateEnhancedBatchRequest(batchRequest);
     if (!validationResult.valid) {
-      return APIErrorHandler.handleBadRequest(res, validationResult.message, validationResult.details);
+      return APIErrorHandler.handleBadRequest(res, validationResult.message || 'Invalid request', validationResult.details);
     }
 
     // Process enhanced batch conversion
@@ -172,7 +172,7 @@ async function processEnhancedBatchConversion(request: EnhancedBatchRequest): Pr
   const validateInputs = request.validateInputs ?? true;
 
   // Process items in chunks if parallel processing is enabled
-  if (parallel && request.items.length > chunkSize) {
+  if (parallel && request.items && request.items.length > chunkSize) {
     const chunks = chunkArray(request.items, chunkSize);
     
     for (const chunk of chunks) {
@@ -181,14 +181,14 @@ async function processEnhancedBatchConversion(request: EnhancedBatchRequest): Pr
       );
       
       chunkResults.forEach(result => {
-        if (result.success) {
+        if (result.success && result.data) {
           results.push(result.data);
           itemTimes.push(result.processingTime);
-          
+
           // Track input types
           const inputType = typeof result.data.input;
           inputTypes[inputType] = (inputTypes[inputType] || 0) + 1;
-          
+
           // Track timezone distribution
           if (result.data.timezone?.identifier) {
             const tz = result.data.timezone.identifier;
@@ -203,10 +203,10 @@ async function processEnhancedBatchConversion(request: EnhancedBatchRequest): Pr
     }
   } else {
     // Sequential processing
-    for (const item of request.items) {
+    for (const item of request.items || []) {
       const result = await processEnhancedSingleItem(item, request, outputFormats, validateInputs);
-      
-      if (result.success) {
+
+      if (result.success && result.data) {
         results.push(result.data);
         itemTimes.push(result.processingTime);
         

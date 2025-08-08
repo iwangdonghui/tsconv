@@ -84,8 +84,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     // Process batch conversion
-    const results = [];
-    const errors = [];
+    const results: any[] = [];
+    const errors: any[] = [];
 
     for (let i = 0; i < items.length; i++) {
       try {

@@ -152,7 +152,7 @@ function generateTimeSeries(start?: number, end?: number, interval?: number, tim
   const step = interval || 3600; // 1 hour
   const tz = timezone || 'UTC';
 
-  const data = [];
+  const data: any[] = [];
   for (let ts = startTime; ts <= endTime; ts += step) {
     const date = new Date(ts * 1000);
     const localTime = date.toLocaleString('en-US', { timeZone: tz });
@@ -186,7 +186,7 @@ function generateTimeSeries(start?: number, end?: number, interval?: number, tim
 }
 
 function generateOffsetMap() {
-  const offsets = [];
+  const offsets: any[] = [];
   
   // Generate data for UTC-12 to UTC+14
   for (let offset = -12; offset <= 14; offset++) {
@@ -218,11 +218,11 @@ function generateOffsetMap() {
 function generateDSTCalendar(timezone?: string) {
   const tz = timezone || 'America/New_York';
   const year = new Date().getFullYear();
-  const months = [];
+  const months: any[] = [];
 
   for (let month = 0; month < 12; month++) {
     const daysInMonth = new Date(year, month + 1, 0).getDate();
-    const days = [];
+    const days: any[] = [];
 
     for (let day = 1; day <= daysInMonth; day++) {
       const date = new Date(year, month, day);

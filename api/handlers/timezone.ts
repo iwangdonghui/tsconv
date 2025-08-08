@@ -59,7 +59,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // Validate timezone request
     const validationResult = validateTimezoneRequest(timezoneRequest);
     if (!validationResult.valid) {
-      return APIErrorHandler.handleBadRequest(res, validationResult.message, validationResult.details);
+      return APIErrorHandler.handleBadRequest(res, validationResult.message || 'Invalid request', validationResult.details);
     }
 
     // Process timezone request based on action

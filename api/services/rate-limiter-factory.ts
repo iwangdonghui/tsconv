@@ -227,8 +227,8 @@ export class RateLimiterFactory {
       },
       redisConfig: {
         url: config.caching.redis.url ? '[CONFIGURED]' : undefined,
-        useUpstash: config.caching.redis.useUpstash,
-        fallbackToMemory: config.caching.redis.fallbackToMemory || false
+        useUpstash: config.caching.redis.useUpstash ?? false,
+        fallbackToMemory: config.caching.redis.fallbackToMemory ?? false
       }
     };
   }

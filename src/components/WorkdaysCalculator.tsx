@@ -435,7 +435,7 @@ export default function WorkdaysCalculator() {
                 </div>
               </div>
 
-              {result.data.excludedDates.length > 0 && (
+              {result.data.excludedDates && result.data.excludedDates.length > 0 && (
                 <div className={`p-4 rounded-lg ${isDark ? 'bg-yellow-900/20 border border-yellow-800' : 'bg-yellow-50'}`}>
                   <h4 className={`font-medium mb-2 ${isDark ? 'text-yellow-300' : 'text-yellow-800'}`}>Excluded Dates:</h4>
                   <div className={`text-sm max-h-32 overflow-y-auto ${isDark ? 'text-yellow-200' : 'text-yellow-700'}`}>

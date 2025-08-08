@@ -223,7 +223,7 @@ function getDSTTransitions(timezone: string, year: number) {
   // This is a simplified implementation
   // In a real application, you would use a proper timezone database
   try {
-    const transitions = [];
+    const transitions: any[] = [];
     
     // Check each month for DST transitions
     for (let month = 0; month < 12; month++) {

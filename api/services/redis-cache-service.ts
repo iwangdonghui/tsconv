@@ -93,7 +93,7 @@ export class RedisCacheService implements CacheService {
           const batchSize = 100;
           for (let i = 0; i < keys.length; i += batchSize) {
             const batch = keys.slice(i, i + batchSize);
-            await Promise.all(batch.map(key => this.redis.del(key)));
+            await Promise.all(batch.map((key: string) => this.redis.del(key)));
           }
         }
       } else {
@@ -103,7 +103,7 @@ export class RedisCacheService implements CacheService {
           const batchSize = 100;
           for (let i = 0; i < keys.length; i += batchSize) {
             const batch = keys.slice(i, i + batchSize);
-            await Promise.all(batch.map(key => this.redis.del(key)));
+            await Promise.all(batch.map((key: string) => this.redis.del(key)));
           }
         }
       }

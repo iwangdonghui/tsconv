@@ -38,7 +38,7 @@ export function validateBatchRequest(body: any): ValidationResult {
     }
 
     // Validate individual items
-    body.items.forEach((item, index) => {
+    body.items.forEach((item: any, index: number) => {
       if (item === null || item === undefined) {
         errors.push({
           field: `items[${index}]`,

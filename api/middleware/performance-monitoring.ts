@@ -248,7 +248,7 @@ export const performanceMonitoringMiddleware = (options: PerformanceMonitoringOp
         responseSize = typeof chunk === 'string' ? chunk.length : JSON.stringify(chunk).length;
       }
       
-      return originalEnd.call(this, chunk);
+      return originalEnd.call(this, chunk, 'utf8');
     };
 
     try {

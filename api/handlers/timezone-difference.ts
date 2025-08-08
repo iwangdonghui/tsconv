@@ -99,7 +99,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // Validate request
     const validationResult = validateTimezoneDifferenceRequest(request);
     if (!validationResult.valid) {
-      return APIErrorHandler.handleBadRequest(res, validationResult.message, validationResult.details);
+      return APIErrorHandler.handleBadRequest(res, validationResult.message || 'Invalid request', validationResult.details);
     }
 
     // Calculate timezone difference
