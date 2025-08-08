@@ -56,3 +56,6 @@ jspm_packages/
 # Local development
 .cache/
 node_modules
+
+# Test deployment
+test-deploy/
