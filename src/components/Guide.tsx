@@ -82,7 +82,7 @@ export default function Guide() {
         <SEO
           title={`${article.title} - Guide | tsconv.com`}
           description={article.description}
-          canonical={`https://tsconv.com/guide/${articleId}`}
+          canonical={`https://www.tsconv.com/guide/${articleId}`}
           ogTitle={`${article.title} - Guide`}
           ogDescription={article.description}
           keywords={`timestamp guide, ${article.title.toLowerCase()}, unix timestamp, date conversion`}
@@ -112,7 +112,7 @@ export default function Guide() {
       <SEO
         title="Developer Guides - Timestamp Converter | tsconv.com"
         description="Comprehensive guides for working with timestamps in different programming languages and frameworks. Learn best practices for timestamp handling."
-        canonical="https://tsconv.com/guide"
+        canonical="https://www.tsconv.com/guide"
         ogTitle="Developer Guides - Timestamp Converter"
         ogDescription="Comprehensive guides for working with timestamps in different programming languages and frameworks. Learn best practices for timestamp handling."
         keywords="timestamp guides, unix timestamp tutorial, date conversion guide, programming timestamps"

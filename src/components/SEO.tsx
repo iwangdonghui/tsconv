@@ -51,7 +51,7 @@ export function SEO({
     }
 
     // Update canonical URL
-    const canonicalUrl = canonical || `https://tsconv.com${location.pathname}`;
+    const canonicalUrl = canonical || `https://www.tsconv.com${location.pathname}`;
     let canonicalLink = document.querySelector('link[rel="canonical"]');
     if (!canonicalLink) {
       canonicalLink = document.createElement('link');

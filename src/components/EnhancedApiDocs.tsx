@@ -146,7 +146,7 @@ const EnhancedApiDocs = () => {
       <SEO
         title="API Documentation - Timestamp Converter | tsconv.com"
         description="Complete API documentation for tsconv.com timestamp conversion service. Convert Unix timestamps, handle timezones, batch processing, and more."
-        canonical="https://tsconv.com/api"
+        canonical="https://www.tsconv.com/api"
         ogTitle="API Documentation - Timestamp Converter"
         ogDescription="Complete API documentation for tsconv.com timestamp conversion service. Convert Unix timestamps, handle timezones, batch processing, and more."
         keywords="timestamp API, unix timestamp API, date conversion API, timezone API, batch conversion API"

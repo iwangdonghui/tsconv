@@ -136,7 +136,7 @@ export default function DateDiffCalculator() {
       <SEO
         title="Date Difference Calculator - Time Between Dates | tsconv.com"
         description="Calculate the difference between two dates in years, months, days, hours, minutes, and seconds. Get human-readable time differences with precise calculations."
-        canonical="https://tsconv.com/date-diff"
+        canonical="https://www.tsconv.com/date-diff"
         ogTitle="Date Difference Calculator - Time Between Dates"
         ogDescription="Calculate the difference between two dates in years, months, days, hours, minutes, and seconds. Get human-readable time differences with precise calculations."
         keywords="date difference, time difference, date calculator, days between dates, time between dates, age calculator, duration calculator, date math"

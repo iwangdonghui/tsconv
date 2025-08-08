@@ -181,7 +181,7 @@ export default function FormatTool() {
       <SEO
         title="Date Format Tool - Custom Date Formatting | tsconv.com"
         description="Format dates and timestamps with custom patterns. Choose from 17 predefined templates or create your own date format patterns. Support for ISO, US, EU, and custom formats."
-        canonical="https://tsconv.com/format"
+        canonical="https://www.tsconv.com/format"
         ogTitle="Date Format Tool - Custom Date Formatting"
         ogDescription="Format dates and timestamps with custom patterns. Choose from 17 predefined templates or create your own date format patterns. Support for ISO, US, EU, and custom formats."
         keywords="date format, timestamp format, date formatting, custom date format, date patterns, ISO format, date template, time formatting"

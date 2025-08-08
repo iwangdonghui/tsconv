@@ -157,7 +157,7 @@ export default function WorkdaysCalculator() {
       <SEO
         title="Workdays Calculator - Business Days Counter | tsconv.com"
         description="Calculate workdays and business days between dates. Exclude weekends and holidays for accurate business day calculations. Support for US, UK, and China holidays."
-        canonical="https://tsconv.com/workdays"
+        canonical="https://www.tsconv.com/workdays"
         ogTitle="Workdays Calculator - Business Days Counter"
         ogDescription="Calculate workdays and business days between dates. Exclude weekends and holidays for accurate business day calculations. Support for US, UK, and China holidays."
         keywords="workdays calculator, business days, working days, date calculator, holiday calculator, business day counter, weekday calculator, work schedule"

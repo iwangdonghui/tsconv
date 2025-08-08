@@ -192,7 +192,7 @@ export default function TimezoneExplorer() {
       <SEO
         title="Timezone Explorer - World Time Zones | tsconv.com"
         description="Explore world timezones with search and filtering. View current time in different timezones and get detailed timezone information. Real-time world clock with IANA timezone support."
-        canonical="https://tsconv.com/timezones"
+        canonical="https://www.tsconv.com/timezones"
         ogTitle="Timezone Explorer - World Time Zones"
         ogDescription="Explore world timezones with search and filtering. View current time in different timezones and get detailed timezone information. Real-time world clock with IANA timezone support."
         keywords="timezone explorer, world timezones, time zones, world clock, timezone search, timezone converter, IANA timezones, UTC offset, GMT"
