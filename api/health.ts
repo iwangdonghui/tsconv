@@ -1,4 +1,8 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
+import { apiSecurityHeadersMiddleware } from './middleware/security-headers';
+import { maximumSecurityHeadersMiddleware } from './middleware/enhanced-security-headers';
+import { defaultAPISecurityMiddleware } from './middleware/api-security';
+import { optionalAuthMiddleware } from './middleware/auth';
 
 /**
  * Health Check API Endpoint
@@ -137,6 +141,14 @@ function calculateOverallStatus(services: HealthStatus['services']): HealthStatu
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
+  // Apply enhanced security headers first (includes CSP and comprehensive security headers)
+  maximumSecurityHeadersMiddleware(req, res);
+
+  // Apply API security middleware (threat detection, input sanitization, etc.)
+  defaultAPISecurityMiddleware(req, res, () => {
+    // Apply optional authentication (allows both authenticated and anonymous access)
+    optionalAuthMiddleware(req, res, () => {
+
   // Set CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
@@ -186,7 +198,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // Set status code based on health
     const statusCode = healthStatus.status === 'unhealthy' ? 503 : 200;
 
-    res.status(statusCode).json({
+    return res.status(statusCode).json({
       success: true,
       data: healthStatus,
       metadata: {
@@ -197,11 +209,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   } catch (error) {
     console.error('Health check error:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: 'Internal Server Error',
       message: error instanceof Error ? error.message : 'Unknown error occurred'
     });
   }
+    });
+  });
 }
 
