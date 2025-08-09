@@ -53,6 +53,8 @@
     "icon-audit": "npm run analyze-icons",
     "analyze": "npx vite-bundle-analyzer dist",
     "build:analyze": "npm run build && npm run analyze",
+    "analyze-code-splitting": "node scripts/analyze-code-splitting.cjs",
+    "code-splitting-report": "npm run build && npm run analyze-code-splitting",
     "quality-check": "npm run type-check && npm run lint && npm run test:coverage",
     "preview": "vite preview",
     "test": "vitest",
@@ -76,6 +78,7 @@
     "lucide-react": "^0.263.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "react-error-boundary": "^6.0.0",
     "react-router-dom": "^7.7.0",
     "tailwind-merge": "^1.14.0",
     "tailwindcss-animate": "^1.0.7"
