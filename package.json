@@ -58,6 +58,8 @@
     "analyze-images": "node scripts/analyze-image-optimization.cjs",
     "optimize-images": "node scripts/optimize-images.cjs",
     "image-optimization-report": "npm run optimize-images && npm run analyze-images",
+    "analyze-cache": "node scripts/analyze-cache-strategy.cjs",
+    "cache-report": "npm run build && npm run analyze-cache",
     "quality-check": "npm run type-check && npm run lint && npm run test:coverage",
     "preview": "vite preview",
     "test": "vitest",
