@@ -110,6 +110,33 @@ export default defineConfig({
           if (id.includes('/utils/') || id.includes('/services/')) {
             return 'app-utils';
           }
+        },
+
+        // Optimize asset file names with better organization
+        assetFileNames: (assetInfo) => {
+          const info = assetInfo.name.split('.');
+          const ext = info[info.length - 1];
+
+          // Image assets
+          if (/png|jpe?g|svg|gif|tiff|bmp|ico|webp|avif/i.test(ext)) {
+            // Optimized images go to optimized folder
+            if (assetInfo.name.includes('optimized') || assetInfo.name.includes('webp') || assetInfo.name.includes('avif')) {
+              return `assets/images/optimized/[name]-[hash][extname]`;
+            }
+            return `assets/images/[name]-[hash][extname]`;
+          }
+
+          // CSS assets
+          if (/css/i.test(ext)) {
+            return `assets/css/[name]-[hash][extname]`;
+          }
+
+          // Font assets
+          if (/woff2?|eot|ttf|otf/i.test(ext)) {
+            return `assets/fonts/[name]-[hash][extname]`;
+          }
+
+          return `assets/[name]-[hash][extname]`;
         }
       }
     },
