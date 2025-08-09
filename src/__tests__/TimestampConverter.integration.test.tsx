@@ -100,8 +100,8 @@ describe('TimestampConverter Integration Tests', () => {
     it('should validate manual date inputs', async () => {
       const { findByLabelText } = renderConverter();
       const yearInput = await findByLabelText('Year');
-      const monthInput = await findByLabelText('Month');
-      const dayInput = await findByLabelText('Day');
+      const __monthInput = await findByLabelText('Month');
+      const __dayInput = await findByLabelText('Day');
 
       fireEvent.change(yearInput, { target: { value: '1969' } }); // Invalid year for Unix timestamp
 
@@ -158,7 +158,7 @@ describe('TimestampConverter Integration Tests', () => {
     it('should navigate between input fields with Tab key', async () => {
       const { findByPlaceholderText, findByLabelText } = renderConverter();
       const mainInput = await findByPlaceholderText('Enter timestamp or date...');
-      const yearInput = await findByLabelText('Year');
+      const __yearInput = await findByLabelText('Year');
 
       mainInput.focus();
       expect(document.activeElement).toBe(mainInput);

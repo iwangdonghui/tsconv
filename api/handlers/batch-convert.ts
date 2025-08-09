@@ -145,23 +145,23 @@ async function processBatchConversion(request: BatchConversionRequest): Promise<
   return results;
 }
 
-// Helper function to validate timestamp input
-function isValidTimestamp(input: any): boolean {
-  if (typeof input === 'number') {
-    return !isNaN(input) && isFinite(input);
-  }
-  
-  if (typeof input === 'string') {
-    // Check if it's a valid date string or numeric string
-    const asNumber = parseFloat(input);
-    if (!isNaN(asNumber) && isFinite(asNumber)) {
-      return true;
-    }
-    
-    // Check if it's a valid date string
-    const date = new Date(input);
-    return !isNaN(date.getTime());
-  }
-  
-  return false;
-}
+// Helper function to validate timestamp input (currently unused but kept for future use)
+// function isValidTimestamp(input: any): boolean {
+//   if (typeof input === 'number') {
+//     return !isNaN(input) && isFinite(input);
+//   }
+//
+//   if (typeof input === 'string') {
+//     // Check if it's a valid date string or numeric string
+//     const asNumber = parseFloat(input);
+//     if (!isNaN(asNumber) && isFinite(asNumber)) {
+//       return true;
+//     }
+//
+//     // Check if it's a valid date string
+//     const date = new Date(input);
+//     return !isNaN(date.getTime());
+//   }
+//
+//   return false;
+// }

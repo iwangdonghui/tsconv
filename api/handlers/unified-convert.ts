@@ -1,7 +1,7 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
 import { BaseHandler, HandlerContext } from './base-handler';
 import { convertTimestamp } from '../utils/conversion-utils';
-import { validateRequest } from '../utils/response';
+// import { validateRequest } from '../utils/response'; // Currently unused
 
 export interface ConvertRequest {
   timestamp: number | string;

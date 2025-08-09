@@ -42,12 +42,18 @@ async function convertHandler(req: VercelRequest, res: VercelResponse) {
     const inputValue = timestamp || date;
     const isTimestamp = !!timestamp;
 
-    const result = await processConversion(inputValue, isTimestamp, {
-      format: format ? String(format) : undefined,
-      timezone: timezone ? String(timezone) : undefined,
-      targetTimezone: targetTimezone ? String(targetTimezone) : undefined,
-      includeFormats
-    });
+    const options: {
+      format?: string;
+      timezone?: string;
+      targetTimezone?: string;
+      includeFormats?: boolean;
+    } = { includeFormats };
+
+    if (format) options.format = String(format);
+    if (timezone) options.timezone = String(timezone);
+    if (targetTimezone) options.targetTimezone = String(targetTimezone);
+
+    const result = await processConversion(inputValue, isTimestamp, options);
 
     const builder = new ResponseBuilder().setData(result);
     builder.send(res);

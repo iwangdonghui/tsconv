@@ -1,5 +1,5 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
-import { apiSecurityHeadersMiddleware } from './middleware/security-headers';
+
 import { maximumSecurityHeadersMiddleware } from './middleware/enhanced-security-headers';
 import { defaultAPISecurityMiddleware } from './middleware/api-security';
 import { optionalAuthMiddleware } from './middleware/auth';
@@ -147,7 +147,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Apply API security middleware (threat detection, input sanitization, etc.)
   defaultAPISecurityMiddleware(req, res, () => {
     // Apply optional authentication (allows both authenticated and anonymous access)
-    optionalAuthMiddleware(req, res, () => {
+    optionalAuthMiddleware(req, res, async () => {
 
   // Set CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');

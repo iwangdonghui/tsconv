@@ -69,14 +69,14 @@ function formatDate(date: Date, format: string): string {
     .replace(/YY/g, year.toString().slice(-2))
     
     // Month - longer patterns first to avoid conflicts
-    .replace(/MMMM/g, monthNames[month - 1])
-    .replace(/MMM/g, monthNamesShort[month - 1])
+    .replace(/MMMM/g, monthNames[month - 1] || '')
+    .replace(/MMM/g, monthNamesShort[month - 1] || '')
     .replace(/MM/g, month.toString().padStart(2, '0'))
     .replace(/\bM\b/g, month.toString()) // Use word boundary to avoid conflicts
 
     // Day - longer patterns first
-    .replace(/dddd/g, dayNames[date.getDay()])
-    .replace(/ddd/g, dayNamesShort[date.getDay()])
+    .replace(/dddd/g, dayNames[date.getDay()] || '')
+    .replace(/ddd/g, dayNamesShort[date.getDay()] || '')
     .replace(/Do/g, day.toString() + getOrdinalSuffix(day))
     .replace(/DD/g, day.toString().padStart(2, '0'))
     .replace(/\bD\b/g, day.toString()) // Use word boundary

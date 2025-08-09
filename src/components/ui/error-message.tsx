@@ -1,5 +1,6 @@
+import { AlertTriangle, AlertCircle, Info } from "lucide-react";
 import * as React from "react";
-import { AlertTriangle, Info, AlertCircle } from "lucide-react";
+
 import { cn } from "@/lib/utils";
 import { ValidationResult } from "@/utils/validation";
 import { useLanguage } from "@/contexts/LanguageContext";

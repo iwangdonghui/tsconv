@@ -80,7 +80,8 @@ export class CacheFactory {
   private static createUpstashCache(): CacheService {
     try {
       // Dynamic import to avoid loading Upstash dependencies if not needed
-      const { UpstashCacheService } = require('./upstash-cache-service');
+      const UpstashCacheServiceModule = require('./upstash-cache-service.ts');
+      const UpstashCacheService = UpstashCacheServiceModule.UpstashCacheService || UpstashCacheServiceModule.default;
       return new UpstashCacheService();
     } catch (error) {
       console.warn('Failed to load Upstash cache service:', error);
@@ -94,7 +95,7 @@ export class CacheFactory {
   private static createRedisCache(): CacheService {
     try {
       // Dynamic import to avoid loading Redis dependencies if not needed
-      const { RedisCacheService } = require('./redis-cache-service');
+      const { RedisCacheService } = require('./redis-cache-service.ts');
       return new RedisCacheService();
     } catch (error) {
       console.warn('Failed to load Redis cache service:', error);

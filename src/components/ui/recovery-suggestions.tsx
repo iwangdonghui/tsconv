@@ -1,5 +1,6 @@
-import * as React from "react";
 import { Lightbulb, Copy, Check, ArrowRight } from "lucide-react";
+import * as React from "react";
+
 import { cn } from "@/lib/utils";
 import { ValidationResult } from "@/utils/validation";
 import { Button } from "./button";

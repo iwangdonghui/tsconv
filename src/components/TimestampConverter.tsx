@@ -1,5 +1,6 @@
-import { useState, useEffect, useRef } from "react";
 import { Copy, Check, X, Clock } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+
 import { useTheme } from "../contexts/ThemeContext";
 import { useLanguage } from "../contexts/LanguageContext";
 import { useKeyboardShortcuts } from "../hooks/useKeyboardShortcuts";

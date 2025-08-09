@@ -343,7 +343,7 @@ class UpstashRateLimiter implements RateLimiter {
             // Extract window start from key and check if expired
             const parts = key.split(':');
             if (parts.length >= 4) {
-              const windowStart = parseInt(parts[3]);
+              const windowStart = parseInt(parts[3]!);
               const windowSize = 60000; // Default 1 minute, should be configurable
               
               if (now > windowStart + windowSize * 2) { // Clean up keys older than 2 windows

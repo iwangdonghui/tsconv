@@ -1,10 +1,11 @@
 import { describe, it, expect, beforeEach, afterEach, vi, Mock } from 'vitest';
 import { RateLimiterFactory, getClientIdentifier, getRateLimitRule, applyRateLimit, createRateLimitHeaders } from '../rate-limiter-factory';
 import { MemoryRateLimiter } from '../rate-limiter';
+import config from '../config/config';
 
-// Mock the config module
-vi.mock('../config/config', () => ({
-  default: {
+// Mock the config module with mutable structure
+vi.mock('../config/config', () => {
+  const mockConfig = {
     rateLimiting: {
       enabled: true,
       rules: [
@@ -37,8 +38,12 @@ vi.mock('../config/config', () => ({
         fallbackToMemory: true
       }
     }
-  }
-}));
+  };
+
+  return {
+    default: mockConfig
+  };
+});
 
 // Mock the rate limiter modules
 vi.mock('../rate-limiter', () => ({

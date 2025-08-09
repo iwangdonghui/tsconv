@@ -4,7 +4,7 @@ import cacheService from '../services/cache-service';
 import timezoneService from '../services/timezone-service';
 import formatService from '../services/format-service';
 import { ErrorHandler } from '../middleware/error-handler';
-import { monitoringService } from '../api/health';
+import { monitoringService } from '../health';
 
 describe('API Integration Tests', () => {
   let mockReq: Partial<VercelRequest>;
@@ -173,7 +173,7 @@ describe('API Integration Tests', () => {
       mockReq.body = batchData;
 
       // Import and test batch handler
-      const batchHandler = (await import('../api/enhanced-batch')).default;
+      const batchHandler = (await import('../handlers/enhanced-batch')).default;
       await batchHandler(mockReq as VercelRequest, mockRes as VercelResponse);
 
       expect(mockRes.status).toHaveBeenCalledWith(200);
@@ -192,7 +192,7 @@ describe('API Integration Tests', () => {
         to: 'America/New_York'
       };
 
-      const tzHandler = (await import('../api/timezone-difference')).default;
+      const tzHandler = (await import('../timezone-difference')).default;
       await tzHandler(mockReq as VercelRequest, mockRes as VercelResponse);
 
       expect(mockRes.status).toHaveBeenCalledWith(200);
@@ -207,7 +207,7 @@ describe('API Integration Tests', () => {
     it('should handle format listing correctly', async () => {
       mockReq.query = {};
 
-      const formatsHandler = (await import('../api/formats')).default;
+      const formatsHandler = (await import('../formats')).default;
       await formatsHandler(mockReq as VercelRequest, mockRes as VercelResponse);
 
       expect(mockRes.status).toHaveBeenCalledWith(200);
@@ -224,7 +224,7 @@ describe('API Integration Tests', () => {
     it('should handle invalid timestamp gracefully', async () => {
       mockReq.query = { timestamp: 'invalid' };
 
-      const convertHandler = (await import('../api/convert')).default;
+      const convertHandler = (await import('../convert')).default;
       await convertHandler(mockReq as VercelRequest, mockRes as VercelResponse);
 
       expect(mockRes.status).toHaveBeenCalledWith(400);
@@ -241,7 +241,7 @@ describe('API Integration Tests', () => {
     it('should handle invalid timezone gracefully', async () => {
       mockReq.query = { from: 'invalid', to: 'timezone' };
 
-      const tzHandler = (await import('../api/timezone-difference')).default;
+      const tzHandler = (await import('../timezone-difference')).default;
       await tzHandler(mockReq as VercelRequest, mockRes as VercelResponse);
 
       expect(mockRes.status).toHaveBeenCalledWith(400);
@@ -250,7 +250,7 @@ describe('API Integration Tests', () => {
     it('should handle missing parameters gracefully', async () => {
       mockReq.query = {};
 
-      const convertHandler = (await import('../api/convert')).default;
+      const convertHandler = (await import('../convert')).default;
       await convertHandler(mockReq as VercelRequest, mockRes as VercelResponse);
 
       expect(mockRes.status).toHaveBeenCalledWith(400);
@@ -268,7 +268,7 @@ describe('API Integration Tests', () => {
       mockReq.body = largeBatch;
 
       const start = Date.now();
-      const batchHandler = (await import('../api/enhanced-batch')).default;
+      const batchHandler = (await import('../handlers/enhanced-batch')).default;
       await batchHandler(mockReq as VercelRequest, mockRes as VercelResponse);
       const duration = Date.now() - start;
 
@@ -280,7 +280,7 @@ describe('API Integration Tests', () => {
       const timestamp = 1640995200;
       mockReq.query = { timestamp: String(timestamp) };
 
-      const convertHandler = (await import('../api/convert')).default;
+      const convertHandler = (await import('../convert')).default;
       
       // First call
       await convertHandler(mockReq as VercelRequest, mockRes as VercelResponse);
@@ -300,7 +300,7 @@ describe('API Integration Tests', () => {
       mockReq.query = { timestamp: '1640995200' };
       mockReq.headers = { 'x-forwarded-for': '192.168.1.1' };
 
-      const convertHandler = (await import('../api/convert')).default;
+      const convertHandler = (await import('../convert')).default;
       
       // Make many requests
       const promises = Array.from({ length: 110 }, () => 

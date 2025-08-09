@@ -1,5 +1,6 @@
+import { Type, Clock, Copy, CheckCircle, AlertCircle, Palette } from "lucide-react";
 import { useState, useEffect } from 'react';
-import { Type, Clock, Copy, CheckCircle, AlertCircle, Palette } from 'lucide-react';
+
 import { useTheme } from '../contexts/ThemeContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import { SEO } from './SEO';

@@ -7,7 +7,7 @@ import { CacheService, CacheStats, CacheableRequest } from '../types/api';
 import config from '../config/config';
 import { createRedisClient } from './redis-client';
 
-export class RedisCacheService implements CacheService {
+class RedisCacheService implements CacheService {
   private redis: any; // Redis client
   private connected: boolean = false;
   private keyPrefix: string = 'tsconv:cache:';
@@ -179,6 +179,9 @@ export class CacheServiceFactory {
   }
 }
 
-// Create and export default cache service
+// Export the class for factory usage
+export { RedisCacheService };
+
+// Create and export default cache service instance
 const redisCacheService = new RedisCacheService();
 export default redisCacheService;

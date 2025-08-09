@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Calendar, Clock, TrendingUp, AlertCircle, CheckCircle } from "lucide-react/icons";
+import { Calendar, Clock, TrendingUp, AlertCircle, CheckCircle } from "lucide-react";
 import { useTheme } from '../contexts/ThemeContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import { SEO } from './SEO';

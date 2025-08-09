@@ -130,14 +130,14 @@ class TimezoneService {
         const match = offsetPart.value.match(/GMT([+-])(\d{2}):(\d{2})/);
         if (match) {
           const sign = match[1] === '+' ? 1 : -1;
-          const hours = parseInt(match[2]);
-          const minutes = parseInt(match[3]);
+          const hours = parseInt(match[2]!);
+          const minutes = parseInt(match[3]!);
           return sign * (hours * 60 + minutes);
         }
       }
       
       // Fallback method using date comparison
-      const utcTime = now.getTime();
+      const __utcTime = now.getTime();
       const localTime = new Date(now.toLocaleString('en-US', { timeZone: timezone })).getTime();
       const localUTCTime = new Date(now.toLocaleString('en-US', { timeZone: 'UTC' })).getTime();
       
@@ -178,7 +178,7 @@ class TimezoneService {
       // For most northern hemisphere timezones:
       // - Standard time (winter) has a more negative offset
       // - DST (summer) has a less negative offset (closer to 0)
-      const standardOffset = Math.min(janOffset, julOffset); // More negative
+      const __standardOffset = Math.min(janOffset, julOffset); // More negative
       const dstOffset = Math.max(janOffset, julOffset); // Less negative
       
       // DST is active when current offset matches the DST offset
@@ -201,7 +201,7 @@ class TimezoneService {
       }
       
       // Use a more reliable method to get timezone offset
-      const utcTime = date.getTime();
+      const __utcTime = date.getTime();
       const localTime = new Date(date.toLocaleString('en-US', { timeZone: resolvedTimezone })).getTime();
       const utcTimeInTz = new Date(date.toLocaleString('en-US', { timeZone: 'UTC' })).getTime();
       
@@ -401,7 +401,7 @@ class TimezoneService {
 
     try {
       // Convert to target timezone
-      const utcDate = new Date(date.getTime() + date.getTimezoneOffset() * 60000);
+      const __utcDate = new Date(date.getTime() + date.getTimezoneOffset() * 60000);
       const fromOffset = this.getTimezoneOffset(date, resolvedFrom);
       const toOffset = this.getTimezoneOffset(date, resolvedTo);
       
@@ -417,7 +417,7 @@ class TimezoneService {
     const resolvedFrom = this.resolveTimezone(fromTimezone);
     const resolvedTo = this.resolveTimezone(toTimezone);
     
-    const now = new Date();
+    const __now = new Date();
     const fromOffset = this.getCurrentOffset(resolvedFrom);
     const toOffset = this.getCurrentOffset(resolvedTo);
     
@@ -487,7 +487,7 @@ class TimezoneService {
   }
 
   getDSTTransitionDates(timezone: string, year?: number): DSTTransition[] {
-    const targetYear = year || new Date().getFullYear();
+    const __targetYear = year || new Date().getFullYear();
     const resolvedTimezone = this.resolveTimezone(timezone);
     
     if (!this.validateTimezone(resolvedTimezone)) {

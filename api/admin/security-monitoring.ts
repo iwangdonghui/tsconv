@@ -618,4 +618,4 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 // Exports
 // ============================================================================
 
-export { SecurityAnalytics };
+// SecurityAnalytics already exported above

@@ -116,7 +116,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     // Return all formats
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       data: {
         current: {
@@ -136,7 +136,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   } catch (error) {
     console.error('Now API error:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: 'Internal Server Error',
       message: error instanceof Error ? error.message : 'Unknown error occurred'

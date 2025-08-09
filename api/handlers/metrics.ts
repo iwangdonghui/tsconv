@@ -110,7 +110,7 @@ async function getCacheMetrics() {
     
     // Get cache keys and basic stats
     const keys = await redis.keys('tsconv:cache:*');
-    const dbSize = await redis.dbsize();
+    const ___dbSize = await redis.dbsize(); // Available for future use
 
     // Upstash Redis doesn't support INFO command, use default values
     let memoryUsage = '0B';
@@ -259,7 +259,7 @@ async function getRedisMetrics() {
 
     // Test connection with ping and get basic stats
     await redis.ping();
-    const dbSize = await redis.dbsize();
+    const ___dbSize = await redis.dbsize(); // Available for future use
     
     const responseTime = Date.now() - startTime;
     // Upstash doesn't provide detailed info, use basic metrics
@@ -287,7 +287,8 @@ async function getRedisMetrics() {
   }
 }
 
-function extractInfoValue(lines: string[], key: string): string | null {
+// Helper function for extracting Redis info values (currently unused but kept for future use)
+function _extractInfoValue(lines: string[], key: string): string | null {
   const line = lines.find(l => l.startsWith(`${key}:`));
-  return line ? line.split(':')[1]?.trim() : null;
+  return line ? line.split(':')[1]?.trim() || null : null;
 }

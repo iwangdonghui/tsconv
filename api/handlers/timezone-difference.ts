@@ -302,7 +302,7 @@ function getTimezoneOffset(timezone: string, date: Date): number {
   try {
     // Create a date in the target timezone
     const utcTime = date.getTime() + (date.getTimezoneOffset() * 60000);
-    const targetTime = new Date(utcTime + (getTimezoneOffsetMinutes(timezone, date) * 60000));
+    const __targetTime = new Date(utcTime + (getTimezoneOffsetMinutes(timezone, date) * 60000));
     
     // Calculate offset in minutes from UTC
     return getTimezoneOffsetMinutes(timezone, date);

@@ -164,7 +164,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // Format timestamp
     const result = formatTimestamp(ts, format as string, timezone as string);
 
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       data: result,
       metadata: {
@@ -175,7 +175,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   } catch (error) {
     console.error('Formats error:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: 'Internal Server Error',
       message: error instanceof Error ? error.message : 'Unknown error occurred'
@@ -232,9 +232,9 @@ function applyPredefinedFormat(date: Date, format: string, timezone: string): st
     case 'iso':
       return date.toISOString();
     case 'iso-date':
-      return date.toISOString().split('T')[0];
+      return date.toISOString().split('T')[0] || '';
     case 'iso-time':
-      return date.toISOString().split('T')[1].split('.')[0];
+      return date.toISOString().split('T')[1]?.split('.')[0] || '';
     case 'us-date':
       return date.toLocaleDateString('en-US', { ...options, month: '2-digit', day: '2-digit', year: 'numeric' });
     case 'us-datetime':

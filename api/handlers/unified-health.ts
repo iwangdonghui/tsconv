@@ -515,7 +515,7 @@ export class UnifiedHealthHandler extends BaseHandler {
       const _redis = createRedisClient('general');
       
       await _redis.ping();
-      const _dbSize = await _redis.dbsize();
+      const ___dbSize = await _redis.dbsize();
       
       // Since Upstash doesn't provide detailed info, use basic metrics
       const _keyspaceHits = 0;

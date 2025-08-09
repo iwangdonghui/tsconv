@@ -1,5 +1,6 @@
+import { Globe, Search, Filter, Clock, MapPin, AlertCircle } from "lucide-react";
 import React, { useState, useEffect } from 'react';
-import { Globe, Search, Filter, Clock, MapPin, AlertCircle } from 'lucide-react';
+
 import { useTheme } from '../contexts/ThemeContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import { SEO } from './SEO';
@@ -164,7 +165,7 @@ export default function TimezoneExplorer() {
   };
 
   const getOffsetColor = (offset: string): string => {
-    const hour = parseInt(offset.split(':')[0]);
+    const hour = parseInt(offset.split(':')[0]!);
     if (hour < 0) return 'text-blue-600';
     if (hour > 0) return 'text-green-600';
     return 'text-gray-600';

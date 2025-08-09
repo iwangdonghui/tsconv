@@ -350,9 +350,10 @@ class FormatServiceImpl implements FormatService {
       if (formatName === 'iso8601-date') {
         try {
           const parts = value.split('-');
-          const year = parseInt(parts[0]);
-          const month = parseInt(parts[1]);
-          const day = parseInt(parts[2]);
+          if (parts.length < 3) return { valid: false, error: 'Invalid date format' };
+          const year = parseInt(parts[0]!);
+          const month = parseInt(parts[1]!);
+          const day = parseInt(parts[2]!);
           
           // Create a date and check if it matches the input
           const testDate = new Date(year, month - 1, day);
@@ -521,9 +522,9 @@ class FormatServiceImpl implements FormatService {
         throw new Error(`Invalid ISO 8601 date: ${value}`);
       }
       
-      const year = parseInt(parts[0]);
-      const month = parseInt(parts[1]) - 1; // Month is 0-indexed
-      const day = parseInt(parts[2]);
+      const year = parseInt(parts[0]!);
+      const month = parseInt(parts[1]!) - 1; // Month is 0-indexed
+      const day = parseInt(parts[2]!);
       
       if (isNaN(year) || isNaN(month) || isNaN(day)) {
         throw new Error(`Invalid ISO 8601 date: ${value}`);

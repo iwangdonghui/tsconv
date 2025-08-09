@@ -166,7 +166,7 @@ class UpstashCacheService implements CacheService {
         const dbsize = await this.redis.dbsize();
         
         // Memory info not available in Upstash
-        const memoryUsed = 0; // Not available in Upstash
+        const __memoryUsed = 0; // Not available in Upstash
         
         // Get sample keys for debugging
         const sampleKeys = await this.scanKeys('*');

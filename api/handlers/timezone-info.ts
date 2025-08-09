@@ -183,7 +183,7 @@ async function getTimezoneList(filters: { region?: string; search?: string; popu
     if (!acc[tz.region]) {
       acc[tz.region] = [];
     }
-    acc[tz.region].push(tz);
+    acc[tz.region]!.push(tz);
     return acc;
   }, {} as Record<string, any[]>);
 

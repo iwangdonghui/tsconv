@@ -171,8 +171,8 @@ function validateBatchRequest(request: BatchRequest): { valid: boolean; message?
   // Validate individual items
   for (let i = 0; i < request.items.length; i++) {
     const item = request.items[i];
-    
-    if (!item.timestamp && item.timestamp !== 0) {
+
+    if (!item || (!item.timestamp && item.timestamp !== 0)) {
       return {
         valid: false,
         message: `Item at index ${i} is missing timestamp`,

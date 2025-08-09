@@ -87,7 +87,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // Calculate timezone difference
     const result = await calculateTimezoneDifference(timezone1, timezone2, timestamp, includeDetails);
 
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       data: result,
       metadata: {
@@ -98,7 +98,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   } catch (error) {
     console.error('Timezone difference error:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: 'Internal Server Error',
       message: error instanceof Error ? error.message : 'Unknown error occurred'

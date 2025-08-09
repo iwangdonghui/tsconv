@@ -1,5 +1,6 @@
+import { Clock, Code, Calculator, Globe, Database, Zap } from "lucide-react";
 import { useParams, useNavigate } from 'react-router-dom';
-import { Clock, Code, Calculator, Globe, Database, Zap } from 'lucide-react';
+
 import { useTheme } from '../contexts/ThemeContext';
 import { SEO } from './SEO';
 import Header from './Header';

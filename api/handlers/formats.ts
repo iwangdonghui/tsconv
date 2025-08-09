@@ -1,6 +1,6 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
 import { APIErrorHandler, createCorsHeaders } from '../utils/response';
-import { SupportedFormat, CustomFormat } from '../types/api';
+import { SupportedFormat } from '../types/api';
 
 const SUPPORTED_FORMATS: SupportedFormat[] = [
   // Standard formats
@@ -188,7 +188,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       if (!acc[format.category]) {
         acc[format.category] = [];
       }
-      acc[format.category].push(format);
+      acc[format.category]!.push(format);
       return acc;
     }, {} as Record<string, SupportedFormat[]>);
 

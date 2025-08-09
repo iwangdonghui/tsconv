@@ -27,16 +27,7 @@ interface CreateAPIKeyRequest {
   expiresIn?: string; // e.g., "30d", "1y", "never"
 }
 
-interface UpdateAPIKeyRequest {
-  name?: string;
-  roles?: string[];
-  permissions?: string[];
-  enabled?: boolean;
-  rateLimit?: {
-    requests: number;
-    window: number;
-  };
-}
+// UpdateAPIKeyRequest interface removed (unused)
 
 interface APIKeyListResponse {
   keys: Omit<APIKeyInfo, 'key' | 'hashedKey'>[];

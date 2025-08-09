@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Copy, Check } from "lucide-react/icons";
+import { Copy, Check } from "lucide-react";
 import { useTheme } from "../contexts/ThemeContext";
 import Header from "./Header";
 import Footer from "./Footer";

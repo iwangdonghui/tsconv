@@ -1,14 +1,5 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
 
-interface DateDiffRequest {
-  startDate: string;
-  endDate: string;
-  startTime?: string;
-  endTime?: string;
-  includeTime: boolean;
-  absolute: boolean;
-}
-
 function calculateDateDifference(start: Date, end: Date, absolute: boolean = false) {
   let startDate = new Date(start);
   let endDate = new Date(end);
@@ -31,12 +22,12 @@ function calculateDateDifference(start: Date, end: Date, absolute: boolean = fal
   const months = Math.floor(days / 30.44); // Average month length
   const years = Math.floor(days / 365.25); // Account for leap years
   
-  // More precise calculations
-  const remainingDaysAfterYears = days - (years * 365.25);
-  const remainingDaysAfterMonths = days - (months * 30.44);
-  const remainingHoursAfterDays = hours - (days * 24);
-  const remainingMinutesAfterHours = minutes - (hours * 60);
-  const remainingSecondsAfterMinutes = seconds - (minutes * 60);
+  // More precise calculations (for potential future use)
+  // const remainingDaysAfterYears = days - (years * 365.25);
+  // const remainingDaysAfterMonths = days - (months * 30.44);
+  // const remainingHoursAfterDays = hours - (days * 24);
+  // const remainingMinutesAfterHours = minutes - (hours * 60);
+  // const remainingSecondsAfterMinutes = seconds - (minutes * 60);
   
   // Human readable format
   const parts: string[] = [];

@@ -70,7 +70,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         // Upstash doesn't have info(), use alternative approach
         await redis.ping();
         const keys = await redis.keys('*');
-        const dbSize = await redis.dbsize();
+        const ___dbSize = await redis.dbsize(); // Available for future use
         
         // Since Upstash doesn't provide detailed info, use basic stats
         const stats: RedisStats = {

@@ -293,6 +293,26 @@ export interface APIConfiguration {
       allowedMethods: string[];
       allowedHeaders: string[];
     };
+    csp: {
+      enabled: boolean;
+      reportOnly: boolean;
+      useNonces: boolean;
+      enableViolationReporting: boolean;
+      reportEndpoint: string;
+    };
+    headers: {
+      hsts: {
+        enabled: boolean;
+        maxAge: number;
+        includeSubDomains: boolean;
+        preload: boolean;
+      };
+      frameOptions: string;
+      contentTypeOptions: string;
+      xssProtection: string;
+      referrerPolicy: string;
+      permissionsPolicy: string;
+    };
     maxRequestSize: string;
     timeout: number;
   };
