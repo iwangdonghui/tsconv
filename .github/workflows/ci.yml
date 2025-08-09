@@ -1,0 +1,329 @@
+name: 🚀 CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - staging
+          - production
+
+env:
+  NODE_VERSION: '18'
+  CACHE_KEY_PREFIX: 'tsconv-v1'
+
+jobs:
+  # ============================================================================
+  # Code Quality and Testing
+  # ============================================================================
+  
+  quality-check:
+    name: 🔍 Code Quality & Security
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: 📦 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+      
+      - name: 📋 Cache dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.npm
+          key: ${{ env.CACHE_KEY_PREFIX }}-npm-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ env.CACHE_KEY_PREFIX }}-npm-
+      
+      - name: 🔧 Install dependencies
+        run: npm ci --prefer-offline --no-audit
+      
+      - name: 🔍 Lint code
+        run: npm run lint
+      
+      - name: 🎯 Type check
+        run: npm run type-check
+      
+      - name: 🔒 Security audit
+        run: npm audit --audit-level=moderate
+      
+      - name: 📊 Analyze bundle size
+        run: npm run analyze-bundle
+      
+      - name: 🖼️ Check image optimization
+        run: npm run analyze-images
+      
+      - name: 🚀 Check cache strategy
+        run: npm run analyze-cache
+
+  test:
+    name: 🧪 Test Suite
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      matrix:
+        test-type: [unit, integration, e2e]
+    
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+      
+      - name: 📦 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+      
+      - name: 🔧 Install dependencies
+        run: npm ci --prefer-offline --no-audit
+      
+      - name: 🧪 Run ${{ matrix.test-type }} tests
+        run: npm run test:${{ matrix.test-type }}
+        env:
+          CI: true
+      
+      - name: 📊 Upload coverage
+        if: matrix.test-type == 'unit'
+        uses: codecov/codecov-action@v3
+        with:
+          file: ./coverage/lcov.info
+          flags: unittests
+          name: codecov-umbrella
+
+  # ============================================================================
+  # Build and Optimization
+  # ============================================================================
+  
+  build:
+    name: 🏗️ Build & Optimize
+    runs-on: ubuntu-latest
+    needs: [quality-check, test]
+    timeout-minutes: 15
+    
+    outputs:
+      build-hash: ${{ steps.build-info.outputs.hash }}
+      bundle-size: ${{ steps.build-info.outputs.size }}
+    
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+      
+      - name: 📦 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+      
+      - name: 🔧 Install dependencies
+        run: npm ci --prefer-offline --no-audit
+      
+      - name: 🖼️ Optimize images
+        run: npm run optimize-images
+      
+      - name: 🏗️ Build application
+        run: npm run build
+        env:
+          NODE_ENV: production
+          VITE_BUILD_TIME: ${{ github.run_number }}
+          VITE_COMMIT_SHA: ${{ github.sha }}
+      
+      - name: 📊 Analyze build
+        id: build-info
+        run: |
+          BUILD_HASH=$(find dist -name "*.js" -exec md5sum {} \; | md5sum | cut -d' ' -f1)
+          BUNDLE_SIZE=$(du -sb dist | cut -f1)
+          echo "hash=$BUILD_HASH" >> $GITHUB_OUTPUT
+          echo "size=$BUNDLE_SIZE" >> $GITHUB_OUTPUT
+          echo "Build hash: $BUILD_HASH"
+          echo "Bundle size: $BUNDLE_SIZE bytes"
+      
+      - name: 📦 Upload build artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: build-${{ github.sha }}
+          path: dist/
+          retention-days: 30
+      
+      - name: 📊 Bundle size report
+        run: |
+          echo "## 📊 Bundle Analysis" >> $GITHUB_STEP_SUMMARY
+          echo "- **Build Hash**: \`${{ steps.build-info.outputs.hash }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Bundle Size**: $((${{ steps.build-info.outputs.size }} / 1024)) KB" >> $GITHUB_STEP_SUMMARY
+          npm run analyze-code-splitting >> $GITHUB_STEP_SUMMARY
+
+  # ============================================================================
+  # Security Scanning
+  # ============================================================================
+  
+  security:
+    name: 🔒 Security Scan
+    runs-on: ubuntu-latest
+    needs: [build]
+    timeout-minutes: 10
+    
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+      
+      - name: 🔍 Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+      
+      - name: 📊 Upload Trivy scan results
+        uses: github/codeql-action/upload-sarif@v2
+        if: always()
+        with:
+          sarif_file: 'trivy-results.sarif'
+      
+      - name: 🔒 Security headers test
+        run: npm run test-security-headers
+
+  # ============================================================================
+  # Performance Testing
+  # ============================================================================
+  
+  performance:
+    name: ⚡ Performance Test
+    runs-on: ubuntu-latest
+    needs: [build]
+    timeout-minutes: 15
+    
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+      
+      - name: 📦 Download build artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: build-${{ github.sha }}
+          path: dist/
+      
+      - name: 🚀 Start preview server
+        run: |
+          npm install -g serve
+          serve -s dist -p 3000 &
+          sleep 5
+      
+      - name: ⚡ Run Lighthouse CI
+        uses: treosh/lighthouse-ci-action@v10
+        with:
+          configPath: './.lighthouserc.json'
+          uploadArtifacts: true
+          temporaryPublicStorage: true
+      
+      - name: 📊 Performance budget check
+        run: |
+          echo "## ⚡ Performance Results" >> $GITHUB_STEP_SUMMARY
+          echo "Lighthouse CI results uploaded to temporary storage" >> $GITHUB_STEP_SUMMARY
+
+  # ============================================================================
+  # Deployment
+  # ============================================================================
+  
+  deploy-staging:
+    name: 🚀 Deploy to Staging
+    runs-on: ubuntu-latest
+    needs: [build, security, performance]
+    if: github.ref == 'refs/heads/develop' || github.event.inputs.environment == 'staging'
+    environment: staging
+    timeout-minutes: 10
+    
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+      
+      - name: 📦 Download build artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: build-${{ github.sha }}
+          path: dist/
+      
+      - name: 🚀 Deploy to Vercel (Staging)
+        uses: amondnet/vercel-action@v25
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          working-directory: ./
+          scope: ${{ secrets.VERCEL_ORG_ID }}
+      
+      - name: 🔗 Comment deployment URL
+        uses: actions/github-script@v6
+        if: github.event_name == 'pull_request'
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '🚀 **Staging deployment ready!**\n\n📱 Preview: https://tsconv-staging.vercel.app\n🔍 Build: ${{ github.sha }}'
+            })
+
+  deploy-production:
+    name: 🌟 Deploy to Production
+    runs-on: ubuntu-latest
+    needs: [build, security, performance]
+    if: github.ref == 'refs/heads/main' || github.event.inputs.environment == 'production'
+    environment: production
+    timeout-minutes: 15
+    
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+      
+      - name: 📦 Download build artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: build-${{ github.sha }}
+          path: dist/
+      
+      - name: 🚀 Deploy to Vercel (Production)
+        uses: amondnet/vercel-action@v25
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          vercel-args: '--prod'
+          working-directory: ./
+          scope: ${{ secrets.VERCEL_ORG_ID }}
+      
+      - name: 🌐 Deploy to Cloudflare Pages
+        uses: cloudflare/pages-action@v1
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          projectName: tsconv
+          directory: dist
+          gitHubToken: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: 📊 Post-deployment health check
+        run: |
+          sleep 30
+          curl -f https://tsconv.com/api/health || exit 1
+          echo "✅ Production health check passed"
+      
+      - name: 🎉 Deployment success notification
+        run: |
+          echo "## 🎉 Production Deployment Successful!" >> $GITHUB_STEP_SUMMARY
+          echo "- **URL**: https://tsconv.com" >> $GITHUB_STEP_SUMMARY
+          echo "- **Build**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Bundle Size**: $((${{ needs.build.outputs.bundle-size }} / 1024)) KB" >> $GITHUB_STEP_SUMMARY
