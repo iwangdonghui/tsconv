@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Calendar, Clock, TrendingUp, AlertCircle, CheckCircle } from 'lucide-react';
+import { Calendar, Clock, TrendingUp, AlertCircle, CheckCircle } from "lucide-react/icons";
 import { useTheme } from '../contexts/ThemeContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import { SEO } from './SEO';
@@ -107,8 +107,8 @@ export default function DateDiffCalculator() {
     setError('');
   };
 
-  const getTodayDate = () => {
-    return new Date().toISOString().split('T')[0];
+  const getTodayDate = (): string => {
+    return new Date().toISOString().split('T')[0] || '';
   };
 
   const getCurrentTime = () => {
