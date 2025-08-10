@@ -1,11 +1,31 @@
-# SPA fallback for React Router
-/*    /index.html   200
-
-# API routes (if any)
-/api/*  /api/:splat  200
-
-# Static assets should be served directly
-/assets/*  /assets/:splat  200
+# Static assets should be served directly (highest priority)
 /favicon.ico  /favicon.ico  200
 /robots.txt  /robots.txt  200
 /sitemap.xml  /sitemap.xml  200
+/assets/*  /assets/:splat  200
+
+# API routes
+/api/*  /api/:splat  200
+
+# Test pages - specific redirects
+/react-cdn  /react-cdn-test.html  200
+/minimal  /minimal-test.html  200
+/debug  /debug-index.html  200
+/simple  /simple-index.html  200
+
+# Working app backup (for testing)
+/working-app  /working-app.html  200
+
+# SPA fallback for React Router - specific routes to avoid infinite loop
+/api-docs  /index.html  200
+/guide  /index.html  200
+/guide/*  /index.html  200
+/how-to  /index.html  200
+/how-to/*  /index.html  200
+/workdays  /index.html  200
+/date-diff  /index.html  200
+/format  /index.html  200
+/timezones  /index.html  200
+
+# Catch-all for client-side routing
+/*  /index.html  200
