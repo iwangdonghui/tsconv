@@ -157,7 +157,16 @@ export default defineConfig({
     chunkSizeWarningLimit: 300,
   },
   optimizeDeps: {
-    // Pre-bundle lucide-react for better performance and tree shaking
-    include: ['lucide-react'],
+    // Pre-bundle dependencies for better performance and compatibility
+    include: [
+      'lucide-react',
+      'react',
+      'react-dom',
+      '@radix-ui/react-select',
+      '@radix-ui/react-tabs',
+      'react-router-dom',
+    ],
+    // Force optimization of problematic dependencies
+    force: true,
   },
 });
