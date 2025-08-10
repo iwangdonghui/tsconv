@@ -1,0 +1,56 @@
+{
+  "timestamp": "2025-08-09T08:33:21.559Z",
+  "eslint": {
+    "totalErrors": -1,
+    "totalWarnings": -1,
+    "totalFiles": 0,
+    "filesWithIssues": 0
+  },
+  "typescript": {
+    "typeErrors": 646,
+    "success": false,
+    "errorsByType": {
+      "TS1068": 2,
+      "TS1005": 366,
+      "TS1128": 97,
+      "TS1434": 33,
+      "TS1109": 80,
+      "TS1135": 5,
+      "TS1138": 14,
+      "TS1359": 13,
+      "TS2809": 1,
+      "TS1003": 3,
+      "TS1131": 13,
+      "TS1160": 1,
+      "TS1136": 4,
+      "TS1011": 8,
+      "TS1390": 1,
+      "TS1228": 4,
+      "TS1435": 1
+    }
+  },
+  "security": {
+    "info": 0,
+    "low": 5,
+    "moderate": 9,
+    "high": 4,
+    "critical": 0,
+    "total": 18
+  },
+  "complexity": {
+    "totalFiles": 75,
+    "totalLines": 14592,
+    "totalFunctions": 4436,
+    "complexFiles": 30,
+    "averageLinesPerFile": 195
+  },
+  "qualityScore": {
+    "score": 30,
+    "grade": "F",
+    "issues": [
+      "TypeScript errors: -40 points",
+      "High vulnerabilities: -20 points",
+      "Complex files: -10 points"
+    ]
+  }
+}

@@ -1,0 +1,38 @@
+{
+  "timestamp": "2025-08-09T15:02:15.708Z",
+  "toolConfiguration": {
+    "configuredTools": 7,
+    "totalTools": 7
+  },
+  "prettier": {
+    "formatted": false,
+    "issues": 1
+  },
+  "eslint": {
+    "errors": 23,
+    "warnings": 124,
+    "filesWithIssues": 45
+  },
+  "gitHooks": {
+    "workingHooks": 2,
+    "totalHooks": 2
+  },
+  "codeStructure": {
+    "totalFiles": 75,
+    "totalLines": 15733,
+    "componentFiles": 45,
+    "hookFiles": 4,
+    "utilFiles": 9,
+    "testFiles": 9,
+    "averageLinesPerFile": 210
+  },
+  "qualityScore": {
+    "score": "64.5",
+    "grade": "D",
+    "feedback": [
+      "1 files need formatting (-0.5 points)",
+      "23 ESLint errors (-25 points)",
+      "124 ESLint warnings (-10.0 points)"
+    ]
+  }
+}
