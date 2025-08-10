@@ -1,0 +1,356 @@
+name: 🔒 Security Scan
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+    # Run security scan daily at 2 AM UTC
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+    inputs:
+      scan_type:
+        description: 'Type of security scan to run'
+        required: true
+        default: 'full'
+        type: choice
+        options:
+          - full
+          - dependencies
+          - code
+          - configuration
+
+env:
+  NODE_VERSION: '18'
+
+jobs:
+  # ============================================================================
+  # Dependency Security Scan
+  # ============================================================================
+  
+  dependency-scan:
+    name: 🔍 Dependency Vulnerability Scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+      
+      - name: 📦 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+      
+      - name: 🔧 Install dependencies
+        run: npm ci --prefer-offline --no-audit
+      
+      - name: 🔍 Run npm audit
+        run: |
+          echo "## 🔍 Dependency Vulnerability Scan" >> $GITHUB_STEP_SUMMARY
+          npm audit --audit-level=moderate --json > audit-report.json || true
+          
+          # Parse and display results
+          if [ -s audit-report.json ]; then
+            echo "### Audit Results" >> $GITHUB_STEP_SUMMARY
+            npm audit --audit-level=moderate >> $GITHUB_STEP_SUMMARY || true
+          else
+            echo "✅ No vulnerabilities found!" >> $GITHUB_STEP_SUMMARY
+          fi
+      
+      - name: 📊 Upload audit report
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: dependency-audit-report
+          path: audit-report.json
+          retention-days: 30
+      
+      - name: 🚨 Check for critical vulnerabilities
+        run: |
+          if [ -s audit-report.json ]; then
+            CRITICAL=$(cat audit-report.json | jq -r '.metadata.vulnerabilities.critical // 0')
+            HIGH=$(cat audit-report.json | jq -r '.metadata.vulnerabilities.high // 0')
+            
+            if [ "$CRITICAL" -gt 0 ] || [ "$HIGH" -gt 5 ]; then
+              echo "❌ Critical security vulnerabilities found!"
+              echo "Critical: $CRITICAL, High: $HIGH"
+              exit 1
+            fi
+          fi
+
+  # ============================================================================
+  # Code Security Analysis
+  # ============================================================================
+  
+  code-security:
+    name: 🔎 Code Security Analysis
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+      
+      - name: 📦 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+      
+      - name: 🔧 Install dependencies
+        run: npm ci --prefer-offline --no-audit
+      
+      - name: 🔍 ESLint Security Analysis
+        run: |
+          echo "## 🔎 Code Security Analysis" >> $GITHUB_STEP_SUMMARY
+          
+          # Run ESLint with security plugin
+          npx eslint . --ext ts,tsx --format json --output-file eslint-security.json || true
+          
+          # Parse results
+          if [ -s eslint-security.json ]; then
+            ISSUES=$(cat eslint-security.json | jq '[.[].messages[]] | length')
+            echo "Found $ISSUES potential security issues" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "✅ No code security issues found!" >> $GITHUB_STEP_SUMMARY
+          fi
+      
+      - name: 🔒 Semgrep Security Scan
+        uses: returntocorp/semgrep-action@v1
+        with:
+          config: >-
+            p/security-audit
+            p/secrets
+            p/owasp-top-ten
+          generateSarif: "1"
+        continue-on-error: true
+      
+      - name: 📊 Upload Semgrep results
+        uses: github/codeql-action/upload-sarif@v2
+        if: always()
+        with:
+          sarif_file: semgrep.sarif
+      
+      - name: 📊 Upload ESLint results
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: eslint-security-report
+          path: eslint-security.json
+          retention-days: 30
+
+  # ============================================================================
+  # Infrastructure Security Scan
+  # ============================================================================
+  
+  infrastructure-scan:
+    name: 🏗️ Infrastructure Security Scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+      
+      - name: 🔍 Trivy Filesystem Scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'sarif'
+          output: 'trivy-fs-results.sarif'
+          severity: 'CRITICAL,HIGH,MEDIUM'
+      
+      - name: 📊 Upload Trivy results
+        uses: github/codeql-action/upload-sarif@v2
+        if: always()
+        with:
+          sarif_file: 'trivy-fs-results.sarif'
+      
+      - name: 🔍 Trivy Configuration Scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'config'
+          scan-ref: '.'
+          format: 'table'
+        continue-on-error: true
+
+  # ============================================================================
+  # Secrets Detection
+  # ============================================================================
+  
+  secrets-scan:
+    name: 🔐 Secrets Detection
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: 🔍 TruffleHog Secrets Scan
+        uses: trufflesecurity/trufflehog@main
+        with:
+          path: ./
+          base: main
+          head: HEAD
+          extra_args: --debug --only-verified
+        continue-on-error: true
+      
+      - name: 🔍 GitLeaks Secrets Scan
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        continue-on-error: true
+
+  # ============================================================================
+  # License Compliance Check
+  # ============================================================================
+  
+  license-check:
+    name: 📄 License Compliance
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+      
+      - name: 📦 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+      
+      - name: 🔧 Install dependencies
+        run: npm ci --prefer-offline --no-audit
+      
+      - name: 📄 License Check
+        run: |
+          echo "## 📄 License Compliance Check" >> $GITHUB_STEP_SUMMARY
+          
+          # Install license checker
+          npm install -g license-checker
+          
+          # Generate license report
+          license-checker --json --out licenses.json
+          
+          # Check for problematic licenses
+          PROBLEMATIC=$(cat licenses.json | jq -r 'to_entries[] | select(.value.licenses | test("GPL|AGPL")) | .key' | wc -l)
+          
+          if [ "$PROBLEMATIC" -gt 0 ]; then
+            echo "⚠️ Found $PROBLEMATIC packages with potentially problematic licenses" >> $GITHUB_STEP_SUMMARY
+            cat licenses.json | jq -r 'to_entries[] | select(.value.licenses | test("GPL|AGPL")) | "- \(.key): \(.value.licenses)"' >> $GITHUB_STEP_SUMMARY
+          else
+            echo "✅ No license compliance issues found!" >> $GITHUB_STEP_SUMMARY
+          fi
+      
+      - name: 📊 Upload license report
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: license-report
+          path: licenses.json
+          retention-days: 30
+
+  # ============================================================================
+  # Comprehensive Security Scan
+  # ============================================================================
+  
+  comprehensive-scan:
+    name: 🔒 Comprehensive Security Scan
+    runs-on: ubuntu-latest
+    needs: [dependency-scan, code-security, infrastructure-scan, secrets-scan, license-check]
+    timeout-minutes: 15
+    if: always()
+    
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+      
+      - name: 📦 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+      
+      - name: 🔧 Install dependencies
+        run: npm ci --prefer-offline --no-audit
+      
+      - name: 📥 Download all artifacts
+        uses: actions/download-artifact@v3
+        continue-on-error: true
+      
+      - name: 🔒 Run comprehensive security scan
+        run: |
+          echo "## 🔒 Comprehensive Security Scan Results" >> $GITHUB_STEP_SUMMARY
+          node scripts/security-scanner.cjs
+      
+      - name: 📊 Upload comprehensive report
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: comprehensive-security-report
+          path: security-scan-report.json
+          retention-days: 90
+      
+      - name: 📧 Security notification
+        if: failure()
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const issue = await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: '🚨 Security Scan Failed',
+              body: `
+              ## 🚨 Security Scan Alert
+              
+              A security scan has failed on branch \`${context.ref}\`.
+              
+              **Commit:** ${context.sha}
+              **Workflow:** ${context.workflow}
+              **Run:** ${context.runNumber}
+              
+              Please review the security scan results and address any critical issues immediately.
+              
+              [View Workflow Run](${context.payload.repository.html_url}/actions/runs/${context.runId})
+              `,
+              labels: ['security', 'urgent', 'automated']
+            });
+            
+            console.log('Created security alert issue:', issue.data.number);
+
+  # ============================================================================
+  # Security Report Summary
+  # ============================================================================
+  
+  security-summary:
+    name: 📋 Security Summary
+    runs-on: ubuntu-latest
+    needs: [comprehensive-scan]
+    if: always()
+    
+    steps:
+      - name: 📊 Generate Security Summary
+        run: |
+          echo "# 🔒 Security Scan Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Scan Results" >> $GITHUB_STEP_SUMMARY
+          echo "- **Dependency Scan:** ${{ needs.dependency-scan.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Code Security:** ${{ needs.code-security.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Infrastructure:** ${{ needs.infrastructure-scan.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Secrets Detection:** ${{ needs.secrets-scan.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **License Check:** ${{ needs.license-check.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Comprehensive:** ${{ needs.comprehensive-scan.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Next Steps" >> $GITHUB_STEP_SUMMARY
+          echo "1. Review detailed reports in the artifacts" >> $GITHUB_STEP_SUMMARY
+          echo "2. Address any critical or high-severity issues" >> $GITHUB_STEP_SUMMARY
+          echo "3. Update dependencies with \`npm audit fix\`" >> $GITHUB_STEP_SUMMARY
+          echo "4. Review and improve security configurations" >> $GITHUB_STEP_SUMMARY
