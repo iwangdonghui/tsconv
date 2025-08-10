@@ -6,6 +6,7 @@ import { useTheme } from '../contexts/ThemeContext';
 import { useHistory } from '../hooks/useHistory';
 import { useInputValidation } from '../hooks/useInputValidation';
 import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts';
+import FAQ from './FAQ';
 import Footer from './Footer';
 import Header from './Header';
 import { HistoryPanel } from './HistoryPanel';
@@ -350,11 +351,11 @@ export default function TimestampConverter() {
     >
       <SEO
         title='Timestamp Converter - Unix & Epoch Time | tsconv.com'
-        description='Convert Unix timestamps to human-readable dates and vice versa. Fast, simple, and accurate timestamp conversion tool with real-time results.'
+        description='Convert Unix timestamps to human-readable dates and vice versa. Fast, simple, and accurate timestamp conversion tool with real-time results. Includes FAQ about timestamp conversion, timezone handling, and programming best practices.'
         canonical='https://www.tsconv.com/'
         ogTitle='Timestamp Converter - Unix & Epoch Time'
-        ogDescription='Convert Unix timestamps to human-readable dates and vice versa. Fast, simple, and accurate timestamp conversion tool with real-time results.'
-        keywords='timestamp converter, unix timestamp, epoch time, date converter, time conversion, unix time'
+        ogDescription='Convert Unix timestamps to human-readable dates and vice versa. Fast, simple, and accurate timestamp conversion tool with real-time results. Includes FAQ about timestamp conversion, timezone handling, and programming best practices.'
+        keywords='timestamp converter, unix timestamp, epoch time, date converter, time conversion, unix time, timestamp FAQ, 时间戳转换, 毫秒转换, 1970年, 闰秒, 时区处理, 2038年问题'
       />
       <Header />
       {/* 转换器主要内容 */}
@@ -1061,6 +1062,9 @@ export default function TimestampConverter() {
             {t('unix.what.description')}
           </p>
         </div>
+
+        {/* FAQ Section */}
+        <FAQ />
       </main>
 
       <Footer />
