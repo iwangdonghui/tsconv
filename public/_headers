@@ -8,7 +8,7 @@
   Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=()
 
   # Content Security Policy
-  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://static.cloudflareinsights.com https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://api.tsconv.com https://*.upstash.io; frame-ancestors 'none'; base-uri 'self'; form-action 'self'
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://static.cloudflareinsights.com https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://api.tsconv.com https://*.upstash.io; frame-ancestors 'none'; base-uri 'self'; form-action 'self'
 
   # HSTS (HTTP Strict Transport Security)
   Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
