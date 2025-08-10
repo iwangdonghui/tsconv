@@ -14,37 +14,42 @@ function getTypeScriptErrors() {
   } catch (error) {
     const output = error.stdout?.toString() || error.stderr?.toString() || '';
     const lines = output.split('\n').filter(line => line.includes('error TS'));
-    return lines.map(line => {
-      const match = line.match(/^(.+?):(\d+):(\d+) - error (TS\d+): (.+)$/);
-      if (match) {
-        return {
-          file: match[1],
-          line: parseInt(match[2]),
-          column: parseInt(match[3]),
-          code: match[4],
-          message: match[5]
-        };
-      }
-      return null;
-    }).filter(Boolean);
+    return lines
+      .map(line => {
+        const match = line.match(/^(.+?):(\d+):(\d+) - error (TS\d+): (.+)$/);
+        if (match) {
+          return {
+            file: match[1],
+            line: parseInt(match[2]),
+            column: parseInt(match[3]),
+            code: match[4],
+            message: match[5],
+          };
+        }
+        return null;
+      })
+      .filter(Boolean);
   }
 }
 
 // Fix unused React imports
 function fixUnusedReactImports(filePath) {
   if (!fs.existsSync(filePath)) return false;
-  
+
   let content = fs.readFileSync(filePath, 'utf8');
   let modified = false;
 
   // Remove unused React import when JSX is used with new transform
-  if (content.includes("import React") && !content.includes("React.")) {
-    content = content.replace(/import React,?\s*\{?\s*([^}]*)\s*\}?\s*from\s*['"]react['"];?\n?/g, (match, imports) => {
-      if (imports.trim()) {
-        return `import { ${imports.trim()} } from 'react';\n`;
+  if (content.includes('import React') && !content.includes('React.')) {
+    content = content.replace(
+      /import React,?\s*\{?\s*([^}]*)\s*\}?\s*from\s*['"]react['"];?\n?/g,
+      (match, imports) => {
+        if (imports.trim()) {
+          return `import { ${imports.trim()} } from 'react';\n`;
+        }
+        return ''; // Remove the entire import if only React was imported
       }
-      return ''; // Remove the entire import if only React was imported
-    });
+    );
     modified = true;
   }
 
@@ -58,9 +63,9 @@ function fixUnusedReactImports(filePath) {
 // Fix unused variables by prefixing with underscore
 function fixUnusedVariables(filePath) {
   if (!fs.existsSync(filePath)) return false;
-  
-  let content = fs.readFileSync(filePath, 'utf8');
-  let modified = false;
+
+  const content = fs.readFileSync(filePath, 'utf8');
+  const modified = false;
 
   // Common patterns for unused variables
   const patterns = [
@@ -85,13 +90,13 @@ function fixUnusedVariables(filePath) {
 // Add explicit any types
 function addExplicitAnyTypes(filePath) {
   if (!fs.existsSync(filePath)) return false;
-  
-  let content = fs.readFileSync(filePath, 'utf8');
-  let modified = false;
+
+  const content = fs.readFileSync(filePath, 'utf8');
+  const modified = false;
 
   // Add : any to function parameters that need it
   // This is a basic implementation - more sophisticated parsing would be better
-  
+
   if (modified) {
     fs.writeFileSync(filePath, content);
     return true;
@@ -136,7 +141,7 @@ try {
   const output = error.stdout?.toString() || error.stderr?.toString() || '';
   const remainingErrors = (output.match(/error TS/g) || []).length;
   console.log(`⚠️  ${remainingErrors} TypeScript errors remaining`);
-  
+
   // Show breakdown of remaining error types
   const errorTypes = {};
   output.split('\n').forEach(line => {
@@ -146,7 +151,7 @@ try {
       errorTypes[code] = (errorTypes[code] || 0) + 1;
     }
   });
-  
+
   console.log('\nRemaining error types:');
   Object.entries(errorTypes).forEach(([code, count]) => {
     console.log(`  ${code}: ${count} errors`);

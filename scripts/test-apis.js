@@ -11,31 +11,31 @@ const testCases = [
     name: '健康检查',
     method: 'GET',
     path: '/api/health',
-    expected: 200
+    expected: 200,
   },
   {
     name: '基础时间戳转换',
     method: 'GET',
     path: '/api/convert?timestamp=1642248600',
-    expected: 200
+    expected: 200,
   },
   {
     name: '时区转换',
     method: 'GET',
     path: '/api/timezone-convert?timestamp=1642248600&fromTimezone=UTC&toTimezone=America/New_York',
-    expected: 200
+    expected: 200,
   },
   {
     name: '时区信息',
     method: 'GET',
     path: '/api/timezone-info?timezone=America/New_York',
-    expected: 200
+    expected: 200,
   },
   {
     name: '支持的格式',
     method: 'GET',
     path: '/api/formats',
-    expected: 200
+    expected: 200,
   },
   {
     name: '批量转换',
@@ -43,26 +43,26 @@ const testCases = [
     path: '/api/batch-convert',
     body: {
       items: [1642248600, 1642335000],
-      outputFormats: ['iso8601', 'unix-timestamp']
+      outputFormats: ['iso8601', 'unix-timestamp'],
     },
-    expected: 200
+    expected: 200,
   },
   {
     name: '时区差异',
     method: 'GET',
     path: '/api/timezone-difference?from=UTC&to=America/New_York',
-    expected: 200
+    expected: 200,
   },
   {
     name: '可视化数据',
     method: 'GET',
     path: '/api/visualization?type=timezone-map',
-    expected: 200
-  }
+    expected: 200,
+  },
 ];
 
 async function makeRequest(testCase) {
-  return new Promise((resolve) => {
+  return new Promise(resolve => {
     const url = new URL(BASE_URL + testCase.path);
     const options = {
       hostname: url.hostname,
@@ -71,41 +71,41 @@ async function makeRequest(testCase) {
       method: testCase.method,
       headers: {
         'Content-Type': 'application/json',
-        'User-Agent': 'API-Test-Script/1.0'
-      }
+        'User-Agent': 'API-Test-Script/1.0',
+      },
     };
 
-    const req = http.request(options, (res) => {
+    const req = http.request(options, res => {
       let data = '';
-      res.on('data', (chunk) => {
+      res.on('data', chunk => {
         data += chunk;
       });
-      
+
       res.on('end', () => {
         try {
           const jsonData = JSON.parse(data);
           resolve({
             status: res.statusCode,
             data: jsonData,
-            success: res.statusCode === testCase.expected
+            success: res.statusCode === testCase.expected,
           });
         } catch (e) {
           resolve({
             status: res.statusCode,
-            data: data,
+            data,
             success: false,
-            error: 'Invalid JSON response'
+            error: 'Invalid JSON response',
           });
         }
       });
     });
 
-    req.on('error', (err) => {
+    req.on('error', err => {
       resolve({
         status: 0,
         data: null,
         success: false,
-        error: err.message
+        error: err.message,
       });
     });
 
@@ -126,9 +126,9 @@ async function runTests() {
 
   for (const testCase of testCases) {
     process.stdout.write(`⏳ 测试: ${testCase.name}... `);
-    
+
     const result = await makeRequest(testCase);
-    
+
     if (result.success) {
       console.log('✅ 通过');
       passed++;
@@ -160,12 +160,12 @@ async function runTests() {
 // 检查服务器是否运行
 async function checkServer() {
   console.log('🔍 检查服务器状态...');
-  
+
   const result = await makeRequest({
     name: 'Server Check',
     method: 'GET',
     path: '/api/health',
-    expected: 200
+    expected: 200,
   });
 
   if (!result.success) {

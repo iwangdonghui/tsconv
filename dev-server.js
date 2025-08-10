@@ -21,51 +21,51 @@ app.get('/api/health', (req, res) => {
       services: {
         redis: 'mock (memory fallback)',
         cache: 'active',
-        rateLimiter: 'mock'
+        rateLimiter: 'mock',
       },
       metrics: {
         totalRequests: 100,
         cacheHitRate: 0.85,
-        avgResponseTime: 25
-      }
+        avgResponseTime: 25,
+      },
     },
     meta: {
       endpoint: '/api/health',
       method: 'GET',
-      timestamp: new Date().toISOString()
-    }
+      timestamp: new Date().toISOString(),
+    },
   });
 });
 
 // Convert endpoint
 app.get('/api/convert', (req, res) => {
   const { timestamp, date, format, timezone, targetTimezone } = req.query;
-  
-  let inputValue = timestamp || date;
+
+  const inputValue = timestamp || date;
   if (!inputValue) {
     return res.status(400).json({
       success: false,
       error: {
         code: 'MISSING_PARAMETER',
-        message: 'Either timestamp or date parameter is required'
-      }
+        message: 'Either timestamp or date parameter is required',
+      },
     });
   }
 
   const ts = timestamp ? parseInt(timestamp) : Math.floor(new Date(date).getTime() / 1000);
-  
+
   if (isNaN(ts)) {
     return res.status(400).json({
       success: false,
       error: {
         code: 'INVALID_FORMAT',
-        message: 'Invalid timestamp or date format'
-      }
+        message: 'Invalid timestamp or date format',
+      },
     });
   }
 
   const dateObj = new Date(ts * 1000);
-  
+
   res.json({
     success: true,
     data: {
@@ -77,15 +77,15 @@ app.get('/api/convert', (req, res) => {
         timestamp: ts,
         local: dateObj.toLocaleString(),
         unix: ts,
-        relative: 'now'
-      }
+        relative: 'now',
+      },
     },
     meta: {
       timezone: timezone || 'UTC',
       targetTimezone: targetTimezone || 'UTC',
       processingTime: 2,
-      cacheHit: false
-    }
+      cacheHit: false,
+    },
   });
 });
 
@@ -95,19 +95,49 @@ app.get('/api/formats', (req, res) => {
     success: true,
     data: {
       formats: [
-        { name: 'ISO 8601', value: 'iso8601', description: 'International standard date format', example: '2024-01-15T14:30:00.000Z', category: 'standard' },
-        { name: 'UTC String', value: 'utc', description: 'UTC date string format', example: 'Mon, 15 Jan 2024 14:30:00 GMT', category: 'standard' },
-        { name: 'Unix Timestamp', value: 'timestamp', description: 'Seconds since Unix epoch', example: '1705321800', category: 'technical' },
-        { name: 'Local String', value: 'local', description: 'Browser local format', example: '1/15/2024, 2:30:00 PM', category: 'standard' },
-        { name: 'Relative Time', value: 'relative', description: 'Human-readable relative time', example: '2 hours ago', category: 'human' }
+        {
+          name: 'ISO 8601',
+          value: 'iso8601',
+          description: 'International standard date format',
+          example: '2024-01-15T14:30:00.000Z',
+          category: 'standard',
+        },
+        {
+          name: 'UTC String',
+          value: 'utc',
+          description: 'UTC date string format',
+          example: 'Mon, 15 Jan 2024 14:30:00 GMT',
+          category: 'standard',
+        },
+        {
+          name: 'Unix Timestamp',
+          value: 'timestamp',
+          description: 'Seconds since Unix epoch',
+          example: '1705321800',
+          category: 'technical',
+        },
+        {
+          name: 'Local String',
+          value: 'local',
+          description: 'Browser local format',
+          example: '1/15/2024, 2:30:00 PM',
+          category: 'standard',
+        },
+        {
+          name: 'Relative Time',
+          value: 'relative',
+          description: 'Human-readable relative time',
+          example: '2 hours ago',
+          category: 'human',
+        },
       ],
       categories: ['standard', 'human', 'regional', 'technical'],
-      total: 5
+      total: 5,
     },
     meta: {
       timestamp: new Date().toISOString(),
-      cacheHit: true
-    }
+      cacheHit: true,
+    },
   });
 });
 
@@ -115,53 +145,54 @@ app.get('/api/formats', (req, res) => {
 app.get('/api/now', (req, res) => {
   const now = new Date();
   const timestamp = Math.floor(now.getTime() / 1000);
-  
+
   res.json({
     success: true,
     data: {
       current: {
-        timestamp: timestamp,
+        timestamp,
         date: now.toISOString(),
         formats: {
           iso8601: now.toISOString(),
           utc: now.toUTCString(),
-          timestamp: timestamp,
+          timestamp,
           local: now.toLocaleString(),
-          unix: timestamp
-        }
-      }
+          unix: timestamp,
+        },
+      },
     },
     meta: {
-      timestamp: now.toISOString()
-    }
+      timestamp: now.toISOString(),
+    },
   });
 });
 
 // Batch endpoint
 app.post('/api/enhanced-batch', (req, res) => {
   const { inputs = [] } = req.body;
-  
+
   const results = inputs.map(input => {
     try {
-      const ts = typeof input === 'string' && isNaN(input) ? 
-        Math.floor(new Date(input).getTime() / 1000) : 
-        parseInt(input);
-      
+      const ts =
+        typeof input === 'string' && isNaN(input)
+          ? Math.floor(new Date(input).getTime() / 1000)
+          : parseInt(input);
+
       if (isNaN(ts)) {
         return {
-          input: input,
+          input,
           success: false,
           error: {
             code: 'INVALID_FORMAT',
-            message: 'Unable to parse as timestamp or date'
-          }
+            message: 'Unable to parse as timestamp or date',
+          },
         };
       }
 
       const dateObj = new Date(ts * 1000);
-      
+
       return {
-        input: input,
+        input,
         success: true,
         data: {
           original: input,
@@ -172,18 +203,18 @@ app.post('/api/enhanced-batch', (req, res) => {
             utc: dateObj.toUTCString(),
             timestamp: ts,
             local: dateObj.toLocaleString(),
-            unix: ts
-          }
-        }
+            unix: ts,
+          },
+        },
       };
     } catch (error) {
       return {
-        input: input,
+        input,
         success: false,
         error: {
           code: 'PROCESSING_ERROR',
-          message: error.message
-        }
+          message: error.message,
+        },
       };
     }
   });
@@ -191,18 +222,18 @@ app.post('/api/enhanced-batch', (req, res) => {
   res.json({
     success: true,
     data: {
-      results: results,
+      results,
       summary: {
         total: results.length,
         successful: results.filter(r => r.success).length,
-        failed: results.filter(r => !r.success).length
-      }
+        failed: results.filter(r => !r.success).length,
+      },
     },
     meta: {
       processingTime: 5,
       batchSize: results.length,
-      maxBatchSize: 100
-    }
+      maxBatchSize: 100,
+    },
   });
 });
 
@@ -214,14 +245,8 @@ app.get('/api/*', (req, res) => {
     error: {
       code: 'ENDPOINT_NOT_FOUND',
       message: `Endpoint ${endpoint} not found`,
-      available: [
-        '/api/convert',
-        '/api/formats',
-        '/api/now',
-        '/api/enhanced-batch',
-        '/api/health'
-      ]
-    }
+      available: ['/api/convert', '/api/formats', '/api/now', '/api/enhanced-batch', '/api/health'],
+    },
   });
 });
 

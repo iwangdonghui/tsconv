@@ -24,14 +24,14 @@ console.log('');
 const vercelDev = spawn('npx', ['vercel', 'dev', '--port', '3000'], {
   stdio: 'inherit',
   shell: true,
-  cwd: process.cwd()
+  cwd: process.cwd(),
 });
 
-vercelDev.on('close', (code) => {
+vercelDev.on('close', code => {
   console.log(`\n开发服务器已停止 (退出码: ${code})`);
 });
 
-vercelDev.on('error', (err) => {
+vercelDev.on('error', err => {
   console.error('启动开发服务器时出错:', err);
   process.exit(1);
 });

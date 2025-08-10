@@ -5,13 +5,11 @@ import path from 'path';
 import { execSync } from 'child_process';
 
 // Files to fix
-const filesToFix = [
-  'api/handlers/unified-health.ts'
-];
+const filesToFix = ['api/handlers/unified-health.ts'];
 
 function fixVariableNaming(filePath) {
   console.log(`\n🔧 Fixing variable naming in ${filePath}...`);
-  
+
   if (!fs.existsSync(filePath)) {
     console.log(`❌ File not found: ${filePath}`);
     return false;
@@ -94,7 +92,10 @@ if (totalFixed > 0) {
     console.log(`⚠️  TypeScript compilation failed with ${errorCount} errors`);
 
     // Show first few errors for context
-    const lines = output.split('\n').filter(line => line.includes('error TS')).slice(0, 5);
+    const lines = output
+      .split('\n')
+      .filter(line => line.includes('error TS'))
+      .slice(0, 5);
     if (lines.length > 0) {
       console.log('\nFirst few errors:');
       lines.forEach(line => console.log(`  ${line}`));

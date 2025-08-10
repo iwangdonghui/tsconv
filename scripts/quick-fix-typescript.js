@@ -26,10 +26,10 @@ const fixes = [
   // Remove unused imports
   {
     pattern: /^import React from 'react';$/m,
-    replacement: '// import React from \'react\'; // Unused import',
-    description: 'Comment out unused React imports'
+    replacement: "// import React from 'react'; // Unused import",
+    description: 'Comment out unused React imports',
   },
-  
+
   // Prefix unused variables with underscore
   {
     pattern: /(\s+)(const|let|var)\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*=/g,
@@ -37,9 +37,9 @@ const fixes = [
       if (varName.startsWith('_')) return match;
       return `${indent}const _${varName} =`;
     },
-    description: 'Prefix unused variables with underscore'
+    description: 'Prefix unused variables with underscore',
   },
-  
+
   // Prefix unused parameters with underscore
   {
     pattern: /(\([^)]*?)([a-zA-Z_][a-zA-Z0-9_]*)(:\s*[^,)]+)/g,
@@ -47,24 +47,24 @@ const fixes = [
       if (paramName.startsWith('_')) return match;
       return `${before}_${paramName}${typeAnnotation}`;
     },
-    description: 'Prefix unused parameters with underscore'
-  }
+    description: 'Prefix unused parameters with underscore',
+  },
 ];
 
 async function quickFix() {
   console.log('📊 Getting TypeScript errors...');
   const errors = getTypeScriptErrors();
-  
+
   if (errors.length === 0) {
     console.log('✅ No TypeScript errors found!');
     return;
   }
-  
+
   console.log(`Found ${errors.length} TypeScript errors`);
-  
+
   // Extract files with unused variable/parameter errors
   const filesToFix = new Set();
-  
+
   errors.forEach(error => {
     if (error.includes('TS6133') || error.includes('TS6196')) {
       const match = error.match(/^(.+?)\(/);
@@ -73,31 +73,34 @@ async function quickFix() {
       }
     }
   });
-  
+
   console.log(`\n🔧 Fixing ${filesToFix.size} files with unused variables/parameters...\n`);
-  
+
   // Apply simple fixes to each file
   for (const filePath of filesToFix) {
     if (!fs.existsSync(filePath)) continue;
-    
+
     console.log(`📁 Processing ${filePath}...`);
-    
-    let content = fs.readFileSync(filePath, 'utf8');
+
+    const content = fs.readFileSync(filePath, 'utf8');
     let modified = false;
-    
+
     // Apply manual fixes for specific patterns
     const lines = content.split('\n');
-    
+
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
-      
+
       // Fix unused React imports
-      if (line.trim() === "import React from 'react';" || line.trim() === 'import React, { useState } from \'react\';') {
-        lines[i] = '// ' + line + ' // Unused import';
+      if (
+        line.trim() === "import React from 'react';" ||
+        line.trim() === "import React, { useState } from 'react';"
+      ) {
+        lines[i] = `// ${line} // Unused import`;
         modified = true;
         console.log(`  ✅ Commented out unused React import`);
       }
-      
+
       // Fix unused const declarations
       if (line.includes('const ') && !line.includes('_')) {
         const constMatch = line.match(/(\s*const\s+)([a-zA-Z_][a-zA-Z0-9_]*)/);
@@ -110,7 +113,7 @@ async function quickFix() {
           }
         }
       }
-      
+
       // Fix unused function parameters
       if (line.includes('(') && line.includes(':') && !line.includes('_')) {
         const paramMatches = line.matchAll(/([a-zA-Z_][a-zA-Z0-9_]*)(:\s*[^,)]+)/g);
@@ -124,7 +127,7 @@ async function quickFix() {
         }
       }
     }
-    
+
     if (modified) {
       fs.writeFileSync(filePath, lines.join('\n'));
       console.log(`  💾 Saved changes to ${filePath}`);
@@ -132,16 +135,16 @@ async function quickFix() {
       console.log(`  ⚪ No changes needed for ${filePath}`);
     }
   }
-  
+
   // Test compilation again
   console.log('\n🧪 Testing compilation after fixes...');
   const remainingErrors = getTypeScriptErrors();
-  
+
   console.log(`\n📊 Results:`);
   console.log(`  Before: ${errors.length} errors`);
   console.log(`  After: ${remainingErrors.length} errors`);
   console.log(`  Fixed: ${errors.length - remainingErrors.length} errors`);
-  
+
   if (remainingErrors.length === 0) {
     console.log('\n✅ All TypeScript errors fixed!');
   } else {
@@ -151,7 +154,7 @@ async function quickFix() {
       console.log(`  ${error}`);
     });
   }
-  
+
   console.log('\n🎯 Next Steps:');
   if (remainingErrors.length === 0) {
     console.log('1. Run: npm run typescript:optimize to enable more strict options');
@@ -161,8 +164,8 @@ async function quickFix() {
     console.log('2. Run this script again if needed');
     console.log('3. Consider enabling strict mode gradually');
   }
-  
-  console.log('\n' + '=' .repeat(50));
+
+  console.log(`\n${'='.repeat(50)}`);
   console.log('🔧 Quick TypeScript Fix Complete!');
 }
 
