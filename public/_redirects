@@ -13,13 +13,13 @@
 /debug  /debug-index.html  200
 /simple  /simple-index.html  200
 
-# Stable working app as main page (temporary fix for React issues)
-/  /working-app-stable.html  200
-
 # Working app backup (for testing)
 /working-app  /working-app.html  200
 
-# React app (for testing - currently has dependency issues)
+# Stable version (for fallback)
+/stable  /working-app-stable.html  200
+
+# React app testing routes
 /react-app  /index.html  200
 
 # SPA fallback for React Router - specific routes to avoid infinite loop
