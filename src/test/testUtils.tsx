@@ -1,3 +1,4 @@
+import React from 'react';
 import { ReactElement } from 'react';
 import { render, RenderOptions } from '@testing-library/react';
 import { ThemeProvider } from '../contexts/ThemeContext';

@@ -122,7 +122,7 @@ function addCacheTimestamp(response) {
   return new Response(responseClone.body, {
     status: responseClone.status,
     statusText: responseClone.statusText,
-    headers: headers
+    headers
   });
 }
 

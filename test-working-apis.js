@@ -10,40 +10,40 @@ const testCases = [
     name: '简化健康检查',
     method: 'GET',
     path: '/api/working-health',
-    expected: 200
+    expected: 200,
   },
   {
     name: '简化时间戳转换',
     method: 'GET',
     path: '/api/working-convert?timestamp=1642248600',
-    expected: 200
+    expected: 200,
   },
   {
     name: '简化日期转换',
     method: 'GET',
     path: '/api/working-convert?date=2022-01-15T14:30:00Z',
-    expected: 200
+    expected: 200,
   },
   {
     name: '简化批量转换',
     method: 'POST',
     path: '/api/working-batch',
     body: {
-      items: [1642248600, 1642335000, "2022-01-16T10:00:00Z"],
-      outputFormats: ['iso8601', 'timestamp', 'local']
+      items: [1642248600, 1642335000, '2022-01-16T10:00:00Z'],
+      outputFormats: ['iso8601', 'timestamp', 'local'],
     },
-    expected: 200
+    expected: 200,
   },
   {
     name: '基础测试端点',
     method: 'GET',
     path: '/api/test',
-    expected: 200
-  }
+    expected: 200,
+  },
 ];
 
 async function makeRequest(testCase) {
-  return new Promise((resolve) => {
+  return new Promise(resolve => {
     const url = new URL(BASE_URL + testCase.path);
     const options = {
       hostname: url.hostname,
@@ -52,41 +52,41 @@ async function makeRequest(testCase) {
       method: testCase.method,
       headers: {
         'Content-Type': 'application/json',
-        'User-Agent': 'API-Test-Script/1.0'
-      }
+        'User-Agent': 'API-Test-Script/1.0',
+      },
     };
 
-    const req = http.request(options, (res) => {
+    const req = http.request(options, res => {
       let data = '';
-      res.on('data', (chunk) => {
+      res.on('data', chunk => {
         data += chunk;
       });
-      
+
       res.on('end', () => {
         try {
           const jsonData = JSON.parse(data);
           resolve({
             status: res.statusCode,
             data: jsonData,
-            success: res.statusCode === testCase.expected
+            success: res.statusCode === testCase.expected,
           });
         } catch (e) {
           resolve({
             status: res.statusCode,
-            data: data,
+            data,
             success: false,
-            error: 'Invalid JSON response'
+            error: 'Invalid JSON response',
           });
         }
       });
     });
 
-    req.on('error', (err) => {
+    req.on('error', err => {
       resolve({
         status: 0,
         data: null,
         success: false,
-        error: err.message
+        error: err.message,
       });
     });
 
@@ -107,9 +107,9 @@ async function runTests() {
 
   for (const testCase of testCases) {
     process.stdout.write(`⏳ 测试: ${testCase.name}... `);
-    
+
     const result = await makeRequest(testCase);
-    
+
     if (result.success) {
       console.log('✅ 通过');
       if (result.data && result.data.success) {
@@ -150,12 +150,12 @@ async function runTests() {
 // 检查服务器是否运行
 async function checkServer() {
   console.log('🔍 检查服务器状态...');
-  
+
   const result = await makeRequest({
     name: 'Server Check',
     method: 'GET',
     path: '/api/test',
-    expected: 200
+    expected: 200,
   });
 
   if (!result.success) {

@@ -1,11 +1,9 @@
-import { describe, it, expect, afterEach, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import TimestampConverter from '../components/TimestampConverter';
-import { ThemeProvider } from '../contexts/ThemeContext';
-import { LanguageProvider } from '../contexts/LanguageContext';
-import React from 'react';
-import { vi } from 'vitest';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import TimestampConverter from '../components/TimestampConverter';
+import { LanguageProvider } from '../contexts/LanguageContext';
+import { ThemeProvider } from '../contexts/ThemeContext';
 
 // Mock clipboard API
 describe('TimestampConverter Integration Tests', () => {
@@ -16,7 +14,7 @@ describe('TimestampConverter Integration Tests', () => {
         writeText: vi.fn().mockResolvedValue(undefined),
       },
     });
-    
+
     // Mock window.matchMedia for theme context
     Object.defineProperty(window, 'matchMedia', {
       writable: true,
@@ -31,7 +29,7 @@ describe('TimestampConverter Integration Tests', () => {
         dispatchEvent: vi.fn(),
       })),
     });
-    
+
     // Mock localStorage
     const localStorageMock = {
       getItem: vi.fn(),
@@ -40,7 +38,7 @@ describe('TimestampConverter Integration Tests', () => {
       clear: vi.fn(),
     };
     Object.defineProperty(window, 'localStorage', {
-      value: localStorageMock
+      value: localStorageMock,
     });
   });
 
@@ -91,7 +89,9 @@ describe('TimestampConverter Integration Tests', () => {
 
       await waitFor(() => {
         expect(screen.getByText('Suggestions:')).toBeInTheDocument();
-        expect(screen.getByText('Try adding leading zeros to make a 10-digit timestamp')).toBeInTheDocument();
+        expect(
+          screen.getByText('Try adding leading zeros to make a 10-digit timestamp')
+        ).toBeInTheDocument();
       });
     });
   });
@@ -100,13 +100,16 @@ describe('TimestampConverter Integration Tests', () => {
     it('should validate manual date inputs', async () => {
       const { findByLabelText } = renderConverter();
       const yearInput = await findByLabelText('Year');
-      const __monthInput = await findByLabelText('Month');
-      const __dayInput = await findByLabelText('Day');
+      // Month and day inputs are available but not used in this test
+      await findByLabelText('Month');
+      await findByLabelText('Day');
 
       fireEvent.change(yearInput, { target: { value: '1969' } }); // Invalid year for Unix timestamp
 
       await waitFor(() => {
-        expect(screen.getByText('Year must be 1970 or later for Unix timestamps')).toBeInTheDocument();
+        expect(
+          screen.getByText('Year must be 1970 or later for Unix timestamps')
+        ).toBeInTheDocument();
       });
     });
 
@@ -158,7 +161,8 @@ describe('TimestampConverter Integration Tests', () => {
     it('should navigate between input fields with Tab key', async () => {
       const { findByPlaceholderText, findByLabelText } = renderConverter();
       const mainInput = await findByPlaceholderText('Enter timestamp or date...');
-      const __yearInput = await findByLabelText('Year');
+      // Year input is available but not used in this test
+      await findByLabelText('Year');
 
       mainInput.focus();
       expect(document.activeElement).toBe(mainInput);
@@ -189,7 +193,7 @@ describe('TimestampConverter Integration Tests', () => {
 
   describe('Batch Conversion Validation', () => {
     it('should validate batch input and show appropriate feedback', async () => {
-      const { findByRole, findByText } = renderConverter();
+      const { findByRole } = renderConverter();
       const batchButton = await findByRole('button', { name: /batch converter/i });
 
       fireEvent.click(batchButton);
@@ -198,7 +202,9 @@ describe('TimestampConverter Integration Tests', () => {
       expect(batchTextarea).toBeTruthy();
       expect(batchTextarea.tagName.toLowerCase()).toBe('textarea');
 
-      fireEvent.change(batchTextarea, { target: { value: '1640995200\ninvalid-input\n2022-01-01' } });
+      fireEvent.change(batchTextarea, {
+        target: { value: '1640995200\ninvalid-input\n2022-01-01' },
+      });
 
       await waitFor(() => {
         expect(screen.getByText('1640995200 →')).toBeInTheDocument();
