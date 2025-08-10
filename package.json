@@ -15,6 +15,7 @@
     "build:frontend": "tsc && vite build",
     "build:api": "tsc -p api/tsconfig.json",
     "build:cloudflare": "tsc --noEmit --project tsconfig.frontend.json && vite build",
+    "build:minimal": "vite build --config vite.minimal.config.ts",
     "deploy:cloudflare": "npm run build:cloudflare && wrangler pages deploy dist",
     "preview:cloudflare": "wrangler pages dev dist",
     "test:migration": "node scripts/test-migration.js",
@@ -99,8 +100,8 @@
     "verify:security": "node scripts/verify-security-automation.cjs"
   },
   "dependencies": {
-    "@radix-ui/react-select": "^2.2.5",
-    "@radix-ui/react-tabs": "^1.1.12",
+    "@radix-ui/react-select": "^2.1.1",
+    "@radix-ui/react-tabs": "^1.1.0",
     "@sentry/node": "^10.3.0",
     "@sentry/react": "^10.3.0",
     "@sentry/vite-plugin": "^4.0.2",
@@ -114,7 +115,7 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-error-boundary": "^6.0.0",
-    "react-router-dom": "^7.7.0",
+    "react-router-dom": "^6.26.2",
     "tailwind-merge": "^1.14.0",
     "tailwindcss-animate": "^1.0.7",
     "web-vitals": "^5.1.0"
