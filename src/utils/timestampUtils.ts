@@ -59,7 +59,7 @@ export function formatResults(parsed: ParsedInput): FormattedResult {
       second: '2-digit',
       timeZoneName: 'short'
     }),
-    timestamp: timestamp,
+    timestamp,
     iso8601: date.toISOString(),
     relative: getRelativeTime(date)
   };

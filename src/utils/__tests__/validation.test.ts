@@ -1,5 +1,5 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { validateInput, ValidationResult } from '../validation';
+import { describe, expect, it } from 'vitest';
+import { validateInput } from '../validation';
 
 describe('Validation Utils', () => {
   describe('validateInput', () => {
@@ -66,7 +66,7 @@ describe('Validation Utils', () => {
     it('should handle edge case timestamps', () => {
       const minResult = validateInput('0'); // Unix epoch
       expect(minResult.isValid).toBe(false); // Too small for our validator
-      
+
       const maxResult = validateInput('2147483647'); // Max 32-bit timestamp
       expect(maxResult.isValid).toBe(true);
     });

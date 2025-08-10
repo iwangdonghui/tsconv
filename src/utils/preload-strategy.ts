@@ -1,6 +1,6 @@
 /**
  * Preload Strategy for Code Splitting Optimization
- * 
+ *
  * This module provides intelligent preloading strategies to improve
  * perceived performance by loading components before they're needed.
  */
@@ -10,20 +10,20 @@ export const componentImports = {
   // Core tools (high priority)
   TimestampConverter: () => import('../components/TimestampConverter'),
   FormatTool: () => import('../components/FormatTool'),
-  
+
   // Calculator tools (medium priority)
   WorkdaysCalculator: () => import('../components/WorkdaysCalculator'),
   DateDiffCalculator: () => import('../components/DateDiffCalculator'),
   TimezoneExplorer: () => import('../components/TimezoneExplorer'),
-  
+
   // Documentation (low priority)
   ApiDocs: () => import('../components/ApiDocs'),
   EnhancedApiDocs: () => import('../components/EnhancedApiDocs'),
   Guide: () => import('../components/Guide'),
   HowTo: () => import('../components/HowTo'),
-  
+
   // System pages (lowest priority)
-  HealthPage: () => import('../components/HealthPage')
+  HealthPage: () => import('../components/HealthPage'),
 };
 
 // Preload priorities
@@ -32,7 +32,7 @@ export const preloadPriorities = {
   high: ['FormatTool', 'WorkdaysCalculator'], // Load on user interaction
   medium: ['DateDiffCalculator', 'TimezoneExplorer'], // Load on idle
   low: ['ApiDocs', 'Guide', 'HowTo'], // Load on demand
-  background: ['EnhancedApiDocs', 'HealthPage'] // Load in background
+  background: ['EnhancedApiDocs', 'HealthPage'], // Load in background
 };
 
 // Route-based preloading map
@@ -45,7 +45,7 @@ export const routePreloadMap: Record<string, string[]> = {
   '/api': ['ApiDocs', 'Guide'], // Documentation flow
   '/api-docs': ['EnhancedApiDocs', 'HowTo'], // Documentation flow
   '/guide': ['HowTo', 'ApiDocs'], // Documentation flow
-  '/how-to': ['Guide', 'ApiDocs'] // Documentation flow
+  '/how-to': ['Guide', 'ApiDocs'], // Documentation flow
 };
 
 /**
@@ -57,7 +57,7 @@ export function preloadComponent(componentName: keyof typeof componentImports): 
     console.warn(`Component ${componentName} not found in preload map`);
     return Promise.resolve();
   }
-  
+
   return importFn().catch(error => {
     console.warn(`Failed to preload component ${componentName}:`, error);
   });
@@ -67,10 +67,10 @@ export function preloadComponent(componentName: keyof typeof componentImports): 
  * Preloads multiple components
  */
 export function preloadComponents(componentNames: string[]): Promise<any[]> {
-  const validNames = componentNames.filter(name => 
-    name in componentImports
+  const validNames = componentNames.filter(
+    name => name in componentImports
   ) as (keyof typeof componentImports)[];
-  
+
   return Promise.all(validNames.map(preloadComponent));
 }
 
@@ -95,7 +95,9 @@ export function preloadForRoute(currentPath: string): Promise<any[]> {
  */
 export class PreloadManager {
   private preloadedComponents = new Set<string>();
-  private preloadQueue: string[] = [];
+  // Reserved for future use - queue for preloading components
+  // @ts-ignore - Will be used in future implementation
+  private _preloadQueue: string[] = [];
   private isPreloading = false;
 
   constructor() {
@@ -105,10 +107,10 @@ export class PreloadManager {
   private async initializePreloading() {
     // Preload immediate priority components
     await this.preloadImmediate();
-    
+
     // Set up idle preloading
     this.scheduleIdlePreloading();
-    
+
     // Set up intersection observer for link preloading
     this.setupLinkPreloading();
   }
@@ -162,7 +164,7 @@ export class PreloadManager {
 
   private setupLinkPreloading() {
     // Preload components when user hovers over navigation links
-    const observer = new IntersectionObserver((entries) => {
+    const observer = new IntersectionObserver(entries => {
       entries.forEach(entry => {
         if (entry.isIntersecting) {
           const link = entry.target as HTMLAnchorElement;
@@ -182,8 +184,8 @@ export class PreloadManager {
 
   public preloadForRoute(path: string): Promise<any[]> {
     const components = routePreloadMap[path] || [];
-    const unloadedComponents = components.filter(component => 
-      !this.preloadedComponents.has(component)
+    const unloadedComponents = components.filter(
+      component => !this.preloadedComponents.has(component)
     );
 
     if (unloadedComponents.length === 0) {

@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { Trash2, RefreshCw, Database, Wifi, WifiOff, Download } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useServiceWorker, formatCacheSize, getNetworkInfo } from '@/utils/service-worker';
+import { formatCacheSize, getNetworkInfo, useServiceWorker } from '@/utils/service-worker';
+import { Database, Download, RefreshCw, Trash2, Wifi, WifiOff } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
 interface CacheManagerProps {
   className?: string;
@@ -15,10 +15,10 @@ interface CacheInfo {
   entries: number;
 }
 
-export function CacheManager({ 
-  className, 
-  showNetworkInfo = true, 
-  showCacheDetails = true 
+export function CacheManager({
+  className,
+  showNetworkInfo = true,
+  showCacheDetails = true,
 }: CacheManagerProps) {
   const {
     isSupported,
@@ -30,7 +30,7 @@ export function CacheManager({
     activateWaiting,
     getCacheInfo,
     clearCaches,
-    clearCache
+    clearCache,
   } = useServiceWorker();
 
   const [caches, setCaches] = useState<CacheInfo[]>([]);
@@ -124,6 +124,9 @@ export function CacheManager({
       connection.addEventListener('change', updateNetworkInfo);
       return () => connection.removeEventListener('change', updateNetworkInfo);
     }
+
+    // Return empty cleanup function if no connection
+    return () => {};
   }, []);
 
   // Load cache info on mount and when service worker state changes
@@ -139,64 +142,57 @@ export function CacheManager({
   return (
     <div className={cn('space-y-4', className)}>
       {/* Service Worker Status */}
-      <div className="rounded-lg border bg-card p-4">
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="text-lg font-semibold flex items-center gap-2">
-            <Database className="w-5 h-5" />
+      <div className='rounded-lg border bg-card p-4'>
+        <div className='flex items-center justify-between mb-3'>
+          <h3 className='text-lg font-semibold flex items-center gap-2'>
+            <Database className='w-5 h-5' />
             Cache Manager
           </h3>
-          <div className="flex items-center gap-2">
+          <div className='flex items-center gap-2'>
             {isOnline ? (
-              <Wifi className="w-4 h-4 text-green-500" />
+              <Wifi className='w-4 h-4 text-green-500' />
             ) : (
-              <WifiOff className="w-4 h-4 text-red-500" />
+              <WifiOff className='w-4 h-4 text-red-500' />
             )}
-            <span className={cn(
-              "text-sm font-medium",
-              isOnline ? "text-green-600" : "text-red-600"
-            )}>
+            <span
+              className={cn('text-sm font-medium', isOnline ? 'text-green-600' : 'text-red-600')}
+            >
               {isOnline ? 'Online' : 'Offline'}
             </span>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-          <div className="text-center p-3 bg-muted rounded-lg">
-            <div className="text-2xl font-bold text-primary">
-              {isSupported ? '✅' : '❌'}
-            </div>
-            <div className="text-sm text-muted-foreground">
+        <div className='grid grid-cols-1 md:grid-cols-3 gap-4 mb-4'>
+          <div className='text-center p-3 bg-muted rounded-lg'>
+            <div className='text-2xl font-bold text-primary'>{isSupported ? '✅' : '❌'}</div>
+            <div className='text-sm text-muted-foreground'>
               Service Worker {isSupported ? 'Supported' : 'Not Supported'}
             </div>
           </div>
 
-          <div className="text-center p-3 bg-muted rounded-lg">
-            <div className="text-2xl font-bold text-primary">
-              {isRegistered ? '✅' : '❌'}
-            </div>
-            <div className="text-sm text-muted-foreground">
+          <div className='text-center p-3 bg-muted rounded-lg'>
+            <div className='text-2xl font-bold text-primary'>{isRegistered ? '✅' : '❌'}</div>
+            <div className='text-sm text-muted-foreground'>
               {isRegistered ? 'Registered' : 'Not Registered'}
             </div>
           </div>
 
-          <div className="text-center p-3 bg-muted rounded-lg">
-            <div className="text-2xl font-bold text-primary">
-              {updateAvailable ? '🔄' : '✅'}
-            </div>
-            <div className="text-sm text-muted-foreground">
+          <div className='text-center p-3 bg-muted rounded-lg'>
+            <div className='text-2xl font-bold text-primary'>{updateAvailable ? '🔄' : '✅'}</div>
+            <div className='text-sm text-muted-foreground'>
               {updateAvailable ? 'Update Available' : 'Up to Date'}
             </div>
           </div>
         </div>
 
-        <div className="flex flex-wrap gap-2">
+        <div className='flex flex-wrap gap-2'>
           {!isRegistered && isSupported && (
             <button
               onClick={handleRegister}
               disabled={loading}
-              className="inline-flex items-center gap-2 px-3 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 disabled:opacity-50"
+              className='inline-flex items-center gap-2 px-3 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 disabled:opacity-50'
             >
-              <Download className="w-4 h-4" />
+              <Download className='w-4 h-4' />
               Enable Offline Mode
             </button>
           )}
@@ -205,9 +201,9 @@ export function CacheManager({
             <button
               onClick={handleUpdate}
               disabled={loading}
-              className="inline-flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
+              className='inline-flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50'
             >
-              <RefreshCw className="w-4 h-4" />
+              <RefreshCw className='w-4 h-4' />
               Update App
             </button>
           )}
@@ -216,9 +212,9 @@ export function CacheManager({
             <button
               onClick={loadCacheInfo}
               disabled={loading}
-              className="inline-flex items-center gap-2 px-3 py-2 bg-secondary text-secondary-foreground rounded-md hover:bg-secondary/80 disabled:opacity-50"
+              className='inline-flex items-center gap-2 px-3 py-2 bg-secondary text-secondary-foreground rounded-md hover:bg-secondary/80 disabled:opacity-50'
             >
-              <RefreshCw className={cn("w-4 h-4", loading && "animate-spin")} />
+              <RefreshCw className={cn('w-4 h-4', loading && 'animate-spin')} />
               Refresh
             </button>
           )}
@@ -227,24 +223,22 @@ export function CacheManager({
 
       {/* Network Information */}
       {showNetworkInfo && (
-        <div className="rounded-lg border bg-card p-4">
-          <h4 className="font-semibold mb-3">Network Information</h4>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+        <div className='rounded-lg border bg-card p-4'>
+          <h4 className='font-semibold mb-3'>Network Information</h4>
+          <div className='grid grid-cols-1 md:grid-cols-3 gap-4 text-sm'>
             <div>
-              <span className="text-muted-foreground">Connection:</span>
-              <div className="font-medium">
-                {networkInfo.effectiveType || 'Unknown'}
-              </div>
+              <span className='text-muted-foreground'>Connection:</span>
+              <div className='font-medium'>{networkInfo.effectiveType || 'Unknown'}</div>
             </div>
             <div>
-              <span className="text-muted-foreground">Downlink:</span>
-              <div className="font-medium">
+              <span className='text-muted-foreground'>Downlink:</span>
+              <div className='font-medium'>
                 {networkInfo.downlink ? `${networkInfo.downlink} Mbps` : 'Unknown'}
               </div>
             </div>
             <div>
-              <span className="text-muted-foreground">RTT:</span>
-              <div className="font-medium">
+              <span className='text-muted-foreground'>RTT:</span>
+              <div className='font-medium'>
                 {networkInfo.rtt ? `${networkInfo.rtt} ms` : 'Unknown'}
               </div>
             </div>
@@ -254,58 +248,58 @@ export function CacheManager({
 
       {/* Cache Details */}
       {showCacheDetails && isRegistered && (
-        <div className="rounded-lg border bg-card p-4">
-          <div className="flex items-center justify-between mb-3">
-            <h4 className="font-semibold">Cache Storage</h4>
+        <div className='rounded-lg border bg-card p-4'>
+          <div className='flex items-center justify-between mb-3'>
+            <h4 className='font-semibold'>Cache Storage</h4>
             {caches.length > 0 && (
               <button
                 onClick={handleClearAll}
                 disabled={loading}
-                className="inline-flex items-center gap-2 px-3 py-2 bg-destructive text-destructive-foreground rounded-md hover:bg-destructive/90 disabled:opacity-50 text-sm"
+                className='inline-flex items-center gap-2 px-3 py-2 bg-destructive text-destructive-foreground rounded-md hover:bg-destructive/90 disabled:opacity-50 text-sm'
               >
-                <Trash2 className="w-4 h-4" />
+                <Trash2 className='w-4 h-4' />
                 Clear All
               </button>
             )}
           </div>
 
           {loading ? (
-            <div className="flex items-center justify-center py-8">
-              <RefreshCw className="w-6 h-6 animate-spin text-muted-foreground" />
+            <div className='flex items-center justify-center py-8'>
+              <RefreshCw className='w-6 h-6 animate-spin text-muted-foreground' />
             </div>
           ) : caches.length > 0 ? (
             <>
-              <div className="mb-4 p-3 bg-muted rounded-lg">
-                <div className="grid grid-cols-2 gap-4 text-sm">
+              <div className='mb-4 p-3 bg-muted rounded-lg'>
+                <div className='grid grid-cols-2 gap-4 text-sm'>
                   <div>
-                    <span className="text-muted-foreground">Total Size:</span>
-                    <div className="font-medium">{formatCacheSize(totalCacheSize)}</div>
+                    <span className='text-muted-foreground'>Total Size:</span>
+                    <div className='font-medium'>{formatCacheSize(totalCacheSize)}</div>
                   </div>
                   <div>
-                    <span className="text-muted-foreground">Total Entries:</span>
-                    <div className="font-medium">{totalCacheEntries}</div>
+                    <span className='text-muted-foreground'>Total Entries:</span>
+                    <div className='font-medium'>{totalCacheEntries}</div>
                   </div>
                 </div>
               </div>
 
-              <div className="space-y-2">
-                {caches.map((cache) => (
+              <div className='space-y-2'>
+                {caches.map(cache => (
                   <div
                     key={cache.name}
-                    className="flex items-center justify-between p-3 bg-muted rounded-lg"
+                    className='flex items-center justify-between p-3 bg-muted rounded-lg'
                   >
                     <div>
-                      <div className="font-medium">{cache.name}</div>
-                      <div className="text-sm text-muted-foreground">
+                      <div className='font-medium'>{cache.name}</div>
+                      <div className='text-sm text-muted-foreground'>
                         {cache.entries} entries • {formatCacheSize(cache.size)}
                       </div>
                     </div>
                     <button
                       onClick={() => handleClearCache(cache.name)}
                       disabled={loading}
-                      className="inline-flex items-center gap-1 px-2 py-1 bg-destructive text-destructive-foreground rounded text-sm hover:bg-destructive/90 disabled:opacity-50"
+                      className='inline-flex items-center gap-1 px-2 py-1 bg-destructive text-destructive-foreground rounded text-sm hover:bg-destructive/90 disabled:opacity-50'
                     >
-                      <Trash2 className="w-3 h-3" />
+                      <Trash2 className='w-3 h-3' />
                       Clear
                     </button>
                   </div>
@@ -313,9 +307,7 @@ export function CacheManager({
               </div>
             </>
           ) : (
-            <div className="text-center py-8 text-muted-foreground">
-              No caches found
-            </div>
+            <div className='text-center py-8 text-muted-foreground'>No caches found</div>
           )}
         </div>
       )}

@@ -1,17 +1,18 @@
-import { Copy, Check, X, Clock } from "lucide-react";
-import { useState, useEffect, useRef } from "react";
+import { Check, Clock, Copy, X } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
 
-import { useTheme } from "../contexts/ThemeContext";
-import { useLanguage } from "../contexts/LanguageContext";
-import { useKeyboardShortcuts } from "../hooks/useKeyboardShortcuts";
-import { useHistory, type HistoryItem } from "../hooks/useHistory";
-import { useInputValidation } from "../hooks/useInputValidation";
-import { SEO } from "./SEO";
-import Header from "./Header";
-import Footer from "./Footer";
-import { HistoryPanel } from "./HistoryPanel";
-import { ValidationIndicator } from "./ui/validation-indicator";
-import { ErrorMessage } from "./ui/error-message";
+import { useLanguage } from '../contexts/LanguageContext';
+import { useTheme } from '../contexts/ThemeContext';
+import { useHistory } from '../hooks/useHistory';
+import { useInputValidation } from '../hooks/useInputValidation';
+import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts';
+import Footer from './Footer';
+import Header from './Header';
+import { HistoryPanel } from './HistoryPanel';
+import { SEO } from './SEO';
+import { ErrorMessage } from './ui/error-message';
+import { RecoverySuggestions } from './ui/recovery-suggestions';
+import { ValidationIndicator } from './ui/validation-indicator';
 
 // Type for manual date that allows string values during input
 type ManualDateField = string | number;
@@ -23,17 +24,14 @@ type ManualDateType = {
   minute: ManualDateField;
   second: ManualDateField;
 };
-import { RecoverySuggestions } from "./ui/recovery-suggestions";
 
 export default function TimestampConverter() {
-  const [input, setInput] = useState("");
+  const [input, setInput] = useState('');
   const [currentTime, setCurrentTime] = useState(new Date());
-  const [copiedStates, setCopiedStates] = useState<{ [key: string]: boolean }>(
-    {}
-  );
-  const [userTimezone, setUserTimezone] = useState("");
+  const [copiedStates, setCopiedStates] = useState<{ [key: string]: boolean }>({});
+  const [userTimezone, setUserTimezone] = useState('');
   const [isPaused, setIsPaused] = useState(false);
-  const [batchInput, setBatchInput] = useState("");
+  const [batchInput, setBatchInput] = useState('');
   const [showBatchConverter, setShowBatchConverter] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const [manualDate, setManualDate] = useState<ManualDateType>({
@@ -61,7 +59,7 @@ export default function TimestampConverter() {
   const {
     validationResult: manualDateValidation,
     validateInput: validateManualDateInput,
-    resetValidation: resetManualValidation,
+    resetValidation: _resetManualValidation,
   } = useInputValidation({
     debounceMs: 100,
     validator: () => {
@@ -77,33 +75,30 @@ export default function TimestampConverter() {
       if (isNaN(date.getTime())) {
         return {
           isValid: false,
-          errorType: "syntax" as const,
-          message: "Invalid manual date configuration",
-          severity: "error" as const,
+          errorType: 'syntax' as const,
+          message: 'Invalid manual date configuration',
+          severity: 'error' as const,
           suggestions: [
-            "Check if the date exists",
-            "Verify month has correct number of days",
-            "Ensure all values are within valid ranges",
+            'Check if the date exists',
+            'Verify month has correct number of days',
+            'Ensure all values are within valid ranges',
           ],
         };
       }
       if (date.getFullYear() < 1970) {
         return {
           isValid: false,
-          errorType: "range" as const,
-          message: "Year must be 1970 or later",
-          severity: "error" as const,
-          suggestions: [
-            "Unix timestamps start from January 1970",
-            "Use a year of 1970 or later",
-          ],
+          errorType: 'range' as const,
+          message: 'Year must be 1970 or later',
+          severity: 'error' as const,
+          suggestions: ['Unix timestamps start from January 1970', 'Use a year of 1970 or later'],
         };
       }
       return {
         isValid: true,
         errorType: undefined,
-        message: "Valid date configuration",
-        severity: "info" as const,
+        message: 'Valid date configuration',
+        severity: 'info' as const,
       };
     },
   });
@@ -119,13 +114,11 @@ export default function TimestampConverter() {
     },
     onCopy: () => {
       if (results) {
-        navigator.clipboard.writeText(
-          results.utcDate || results.timestamp?.toString() || ""
-        );
+        navigator.clipboard.writeText(results.utcDate || results.timestamp?.toString() || '');
       }
     },
     onClear: () => {
-      setInput("");
+      setInput('');
       clearMainValidation();
       inputRef.current?.focus();
     },
@@ -140,11 +133,11 @@ export default function TimestampConverter() {
     // 设置 canonical URL
     let canonical = document.querySelector('link[rel="canonical"]');
     if (canonical) {
-      canonical.setAttribute("href", "https://www.tsconv.com/");
+      canonical.setAttribute('href', 'https://www.tsconv.com/');
     } else {
-      canonical = document.createElement("link");
-      canonical.setAttribute("rel", "canonical");
-      canonical.setAttribute("href", "https://www.tsconv.com/");
+      canonical = document.createElement('link');
+      canonical.setAttribute('rel', 'canonical');
+      canonical.setAttribute('href', 'https://www.tsconv.com/');
       document.head.appendChild(canonical);
     }
   }, []);
@@ -160,15 +153,13 @@ export default function TimestampConverter() {
   }, [isPaused]);
 
   // 智能解析输入
-  const parseInput = (
-    value: string
-  ): { type: "timestamp" | "date"; value: number } | null => {
+  const parseInput = (value: string): { type: 'timestamp' | 'date'; value: number } | null => {
     if (!value.trim()) return null;
 
     const trimmed = value.trim();
 
     // 移除可能的逗号分隔符
-    const cleanedNumber = trimmed.replace(/,/g, "");
+    const cleanedNumber = trimmed.replace(/,/g, '');
 
     // 尝试解析为时间戳
     if (/^\d+$/.test(cleanedNumber)) {
@@ -176,24 +167,24 @@ export default function TimestampConverter() {
 
       // 10位时间戳 (2001-2286年): 1000000000 - 9999999999
       if (num >= 1000000000 && num <= 9999999999) {
-        return { type: "timestamp" as const, value: num * 1000 };
+        return { type: 'timestamp' as const, value: num * 1000 };
       }
 
       // 13位时间戳 (毫秒): 1000000000000 - 9999999999999
       if (num >= 1000000000000 && num <= 9999999999999) {
-        return { type: "timestamp" as const, value: num };
+        return { type: 'timestamp' as const, value: num };
       }
 
       // 9位时间戳 (1973-2001年): 100000000 - 999999999
       if (num >= 100000000 && num <= 999999999) {
-        return { type: "timestamp" as const, value: num * 1000 };
+        return { type: 'timestamp' as const, value: num * 1000 };
       }
     }
 
     // 尝试解析为日期字符串
     const date = new Date(trimmed);
     if (!isNaN(date.getTime())) {
-      return { type: "date" as const, value: date.getTime() };
+      return { type: 'date' as const, value: date.getTime() };
     }
 
     return null;
@@ -203,12 +194,12 @@ export default function TimestampConverter() {
   const copyToClipboard = async (text: string, key: string) => {
     try {
       await navigator.clipboard.writeText(text);
-      setCopiedStates((prev) => ({ ...prev, [key]: true }));
+      setCopiedStates(prev => ({ ...prev, [key]: true }));
       setTimeout(() => {
-        setCopiedStates((prev) => ({ ...prev, [key]: false }));
+        setCopiedStates(prev => ({ ...prev, [key]: false }));
       }, 2000);
     } catch (err) {
-      console.error("Copy failed:", err);
+      console.error('Copy failed:', err);
     }
   };
 
@@ -222,17 +213,17 @@ export default function TimestampConverter() {
 
     const result = {
       utcDate: date.toUTCString(),
-      localDate: date.toLocaleString("en-US", {
-        weekday: "long",
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-        hour: "numeric",
-        minute: "2-digit",
-        second: "2-digit",
-        timeZoneName: "short",
+      localDate: date.toLocaleString('en-US', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit',
+        second: '2-digit',
+        timeZoneName: 'short',
       }),
-      timestamp: timestamp,
+      timestamp,
       iso8601: date.toISOString(),
       relative: getRelativeTime(date),
     };
@@ -249,7 +240,7 @@ export default function TimestampConverter() {
       if (parsed) {
         // 检查是否是完整的时间戳（9位、10位或13位）或有效日期
         const trimmed = input.trim();
-        const cleanedNumber = trimmed.replace(/,/g, "");
+        const cleanedNumber = trimmed.replace(/,/g, '');
         let isCompleteTimestamp = false;
 
         if (/^\d+$/.test(cleanedNumber)) {
@@ -259,16 +250,12 @@ export default function TimestampConverter() {
             (num >= 1000000000000 && num <= 9999999999999);
         }
 
-        const isValidDate =
-          !isCompleteTimestamp && !isNaN(new Date(trimmed).getTime());
+        const isValidDate = !isCompleteTimestamp && !isNaN(new Date(trimmed).getTime());
 
         if (isCompleteTimestamp || isValidDate) {
           const date = new Date(parsed.value);
           const timestamp = Math.floor(parsed.value / 1000);
-          const output =
-            parsed.type === "timestamp"
-              ? date.toUTCString()
-              : timestamp.toString();
+          const output = parsed.type === 'timestamp' ? date.toUTCString() : timestamp.toString();
           addToHistory(input.trim(), output, parsed.type);
         }
       }
@@ -286,17 +273,17 @@ export default function TimestampConverter() {
     const diffHour = Math.floor(diffMin / 60);
     const diffDay = Math.floor(diffHour / 24);
 
-    if (Math.abs(diffSec) < 60) return "just now";
+    if (Math.abs(diffSec) < 60) return 'just now';
     if (Math.abs(diffMin) < 60)
       return `${Math.abs(diffMin)} minute${
-        Math.abs(diffMin) !== 1 ? "s" : ""
-      } ${diffMin > 0 ? "from now" : "ago"}`;
+        Math.abs(diffMin) !== 1 ? 's' : ''
+      } ${diffMin > 0 ? 'from now' : 'ago'}`;
     if (Math.abs(diffHour) < 24)
       return `${Math.abs(diffHour)} hour${
-        Math.abs(diffHour) !== 1 ? "s" : ""
-      } ${diffHour > 0 ? "from now" : "ago"}`;
-    return `${Math.abs(diffDay)} day${Math.abs(diffDay) !== 1 ? "s" : ""} ${
-      diffDay > 0 ? "from now" : "ago"
+        Math.abs(diffHour) !== 1 ? 's' : ''
+      } ${diffHour > 0 ? 'from now' : 'ago'}`;
+    return `${Math.abs(diffDay)} day${Math.abs(diffDay) !== 1 ? 's' : ''} ${
+      diffDay > 0 ? 'from now' : 'ago'
     }`;
   };
 
@@ -304,21 +291,21 @@ export default function TimestampConverter() {
   const processBatchConversion = () => {
     const lines = batchInput
       .trim()
-      .split("\n")
-      .filter((line) => line.trim());
-    const results = lines.map((line) => {
+      .split('\n')
+      .filter(line => line.trim());
+    const results = lines.map(line => {
       const trimmed = line.trim();
       const parsed = parseInput(trimmed);
       if (!parsed) return `${trimmed} → Invalid format`;
 
       const date = new Date(parsed.value);
-      if (parsed.type === "timestamp") {
+      if (parsed.type === 'timestamp') {
         return `${trimmed} → ${date.toISOString()} (${date.toLocaleString()})`;
       } else {
         return `${trimmed} → ${Math.floor(parsed.value / 1000)}`;
       }
     });
-    return results.join("\n");
+    return results.join('\n');
   };
 
   // 手动日期转换
@@ -347,12 +334,12 @@ export default function TimestampConverter() {
   };
 
   const updateManualDate = (field: string, value: ManualDateField) => {
-    setManualDate((prev) => ({ ...prev, [field]: value }));
-    setTimeout(() => validateManualDateInput(""), 0);
+    setManualDate(prev => ({ ...prev, [field]: value }));
+    setTimeout(() => validateManualDateInput(''), 0);
   };
 
   useEffect(() => {
-    validateManualDateInput("");
+    validateManualDateInput('');
   }, [manualDate, validateManualDateInput]);
 
   const results = formatResults();
@@ -361,102 +348,88 @@ export default function TimestampConverter() {
   return (
     <div
       className={`min-h-screen flex flex-col transition-colors duration-200 ${
-        isDark ? "bg-slate-900 text-white" : "bg-white text-slate-900"
+        isDark ? 'bg-slate-900 text-white' : 'bg-white text-slate-900'
       }`}
     >
       <SEO
-        title="Timestamp Converter - Unix & Epoch Time | tsconv.com"
-        description="Convert Unix timestamps to human-readable dates and vice versa. Fast, simple, and accurate timestamp conversion tool with real-time results."
-        canonical="https://www.tsconv.com/"
-        ogTitle="Timestamp Converter - Unix & Epoch Time"
-        ogDescription="Convert Unix timestamps to human-readable dates and vice versa. Fast, simple, and accurate timestamp conversion tool with real-time results."
-        keywords="timestamp converter, unix timestamp, epoch time, date converter, time conversion, unix time"
+        title='Timestamp Converter - Unix & Epoch Time | tsconv.com'
+        description='Convert Unix timestamps to human-readable dates and vice versa. Fast, simple, and accurate timestamp conversion tool with real-time results.'
+        canonical='https://www.tsconv.com/'
+        ogTitle='Timestamp Converter - Unix & Epoch Time'
+        ogDescription='Convert Unix timestamps to human-readable dates and vice versa. Fast, simple, and accurate timestamp conversion tool with real-time results.'
+        keywords='timestamp converter, unix timestamp, epoch time, date converter, time conversion, unix time'
       />
       <Header />
       {/* 转换器主要内容 */}
-      <main className="flex-1 max-w-2xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
+      <main className='flex-1 max-w-2xl mx-auto px-4 sm:px-6 py-8 sm:py-12'>
         {/* Title */}
-        <div className="text-center mb-8">
-          <h1 className="text-3xl sm:text-4xl font-bold mb-4">
-            Timestamp Converter
-          </h1>
-          <p className="text-lg text-slate-600 dark:text-slate-400">
+        <div className='text-center mb-8'>
+          <h1 className='text-3xl sm:text-4xl font-bold mb-4'>Timestamp Converter</h1>
+          <p className='text-lg text-slate-600 dark:text-slate-400'>
             Convert Unix timestamps to human-readable dates and vice versa
           </p>
         </div>
 
         {/* Input */}
-        <div className="mb-6 sm:mb-8">
-          <div className="relative">
+        <div className='mb-6 sm:mb-8'>
+          <div className='relative'>
             <input
               ref={inputRef}
-              type="text"
+              type='text'
               value={input}
-              onChange={(e) => {
+              onChange={e => {
                 setInput(e.target.value);
                 validateMainInput(e.target.value);
               }}
-              placeholder={t("converter.placeholder")}
+              placeholder={t('converter.placeholder')}
               className={`w-full p-4 sm:p-6 text-base sm:text-lg border-2 rounded-xl transition-all duration-200 pr-24 ${
                 isDark
-                  ? "bg-slate-800 border-slate-600 text-white placeholder-slate-400 focus:border-blue-500"
-                  : "bg-white border-slate-300 placeholder-slate-500 focus:border-blue-500"
+                  ? 'bg-slate-800 border-slate-600 text-white placeholder-slate-400 focus:border-blue-500'
+                  : 'bg-white border-slate-300 placeholder-slate-500 focus:border-blue-500'
               } ${
-                validationState === "invalid"
-                  ? "border-red-500 focus:border-red-500 focus:ring-red-500/20"
-                  : ""
+                validationState === 'invalid'
+                  ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20'
+                  : ''
               }
               ${
-                validationState === "valid"
-                  ? "border-green-500 focus:border-green-500 focus:ring-green-500/20"
-                  : ""
+                validationState === 'valid'
+                  ? 'border-green-500 focus:border-green-500 focus:ring-green-500/20'
+                  : ''
               }
-              ${
-                isValidating ? "border-blue-500" : ""
-              } focus:outline-none focus:ring-4`}
-              aria-invalid={
-                validationState === "invalid" || validationState === "warning"
-              }
-              aria-describedby={
-                validationResult ? "input-validation-feedback" : undefined
-              }
+              ${isValidating ? 'border-blue-500' : ''} focus:outline-none focus:ring-4`}
+              aria-invalid={validationState === 'invalid' || validationState === 'warning'}
+              aria-describedby={validationResult ? 'input-validation-feedback' : undefined}
               aria-busy={isValidating}
-              role="combobox"
+              role='combobox'
               aria-expanded={showHistory}
             />
-            <div className="absolute right-3 sm:right-4 top-1/2 transform -translate-y-1/2 flex items-center gap-2">
-              <ValidationIndicator
-                state={validationState}
-                size="md"
-                animated={true}
-              />
+            <div className='absolute right-3 sm:right-4 top-1/2 transform -translate-y-1/2 flex items-center gap-2'>
+              <ValidationIndicator state={validationState} size='md' animated={true} />
 
               {/* History Button */}
               <button
                 onClick={() => setShowHistory(!showHistory)}
                 className={`p-2 rounded-lg transition-colors ${
-                  isDark
-                    ? "hover:bg-slate-700 text-slate-400"
-                    : "hover:bg-slate-100 text-slate-500"
+                  isDark ? 'hover:bg-slate-700 text-slate-400' : 'hover:bg-slate-100 text-slate-500'
                 }`}
-                title="Show history"
-                aria-label="Show conversion history"
+                title='Show history'
+                aria-label='Show conversion history'
               >
-                <Clock className="w-5 h-5" />
+                <Clock className='w-5 h-5' />
               </button>
 
               {/* Clear Button */}
               {input && (
                 <button
-                  onClick={() => setInput("")}
+                  onClick={() => setInput('')}
                   className={`p-2 rounded-lg transition-colors ${
                     isDark
-                      ? "hover:bg-slate-700 text-slate-400"
-                      : "hover:bg-slate-100 text-slate-500"
+                      ? 'hover:bg-slate-700 text-slate-400'
+                      : 'hover:bg-slate-100 text-slate-500'
                   }`}
-                  aria-label="Clear input"
+                  aria-label='Clear input'
                 >
-                  <X className="w-5 h-5" />
+                  <X className='w-5 h-5' />
                 </button>
               )}
             </div>
@@ -473,24 +446,24 @@ export default function TimestampConverter() {
         </div>
 
         {/* Validation Feedback */}
-        {validationResult && validationResult.severity === "error" && (
+        {validationResult && validationResult.severity === 'error' && (
           <div
-            id="input-validation-feedback"
-            className="mt-2 space-y-2"
-            role="alert"
-            aria-live="polite"
+            id='input-validation-feedback'
+            className='mt-2 space-y-2'
+            role='alert'
+            aria-live='polite'
           >
             <ErrorMessage result={validationResult} />
             <RecoverySuggestions result={validationResult} />
           </div>
         )}
 
-        {validationResult && validationResult.severity === "warning" && (
+        {validationResult && validationResult.severity === 'warning' && (
           <div
-            id="input-validation-feedback"
-            className="mt-2 space-y-2"
-            role="alert"
-            aria-live="polite"
+            id='input-validation-feedback'
+            className='mt-2 space-y-2'
+            role='alert'
+            aria-live='polite'
           >
             <ErrorMessage result={validationResult} />
           </div>
@@ -498,111 +471,95 @@ export default function TimestampConverter() {
 
         {/* Results */}
         {results && (
-          <div className="space-y-4 sm:space-y-6 mb-8">
+          <div className='space-y-4 sm:space-y-6 mb-8'>
             {/* Primary Results */}
-            <div className="space-y-3 sm:space-y-4">
+            <div className='space-y-3 sm:space-y-4'>
               {/* UTC Date */}
-              <div
-                className={`p-3 sm:p-4 rounded-lg ${
-                  isDark ? "bg-slate-800" : "bg-slate-50"
-                }`}
-              >
-                <div className="flex justify-between items-start gap-3">
-                  <div className="flex-1 min-w-0">
+              <div className={`p-3 sm:p-4 rounded-lg ${isDark ? 'bg-slate-800' : 'bg-slate-50'}`}>
+                <div className='flex justify-between items-start gap-3'>
+                  <div className='flex-1 min-w-0'>
                     <div
                       className={`text-xs sm:text-sm ${
-                        isDark ? "text-slate-400" : "text-slate-600"
+                        isDark ? 'text-slate-400' : 'text-slate-600'
                       } mb-1`}
                     >
                       Human readable date (UTC)
                     </div>
-                    <div className="text-sm sm:text-lg font-mono break-all">
-                      {results.utcDate}
-                    </div>
+                    <div className='text-sm sm:text-lg font-mono break-all'>{results.utcDate}</div>
                   </div>
                   <button
-                    onClick={() => copyToClipboard(results.utcDate, "utc")}
+                    onClick={() => copyToClipboard(results.utcDate, 'utc')}
                     className={`flex-shrink-0 p-2 rounded transition-colors ${
-                      isDark ? "hover:bg-slate-700" : "hover:bg-slate-200"
+                      isDark ? 'hover:bg-slate-700' : 'hover:bg-slate-200'
                     }`}
-                    aria-label="Copy UTC date"
+                    aria-label='Copy UTC date'
                   >
                     {copiedStates.utc ? (
-                      <Check className="w-4 h-4 text-green-500" />
+                      <Check className='w-4 h-4 text-green-500' />
                     ) : (
-                      <Copy className="w-4 h-4" />
+                      <Copy className='w-4 h-4' />
                     )}
                   </button>
                 </div>
               </div>
 
               {/* Local Date */}
-              <div
-                className={`p-3 sm:p-4 rounded-lg ${
-                  isDark ? "bg-slate-800" : "bg-slate-50"
-                }`}
-              >
-                <div className="flex justify-between items-start gap-3">
-                  <div className="flex-1 min-w-0">
+              <div className={`p-3 sm:p-4 rounded-lg ${isDark ? 'bg-slate-800' : 'bg-slate-50'}`}>
+                <div className='flex justify-between items-start gap-3'>
+                  <div className='flex-1 min-w-0'>
                     <div
                       className={`text-xs sm:text-sm ${
-                        isDark ? "text-slate-400" : "text-slate-600"
+                        isDark ? 'text-slate-400' : 'text-slate-600'
                       } mb-1`}
                     >
                       Your timezone: {userTimezone}
                     </div>
-                    <div className="text-sm sm:text-lg font-mono break-all">
+                    <div className='text-sm sm:text-lg font-mono break-all'>
                       {results.localDate}
                     </div>
                   </div>
                   <button
-                    onClick={() => copyToClipboard(results.localDate, "local")}
+                    onClick={() => copyToClipboard(results.localDate, 'local')}
                     className={`flex-shrink-0 p-2 rounded transition-colors ${
-                      isDark ? "hover:bg-slate-700" : "hover:bg-slate-200"
+                      isDark ? 'hover:bg-slate-700' : 'hover:bg-slate-200'
                     }`}
-                    aria-label="Copy local date"
+                    aria-label='Copy local date'
                   >
                     {copiedStates.local ? (
-                      <Check className="w-4 h-4 text-green-500" />
+                      <Check className='w-4 h-4 text-green-500' />
                     ) : (
-                      <Copy className="w-4 h-4" />
+                      <Copy className='w-4 h-4' />
                     )}
                   </button>
                 </div>
               </div>
 
               {/* Unix Timestamp */}
-              <div
-                className={`p-3 sm:p-4 rounded-lg ${
-                  isDark ? "bg-slate-800" : "bg-slate-50"
-                }`}
-              >
-                <div className="flex justify-between items-start gap-3">
-                  <div className="flex-1 min-w-0">
+              <div className={`p-3 sm:p-4 rounded-lg ${isDark ? 'bg-slate-800' : 'bg-slate-50'}`}>
+                <div className='flex justify-between items-start gap-3'>
+                  <div className='flex-1 min-w-0'>
                     <div
                       className={`text-xs sm:text-sm ${
-                        isDark ? "text-slate-400" : "text-slate-600"
+                        isDark ? 'text-slate-400' : 'text-slate-600'
                       } mb-1`}
                     >
                       Unix timestamp (seconds)
                     </div>
-                    <div className="text-sm sm:text-lg font-mono break-all">
+                    <div className='text-sm sm:text-lg font-mono break-all'>
                       {results.timestamp}
                     </div>
                   </div>
                   <button
-                    onClick={() =>
-                      copyToClipboard(results.timestamp.toString(), "timestamp")
-                    }
+                    onClick={() => copyToClipboard(results.timestamp.toString(), 'timestamp')}
                     className={`flex-shrink-0 p-2 rounded transition-colors ${
-                      isDark ? "hover:bg-slate-700" : "hover:bg-slate-200"
+                      isDark ? 'hover:bg-slate-700' : 'hover:bg-slate-200'
                     }`}
-                    aria-label="Copy timestamp"
+                    aria-label='Copy timestamp'
                   >
                     {copiedStates.timestamp ? (
-                      <Check className="w-4 h-4 text-green-500" />
+                      <Check className='w-4 h-4 text-green-500' />
                     ) : (
-                      <Copy className="w-4 h-4" />
+                      <Copy className='w-4 h-4' />
                     )}
                   </button>
                 </div>
@@ -610,36 +567,32 @@ export default function TimestampConverter() {
             </div>
 
             {/* Secondary Information */}
-            <details
-              className={`${isDark ? "text-slate-400" : "text-slate-600"}`}
-            >
-              <summary className="cursor-pointer hover:text-current transition-colors text-sm sm:text-base">
+            <details className={`${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+              <summary className='cursor-pointer hover:text-current transition-colors text-sm sm:text-base'>
                 More formats
               </summary>
-              <div className="mt-3 sm:mt-4 space-y-3">
-                <div className="flex justify-between items-center gap-3">
-                  <span className="text-sm">Relative time:</span>
-                  <span className="font-mono text-sm break-all">
-                    {results.relative}
-                  </span>
+              <div className='mt-3 sm:mt-4 space-y-3'>
+                <div className='flex justify-between items-center gap-3'>
+                  <span className='text-sm'>Relative time:</span>
+                  <span className='font-mono text-sm break-all'>{results.relative}</span>
                 </div>
-                <div className="flex justify-between items-start gap-3">
-                  <span className="text-sm flex-shrink-0">ISO 8601:</span>
-                  <div className="flex items-center gap-2 min-w-0">
-                    <span className="font-mono text-xs sm:text-sm break-all">
+                <div className='flex justify-between items-start gap-3'>
+                  <span className='text-sm flex-shrink-0'>ISO 8601:</span>
+                  <div className='flex items-center gap-2 min-w-0'>
+                    <span className='font-mono text-xs sm:text-sm break-all'>
                       {results.iso8601}
                     </span>
                     <button
-                      onClick={() => copyToClipboard(results.iso8601, "iso")}
+                      onClick={() => copyToClipboard(results.iso8601, 'iso')}
                       className={`flex-shrink-0 p-1 rounded transition-colors ${
-                        isDark ? "hover:bg-slate-700" : "hover:bg-slate-200"
+                        isDark ? 'hover:bg-slate-700' : 'hover:bg-slate-200'
                       }`}
-                      aria-label="Copy ISO 8601 date"
+                      aria-label='Copy ISO 8601 date'
                     >
                       {copiedStates.iso ? (
-                        <Check className="w-3 h-3 text-green-500" />
+                        <Check className='w-3 h-3 text-green-500' />
                       ) : (
-                        <Copy className="w-3 h-3" />
+                        <Copy className='w-3 h-3' />
                       )}
                     </button>
                   </div>
@@ -650,96 +603,86 @@ export default function TimestampConverter() {
         )}
 
         {/* Current Timestamp */}
-        <div className="mb-8">
+        <div className='mb-8'>
           <div
             className={`p-4 sm:p-6 rounded-xl border-2 ${
               isDark
-                ? "bg-gradient-to-r from-blue-900/30 to-purple-900/30 border-blue-500/30"
-                : "bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200"
+                ? 'bg-gradient-to-r from-blue-900/30 to-purple-900/30 border-blue-500/30'
+                : 'bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200'
             }`}
           >
-            <div className="flex justify-between items-start gap-3">
-              <div className="flex-1 min-w-0">
+            <div className='flex justify-between items-start gap-3'>
+              <div className='flex-1 min-w-0'>
                 <div
                   className={`text-sm sm:text-base font-medium mb-2 ${
-                    isDark ? "text-blue-300" : "text-blue-700"
+                    isDark ? 'text-blue-300' : 'text-blue-700'
                   }`}
                 >
-                  {t("current.title")}
+                  {t('current.title')}
                 </div>
                 <div
                   className={`text-xl sm:text-2xl font-mono font-bold break-all ${
-                    isDark ? "text-white" : "text-slate-900"
+                    isDark ? 'text-white' : 'text-slate-900'
                   }`}
                 >
                   {currentTimestamp}
                 </div>
                 <div
                   className={`text-xs sm:text-sm mt-1 ${
-                    isDark ? "text-slate-400" : "text-slate-600"
+                    isDark ? 'text-slate-400' : 'text-slate-600'
                   }`}
                 >
-                  {isPaused ? t("current.paused") : t("current.updates")}
+                  {isPaused ? t('current.paused') : t('current.updates')}
                 </div>
               </div>
-              <div className="flex gap-2">
+              <div className='flex gap-2'>
                 <button
                   onClick={() => setIsPaused(!isPaused)}
                   className={`flex-shrink-0 p-3 rounded-lg transition-all duration-200 ${
                     isDark
-                      ? "hover:bg-blue-800/50 bg-blue-900/30 border border-blue-500/30"
-                      : "hover:bg-blue-100 bg-blue-50 border border-blue-200"
+                      ? 'hover:bg-blue-800/50 bg-blue-900/30 border border-blue-500/30'
+                      : 'hover:bg-blue-100 bg-blue-50 border border-blue-200'
                   }`}
-                  title={isPaused ? t("current.resume") : t("current.pause")}
+                  title={isPaused ? t('current.resume') : t('current.pause')}
                 >
                   {isPaused ? (
                     <svg
-                      className={`w-5 h-5 ${
-                        isDark ? "text-blue-300" : "text-blue-600"
-                      }`}
-                      fill="currentColor"
-                      viewBox="0 0 20 20"
+                      className={`w-5 h-5 ${isDark ? 'text-blue-300' : 'text-blue-600'}`}
+                      fill='currentColor'
+                      viewBox='0 0 20 20'
                     >
                       <path
-                        fillRule="evenodd"
-                        d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z"
-                        clipRule="evenodd"
+                        fillRule='evenodd'
+                        d='M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z'
+                        clipRule='evenodd'
                       />
                     </svg>
                   ) : (
                     <svg
-                      className={`w-5 h-5 ${
-                        isDark ? "text-blue-300" : "text-blue-600"
-                      }`}
-                      fill="currentColor"
-                      viewBox="0 0 20 20"
+                      className={`w-5 h-5 ${isDark ? 'text-blue-300' : 'text-blue-600'}`}
+                      fill='currentColor'
+                      viewBox='0 0 20 20'
                     >
                       <path
-                        fillRule="evenodd"
-                        d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM7 8a1 1 0 012 0v4a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v4a1 1 0 102 0V8a1 1 0 00-1-1z"
-                        clipRule="evenodd"
+                        fillRule='evenodd'
+                        d='M18 10a8 8 0 11-16 0 8 8 0 0116 0zM7 8a1 1 0 012 0v4a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v4a1 1 0 102 0V8a1 1 0 00-1-1z'
+                        clipRule='evenodd'
                       />
                     </svg>
                   )}
                 </button>
                 <button
-                  onClick={() =>
-                    copyToClipboard(currentTimestamp.toString(), "current")
-                  }
+                  onClick={() => copyToClipboard(currentTimestamp.toString(), 'current')}
                   className={`flex-shrink-0 p-3 rounded-lg transition-all duration-200 ${
                     isDark
-                      ? "hover:bg-blue-800/50 bg-blue-900/30 border border-blue-500/30"
-                      : "hover:bg-blue-100 bg-blue-50 border border-blue-200"
+                      ? 'hover:bg-blue-800/50 bg-blue-900/30 border border-blue-500/30'
+                      : 'hover:bg-blue-100 bg-blue-50 border border-blue-200'
                   }`}
                 >
                   {copiedStates.current ? (
-                    <Check className="w-5 h-5 text-green-500" />
+                    <Check className='w-5 h-5 text-green-500' />
                   ) : (
-                    <Copy
-                      className={`w-5 h-5 ${
-                        isDark ? "text-blue-300" : "text-blue-600"
-                      }`}
-                    />
+                    <Copy className={`w-5 h-5 ${isDark ? 'text-blue-300' : 'text-blue-600'}`} />
                   )}
                 </button>
               </div>
@@ -748,243 +691,217 @@ export default function TimestampConverter() {
         </div>
 
         {/* Manual Date & Time section */}
-        <div className="mb-8">
+        <div className='mb-8'>
           <div
             className={`p-4 sm:p-6 rounded-xl border ${
-              isDark
-                ? "bg-slate-800 border-slate-700"
-                : "bg-slate-50 border-slate-200"
+              isDark ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-200'
             }`}
           >
-            <h2 className="text-lg font-medium mb-4">{t("manual.title")}</h2>
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-4">
+            <h2 className='text-lg font-medium mb-4'>{t('manual.title')}</h2>
+            <div className='grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-4'>
               <div>
                 <label
-                  htmlFor="manual-year"
-                  className={`block text-xs mb-1 ${
-                    isDark ? "text-slate-400" : "text-slate-600"
-                  }`}
+                  htmlFor='manual-year'
+                  className={`block text-xs mb-1 ${isDark ? 'text-slate-400' : 'text-slate-600'}`}
                 >
-                  {t("manual.year")}
+                  {t('manual.year')}
                 </label>
                 <input
-                  id="manual-year"
-                  type="number"
-                  min="1970"
-                  max="3000"
+                  id='manual-year'
+                  type='number'
+                  min='1970'
+                  max='3000'
                   value={manualDate.year}
-                  placeholder="YYYY"
-                  onChange={(e) => updateManualDate("year", e.target.value)}
-                  onBlur={(e) => {
+                  placeholder='YYYY'
+                  onChange={e => updateManualDate('year', e.target.value)}
+                  onBlur={e => {
                     const value = e.target.value;
                     if (value === '' || isNaN(parseInt(value))) {
-                      updateManualDate("year", new Date().getFullYear());
+                      updateManualDate('year', new Date().getFullYear());
                     } else {
                       const numValue = parseInt(value);
-                      updateManualDate("year", Math.max(1970, Math.min(3000, numValue)));
+                      updateManualDate('year', Math.max(1970, Math.min(3000, numValue)));
                     }
                   }}
                   className={`w-full p-2 text-sm border rounded ${
                     isDark
-                      ? "bg-slate-700 border-slate-600 text-white"
-                      : "bg-white border-slate-300"
-                  } ${
-                    manualDateValidation?.severity === "error"
-                      ? "border-red-500"
-                      : ""
-                  }
-                  ${
-                    manualDateValidation?.severity === "info"
-                      ? "border-green-500"
-                      : ""
-                  }`}
+                      ? 'bg-slate-700 border-slate-600 text-white'
+                      : 'bg-white border-slate-300'
+                  } ${manualDateValidation?.severity === 'error' ? 'border-red-500' : ''}
+                  ${manualDateValidation?.severity === 'info' ? 'border-green-500' : ''}`}
                   aria-invalid={
-                    manualDateValidation?.severity === "error" ||
-                    manualDateValidation?.severity === "warning"
+                    manualDateValidation?.severity === 'error' ||
+                    manualDateValidation?.severity === 'warning'
                   }
-                  aria-describedby={
-                    manualDateValidation ? "manual-date-validation" : undefined
-                  }
+                  aria-describedby={manualDateValidation ? 'manual-date-validation' : undefined}
                 />
               </div>
               <div>
                 <label
-                  htmlFor="manual-month"
-                  className={`block text-xs mb-1 ${
-                    isDark ? "text-slate-400" : "text-slate-600"
-                  }`}
+                  htmlFor='manual-month'
+                  className={`block text-xs mb-1 ${isDark ? 'text-slate-400' : 'text-slate-600'}`}
                 >
-                  {t("manual.month")}
+                  {t('manual.month')}
                 </label>
                 <input
-                  id="manual-month"
-                  type="number"
-                  min="1"
-                  max="12"
+                  id='manual-month'
+                  type='number'
+                  min='1'
+                  max='12'
                   value={manualDate.month}
-                  placeholder="MM"
-                  onChange={(e) => updateManualDate("month", e.target.value)}
-                  onBlur={(e) => {
+                  placeholder='MM'
+                  onChange={e => updateManualDate('month', e.target.value)}
+                  onBlur={e => {
                     const value = e.target.value;
                     if (value === '' || isNaN(parseInt(value))) {
-                      updateManualDate("month", new Date().getMonth() + 1);
+                      updateManualDate('month', new Date().getMonth() + 1);
                     } else {
                       const numValue = parseInt(value);
-                      updateManualDate("month", Math.max(1, Math.min(12, numValue)));
+                      updateManualDate('month', Math.max(1, Math.min(12, numValue)));
                     }
                   }}
                   className={`w-full p-2 text-sm border rounded ${
                     isDark
-                      ? "bg-slate-700 border-slate-600 text-white"
-                      : "bg-white border-slate-300"
+                      ? 'bg-slate-700 border-slate-600 text-white'
+                      : 'bg-white border-slate-300'
                   }`}
-                  aria-describedby={
-                    manualDateValidation ? "manual-date-validation" : undefined
-                  }
+                  aria-describedby={manualDateValidation ? 'manual-date-validation' : undefined}
                   aria-invalid={
-                    manualDateValidation?.severity === "error" ||
-                    manualDateValidation?.severity === "warning"
+                    manualDateValidation?.severity === 'error' ||
+                    manualDateValidation?.severity === 'warning'
                   }
                 />
               </div>
               <div>
                 <label
-                  htmlFor="manual-day"
-                  className={`block text-xs mb-1 ${
-                    isDark ? "text-slate-400" : "text-slate-600"
-                  }`}
+                  htmlFor='manual-day'
+                  className={`block text-xs mb-1 ${isDark ? 'text-slate-400' : 'text-slate-600'}`}
                 >
-                  {t("manual.day")}
+                  {t('manual.day')}
                 </label>
                 <input
-                  id="manual-day"
-                  type="number"
-                  min="1"
-                  max="31"
+                  id='manual-day'
+                  type='number'
+                  min='1'
+                  max='31'
                   value={manualDate.day}
-                  placeholder="DD"
-                  onChange={(e) => updateManualDate("day", e.target.value)}
-                  onBlur={(e) => {
+                  placeholder='DD'
+                  onChange={e => updateManualDate('day', e.target.value)}
+                  onBlur={e => {
                     const value = e.target.value;
                     if (value === '' || isNaN(parseInt(value))) {
-                      updateManualDate("day", new Date().getDate());
+                      updateManualDate('day', new Date().getDate());
                     } else {
                       const numValue = parseInt(value);
-                      updateManualDate("day", Math.max(1, Math.min(31, numValue)));
+                      updateManualDate('day', Math.max(1, Math.min(31, numValue)));
                     }
                   }}
                   className={`w-full p-2 text-sm border rounded ${
                     isDark
-                      ? "bg-slate-700 border-slate-600 text-white"
-                      : "bg-white border-slate-300"
+                      ? 'bg-slate-700 border-slate-600 text-white'
+                      : 'bg-white border-slate-300'
                   }`}
                 />
               </div>
               <div>
                 <label
-                  htmlFor="manual-hour"
-                  className={`block text-xs mb-1 ${
-                    isDark ? "text-slate-400" : "text-slate-600"
-                  }`}
+                  htmlFor='manual-hour'
+                  className={`block text-xs mb-1 ${isDark ? 'text-slate-400' : 'text-slate-600'}`}
                 >
-                  {t("manual.hour")}
+                  {t('manual.hour')}
                 </label>
                 <input
-                  id="manual-hour"
-                  type="number"
-                  min="0"
-                  max="23"
+                  id='manual-hour'
+                  type='number'
+                  min='0'
+                  max='23'
                   value={manualDate.hour}
-                  placeholder="HH"
-                  onChange={(e) => updateManualDate("hour", e.target.value)}
-                  onBlur={(e) => {
+                  placeholder='HH'
+                  onChange={e => updateManualDate('hour', e.target.value)}
+                  onBlur={e => {
                     const value = e.target.value;
                     if (value === '' || isNaN(parseInt(value))) {
-                      updateManualDate("hour", new Date().getHours());
+                      updateManualDate('hour', new Date().getHours());
                     } else {
                       const numValue = parseInt(value);
-                      updateManualDate("hour", Math.max(0, Math.min(23, numValue)));
+                      updateManualDate('hour', Math.max(0, Math.min(23, numValue)));
                     }
                   }}
                   className={`w-full p-2 text-sm border rounded ${
                     isDark
-                      ? "bg-slate-700 border-slate-600 text-white"
-                      : "bg-white border-slate-300"
+                      ? 'bg-slate-700 border-slate-600 text-white'
+                      : 'bg-white border-slate-300'
                   }`}
                 />
               </div>
               <div>
                 <label
-                  htmlFor="manual-minute"
-                  className={`block text-xs mb-1 ${
-                    isDark ? "text-slate-400" : "text-slate-600"
-                  }`}
+                  htmlFor='manual-minute'
+                  className={`block text-xs mb-1 ${isDark ? 'text-slate-400' : 'text-slate-600'}`}
                 >
-                  {t("manual.minute")}
+                  {t('manual.minute')}
                 </label>
                 <input
-                  id="manual-minute"
-                  type="number"
-                  min="0"
-                  max="59"
+                  id='manual-minute'
+                  type='number'
+                  min='0'
+                  max='59'
                   value={manualDate.minute}
-                  placeholder="MM"
-                  onChange={(e) => updateManualDate("minute", e.target.value)}
-                  onBlur={(e) => {
+                  placeholder='MM'
+                  onChange={e => updateManualDate('minute', e.target.value)}
+                  onBlur={e => {
                     const value = e.target.value;
                     if (value === '' || isNaN(parseInt(value))) {
-                      updateManualDate("minute", new Date().getMinutes());
+                      updateManualDate('minute', new Date().getMinutes());
                     } else {
                       const numValue = parseInt(value);
-                      updateManualDate("minute", Math.max(0, Math.min(59, numValue)));
+                      updateManualDate('minute', Math.max(0, Math.min(59, numValue)));
                     }
                   }}
                   className={`w-full p-2 text-sm border rounded ${
                     isDark
-                      ? "bg-slate-700 border-slate-600 text-white"
-                      : "bg-white border-slate-300"
+                      ? 'bg-slate-700 border-slate-600 text-white'
+                      : 'bg-white border-slate-300'
                   }`}
                 />
               </div>
               <div>
                 <label
-                  htmlFor="manual-second"
-                  className={`block text-xs mb-1 ${
-                    isDark ? "text-slate-400" : "text-slate-600"
-                  }`}
+                  htmlFor='manual-second'
+                  className={`block text-xs mb-1 ${isDark ? 'text-slate-400' : 'text-slate-600'}`}
                 >
-                  {t("manual.second")}
+                  {t('manual.second')}
                 </label>
                 <input
-                  id="manual-second"
-                  type="number"
-                  min="0"
-                  max="59"
+                  id='manual-second'
+                  type='number'
+                  min='0'
+                  max='59'
                   value={manualDate.second}
-                  placeholder="SS"
-                  onChange={(e) => updateManualDate("second", e.target.value)}
-                  onBlur={(e) => {
+                  placeholder='SS'
+                  onChange={e => updateManualDate('second', e.target.value)}
+                  onBlur={e => {
                     const value = e.target.value;
                     if (value === '' || isNaN(parseInt(value))) {
-                      updateManualDate("second", new Date().getSeconds());
+                      updateManualDate('second', new Date().getSeconds());
                     } else {
                       const numValue = parseInt(value);
-                      updateManualDate("second", Math.max(0, Math.min(59, numValue)));
+                      updateManualDate('second', Math.max(0, Math.min(59, numValue)));
                     }
                   }}
                   className={`w-full p-2 text-sm border rounded ${
                     isDark
-                      ? "bg-slate-700 border-slate-600 text-white"
-                      : "bg-white border-slate-300"
+                      ? 'bg-slate-700 border-slate-600 text-white'
+                      : 'bg-white border-slate-300'
                   }`}
                 />
               </div>
             </div>
 
             {/* Manual Date Controls */}
-            <div className="flex gap-2 mb-4">
+            <div className='flex gap-2 mb-4'>
               <button
-                type="button"
+                type='button'
                 onClick={() => {
                   const now = new Date();
                   setManualDate({
@@ -993,20 +910,20 @@ export default function TimestampConverter() {
                     day: now.getDate(),
                     hour: now.getHours(),
                     minute: now.getMinutes(),
-                    second: now.getSeconds()
+                    second: now.getSeconds(),
                   });
                 }}
                 className={`px-3 py-2 text-sm rounded transition-colors ${
                   isDark
-                    ? "bg-slate-600 hover:bg-slate-500 text-white"
-                    : "bg-slate-200 hover:bg-slate-300 text-slate-700"
+                    ? 'bg-slate-600 hover:bg-slate-500 text-white'
+                    : 'bg-slate-200 hover:bg-slate-300 text-slate-700'
                 }`}
-                title="Set to current date and time"
+                title='Set to current date and time'
               >
                 Now
               </button>
               <button
-                type="button"
+                type='button'
                 onClick={() => {
                   setManualDate({
                     year: '',
@@ -1014,20 +931,20 @@ export default function TimestampConverter() {
                     day: '',
                     hour: '',
                     minute: '',
-                    second: ''
+                    second: '',
                   });
                 }}
                 className={`px-3 py-2 text-sm rounded transition-colors ${
                   isDark
-                    ? "bg-slate-600 hover:bg-slate-500 text-white"
-                    : "bg-slate-200 hover:bg-slate-300 text-slate-700"
+                    ? 'bg-slate-600 hover:bg-slate-500 text-white'
+                    : 'bg-slate-200 hover:bg-slate-300 text-slate-700'
                 }`}
-                title="Clear all fields"
+                title='Clear all fields'
               >
                 Clear
               </button>
               <button
-                type="button"
+                type='button'
                 onClick={() => {
                   setManualDate({
                     year: 2000,
@@ -1035,15 +952,15 @@ export default function TimestampConverter() {
                     day: 1,
                     hour: 0,
                     minute: 0,
-                    second: 0
+                    second: 0,
                   });
                 }}
                 className={`px-3 py-2 text-sm rounded transition-colors ${
                   isDark
-                    ? "bg-slate-600 hover:bg-slate-500 text-white"
-                    : "bg-slate-200 hover:bg-slate-300 text-slate-700"
+                    ? 'bg-slate-600 hover:bg-slate-500 text-white'
+                    : 'bg-slate-200 hover:bg-slate-300 text-slate-700'
                 }`}
-                title="Reset to default values"
+                title='Reset to default values'
               >
                 Reset
               </button>
@@ -1052,46 +969,41 @@ export default function TimestampConverter() {
             <div>
               <ValidationIndicator
                 state={
-                  manualDateValidation?.severity === "error"
-                    ? "invalid"
-                    : manualDateValidation?.severity === "info"
-                    ? "valid"
-                    : "idle"
+                  manualDateValidation?.severity === 'error'
+                    ? 'invalid'
+                    : manualDateValidation?.severity === 'info'
+                      ? 'valid'
+                      : 'idle'
                 }
-                size="sm"
+                size='sm'
                 animated={true}
               />
             </div>
 
-            {manualDateValidation &&
-              manualDateValidation.severity === "error" && (
-                <div className="mt-2 space-y-2" role="alert" aria-live="polite">
-                  <ErrorMessage result={manualDateValidation} />
-                </div>
-              )}
+            {manualDateValidation && manualDateValidation.severity === 'error' && (
+              <div className='mt-2 space-y-2' role='alert' aria-live='polite'>
+                <ErrorMessage result={manualDateValidation} />
+              </div>
+            )}
 
-            <div className="flex justify-between items-center">
-              <div className="text-sm">
-                <span className={isDark ? "text-slate-400" : "text-slate-600"}>
-                  {t("manual.timestamp")}:
+            <div className='flex justify-between items-center'>
+              <div className='text-sm'>
+                <span className={isDark ? 'text-slate-400' : 'text-slate-600'}>
+                  {t('manual.timestamp')}:
                 </span>
-                <span className="font-mono font-bold">
-                  {getManualTimestamp()}
-                </span>
+                <span className='font-mono font-bold'>{getManualTimestamp()}</span>
               </div>
               <button
-                onClick={() =>
-                  copyToClipboard(getManualTimestamp().toString(), "manual")
-                }
+                onClick={() => copyToClipboard(getManualTimestamp().toString(), 'manual')}
                 className={`p-2 rounded transition-colors ${
-                  isDark ? "hover:bg-slate-700" : "hover:bg-slate-200"
+                  isDark ? 'hover:bg-slate-700' : 'hover:bg-slate-200'
                 }`}
-                aria-label="Copy manual timestamp"
+                aria-label='Copy manual timestamp'
               >
                 {copiedStates.manual ? (
-                  <Check className="w-4 h-4 text-green-500" />
+                  <Check className='w-4 h-4 text-green-500' />
                 ) : (
-                  <Copy className="w-4 h-4" />
+                  <Copy className='w-4 h-4' />
                 )}
               </button>
             </div>
@@ -1099,86 +1011,73 @@ export default function TimestampConverter() {
         </div>
 
         {/* Batch Converter */}
-        <div className="mb-8">
+        <div className='mb-8'>
           <button
             onClick={() => setShowBatchConverter(!showBatchConverter)}
             className={`w-full p-4 rounded-lg border-2 border-dashed transition-colors ${
               isDark
-                ? "border-slate-600 hover:border-slate-500 hover:bg-slate-800/50"
-                : "border-slate-300 hover:border-slate-400 hover:bg-slate-50"
+                ? 'border-slate-600 hover:border-slate-500 hover:bg-slate-800/50'
+                : 'border-slate-300 hover:border-slate-400 hover:bg-slate-50'
             }`}
           >
-            <div className="flex items-center justify-center gap-2">
-              <svg
-                className="w-5 h-5"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
+            <div className='flex items-center justify-center gap-2'>
+              <svg className='w-5 h-5' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
                 <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
+                  strokeLinecap='round'
+                  strokeLinejoin='round'
                   strokeWidth={2}
-                  d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                  d='M12 6v6m0 0v6m0-6h6m-6 0H6'
                 />
               </svg>
-              <span>{t("batch.title")}</span>
+              <span>{t('batch.title')}</span>
             </div>
           </button>
 
           {showBatchConverter && (
             <div
               className={`mt-4 p-4 rounded-lg border ${
-                isDark
-                  ? "bg-slate-800 border-slate-700"
-                  : "bg-slate-50 border-slate-200"
+                isDark ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-200'
               }`}
             >
-              <h2 className="text-lg font-medium mb-3">{t("batch.title")}</h2>
+              <h2 className='text-lg font-medium mb-3'>{t('batch.title')}</h2>
               <label
-                htmlFor="batch-input"
-                className={`text-sm mb-3 block ${
-                  isDark ? "text-slate-400" : "text-slate-600"
-                }`}
+                htmlFor='batch-input'
+                className={`text-sm mb-3 block ${isDark ? 'text-slate-400' : 'text-slate-600'}`}
               >
-                {t("batch.description")}
+                {t('batch.description')}
               </label>
               <textarea
-                id="batch-input"
+                id='batch-input'
                 value={batchInput}
-                onChange={(e) => setBatchInput(e.target.value)}
-                placeholder="1640995200&#10;2022-01-01&#10;1672531200"
+                onChange={e => setBatchInput(e.target.value)}
+                placeholder='1640995200&#10;2022-01-01&#10;1672531200'
                 rows={4}
                 className={`w-full p-3 border rounded-lg text-sm font-mono ${
                   isDark
-                    ? "bg-slate-700 border-slate-600 text-white placeholder-slate-400"
-                    : "bg-white border-slate-300 placeholder-slate-500"
+                    ? 'bg-slate-700 border-slate-600 text-white placeholder-slate-400'
+                    : 'bg-white border-slate-300 placeholder-slate-500'
                 }`}
               />
               {batchInput.trim() && (
-                <div className="mt-3">
-                  <h3 className="font-medium mb-2">Results:</h3>
+                <div className='mt-3'>
+                  <h3 className='font-medium mb-2'>Results:</h3>
                   <pre
                     className={`p-3 rounded text-xs font-mono whitespace-pre-wrap ${
-                      isDark
-                        ? "bg-slate-900 text-slate-300"
-                        : "bg-white text-slate-700"
+                      isDark ? 'bg-slate-900 text-slate-300' : 'bg-white text-slate-700'
                     }`}
                   >
                     {processBatchConversion()}
                   </pre>
                   <button
-                    onClick={() =>
-                      copyToClipboard(processBatchConversion(), "batch")
-                    }
+                    onClick={() => copyToClipboard(processBatchConversion(), 'batch')}
                     className={`mt-2 px-3 py-1 text-sm rounded transition-colors ${
                       isDark
-                        ? "bg-blue-600 hover:bg-blue-700 text-white"
-                        : "bg-blue-500 hover:bg-blue-600 text-white"
+                        ? 'bg-blue-600 hover:bg-blue-700 text-white'
+                        : 'bg-blue-500 hover:bg-blue-600 text-white'
                     }`}
-                    aria-label="Copy batch results"
+                    aria-label='Copy batch results'
                   >
-                    {copiedStates.batch ? "Copied!" : "Copy Results"}
+                    {copiedStates.batch ? 'Copied!' : 'Copy Results'}
                   </button>
                 </div>
               )}
@@ -1187,16 +1086,14 @@ export default function TimestampConverter() {
         </div>
 
         {/* What is Unix Timestamp */}
-        <div className="mb-8">
-          <h2 className="text-lg sm:text-xl font-medium mb-3 sm:mb-4">
-            {t("unix.what.title")}
-          </h2>
+        <div className='mb-8'>
+          <h2 className='text-lg sm:text-xl font-medium mb-3 sm:mb-4'>{t('unix.what.title')}</h2>
           <p
             className={`${
-              isDark ? "text-slate-400" : "text-slate-600"
+              isDark ? 'text-slate-400' : 'text-slate-600'
             } leading-relaxed text-sm sm:text-base`}
           >
-            {t("unix.what.description")}
+            {t('unix.what.description')}
           </p>
         </div>
       </main>

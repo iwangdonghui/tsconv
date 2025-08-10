@@ -18,7 +18,7 @@ const EnhancedApiDocs = () => {
   const { isDark } = useTheme();
   const { language } = useLanguage();
   const [activeTab, setActiveTab] = useState('overview');
-  const [selectedEndpoint, setSelectedEndpoint] = useState('convert');
+  const [_selectedEndpoint, _setSelectedEndpoint] = useState('convert');
   const [testingData, setTestingData] = useState({
     timestamp: '',
     date: '',
@@ -342,7 +342,7 @@ const EnhancedApiDocs = () => {
                           if (testingData.targetTimezone && testingData.targetTimezone !== 'UTC') {
                             params.append('timezone', testingData.targetTimezone);
                           }
-                          const url = `/api/now${params.toString() ? '?' + params.toString() : ''}`;
+                          const url = `/api/now${params.toString() ? `?${  params.toString()}` : ''}`;
                           window.open(url, '_blank');
                         } else {
                           // In production, use /api/convert with all parameters

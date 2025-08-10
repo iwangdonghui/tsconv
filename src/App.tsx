@@ -1,10 +1,10 @@
-
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { lazy } from 'react';
-import { ThemeProvider } from './contexts/ThemeContext';
-import { LanguageProvider } from './contexts/LanguageContext';
+import { Route, BrowserRouter as Router, Routes } from 'react-router-dom';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { LazyWrapper } from './components/ui/lazy-wrapper';
+import { LanguageProvider } from './contexts/LanguageContext';
+import { ThemeProvider } from './contexts/ThemeContext';
+import { usePerformanceMonitoring } from './hooks/usePerformanceMonitoring';
 
 // 懒加载组件 - 核心转换工具
 const TimestampConverter = lazy(() => import('./components/TimestampConverter'));
@@ -25,85 +25,128 @@ const HowTo = lazy(() => import('./components/HowTo'));
 const HealthPage = lazy(() => import('./components/HealthPage'));
 
 function App() {
+  // Initialize performance monitoring for the main App component
+  const { markStart, markEnd, measureTime } = usePerformanceMonitoring({
+    componentName: 'App',
+    trackRenders: true,
+    trackEffects: true,
+  });
+
   return (
     <ErrorBoundary>
       <ThemeProvider>
         <LanguageProvider>
           <Router>
             <Routes>
-                <Route path="/" element={
-                  <LazyWrapper name="Timestamp Converter" fullPage>
+              <Route
+                path='/'
+                element={
+                  <LazyWrapper name='Timestamp Converter' fullPage>
                     <TimestampConverter />
                   </LazyWrapper>
-                } />
+                }
+              />
 
-                <Route path="/api" element={
-                  <LazyWrapper name="Enhanced API Docs" fullPage>
+              <Route
+                path='/api'
+                element={
+                  <LazyWrapper name='Enhanced API Docs' fullPage>
                     <EnhancedApiDocs />
                   </LazyWrapper>
-                } />
+                }
+              />
 
-                <Route path="/api-docs" element={
-                  <LazyWrapper name="API Documentation" fullPage>
+              <Route
+                path='/api-docs'
+                element={
+                  <LazyWrapper name='API Documentation' fullPage>
                     <ApiDocs />
                   </LazyWrapper>
-                } />
+                }
+              />
 
-                <Route path="/api/health" element={
-                  <LazyWrapper name="Health Status" fullPage>
+              <Route
+                path='/api/health'
+                element={
+                  <LazyWrapper name='Health Status' fullPage>
                     <HealthPage />
                   </LazyWrapper>
-                } />
+                }
+              />
 
-                <Route path="/guide" element={
-                  <LazyWrapper name="User Guide" fullPage>
+              <Route
+                path='/guide'
+                element={
+                  <LazyWrapper name='User Guide' fullPage>
                     <Guide />
                   </LazyWrapper>
-                } />
+                }
+              />
 
-                <Route path="/guide/:articleId" element={
-                  <LazyWrapper name="Guide Article" fullPage>
+              <Route
+                path='/guide/:articleId'
+                element={
+                  <LazyWrapper name='Guide Article' fullPage>
                     <Guide />
                   </LazyWrapper>
-                } />
+                }
+              />
 
-                <Route path="/how-to" element={
-                  <LazyWrapper name="How-To Guides" fullPage>
+              <Route
+                path='/how-to'
+                element={
+                  <LazyWrapper name='How-To Guides' fullPage>
                     <HowTo />
                   </LazyWrapper>
-                } />
+                }
+              />
 
-                <Route path="/how-to/:articleId" element={
-                  <LazyWrapper name="How-To Article" fullPage>
+              <Route
+                path='/how-to/:articleId'
+                element={
+                  <LazyWrapper name='How-To Article' fullPage>
                     <HowTo />
                   </LazyWrapper>
-                } />
+                }
+              />
 
-                {/* 新功能页面 */}
-                <Route path="/workdays" element={
-                  <LazyWrapper name="Workdays Calculator" fullPage>
+              {/* 新功能页面 */}
+              <Route
+                path='/workdays'
+                element={
+                  <LazyWrapper name='Workdays Calculator' fullPage>
                     <WorkdaysCalculator />
                   </LazyWrapper>
-                } />
+                }
+              />
 
-                <Route path="/date-diff" element={
-                  <LazyWrapper name="Date Difference Calculator" fullPage>
+              <Route
+                path='/date-diff'
+                element={
+                  <LazyWrapper name='Date Difference Calculator' fullPage>
                     <DateDiffCalculator />
                   </LazyWrapper>
-                } />
+                }
+              />
 
-                <Route path="/format" element={
-                  <LazyWrapper name="Format Tool" fullPage>
+              <Route
+                path='/format'
+                element={
+                  <LazyWrapper name='Format Tool' fullPage>
                     <FormatTool />
                   </LazyWrapper>
-                } />
+                }
+              />
 
-                <Route path="/timezones" element={
-                  <LazyWrapper name="Timezone Explorer" fullPage>
+              <Route
+                path='/timezones'
+                element={
+                  <LazyWrapper name='Timezone Explorer' fullPage>
                     <TimezoneExplorer />
                   </LazyWrapper>
-                } />
-              </Routes>
+                }
+              />
+            </Routes>
           </Router>
         </LanguageProvider>
       </ThemeProvider>

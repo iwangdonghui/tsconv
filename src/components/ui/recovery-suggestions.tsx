@@ -34,7 +34,7 @@ export function RecoverySuggestions({
     return null;
   }
 
-  const handleSuggestionClick = (suggestion: string, index: number) => {
+  const handleSuggestionClick = (suggestion: string, _index: number) => {
     if (onSuggestionClick) {
       onSuggestionClick(suggestion);
     }
@@ -48,7 +48,7 @@ export function RecoverySuggestions({
       const match = suggestion.match(/Try:?\s*([^\s(]+)/);
       const textToCopy = match ? match[1] : suggestion;
       
-      await navigator.clipboard.writeText(textToCopy);
+      await navigator.clipboard.writeText(textToCopy || "");
       setCopiedIndex(index);
       setTimeout(() => setCopiedIndex(null), 2000);
     } catch (error) {

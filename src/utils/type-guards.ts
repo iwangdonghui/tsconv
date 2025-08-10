@@ -1,19 +1,19 @@
 /**
  * Advanced Type Guards and Validation Utilities
- * 
+ *
  * This module provides comprehensive type guards and validation utilities
  * for enhanced runtime type safety.
  */
 
 import type {
+  DateString,
+  ISOString,
   Timestamp,
   TimestampMs,
   TimezoneId,
-  DateString,
-  ISOString,
-  ValidationResult,
+  TypedAPIResponse,
   ValidationError,
-  TypedAPIResponse
+  ValidationResult,
 } from '../types/advanced';
 
 // ============================================================================
@@ -59,11 +59,11 @@ export function isValidTimestamp(value: unknown): value is Timestamp {
   if (typeof value !== 'number' || !Number.isInteger(value)) {
     return false;
   }
-  
+
   // Unix timestamp should be between 1970 and 2038 (32-bit limit)
   const minTimestamp = 0;
   const maxTimestamp = 2147483647; // 2038-01-19
-  
+
   return value >= minTimestamp && value <= maxTimestamp;
 }
 
@@ -74,11 +74,11 @@ export function isValidTimestampMs(value: unknown): value is TimestampMs {
   if (typeof value !== 'number' || !Number.isInteger(value)) {
     return false;
   }
-  
+
   // Millisecond timestamp range
   const minTimestampMs = 0;
   const maxTimestampMs = 2147483647000; // 2038-01-19 in ms
-  
+
   return value >= minTimestampMs && value <= maxTimestampMs;
 }
 
@@ -89,16 +89,16 @@ export function isValidTimezoneId(value: unknown): value is TimezoneId {
   if (typeof value !== 'string') {
     return false;
   }
-  
+
   // Common timezone patterns
   const timezonePatterns = [
     /^[A-Za-z_]+\/[A-Za-z_]+$/, // America/New_York
     /^[A-Za-z_]+\/[A-Za-z_]+\/[A-Za-z_]+$/, // America/Argentina/Buenos_Aires
     /^UTC[+-]\d{1,2}$/, // UTC+5, UTC-8
     /^GMT[+-]\d{1,2}$/, // GMT+5, GMT-8
-    /^[A-Z]{3,4}$/ // EST, PST, etc.
+    /^[A-Z]{3,4}$/, // EST, PST, etc.
   ];
-  
+
   return timezonePatterns.some(pattern => pattern.test(value));
 }
 
@@ -109,12 +109,12 @@ export function isValidDateString(value: unknown): value is DateString {
   if (typeof value !== 'string') {
     return false;
   }
-  
+
   const datePattern = /^\d{4}-\d{2}-\d{2}$/;
   if (!datePattern.test(value)) {
     return false;
   }
-  
+
   const date = new Date(value);
   return !isNaN(date.getTime()) && date.toISOString().startsWith(value);
 }
@@ -126,12 +126,12 @@ export function isValidISOString(value: unknown): value is ISOString {
   if (typeof value !== 'string') {
     return false;
   }
-  
+
   const isoPattern = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{3})?Z?$/;
   if (!isoPattern.test(value)) {
     return false;
   }
-  
+
   const date = new Date(value);
   return !isNaN(date.getTime());
 }
@@ -150,29 +150,28 @@ export function isValidAPIResponse<T>(
   if (!isObject(value)) {
     return false;
   }
-  
+
   const response = value as Record<string, unknown>;
-  
+
   // Check required fields
   if (typeof response.success !== 'boolean') {
     return false;
   }
-  
+
   if (!isObject(response.metadata)) {
     return false;
   }
-  
+
   const metadata = response.metadata as Record<string, unknown>;
-  if (typeof metadata.processingTime !== 'number' || 
-      typeof metadata.timestamp !== 'number') {
+  if (typeof metadata.processingTime !== 'number' || typeof metadata.timestamp !== 'number') {
     return false;
   }
-  
+
   // Validate data if validator provided
   if (dataValidator && response.data !== undefined) {
     return dataValidator(response.data);
   }
-  
+
   return true;
 }
 
@@ -183,7 +182,7 @@ export function isValidConfig(value: unknown): value is Record<string, unknown> 
   if (!isObject(value)) {
     return false;
   }
-  
+
   // Add specific configuration validation logic here
   return true;
 }
@@ -227,17 +226,17 @@ export function validateFields(
 ): ValidationResult<Record<string, unknown>> {
   const errors: ValidationError[] = [];
   const data: Record<string, unknown> = {};
-  
+
   for (const validator of validators) {
     const result = validator();
     if (!result.valid) {
       errors.push(...result.errors);
     }
   }
-  
+
   return errors.length === 0
     ? createValidationResult(true, data)
-    : createValidationResult(false, undefined, errors);
+    : createValidationResult(false, {}, errors);
 }
 
 // ============================================================================
@@ -260,10 +259,7 @@ export function assertType<T>(
 /**
  * Safely casts a value to a type with validation
  */
-export function safeCast<T>(
-  value: unknown,
-  guard: (value: unknown) => value is T
-): T | null {
+export function safeCast<T>(value: unknown, guard: (value: unknown) => value is T): T | null {
   return guard(value) ? value : null;
 }
 
@@ -292,7 +288,7 @@ export function hasRequiredProperties<T extends Record<string, unknown>>(
   if (!isObject(obj)) {
     return false;
   }
-  
+
   return properties.every(prop => prop in obj);
 }
 
@@ -306,7 +302,7 @@ export function validateObjectShape<T>(
   if (!isObject(obj)) {
     return false;
   }
-  
+
   return Object.entries(shape).every(([key, validator]) => {
     const value = (obj as Record<string, unknown>)[key];
     return typeof validator === 'function' ? validator(value) : false;
