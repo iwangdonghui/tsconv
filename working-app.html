@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>时间戳转换器 - Timestamp Converter</title>
+    <meta name="description" content="免费在线时间戳转换器，支持Unix时间戳与日期时间的双向转换，支持多种时区和格式">
+    <meta name="keywords" content="时间戳转换器,timestamp converter,unix时间戳,日期转换,时区转换">
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- React and ReactDOM from CDN -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    
+    <style>
+        .dark {
+            color-scheme: dark;
+        }
+        
+        /* 自定义样式 */
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .card {
+            backdrop-filter: blur(10px);
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .dark .card {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+    </style>
+</head>
+<body class="min-h-screen transition-colors duration-300">
+    <div id="root">
+        <div class="min-h-screen flex items-center justify-center p-4">
+            <div class="text-center">
+                <h1 class="text-2xl font-bold mb-4">加载中...</h1>
+                <p>正在初始化时间戳转换器...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 全局错误处理
+        window.addEventListener('error', (event) => {
+            console.error('Global error:', event.error);
+        });
+        
+        window.addEventListener('unhandledrejection', (event) => {
+            console.error('Unhandled promise rejection:', event.reason);
+        });
+
+        // 检查React是否加载成功
+        if (typeof React === 'undefined' || typeof ReactDOM === 'undefined') {
+            document.getElementById('root').innerHTML = `
+                <div class="min-h-screen flex items-center justify-center p-4">
+                    <div class="text-center text-red-600">
+                        <h1 class="text-2xl font-bold mb-4">加载失败</h1>
+                        <p>React库加载失败，请刷新页面重试</p>
+                    </div>
+                </div>
+            `;
+        } else {
+            // React应用程序
+            const { useState, useEffect } = React;
+            
+            function TimestampConverter() {
+                const [timestamp, setTimestamp] = useState(Math.floor(Date.now() / 1000));
+                const [dateInput, setDateInput] = useState('');
+                const [isDark, setIsDark] = useState(false);
+                const [timezone, setTimezone] = useState('Asia/Shanghai');
+                
+                useEffect(() => {
+                    // 检测系统主题偏好
+                    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                    setIsDark(prefersDark);
+                    
+                    // 设置当前时间
+                    const now = new Date();
+                    setDateInput(now.toISOString().slice(0, 16));
+                }, []);
+                
+                useEffect(() => {
+                    // 应用主题
+                    if (isDark) {
+                        document.documentElement.classList.add('dark');
+                        document.body.className = 'min-h-screen bg-gray-900 text-white transition-colors duration-300';
+                    } else {
+                        document.documentElement.classList.remove('dark');
+                        document.body.className = 'min-h-screen gradient-bg text-white transition-colors duration-300';
+                    }
+                }, [isDark]);
+                
+                const handleTimestampChange = (value) => {
+                    const ts = parseInt(value);
+                    if (!isNaN(ts) && ts > 0) {
+                        setTimestamp(ts);
+                        const date = new Date(ts * 1000);
+                        setDateInput(date.toISOString().slice(0, 16));
+                    }
+                };
+                
+                const handleDateChange = (value) => {
+                    setDateInput(value);
+                    const date = new Date(value);
+                    if (!isNaN(date.getTime())) {
+                        setTimestamp(Math.floor(date.getTime() / 1000));
+                    }
+                };
+                
+                const updateToNow = () => {
+                    const now = Math.floor(Date.now() / 1000);
+                    setTimestamp(now);
+                    setDateInput(new Date().toISOString().slice(0, 16));
+                };
+                
+                const formatDate = (ts, tz = 'Asia/Shanghai') => {
+                    try {
+                        return new Date(ts * 1000).toLocaleString('zh-CN', {
+                            timeZone: tz,
+                            year: 'numeric',
+                            month: '2-digit',
+                            day: '2-digit',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                            second: '2-digit'
+                        });
+                    } catch (error) {
+                        return new Date(ts * 1000).toLocaleString();
+                    }
+                };
+                
+                return React.createElement('div', { className: 'min-h-screen p-4' }, [
+                    // Header
+                    React.createElement('header', { key: 'header', className: 'text-center mb-8' }, [
+                        React.createElement('h1', { key: 'title', className: 'text-4xl font-bold mb-2' }, '时间戳转换器'),
+                        React.createElement('p', { key: 'subtitle', className: 'text-lg opacity-90' }, 'Unix时间戳与日期时间双向转换工具'),
+                        React.createElement('button', {
+                            key: 'theme-toggle',
+                            onClick: () => setIsDark(!isDark),
+                            className: 'mt-4 px-4 py-2 rounded-lg bg-white bg-opacity-20 hover:bg-opacity-30 transition-all duration-200'
+                        }, isDark ? '🌞 浅色模式' : '🌙 深色模式')
+                    ]),
+                    
+                    // Main Content
+                    React.createElement('div', { key: 'main', className: 'max-w-4xl mx-auto' }, [
+                        // Current Time Card
+                        React.createElement('div', { key: 'current', className: 'card rounded-xl p-6 mb-6' }, [
+                            React.createElement('h2', { key: 'current-title', className: 'text-xl font-semibold mb-4' }, '当前时间'),
+                            React.createElement('div', { key: 'current-content', className: 'grid grid-cols-1 md:grid-cols-2 gap-4' }, [
+                                React.createElement('div', { key: 'current-ts' }, [
+                                    React.createElement('p', { key: 'ts-label', className: 'text-sm opacity-75 mb-1' }, '时间戳'),
+                                    React.createElement('p', { key: 'ts-value', className: 'text-2xl font-mono' }, Math.floor(Date.now() / 1000))
+                                ]),
+                                React.createElement('div', { key: 'current-date' }, [
+                                    React.createElement('p', { key: 'date-label', className: 'text-sm opacity-75 mb-1' }, '日期时间'),
+                                    React.createElement('p', { key: 'date-value', className: 'text-lg' }, formatDate(Math.floor(Date.now() / 1000), timezone))
+                                ])
+                            ]),
+                            React.createElement('button', {
+                                key: 'update-btn',
+                                onClick: updateToNow,
+                                className: 'mt-4 px-6 py-2 bg-blue-500 hover:bg-blue-600 rounded-lg transition-colors duration-200'
+                            }, '更新到当前时间')
+                        ]),
+                        
+                        // Converter Cards
+                        React.createElement('div', { key: 'converters', className: 'grid grid-cols-1 lg:grid-cols-2 gap-6' }, [
+                            // Timestamp to Date
+                            React.createElement('div', { key: 'ts-to-date', className: 'card rounded-xl p-6' }, [
+                                React.createElement('h3', { key: 'ts-title', className: 'text-lg font-semibold mb-4' }, '时间戳转日期'),
+                                React.createElement('input', {
+                                    key: 'ts-input',
+                                    type: 'number',
+                                    value: timestamp,
+                                    onChange: (e) => handleTimestampChange(e.target.value),
+                                    className: 'w-full p-3 rounded-lg bg-white bg-opacity-20 border border-white border-opacity-30 placeholder-white placeholder-opacity-70 text-white',
+                                    placeholder: '输入时间戳'
+                                }),
+                                React.createElement('div', { key: 'ts-result', className: 'mt-4 p-3 bg-black bg-opacity-20 rounded-lg' }, [
+                                    React.createElement('p', { key: 'result-label', className: 'text-sm opacity-75 mb-1' }, '转换结果'),
+                                    React.createElement('p', { key: 'result-value', className: 'font-mono' }, formatDate(timestamp, timezone))
+                                ])
+                            ]),
+                            
+                            // Date to Timestamp
+                            React.createElement('div', { key: 'date-to-ts', className: 'card rounded-xl p-6' }, [
+                                React.createElement('h3', { key: 'date-title', className: 'text-lg font-semibold mb-4' }, '日期转时间戳'),
+                                React.createElement('input', {
+                                    key: 'date-input',
+                                    type: 'datetime-local',
+                                    value: dateInput,
+                                    onChange: (e) => handleDateChange(e.target.value),
+                                    className: 'w-full p-3 rounded-lg bg-white bg-opacity-20 border border-white border-opacity-30 text-white'
+                                }),
+                                React.createElement('div', { key: 'date-result', className: 'mt-4 p-3 bg-black bg-opacity-20 rounded-lg' }, [
+                                    React.createElement('p', { key: 'result-label', className: 'text-sm opacity-75 mb-1' }, '转换结果'),
+                                    React.createElement('p', { key: 'result-value', className: 'font-mono text-xl' }, timestamp)
+                                ])
+                            ])
+                        ]),
+                        
+                        // Timezone Selector
+                        React.createElement('div', { key: 'timezone', className: 'card rounded-xl p-6 mt-6' }, [
+                            React.createElement('h3', { key: 'tz-title', className: 'text-lg font-semibold mb-4' }, '时区设置'),
+                            React.createElement('select', {
+                                key: 'tz-select',
+                                value: timezone,
+                                onChange: (e) => setTimezone(e.target.value),
+                                className: 'w-full p-3 rounded-lg bg-white bg-opacity-20 border border-white border-opacity-30 text-white'
+                            }, [
+                                React.createElement('option', { key: 'tz-shanghai', value: 'Asia/Shanghai' }, '北京时间 (UTC+8)'),
+                                React.createElement('option', { key: 'tz-utc', value: 'UTC' }, 'UTC时间'),
+                                React.createElement('option', { key: 'tz-tokyo', value: 'Asia/Tokyo' }, '东京时间 (UTC+9)'),
+                                React.createElement('option', { key: 'tz-london', value: 'Europe/London' }, '伦敦时间'),
+                                React.createElement('option', { key: 'tz-newyork', value: 'America/New_York' }, '纽约时间')
+                            ])
+                        ])
+                    ]),
+                    
+                    // Footer
+                    React.createElement('footer', { key: 'footer', className: 'text-center mt-12 opacity-75' }, [
+                        React.createElement('p', { key: 'footer-text' }, '© 2024 时间戳转换器 - 免费在线工具')
+                    ])
+                ]);
+            }
+            
+            // 渲染应用
+            try {
+                const root = ReactDOM.createRoot(document.getElementById('root'));
+                root.render(React.createElement(TimestampConverter));
+                console.log('✅ 时间戳转换器加载成功');
+            } catch (error) {
+                console.error('❌ 应用渲染失败:', error);
+                document.getElementById('root').innerHTML = `
+                    <div class="min-h-screen flex items-center justify-center p-4">
+                        <div class="text-center text-red-600">
+                            <h1 class="text-2xl font-bold mb-4">应用启动失败</h1>
+                            <p>错误: ${error.message}</p>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+    </script>
+</body>
+</html>

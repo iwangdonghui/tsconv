@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minimal Test</title>
+</head>
+<body>
+    <div id="root">
+        <h1>Minimal Test - Initial Content</h1>
+        <p>This content should be visible immediately.</p>
+    </div>
+
+    <script>
+        console.log('=== MINIMAL TEST START ===');
+        console.log('Document ready state:', document.readyState);
+        console.log('Root element:', document.getElementById('root'));
+        
+        // Test basic DOM manipulation
+        setTimeout(() => {
+            const root = document.getElementById('root');
+            if (root) {
+                root.innerHTML += '<p style="color: green;">✅ Basic JavaScript is working!</p>';
+                console.log('✅ Basic DOM manipulation successful');
+            } else {
+                console.error('❌ Root element not found');
+            }
+        }, 100);
+
+        // Test module loading
+        console.log('Testing ES module loading...');
+    </script>
+
+    <script type="module">
+        console.log('✅ ES modules are working!');
+        
+        // Test dynamic import
+        try {
+            const testModule = await import('data:text/javascript,export default "Module loading works!"');
+            console.log('✅ Dynamic imports working:', testModule.default);
+            
+            document.getElementById('root').innerHTML += '<p style="color: blue;">✅ ES modules and dynamic imports working!</p>';
+        } catch (error) {
+            console.error('❌ Module loading failed:', error);
+            document.getElementById('root').innerHTML += '<p style="color: red;">❌ Module loading failed: ' + error.message + '</p>';
+        }
+
+        // Test if we can load React
+        try {
+            console.log('Testing React import...');
+            const React = await import('https://esm.sh/react@18');
+            console.log('✅ React loaded successfully:', React);
+            document.getElementById('root').innerHTML += '<p style="color: green;">✅ React can be loaded from CDN!</p>';
+        } catch (error) {
+            console.error('❌ React loading failed:', error);
+            document.getElementById('root').innerHTML += '<p style="color: red;">❌ React loading failed: ' + error.message + '</p>';
+        }
+    </script>
+</body>
+</html>

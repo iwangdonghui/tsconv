@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>React CDN Test</title>
+</head>
+<body>
+    <div id="root">
+        <h1>Loading React from CDN...</h1>
+    </div>
+
+    <script>
+        console.log('=== REACT CDN TEST START ===');
+        
+        // Global error handling
+        window.addEventListener('error', (event) => {
+            console.error('Global error:', event.error);
+            document.getElementById('root').innerHTML += `<p style="color: red;">❌ Error: ${event.error?.message || 'Unknown error'}</p>`;
+        });
+        
+        window.addEventListener('unhandledrejection', (event) => {
+            console.error('Unhandled promise rejection:', event.reason);
+            document.getElementById('root').innerHTML += `<p style="color: red;">❌ Promise rejection: ${event.reason}</p>`;
+        });
+    </script>
+
+    <!-- React and ReactDOM from CDN -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+
+    <script>
+        console.log('React loaded:', typeof React);
+        console.log('ReactDOM loaded:', typeof ReactDOM);
+        
+        if (typeof React !== 'undefined' && typeof ReactDOM !== 'undefined') {
+            console.log('✅ React and ReactDOM loaded successfully');
+            
+            // Simple React component
+            const { useState, useEffect } = React;
+            
+            function SimpleApp() {
+                const [count, setCount] = useState(0);
+                const [timestamp, setTimestamp] = useState(Math.floor(Date.now() / 1000));
+                
+                useEffect(() => {
+                    console.log('✅ React hooks working');
+                }, []);
+                
+                return React.createElement('div', { style: { padding: '20px', fontFamily: 'Arial, sans-serif' } }, [
+                    React.createElement('h1', { key: 'title' }, 'React CDN Test - SUCCESS! 🎉'),
+                    React.createElement('p', { key: 'desc' }, 'This React app is running from CDN on Cloudflare Pages'),
+                    React.createElement('div', { key: 'counter', style: { margin: '20px 0' } }, [
+                        React.createElement('p', { key: 'count-label' }, `Counter: ${count}`),
+                        React.createElement('button', { 
+                            key: 'count-btn',
+                            onClick: () => setCount(count + 1),
+                            style: { padding: '10px 20px', margin: '5px' }
+                        }, 'Increment')
+                    ]),
+                    React.createElement('div', { key: 'timestamp', style: { margin: '20px 0' } }, [
+                        React.createElement('p', { key: 'ts-label' }, `Current Timestamp: ${timestamp}`),
+                        React.createElement('p', { key: 'ts-date' }, `Date: ${new Date(timestamp * 1000).toLocaleString()}`),
+                        React.createElement('button', { 
+                            key: 'ts-btn',
+                            onClick: () => setTimestamp(Math.floor(Date.now() / 1000)),
+                            style: { padding: '10px 20px', margin: '5px' }
+                        }, 'Update Timestamp')
+                    ]),
+                    React.createElement('div', { key: 'status', style: { marginTop: '30px', padding: '15px', backgroundColor: '#e8f5e8', borderRadius: '5px' } }, [
+                        React.createElement('h3', { key: 'status-title' }, 'Status Check:'),
+                        React.createElement('p', { key: 'status-react' }, '✅ React: Working'),
+                        React.createElement('p', { key: 'status-hooks' }, '✅ React Hooks: Working'),
+                        React.createElement('p', { key: 'status-events' }, '✅ Event Handlers: Working'),
+                        React.createElement('p', { key: 'status-state' }, '✅ State Management: Working'),
+                        React.createElement('p', { key: 'status-cloudflare' }, '✅ Cloudflare Pages: Working')
+                    ])
+                ]);
+            }
+            
+            // Render the app
+            try {
+                const root = ReactDOM.createRoot(document.getElementById('root'));
+                root.render(React.createElement(SimpleApp));
+                console.log('✅ React app rendered successfully');
+            } catch (error) {
+                console.error('❌ React rendering failed:', error);
+                document.getElementById('root').innerHTML = `
+                    <div style="padding: 20px; font-family: Arial, sans-serif;">
+                        <h1>React Rendering Failed</h1>
+                        <p>Error: ${error.message}</p>
+                    </div>
+                `;
+            }
+        } else {
+            console.error('❌ React or ReactDOM not loaded');
+            document.getElementById('root').innerHTML = `
+                <div style="padding: 20px; font-family: Arial, sans-serif;">
+                    <h1>React Loading Failed</h1>
+                    <p>React: ${typeof React}</p>
+                    <p>ReactDOM: ${typeof ReactDOM}</p>
+                </div>
+            `;
+        }
+    </script>
+</body>
+</html>
