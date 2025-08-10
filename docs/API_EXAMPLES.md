@@ -26,6 +26,7 @@ curl http://localhost:3000/api/health
 ```
 
 **响应:**
+
 ```json
 {
   "success": true,
@@ -47,6 +48,7 @@ curl "http://localhost:3000/api/convert?timestamp=1642248600"
 ```
 
 **响应:**
+
 ```json
 {
   "success": true,
@@ -66,6 +68,7 @@ curl "http://localhost:3000/api/timezone-convert?timestamp=1642248600&fromTimezo
 ```
 
 **响应:**
+
 ```json
 {
   "success": true,
@@ -92,6 +95,7 @@ curl "http://localhost:3000/api/timezone-info?list=true"
 ```
 
 **响应:**
+
 ```json
 {
   "success": true,
@@ -114,6 +118,7 @@ curl http://localhost:3000/api/formats
 ```
 
 **响应:**
+
 ```json
 {
   "success": true,
@@ -149,6 +154,7 @@ curl -X POST http://localhost:3000/api/batch-convert \
 ```
 
 **响应:**
+
 ```json
 {
   "success": true,
@@ -184,6 +190,7 @@ curl "http://localhost:3000/api/timezone-difference?from=UTC&to=America/New_York
 ```
 
 **响应:**
+
 ```json
 {
   "success": true,
@@ -254,11 +261,13 @@ curl "http://localhost:3000/api/visualization?type=timestamp-distribution&timest
 ## 生产部署
 
 部署到Vercel后，API将在以下地址可用：
+
 ```
 https://your-domain.vercel.app/api/[endpoint]
 ```
 
 确保设置正确的环境变量：
+
 - `REDIS_URL`: Redis连接字符串（生产环境）
 - `RATE_LIMITING_ENABLED`: 启用速率限制
 - `CACHING_ENABLED`: 启用缓存

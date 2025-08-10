@@ -1,6 +1,7 @@
 # 🏷️ Type System Documentation
 
-This document provides a comprehensive overview of the type system used in the TypeScript Converter project.
+This document provides a comprehensive overview of the type system used in the
+TypeScript Converter project.
 
 ## Table of Contents
 
@@ -19,16 +20,16 @@ This document provides a comprehensive overview of the type system used in the T
 ```typescript
 // Time-related types
 interface TimestampData {
-  timestamp: number;        // Unix timestamp in seconds
-  timestampMs: number;      // Unix timestamp in milliseconds
-  date: string;            // ISO date string
-  timezone?: string;       // Timezone identifier
+  timestamp: number; // Unix timestamp in seconds
+  timestampMs: number; // Unix timestamp in milliseconds
+  date: string; // ISO date string
+  timezone?: string; // Timezone identifier
 }
 
 // Conversion options
 interface ConversionOptions {
-  format?: string;         // Output format
-  timezone?: string;       // Target timezone
+  format?: string; // Output format
+  timezone?: string; // Target timezone
   targetTimezone?: string; // Alternative target timezone
   includeFormats?: boolean; // Include multiple formats
 }
@@ -132,7 +133,9 @@ interface ValidationError extends APIError {
 ```typescript
 // Make all properties required recursively
 type DeepRequired<T> = {
-  [P in keyof T]-?: T[P] extends object ? DeepRequired<T[P]> : NonNullable<T[P]>;
+  [P in keyof T]-?: T[P] extends object
+    ? DeepRequired<T[P]>
+    : NonNullable<T[P]>;
 };
 
 // Make all properties optional recursively
@@ -162,8 +165,8 @@ type PathValue<T, P extends Paths<T>> = P extends `${infer K}.${infer Rest}`
       : never
     : never
   : P extends keyof T
-  ? T[P]
-  : never;
+    ? T[P]
+    : never;
 ```
 
 ### Conditional Types
@@ -212,7 +215,10 @@ type RequestId = Brand<string, 'RequestId'>;
 
 ```typescript
 // Type-safe function signatures
-function convertTimestamp(timestamp: Timestamp, timezone: TimezoneId): ISOString;
+function convertTimestamp(
+  timestamp: Timestamp,
+  timezone: TimezoneId
+): ISOString;
 function getUserById(id: UserId): Promise<User>;
 function createSession(userId: UserId): SessionId;
 
@@ -230,7 +236,14 @@ const result = convertTimestamp(timestamp, timezone);
 interface ValidationSchema {
   [key: string]: {
     required?: boolean;
-    type: 'string' | 'number' | 'boolean' | 'timestamp' | 'timezone' | 'array' | 'object';
+    type:
+      | 'string'
+      | 'number'
+      | 'boolean'
+      | 'timestamp'
+      | 'timezone'
+      | 'array'
+      | 'object';
     validator?: (value: unknown) => boolean;
     transform?: (value: unknown) => unknown;
     default?: unknown;
@@ -242,7 +255,7 @@ interface ValidationSchema {
 }
 
 // Validation result
-type ValidationResult<T> = 
+type ValidationResult<T> =
   | { valid: true; data: T; errors: never }
   | { valid: false; data: never; errors: ValidationError[] };
 ```
@@ -255,30 +268,30 @@ const timestampSchema: ValidationSchema = {
     required: true,
     type: 'timestamp',
     min: 0,
-    max: 2147483647
-  }
+    max: 2147483647,
+  },
 };
 
 const timezoneSchema: ValidationSchema = {
   timezone: {
     required: true,
     type: 'timezone',
-    pattern: /^[A-Za-z_]+\/[A-Za-z_]+$/
-  }
+    pattern: /^[A-Za-z_]+\/[A-Za-z_]+$/,
+  },
 };
 
 const paginationSchema: ValidationSchema = {
   page: {
     type: 'number',
     default: 1,
-    min: 1
+    min: 1,
   },
   limit: {
     type: 'number',
     default: 10,
     min: 1,
-    max: 100
-  }
+    max: 100,
+  },
 };
 ```
 
@@ -311,8 +324,12 @@ function isValidDateString(value: unknown): value is DateString;
 function isValidISOString(value: unknown): value is ISOString;
 
 // API type guards
-function isSuccessResponse<T>(response: APIResponse<T>): response is APIResponse<T> & { success: true; data: T };
-function isErrorResponse(response: APIResponse<unknown>): response is APIResponse<never> & { success: false; error: string };
+function isSuccessResponse<T>(
+  response: APIResponse<T>
+): response is APIResponse<T> & { success: true; data: T };
+function isErrorResponse(
+  response: APIResponse<unknown>
+): response is APIResponse<never> & { success: false; error: string };
 ```
 
 ### Advanced Type Guards
@@ -379,7 +396,7 @@ function handleAPIRequest(req: VercelRequest): APIResponse<ConversionResult> {
   if (!isValidTimestamp(req.body.timestamp)) {
     return { success: false, error: 'Invalid timestamp' };
   }
-  
+
   // req.body.timestamp is now typed as Timestamp
   return processTimestamp(req.body.timestamp);
 }
@@ -405,20 +422,20 @@ const userSchema: ValidationSchema = {
     type: 'string',
     pattern: /^[a-zA-Z0-9-]+$/,
     min: 1,
-    max: 50
+    max: 50,
   },
   email: {
     required: true,
     type: 'string',
     pattern: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-    max: 255
+    max: 255,
   },
   age: {
     type: 'number',
     min: 0,
     max: 150,
-    default: 0
-  }
+    default: 0,
+  },
 };
 ```
 
@@ -456,9 +473,11 @@ const userSchema: ValidationSchema = {
 ## Conclusion
 
 The type system provides comprehensive type safety through:
+
 - **Compile-time Safety**: Advanced TypeScript configuration and custom types
 - **Runtime Safety**: Type guards and validation middleware
 - **Developer Experience**: Clear error messages and helpful utilities
 - **Maintainability**: Consistent patterns and documentation
 
-This multi-layered approach ensures both type safety and developer productivity while maintaining code quality and reliability.
+This multi-layered approach ensures both type safety and developer productivity
+while maintaining code quality and reliability.

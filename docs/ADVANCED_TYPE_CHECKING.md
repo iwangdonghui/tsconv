@@ -1,13 +1,19 @@
 # 🔍 Advanced Type Checking
 
-This document outlines the advanced type checking features implemented in the TypeScript Converter project to provide maximum type safety and runtime validation.
+This document outlines the advanced type checking features implemented in the
+TypeScript Converter project to provide maximum type safety and runtime
+validation.
 
 ## Overview
 
 The advanced type checking system includes:
-- **Enhanced TypeScript Configuration**: Advanced compiler options for maximum type safety
-- **Custom Type Definitions**: Utility types, branded types, and domain-specific types
-- **Runtime Type Guards**: Comprehensive validation functions for runtime type safety
+
+- **Enhanced TypeScript Configuration**: Advanced compiler options for maximum
+  type safety
+- **Custom Type Definitions**: Utility types, branded types, and domain-specific
+  types
+- **Runtime Type Guards**: Comprehensive validation functions for runtime type
+  safety
 - **API Validation Middleware**: Request/response validation at the API boundary
 - **Type Coverage Analysis**: Tools to measure and improve type safety coverage
 
@@ -26,7 +32,7 @@ The following advanced options are enabled in `tsconfig.json`:
     "forceConsistentCasingInFileNames": true,
     "noImplicitOverride": true,
     "useUnknownInCatchVariables": true,
-    
+
     // Strict mode enhancements
     "alwaysStrict": true,
     "strictBindCallApply": true,
@@ -41,12 +47,16 @@ The following advanced options are enabled in `tsconfig.json`:
 
 - **`allowUnusedLabels: false`**: Prevents unused labels in code
 - **`allowUnreachableCode: false`**: Reports errors for unreachable code
-- **`forceConsistentCasingInFileNames: true`**: Ensures consistent file name casing
+- **`forceConsistentCasingInFileNames: true`**: Ensures consistent file name
+  casing
 - **`noImplicitOverride: true`**: Requires explicit `override` keyword
-- **`useUnknownInCatchVariables: true`**: Uses `unknown` instead of `any` in catch blocks
-- **`strictBindCallApply: true`**: Strict checking of `bind`, `call`, and `apply`
+- **`useUnknownInCatchVariables: true`**: Uses `unknown` instead of `any` in
+  catch blocks
+- **`strictBindCallApply: true`**: Strict checking of `bind`, `call`, and
+  `apply`
 - **`strictFunctionTypes: true`**: Strict checking of function types
-- **`strictPropertyInitialization: true`**: Ensures class properties are initialized
+- **`strictPropertyInitialization: true`**: Ensures class properties are
+  initialized
 
 ## Custom Type System
 
@@ -77,7 +87,9 @@ type UserId = Brand<number, 'UserId'>;
 type ProductId = Brand<number, 'ProductId'>;
 
 // This would cause a type error:
-function getUser(id: UserId) { /* ... */ }
+function getUser(id: UserId) {
+  /* ... */
+}
 const productId: ProductId = 123 as ProductId;
 getUser(productId); // ❌ Type error!
 ```
@@ -120,10 +132,17 @@ function isPositiveNumber(value: unknown): value is number;
 function safeCast<T>(value: unknown, guard: (v: unknown) => v is T): T | null;
 
 // Type assertion with error throwing
-function assertType<T>(value: unknown, guard: (v: unknown) => v is T): asserts value is T;
+function assertType<T>(
+  value: unknown,
+  guard: (v: unknown) => v is T
+): asserts value is T;
 
 // Type casting with default fallback
-function castWithDefault<T>(value: unknown, guard: (v: unknown) => v is T, defaultValue: T): T;
+function castWithDefault<T>(
+  value: unknown,
+  guard: (v: unknown) => v is T,
+  defaultValue: T
+): T;
 ```
 
 ## API Validation Middleware
@@ -137,18 +156,18 @@ const schema: ValidationSchema = {
     required: true,
     type: 'timestamp',
     min: 0,
-    max: 2147483647
+    max: 2147483647,
   },
   timezone: {
     required: true,
     type: 'timezone',
-    pattern: /^[A-Za-z_]+\/[A-Za-z_]+$/
+    pattern: /^[A-Za-z_]+\/[A-Za-z_]+$/,
   },
   format: {
     type: 'string',
     enum: ['iso', 'unix', 'readable'],
-    default: 'iso'
-  }
+    default: 'iso',
+  },
 };
 
 // Create validation middleware
@@ -184,6 +203,7 @@ npm run type-errors
 ### Coverage Metrics
 
 The type coverage analysis reports:
+
 - **TypeScript Files**: Total count of .ts/.tsx files
 - **Any Types**: Count of explicit `any` usage (should be minimized)
 - **Unknown Types**: Count of `unknown` usage (preferred over `any`)
@@ -212,10 +232,14 @@ function process(data: unknown) {
 
 ```typescript
 // ❌ Avoid mixing similar types
-function convertTimestamp(timestamp: number, timezone: string) { /* ... */ }
+function convertTimestamp(timestamp: number, timezone: string) {
+  /* ... */
+}
 
 // ✅ Use branded types
-function convertTimestamp(timestamp: Timestamp, timezone: TimezoneId) { /* ... */ }
+function convertTimestamp(timestamp: Timestamp, timezone: TimezoneId) {
+  /* ... */
+}
 ```
 
 ### 3. Validate at Boundaries
@@ -227,7 +251,7 @@ export default function handler(req: VercelRequest, res: VercelResponse) {
   if (!validation.valid) {
     return res.status(400).json({ errors: validation.errors });
   }
-  
+
   const { timestamp } = validation.data;
   // timestamp is now guaranteed to be valid
 }
@@ -310,14 +334,17 @@ processTimestamp(userInput); // userInput is guaranteed to be Timestamp
 ### API Endpoint with Validation
 
 ```typescript
-import { createValidationMiddleware, commonSchemas } from '@api/middleware/type-validation';
+import {
+  createValidationMiddleware,
+  commonSchemas,
+} from '@api/middleware/type-validation';
 
 const validateTimestamp = createValidationMiddleware({
   ...commonSchemas.timestamp,
   timezone: {
     type: 'timezone',
-    default: 'UTC'
-  }
+    default: 'UTC',
+  },
 });
 
 export default function handler(req: VercelRequest, res: VercelResponse) {
@@ -338,10 +365,10 @@ import { ValidationResult, createValidationResult } from '@/types/advanced';
 function validateCustomObject(value: unknown): ValidationResult<CustomType> {
   if (!isObject(value)) {
     return createValidationResult(false, undefined, [
-      { field: 'root', message: 'Must be an object', code: 'INVALID_TYPE' }
+      { field: 'root', message: 'Must be an object', code: 'INVALID_TYPE' },
     ]);
   }
-  
+
   // Additional validation logic...
   return createValidationResult(true, value as CustomType);
 }
@@ -349,9 +376,13 @@ function validateCustomObject(value: unknown): ValidationResult<CustomType> {
 
 ## Conclusion
 
-The advanced type checking system provides comprehensive type safety at both compile-time and runtime. By combining enhanced TypeScript configuration, custom type definitions, runtime validation, and analysis tools, the project achieves maximum type safety while maintaining developer productivity.
+The advanced type checking system provides comprehensive type safety at both
+compile-time and runtime. By combining enhanced TypeScript configuration, custom
+type definitions, runtime validation, and analysis tools, the project achieves
+maximum type safety while maintaining developer productivity.
 
 The system is designed to be:
+
 - **Comprehensive**: Covers all aspects of type safety
 - **Performant**: Minimal runtime overhead
 - **Developer-Friendly**: Clear error messages and helpful utilities

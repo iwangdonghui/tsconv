@@ -17,6 +17,7 @@
 ### 1. 改进的输入验证逻辑
 
 **之前的问题：**
+
 ```tsx
 // 旧逻辑 - 不允许空值
 onChange={(e) => {
@@ -26,6 +27,7 @@ onChange={(e) => {
 ```
 
 **改进后的逻辑：**
+
 ```tsx
 // 新逻辑 - 允许临时空值
 onChange={(e) => {
@@ -48,6 +50,7 @@ onBlur={(e) => {
 ```
 
 **改进点：**
+
 - 允许用户临时清空输入框
 - 只在失焦时恢复默认值
 - 更好的用户体验，不会打断输入流程
@@ -57,12 +60,12 @@ onBlur={(e) => {
 为所有输入字段添加了清晰的占位符：
 
 ```tsx
-placeholder="YYYY"  // 年份
-placeholder="MM"    // 月份
-placeholder="DD"    // 日期
-placeholder="HH"    // 小时
-placeholder="MM"    // 分钟
-placeholder="SS"    // 秒钟
+placeholder = 'YYYY'; // 年份
+placeholder = 'MM'; // 月份
+placeholder = 'DD'; // 日期
+placeholder = 'HH'; // 小时
+placeholder = 'MM'; // 分钟
+placeholder = 'SS'; // 秒钟
 ```
 
 ### 3. 快捷操作按钮
@@ -70,34 +73,42 @@ placeholder="SS"    // 秒钟
 添加了两个便捷按钮：
 
 ```tsx
-{/* 设置为当前时间 */}
-<button onClick={() => {
-  const now = new Date();
-  setManualDate({
-    year: now.getFullYear(),
-    month: now.getMonth() + 1,
-    day: now.getDate(),
-    hour: now.getHours(),
-    minute: now.getMinutes(),
-    second: now.getSeconds()
-  });
-}}>
+{
+  /* 设置为当前时间 */
+}
+<button
+  onClick={() => {
+    const now = new Date();
+    setManualDate({
+      year: now.getFullYear(),
+      month: now.getMonth() + 1,
+      day: now.getDate(),
+      hour: now.getHours(),
+      minute: now.getMinutes(),
+      second: now.getSeconds(),
+    });
+  }}
+>
   Now
-</button>
+</button>;
 
-{/* 重置为默认值 */}
-<button onClick={() => {
-  setManualDate({
-    year: 2000,
-    month: 1,
-    day: 1,
-    hour: 0,
-    minute: 0,
-    second: 0
-  });
-}}>
+{
+  /* 重置为默认值 */
+}
+<button
+  onClick={() => {
+    setManualDate({
+      year: 2000,
+      month: 1,
+      day: 1,
+      hour: 0,
+      minute: 0,
+      second: 0,
+    });
+  }}
+>
   🔄 Reset
-</button>
+</button>;
 ```
 
 ### 4. 简洁的样式和布局
@@ -117,6 +128,7 @@ placeholder="SS"    // 秒钟
 ### 边界值处理
 
 每个字段都有适当的最小值和最大值限制：
+
 - 年份: 1970-3000
 - 月份: 1-12
 - 日期: 1-31
@@ -137,24 +149,28 @@ placeholder="SS"    // 秒钟
 ## 用户体验改进
 
 ### 移动端用户
+
 - ✅ 可以清空输入框重新输入
 - ✅ 有清晰的占位符提示
 - ✅ 有快捷的 "Now" 和 "Reset" 按钮
 - ✅ 界面简洁，不会有小按钮难以点击的问题
 
 ### 桌面端用户
+
 - ✅ 保持原有的数字输入框体验
 - ✅ 仍然可以使用键盘上下箭头
 - ✅ 界面保持简洁统一
 
 ### 通用改进
+
 - ✅ 更宽松的输入验证逻辑
 - ✅ 更好的错误恢复机制
 - ✅ 一致的暗色主题支持
 
 ## 总结
 
-这次改进采用了**简洁而有效**的解决方案，解决了移动端 manual date & time 输入的核心问题：
+这次改进采用了**简洁而有效**的解决方案，解决了移动端 manual date &
+time 输入的核心问题：
 
 1. **简洁性** - 避免了复杂的小按钮，保持界面清爽
 2. **可用性** - 用户可以直接清空并输入数字，操作直观

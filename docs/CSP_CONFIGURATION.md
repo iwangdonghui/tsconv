@@ -1,18 +1,24 @@
 # 🔒 Content Security Policy (CSP) Configuration
 
-This document provides comprehensive information about the Content Security Policy implementation in the TypeScript Converter project.
+This document provides comprehensive information about the Content Security
+Policy implementation in the TypeScript Converter project.
 
 ## Overview
 
-Content Security Policy (CSP) is a security standard that helps prevent Cross-Site Scripting (XSS), data injection attacks, and other code injection attacks by controlling which resources the browser is allowed to load.
+Content Security Policy (CSP) is a security standard that helps prevent
+Cross-Site Scripting (XSS), data injection attacks, and other code injection
+attacks by controlling which resources the browser is allowed to load.
 
 ## Features
 
-- **Environment-Specific Policies**: Different CSP configurations for development, testing, and production
-- **Nonce Generation**: Cryptographically secure nonces for inline scripts and styles
+- **Environment-Specific Policies**: Different CSP configurations for
+  development, testing, and production
+- **Nonce Generation**: Cryptographically secure nonces for inline scripts and
+  styles
 - **Violation Reporting**: Comprehensive CSP violation reporting and analysis
 - **Flexible Configuration**: Easy-to-customize CSP directives
-- **Security Headers**: Complete security headers suite including HSTS, frame options, etc.
+- **Security Headers**: Complete security headers suite including HSTS, frame
+  options, etc.
 
 ## CSP Directives Configuration
 
@@ -24,20 +30,20 @@ const PRODUCTION_CSP = {
   'script-src': [
     "'self'",
     "'strict-dynamic'",
-    "https://cdn.jsdelivr.net",
-    "https://www.google-analytics.com"
+    'https://cdn.jsdelivr.net',
+    'https://www.google-analytics.com',
   ],
   'style-src': [
     "'self'",
     "'unsafe-inline'", // Required for CSS-in-JS
-    "https://fonts.googleapis.com"
+    'https://fonts.googleapis.com',
   ],
-  'img-src': ["'self'", "data:", "https:"],
-  'font-src': ["'self'", "data:", "https://fonts.gstatic.com"],
-  'connect-src': ["'self'", "https://api.tsconv.com"],
+  'img-src': ["'self'", 'data:', 'https:'],
+  'font-src': ["'self'", 'data:', 'https://fonts.gstatic.com'],
+  'connect-src': ["'self'", 'https://api.tsconv.com'],
   'frame-ancestors': ["'none'"],
   'upgrade-insecure-requests': true,
-  'block-all-mixed-content': true
+  'block-all-mixed-content': true,
 };
 ```
 
@@ -50,16 +56,16 @@ const DEVELOPMENT_CSP = {
     "'self'",
     "'unsafe-inline'",
     "'unsafe-eval'", // Required for dev tools
-    "localhost:*",
-    "127.0.0.1:*"
+    'localhost:*',
+    '127.0.0.1:*',
   ],
-  'style-src': ["'self'", "'unsafe-inline'", "localhost:*"],
+  'style-src': ["'self'", "'unsafe-inline'", 'localhost:*'],
   'connect-src': [
     "'self'",
-    "localhost:*",
-    "ws://localhost:*", // WebSocket for HMR
-    "wss://localhost:*"
-  ]
+    'localhost:*',
+    'ws://localhost:*', // WebSocket for HMR
+    'wss://localhost:*',
+  ],
 };
 ```
 
@@ -73,7 +79,7 @@ import { defaultCSPMiddleware } from './api/middleware/security-headers';
 export default function handler(req: VercelRequest, res: VercelResponse) {
   // Apply CSP and security headers
   defaultCSPMiddleware(req, res);
-  
+
   // Your API logic here
   res.json({ message: 'Hello World' });
 }
@@ -87,10 +93,10 @@ import { createCSPMiddleware } from './api/middleware/csp';
 const customCSP = createCSPMiddleware({
   directives: {
     'script-src': ["'self'", "'nonce-{nonce}'"],
-    'style-src': ["'self'", "'unsafe-inline'"]
+    'style-src': ["'self'", "'unsafe-inline'"],
   },
   useNonces: true,
-  enableViolationReporting: true
+  enableViolationReporting: true,
 });
 
 export default function handler(req: VercelRequest, res: VercelResponse) {
@@ -102,15 +108,15 @@ export default function handler(req: VercelRequest, res: VercelResponse) {
 ### Environment-Specific Configuration
 
 ```typescript
-import { 
+import {
   defaultCSPMiddleware,
   developmentCSPMiddleware,
-  apiSecurityHeadersMiddleware 
+  apiSecurityHeadersMiddleware,
 } from './api/middleware/security-headers';
 
 export default function handler(req: VercelRequest, res: VercelResponse) {
   const environment = process.env.NODE_ENV;
-  
+
   switch (environment) {
     case 'development':
       developmentCSPMiddleware(req, res);
@@ -121,7 +127,7 @@ export default function handler(req: VercelRequest, res: VercelResponse) {
     default:
       apiSecurityHeadersMiddleware(req, res); // Strict API-only CSP
   }
-  
+
   // Your logic here
 }
 ```
@@ -130,7 +136,8 @@ export default function handler(req: VercelRequest, res: VercelResponse) {
 
 ### How Nonces Work
 
-Nonces (Number Used Once) are cryptographically secure random values that allow specific inline scripts and styles while blocking all others.
+Nonces (Number Used Once) are cryptographically secure random values that allow
+specific inline scripts and styles while blocking all others.
 
 ```typescript
 // Nonce is automatically generated and added to CSP
@@ -154,13 +161,13 @@ const nonce = generateNonce(16); // 16-byte random value
 ```typescript
 export default function handler(req: VercelRequest, res: VercelResponse) {
   defaultCSPMiddleware(req, res);
-  
+
   // Nonce is available in request context
   const nonce = (req as any).cspNonce;
-  
+
   // Also available in response header
   const nonceFromHeader = res.getHeader('X-CSP-Nonce');
-  
+
   res.json({ nonce });
 }
 ```
@@ -187,10 +194,12 @@ CSP violations are automatically reported to `/api/csp-report`:
 ### Violation Processing
 
 The system automatically:
+
 1. **Categorizes violations** (script, style, image, etc.)
 2. **Assesses severity** (high, medium, low)
 3. **Filters false positives** (browser extensions, etc.)
-4. **Stores for analysis** (development: console, production: monitoring service)
+4. **Stores for analysis** (development: console, production: monitoring
+   service)
 5. **Reports to monitoring** (high/medium severity only)
 
 ### Violation Categories
@@ -210,25 +219,25 @@ The system automatically:
 {
   // CSP
   'Content-Security-Policy': '...',
-  
+
   // HSTS (HTTPS only)
   'Strict-Transport-Security': 'max-age=31536000; includeSubDomains; preload',
-  
+
   // Clickjacking protection
   'X-Frame-Options': 'DENY',
-  
+
   // MIME sniffing protection
   'X-Content-Type-Options': 'nosniff',
-  
+
   // XSS protection
   'X-XSS-Protection': '1; mode=block',
-  
+
   // Referrer policy
   'Referrer-Policy': 'strict-origin-when-cross-origin',
-  
+
   // Feature policy
   'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
-  
+
   // Cross-origin policies
   'Cross-Origin-Embedder-Policy': 'require-corp',
   'Cross-Origin-Opener-Policy': 'same-origin',
@@ -239,16 +248,19 @@ The system automatically:
 ### Environment-Specific Headers
 
 **Production:**
+
 - Full security headers with strict policies
 - HSTS enabled with preload
 - Cross-origin policies enforced
 
 **Development:**
+
 - Relaxed CSP for development tools
 - No HSTS (HTTP allowed)
 - Permissive cross-origin policies
 
 **API Endpoints:**
+
 - Minimal CSP (no scripts/styles needed)
 - Strict cross-origin policies
 - Enhanced security for data endpoints
@@ -289,20 +301,20 @@ const customSecurity = createSecurityHeadersMiddleware({
     options: {
       directives: {
         'script-src': ["'self'", "'strict-dynamic'"],
-        'style-src': ["'self'", "'unsafe-inline'"]
+        'style-src': ["'self'", "'unsafe-inline'"],
       },
       useNonces: true,
-      reportOnly: false
-    }
+      reportOnly: false,
+    },
   },
   hsts: {
     enabled: true,
     maxAge: 31536000,
     includeSubDomains: true,
-    preload: true
+    preload: true,
   },
   frameOptions: 'SAMEORIGIN',
-  referrerPolicy: 'strict-origin-when-cross-origin'
+  referrerPolicy: 'strict-origin-when-cross-origin',
 });
 ```
 
@@ -331,13 +343,14 @@ npm run test-security
    - [CSP Evaluator](https://csp-evaluator.withgoogle.com/)
 
 3. **CSP Testing:**
+
    ```javascript
    // Test inline script blocking
    <script>alert('This should be blocked')</script>
-   
+
    // Test external script blocking
    <script src="https://evil.com/script.js"></script>
-   
+
    // Test nonce-based script allowing
    <script nonce="valid-nonce">console.log('Allowed')</script>
    ```
@@ -349,7 +362,7 @@ npm run test-security
 ```typescript
 const reportOnlyCSP = createCSPMiddleware({
   reportOnly: true,
-  enableViolationReporting: true
+  enableViolationReporting: true,
 });
 ```
 
@@ -386,18 +399,21 @@ const reportOnlyCSP = createCSPMiddleware({
 ### Common Issues
 
 1. **Inline Styles Blocked:**
+
    ```typescript
    // Solution: Add 'unsafe-inline' or use nonces
    'style-src': ["'self'", "'unsafe-inline'"]
    ```
 
 2. **Third-Party Scripts Blocked:**
+
    ```typescript
    // Solution: Add specific domains
    'script-src': ["'self'", "https://trusted-cdn.com"]
    ```
 
 3. **WebSocket Connections Blocked:**
+
    ```typescript
    // Solution: Add WebSocket protocols
    'connect-src': ["'self'", "ws:", "wss:"]
@@ -433,20 +449,23 @@ const reportOnlyCSP = createCSPMiddleware({
 ### From Basic CSP to Advanced CSP
 
 1. **Enable the new middleware:**
+
    ```typescript
    import { defaultCSPMiddleware } from './api/middleware/security-headers';
    ```
 
 2. **Update existing CSP headers:**
+
    ```typescript
    // Replace manual CSP headers
    // res.setHeader('Content-Security-Policy', '...');
-   
+
    // With middleware
    defaultCSPMiddleware(req, res);
    ```
 
 3. **Test thoroughly:**
+
    ```bash
    npm run test-csp
    ```
@@ -458,4 +477,7 @@ const reportOnlyCSP = createCSPMiddleware({
 
 ## Conclusion
 
-The CSP implementation provides comprehensive protection against XSS and injection attacks while maintaining flexibility for different environments and use cases. Regular monitoring and testing ensure the policies remain effective and don't interfere with legitimate functionality.
+The CSP implementation provides comprehensive protection against XSS and
+injection attacks while maintaining flexibility for different environments and
+use cases. Regular monitoring and testing ensure the policies remain effective
+and don't interfere with legitimate functionality.

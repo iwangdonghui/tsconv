@@ -2,7 +2,9 @@
 
 ## Overview
 
-This is the enhanced API documentation for tsconv.com, providing comprehensive timestamp and date conversion capabilities with timezone support, custom formatting, caching, and monitoring.
+This is the enhanced API documentation for tsconv.com, providing comprehensive
+timestamp and date conversion capabilities with timezone support, custom
+formatting, caching, and monitoring.
 
 ## Interactive Documentation
 
@@ -11,7 +13,8 @@ We provide interactive API documentation using Swagger UI:
 - **Swagger UI**: [/api/swagger](/api/swagger)
 - **OpenAPI Specification**: [/api/openapi.json](/api/openapi.json)
 
-The Swagger UI allows you to explore and test all API endpoints directly from your browser.
+The Swagger UI allows you to explore and test all API endpoints directly from
+your browser.
 
 ## Base URL
 
@@ -21,7 +24,8 @@ https://tsconv.com/api
 
 ## Authentication
 
-No authentication is required for basic usage. Rate limiting is applied per IP address.
+No authentication is required for basic usage. Rate limiting is applied per IP
+address.
 
 ## Rate Limits
 
@@ -78,6 +82,7 @@ Convert between Unix timestamps and human-readable dates.
 **Endpoint**: `GET /api/convert`
 
 **Parameters**:
+
 - `timestamp` (number): Unix timestamp in seconds
 - `date` (string): ISO 8601 date string
 - `format` (string): Custom format name (optional)
@@ -86,11 +91,13 @@ Convert between Unix timestamps and human-readable dates.
 - `includeFormats` (boolean): Include all available formats (optional)
 
 **Example Request**:
+
 ```bash
 GET /api/convert?timestamp=1640995200&targetTimezone=America/New_York&format=us-datetime
 ```
 
 **Example Response**:
+
 ```json
 {
   "success": true,
@@ -122,6 +129,7 @@ Convert multiple timestamps or dates in a single request.
 **Endpoint**: `POST /api/enhanced-batch`
 
 **Request Body**:
+
 ```json
 {
   "items": [1640995200, "2022-01-01", "2022-12-31T23:59:59Z"],
@@ -136,6 +144,7 @@ Convert multiple timestamps or dates in a single request.
 ```
 
 **Response**:
+
 ```json
 {
   "success": true,
@@ -167,11 +176,13 @@ Convert multiple timestamps or dates in a single request.
 Get comprehensive timezone information and perform conversions.
 
 **Endpoints**:
+
 - `GET /api/timezone` - Timezone info and conversion
 - `GET /api/timezone-difference` - Calculate timezone differences
 - `GET /api/timezone-list` - List available timezones
 
 **Parameters**:
+
 - `timezone` (string): Target timezone
 - `from` (string): Source timezone
 - `to` (string): Target timezone
@@ -182,11 +193,13 @@ Get comprehensive timezone information and perform conversions.
 - `optimalMeeting` (boolean): Find optimal meeting times
 
 **Example**:
+
 ```bash
 GET /api/timezone-difference?from=UTC&to=America/New_York&includeHistorical=true
 ```
 
 **Response**:
+
 ```json
 {
   "success": true,
@@ -236,15 +249,18 @@ Discover and use custom date/time formats.
 **Endpoint**: `GET /api/formats`
 
 **Parameters**:
+
 - `category` (string): Filter by category (standard, human, regional, technical)
 - `format` (string): Get specific format details
 
 **Example**:
+
 ```bash
 GET /api/formats?category=regional
 ```
 
 **Response**:
+
 ```json
 {
   "success": true,
@@ -271,6 +287,7 @@ Generate data for charts and visualizations.
 **Endpoint**: `GET /api/visualization`
 
 **Visualization Types**:
+
 - `timezone-chart`: Timeline chart of timezone differences
 - `business-heatmap`: Heatmap of business hours overlap
 - `timestamp-distribution`: Distribution analysis of timestamps
@@ -278,6 +295,7 @@ Generate data for charts and visualizations.
 - `timezone-map`: Geographic timezone data
 
 **Parameters**:
+
 - `type` (string): Visualization type
 - `fromTimezone` (string): Source timezone
 - `toTimezone` (string): Target timezone
@@ -286,11 +304,13 @@ Generate data for charts and visualizations.
 - `days` (number): Days for historical data
 
 **Example**:
+
 ```bash
 GET /api/visualization?type=timezone-chart&fromTimezone=UTC&toTimezone=America/New_York&days=30
 ```
 
 **Response**:
+
 ```json
 {
   "success": true,
@@ -320,6 +340,7 @@ Monitor system health and performance.
 **Endpoint**: `GET /api/health`
 
 **Response**:
+
 ```json
 {
   "success": true,
@@ -352,9 +373,7 @@ Monitor system health and performance.
     "errors": {
       "lastHour": 2,
       "lastDay": 5,
-      "topErrorCodes": [
-        { "code": "BAD_REQUEST", "count": 3 }
-      ],
+      "topErrorCodes": [{ "code": "BAD_REQUEST", "count": 3 }],
       "recoverySuggestions": {
         "BAD_REQUEST": "Check your request parameters..."
       }
@@ -366,6 +385,7 @@ Monitor system health and performance.
 ## Supported Formats
 
 ### Standard Formats
+
 - **iso8601**: `2024-01-15T12:00:00.000Z`
 - **iso8601-date**: `2024-01-15`
 - **iso8601-time**: `12:00:00`
@@ -374,6 +394,7 @@ Monitor system health and performance.
 - **millis-timestamp**: `1642248000000`
 
 ### Regional Formats
+
 - **us-date**: `01/15/2024`
 - **us-datetime**: `01/15/2024 12:00 PM`
 - **eu-date**: `15/01/2024`
@@ -382,25 +403,27 @@ Monitor system health and performance.
 - **zh-date**: `2024年01月15日`
 
 ### Technical Formats
+
 - **sql-datetime**: `2024-01-15 12:00:00`
 - **log-timestamp**: `2024-01-15 12:00:00.000`
 - **filename-date**: `20240115`
 - **filename-datetime**: `20240115_120000`
 
 ### Human Readable
+
 - **relative**: `2 hours ago`
 - **calendar**: `Today at 12:00 PM`
 
 ## Error Codes
 
-| Code | Description | Resolution |
-|------|-------------|------------|
-| `BAD_REQUEST` | Invalid parameters | Check API documentation |
-| `VALIDATION_ERROR` | Input validation failed | Review error details |
-| `NOT_FOUND` | Resource not found | Verify URL and parameters |
-| `RATE_LIMITED` | Rate limit exceeded | Implement backoff strategy |
-| `INTERNAL_ERROR` | Server error | Retry after delay |
-| `SERVICE_UNAVAILABLE` | Service temporarily down | Check health endpoint |
+| Code                  | Description              | Resolution                 |
+| --------------------- | ------------------------ | -------------------------- |
+| `BAD_REQUEST`         | Invalid parameters       | Check API documentation    |
+| `VALIDATION_ERROR`    | Input validation failed  | Review error details       |
+| `NOT_FOUND`           | Resource not found       | Verify URL and parameters  |
+| `RATE_LIMITED`        | Rate limit exceeded      | Implement backoff strategy |
+| `INTERNAL_ERROR`      | Server error             | Retry after delay          |
+| `SERVICE_UNAVAILABLE` | Service temporarily down | Check health endpoint      |
 
 ## Examples
 
@@ -446,7 +469,9 @@ curl "https://tsconv.com/api/visualization?type=timezone-chart&fromTimezone=UTC&
 
 ```javascript
 // Basic conversion
-const response = await fetch('https://tsconv.com/api/convert?timestamp=1640995200');
+const response = await fetch(
+  'https://tsconv.com/api/convert?timestamp=1640995200'
+);
 const data = await response.json();
 
 // Batch conversion
@@ -456,8 +481,8 @@ const batchResponse = await fetch('https://tsconv.com/api/enhanced-batch', {
   body: JSON.stringify({
     items: [1640995200, 1641081600],
     outputFormat: ['iso8601'],
-    targetTimezone: 'America/New_York'
-  })
+    targetTimezone: 'America/New_York',
+  }),
 });
 ```
 
@@ -483,11 +508,13 @@ batch_response = requests.post('https://tsconv.com/api/enhanced-batch', json={
 
 ## Webhook Support
 
-Coming soon: Webhook notifications for batch job completion and system health alerts.
+Coming soon: Webhook notifications for batch job completion and system health
+alerts.
 
 ## Support
 
 For issues and questions:
+
 - Check the health endpoint: `/api/health`
 - Review error messages and recovery suggestions
 - Contact support with request ID from error responses

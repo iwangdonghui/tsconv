@@ -19,7 +19,7 @@
 ```typescript
 export abstract class BaseHandler {
   protected options: HandlerOptions;
-  
+
   async handle(req: VercelRequest, res: VercelResponse): Promise<void>;
   protected abstract execute(context: HandlerContext): Promise<any>;
 }
@@ -30,11 +30,13 @@ export abstract class BaseHandler {
 `api/handlers/unified-convert.ts` 整合了所有转换相关的功能：
 
 **支持的模式:**
+
 - `simple`: 基础转换功能，最小化元数据
 - `working`: 完整功能，包含元数据和相对时间
 - `standalone`: 独立模式，无外部依赖
 
 **功能特性:**
+
 - 多种输出格式支持
 - 时区转换
 - 相对时间计算
@@ -46,11 +48,13 @@ export abstract class BaseHandler {
 `api/handlers/unified-health.ts` 提供了全面的健康检查功能：
 
 **支持的模式:**
+
 - `simple`: 基础健康检查
 - `working`: 详细的服务和指标检查
 - `standalone`: 独立健康检查，无外部依赖
 
 **检查项目:**
+
 - 缓存服务状态
 - 速率限制服务状态
 - 时区服务状态
@@ -89,21 +93,25 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 ## 优势
 
 ### 1. 代码重用
+
 - 消除了 ~80% 的重复代码
 - 统一的错误处理逻辑
 - 共享的验证和解析逻辑
 
 ### 2. 维护性
+
 - 单一位置的核心逻辑
 - 更容易添加新功能
 - 简化的测试和调试
 
 ### 3. 一致性
+
 - 统一的响应格式
 - 一致的错误消息
 - 标准化的性能指标
 
 ### 4. 可扩展性
+
 - 易于添加新的处理模式
 - 插件化的功能扩展
 - 模块化的服务集成
@@ -155,6 +163,7 @@ npm run test:unified
 ```
 
 这个测试套件验证：
+
 - 所有处理模式的功能
 - 向后兼容性
 - 错误处理
@@ -166,11 +175,11 @@ npm run test:unified
 
 ```typescript
 interface HandlerOptions {
-  allowedMethods?: string[];     // 允许的 HTTP 方法
-  requireAuth?: boolean;         // 是否需要认证
-  timeout?: number;             // 请求超时时间 (ms)
-  enableCaching?: boolean;      // 是否启用缓存
-  enableRateLimit?: boolean;    // 是否启用速率限制
+  allowedMethods?: string[]; // 允许的 HTTP 方法
+  requireAuth?: boolean; // 是否需要认证
+  timeout?: number; // 请求超时时间 (ms)
+  enableCaching?: boolean; // 是否启用缓存
+  enableRateLimit?: boolean; // 是否启用速率限制
 }
 ```
 
@@ -194,11 +203,13 @@ interface ConvertRequest {
 ## 性能影响
 
 ### 改进项目
+
 - **响应时间**: 减少了 15-20% 的平均响应时间
 - **内存使用**: 降低了 25% 的内存占用
 - **代码体积**: 减少了 60% 的处理器代码量
 
 ### 基准测试结果
+
 ```
 统一架构前:
 - 平均响应时间: 180ms
@@ -214,6 +225,7 @@ interface ConvertRequest {
 ## 未来扩展
 
 ### 计划中的功能
+
 1. **中间件系统**: 可插拔的中间件支持
 2. **自动文档生成**: 基于处理器配置的 API 文档
 3. **监控集成**: 内置的性能和错误监控
@@ -234,7 +246,7 @@ interface ConvertRequest {
 // 示例: 添加新的 "advanced" 模式
 private async performConversion(request: ConvertRequest, context: HandlerContext) {
   const mode = request.options?.mode || 'working';
-  
+
   switch (mode) {
     case 'simple':
       return this.performSimpleConversion(request, context);

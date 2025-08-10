@@ -1,15 +1,20 @@
 # 🔐 API Security Enhancement
 
-This document provides comprehensive information about the API security enhancements implemented in the TypeScript Converter project.
+This document provides comprehensive information about the API security
+enhancements implemented in the TypeScript Converter project.
 
 ## Overview
 
-The API security system provides enterprise-grade protection through multiple layers of security including authentication, authorization, input validation, threat detection, and comprehensive monitoring.
+The API security system provides enterprise-grade protection through multiple
+layers of security including authentication, authorization, input validation,
+threat detection, and comprehensive monitoring.
 
 ## Features
 
-- **Multi-layer Authentication**: API keys, JWT tokens, and role-based access control
-- **Advanced Threat Detection**: Real-time detection of SQL injection, XSS, and other attacks
+- **Multi-layer Authentication**: API keys, JWT tokens, and role-based access
+  control
+- **Advanced Threat Detection**: Real-time detection of SQL injection, XSS, and
+  other attacks
 - **Input Sanitization**: Automatic cleaning and validation of all inputs
 - **Request Fingerprinting**: Unique identification and tracking of requests
 - **Security Monitoring**: Comprehensive logging and analysis of security events
@@ -19,6 +24,7 @@ The API security system provides enterprise-grade protection through multiple la
 ## Security Architecture
 
 ### 1. Authentication Layer
+
 ```typescript
 // API Key Authentication
 X-API-Key: ak_1234567890abcdef...
@@ -34,6 +40,7 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 ```
 
 ### 2. Security Middleware Stack
+
 ```typescript
 // Complete security stack
 defaultAPISecurityMiddleware(req, res, () => {
@@ -45,6 +52,7 @@ defaultAPISecurityMiddleware(req, res, () => {
 ```
 
 ### 3. Threat Detection Engine
+
 - **SQL Injection Detection**: Pattern-based detection of SQL injection attempts
 - **XSS Protection**: Detection and blocking of cross-site scripting attacks
 - **Path Traversal Prevention**: Protection against directory traversal attacks
@@ -55,6 +63,7 @@ defaultAPISecurityMiddleware(req, res, () => {
 ### API Key Management
 
 #### Creating API Keys
+
 ```bash
 POST /api/admin/api-keys
 {
@@ -67,6 +76,7 @@ POST /api/admin/api-keys
 ```
 
 #### API Key Features
+
 - **Secure Generation**: Cryptographically secure random keys
 - **Hashed Storage**: Keys are hashed using SHA-256
 - **Role-based Permissions**: Granular access control
@@ -74,19 +84,21 @@ POST /api/admin/api-keys
 - **Usage Tracking**: Last used timestamps and statistics
 
 #### Using API Keys
+
 ```typescript
 // In your API requests
 const response = await fetch('/api/endpoint', {
   headers: {
     'X-API-Key': 'ak_your_api_key_here',
-    'Content-Type': 'application/json'
-  }
+    'Content-Type': 'application/json',
+  },
 });
 ```
 
 ### JWT Token Authentication
 
 #### Token Structure
+
 ```typescript
 {
   "sub": "user123",           // User ID
@@ -101,32 +113,38 @@ const response = await fetch('/api/endpoint', {
 ```
 
 #### Using JWT Tokens
+
 ```typescript
 // Generate token
-const token = jwtManager.generateToken({
-  sub: 'user123',
-  roles: ['admin'],
-  permissions: ['*']
-}, '1h');
+const token = jwtManager.generateToken(
+  {
+    sub: 'user123',
+    roles: ['admin'],
+    permissions: ['*'],
+  },
+  '1h'
+);
 
 // Use in requests
 const response = await fetch('/api/endpoint', {
   headers: {
-    'Authorization': `Bearer ${token}`,
-    'Content-Type': 'application/json'
-  }
+    Authorization: `Bearer ${token}`,
+    'Content-Type': 'application/json',
+  },
 });
 ```
 
 ### Role-Based Access Control
 
 #### Available Roles
+
 - **admin**: Full system access
 - **user**: Standard user access
 - **readonly**: Read-only access
 - **api**: API-only access
 
 #### Permission System
+
 ```typescript
 // Check permissions
 if (hasPermission(user.permissions, 'write')) {
@@ -142,6 +160,7 @@ if (hasRole(user.roles, 'admin')) {
 ## Input Validation & Sanitization
 
 ### Automatic Sanitization
+
 ```typescript
 // Input sanitization is applied automatically
 const sanitized = InputSanitizer.sanitizeInput(userInput);
@@ -153,6 +172,7 @@ const pathSafe = InputSanitizer.sanitizePathTraversal(input);
 ```
 
 ### Threat Detection
+
 ```typescript
 // Automatic threat detection
 const threats = ThreatDetector.analyzeRequest(req);
@@ -162,12 +182,13 @@ if (threats.length > 0) {
   SecurityLogger.log({
     level: 'error',
     event: 'security_threat_detected',
-    threat: threats[0]
+    threat: threats[0],
   });
 }
 ```
 
 ### Validation Schemas
+
 ```typescript
 const apiKeySchema = {
   name: {
@@ -175,19 +196,20 @@ const apiKeySchema = {
     type: 'string',
     min: 1,
     max: 100,
-    pattern: /^[a-zA-Z0-9\s\-_]+$/
+    pattern: /^[a-zA-Z0-9\s\-_]+$/,
   },
   roles: {
     type: 'array',
-    validator: (value) => Array.isArray(value) && 
-                         value.every(role => typeof role === 'string')
-  }
+    validator: value =>
+      Array.isArray(value) && value.every(role => typeof role === 'string'),
+  },
 };
 ```
 
 ## Security Monitoring
 
 ### Security Logging
+
 ```typescript
 // Automatic security event logging
 SecurityLogger.log({
@@ -197,11 +219,12 @@ SecurityLogger.log({
   userAgent: 'Mozilla/5.0...',
   endpoint: '/api/admin/api-keys',
   method: 'POST',
-  metadata: { reason: 'invalid_api_key' }
+  metadata: { reason: 'invalid_api_key' },
 });
 ```
 
 ### Security Metrics
+
 ```bash
 GET /api/admin/security-monitoring?action=metrics&period=24h
 ```
@@ -230,6 +253,7 @@ GET /api/admin/security-monitoring?action=metrics&period=24h
 ```
 
 ### Security Reports
+
 ```bash
 GET /api/admin/security-monitoring?action=report&period=7d
 ```
@@ -257,6 +281,7 @@ GET /api/admin/security-monitoring?action=report&period=7d
 ## Configuration
 
 ### Environment Variables
+
 ```bash
 # Authentication
 JWT_SECRET=your-secret-key-here
@@ -279,6 +304,7 @@ SECURITY_REPORT_RETENTION=30d
 ```
 
 ### Middleware Configuration
+
 ```typescript
 // Custom security configuration
 const customSecurity = createAPISecurityMiddleware({
@@ -289,17 +315,18 @@ const customSecurity = createAPISecurityMiddleware({
   allowedContentTypes: ['application/json'],
   requireHTTPS: true,
   blockedUserAgents: [/bot/i, /crawler/i],
-  blockedIPs: ['192.168.1.100']
+  blockedIPs: ['192.168.1.100'],
 });
 ```
 
 ## Usage Examples
 
 ### Securing an API Endpoint
+
 ```typescript
-import { 
+import {
   defaultAPISecurityMiddleware,
-  apiKeyAuthMiddleware 
+  apiKeyAuthMiddleware,
 } from './middleware/api-security';
 
 export default function handler(req: VercelRequest, res: VercelResponse) {
@@ -315,6 +342,7 @@ export default function handler(req: VercelRequest, res: VercelResponse) {
 ```
 
 ### Admin-Only Endpoint
+
 ```typescript
 import { adminAuthMiddleware } from './middleware/auth';
 
@@ -327,6 +355,7 @@ export default function handler(req: VercelRequest, res: VercelResponse) {
 ```
 
 ### Creating API Keys
+
 ```typescript
 import { apiKeyManager } from './middleware/auth';
 
@@ -338,9 +367,9 @@ const apiKey = apiKeyManager.createAPIKey({
   permissions: ['read', 'write'],
   rateLimit: {
     requests: 1000,
-    window: 3600000 // 1 hour
+    window: 3600000, // 1 hour
   },
-  expiresAt: Date.now() + (365 * 24 * 60 * 60 * 1000) // 1 year
+  expiresAt: Date.now() + 365 * 24 * 60 * 60 * 1000, // 1 year
 });
 
 console.log('New API Key:', apiKey.key); // Only shown once
@@ -349,6 +378,7 @@ console.log('New API Key:', apiKey.key); // Only shown once
 ## Testing
 
 ### Automated Security Testing
+
 ```bash
 # Run comprehensive API security tests
 npm run test-api-security
@@ -361,6 +391,7 @@ npm run security-audit
 ```
 
 ### Manual Testing
+
 ```bash
 # Test authentication
 curl -H "X-API-Key: invalid-key" http://localhost:3000/api/admin/api-keys
@@ -377,6 +408,7 @@ curl -X POST http://localhost:3000/api/convert \
 ```
 
 ### Security Test Results
+
 ```bash
 🔒 API Security Testing Suite
 Performing comprehensive API security testing...
@@ -397,6 +429,7 @@ Performing comprehensive API security testing...
 ## Best Practices
 
 ### 1. Use Strong Authentication
+
 ```typescript
 // ✅ Use API keys for service-to-service
 const apiKey = generateAPIKey('production');
@@ -409,6 +442,7 @@ const auth = 'Basic ' + btoa('user:password');
 ```
 
 ### 2. Implement Proper Authorization
+
 ```typescript
 // ✅ Check permissions before operations
 if (!hasPermission(user.permissions, 'delete')) {
@@ -422,6 +456,7 @@ if (!hasRole(user.roles, 'admin')) {
 ```
 
 ### 3. Validate All Inputs
+
 ```typescript
 // ✅ Always validate and sanitize inputs
 const sanitizedInput = InputSanitizer.sanitizeInput(req.body);
@@ -433,13 +468,14 @@ if (threats.length > 0) {
 ```
 
 ### 4. Monitor Security Events
+
 ```typescript
 // ✅ Log security events
 SecurityLogger.log({
   level: 'warn',
   event: 'suspicious_activity',
   ip: req.ip,
-  details: 'Multiple failed authentication attempts'
+  details: 'Multiple failed authentication attempts',
 });
 
 // ✅ Regular security reviews
@@ -447,6 +483,7 @@ const report = SecurityAnalytics.generateSecurityReport(logs, '7d');
 ```
 
 ### 5. Use HTTPS Everywhere
+
 ```typescript
 // ✅ Enforce HTTPS in production
 if (process.env.NODE_ENV === 'production' && !req.secure) {
@@ -459,6 +496,7 @@ if (process.env.NODE_ENV === 'production' && !req.secure) {
 ### Common Issues
 
 #### 1. Authentication Failures
+
 ```typescript
 // Check API key format
 if (!apiKey.startsWith('ak_')) {
@@ -473,6 +511,7 @@ if (!payload) {
 ```
 
 #### 2. False Positive Threat Detection
+
 ```typescript
 // Adjust threat detection sensitivity
 const customSecurity = createAPISecurityMiddleware({
@@ -482,16 +521,18 @@ const customSecurity = createAPISecurityMiddleware({
 ```
 
 #### 3. Rate Limiting Issues
+
 ```typescript
 // Check rate limit configuration
 const rateLimitConfig = {
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 100, // Limit each IP to 100 requests per windowMs
-  message: 'Too many requests from this IP'
+  message: 'Too many requests from this IP',
 };
 ```
 
 ### Debug Mode
+
 ```typescript
 // Enable debug logging
 process.env.SECURITY_DEBUG = 'true';
@@ -503,4 +544,7 @@ console.log('Auth context:', req.auth);
 
 ## Conclusion
 
-The API security enhancement system provides comprehensive protection against common web application vulnerabilities while maintaining performance and usability. Regular monitoring and testing ensure continued security effectiveness as threats evolve.
+The API security enhancement system provides comprehensive protection against
+common web application vulnerabilities while maintaining performance and
+usability. Regular monitoring and testing ensure continued security
+effectiveness as threats evolve.

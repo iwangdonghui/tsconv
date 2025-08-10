@@ -1,0 +1,33 @@
+{
+  "csp": {
+    "configured": false,
+    "issues": [
+      "CSP not configured"
+    ]
+  },
+  "headers": {
+    "configured": true,
+    "missing": []
+  },
+  "https": {
+    "enforced": false,
+    "issues": [
+      "Vercel HTTPS redirect",
+      "HSTS header configured",
+      "No mixed content"
+    ]
+  },
+  "api": {
+    "secured": true,
+    "issues": []
+  },
+  "environment": {
+    "secure": false,
+    "issues": [
+      "Potential secret exposed in .env:3",
+      "Potential secret exposed in .env.local:10",
+      "Potential credentials in URL in .env.local:21"
+    ]
+  },
+  "score": 51
+}

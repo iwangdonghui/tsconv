@@ -1,0 +1,36 @@
+{
+  "vulnerabilities": {
+    "info": 0,
+    "low": 5,
+    "moderate": 6,
+    "high": 0,
+    "critical": 0,
+    "total": 11
+  },
+  "codeIssues": {
+    "total": 0,
+    "critical": 0,
+    "high": 0,
+    "moderate": 0,
+    "low": 0
+  },
+  "configIssues": [
+    {
+      "name": "Content Security Policy",
+      "severity": "critical",
+      "message": "No CSP configuration found"
+    },
+    {
+      "name": "Environment Variables",
+      "severity": "warning",
+      "message": "Potential secrets exposed in environment files"
+    }
+  ],
+  "licenseIssues": [],
+  "bestPractices": {
+    "passed": 5,
+    "failed": 0,
+    "warnings": 0
+  },
+  "overallScore": 52
+}

@@ -1,15 +1,19 @@
 # Upstash Redis Integration Setup Guide
 
-This guide explains how to set up and use Upstash Serverless Redis with the timestamp converter API.
+This guide explains how to set up and use Upstash Serverless Redis with the
+timestamp converter API.
 
 ## Overview
 
-The API now supports Upstash Serverless Redis for both caching and rate limiting, with automatic fallback to in-memory storage when Redis is unavailable.
+The API now supports Upstash Serverless Redis for both caching and rate
+limiting, with automatic fallback to in-memory storage when Redis is
+unavailable.
 
 ## Features
 
 - ✅ **Serverless Redis**: Upstash Redis integration with HTTP API
-- ✅ **Automatic Fallback**: Falls back to memory cache when Redis is unavailable
+- ✅ **Automatic Fallback**: Falls back to memory cache when Redis is
+  unavailable
 - ✅ **Health Monitoring**: Built-in health checks and connection monitoring
 - ✅ **Performance Metrics**: Comprehensive performance monitoring and metrics
 - ✅ **Rate Limiting**: Distributed rate limiting using Redis
@@ -22,7 +26,8 @@ The API now supports Upstash Serverless Redis for both caching and rate limiting
 
 1. Go to [Upstash Console](https://console.upstash.com/)
 2. Create a new Redis database
-3. Choose your preferred region (closer to your deployment for better performance)
+3. Choose your preferred region (closer to your deployment for better
+   performance)
 4. Copy the REST URL and Token from the database details
 
 ### 2. Environment Variables
@@ -83,7 +88,7 @@ await cacheService.del('key');
 const values = await cacheService.mget(['key1', 'key2', 'key3']);
 await cacheService.mset([
   { key: 'key1', value: 'value1', ttl: 300000 },
-  { key: 'key2', value: 'value2', ttl: 600000 }
+  { key: 'key2', value: 'value2', ttl: 600000 },
 ]);
 
 // Health check
@@ -104,7 +109,7 @@ const rule = {
   identifier: 'anonymous',
   limit: 100,
   window: 60000, // 1 minute
-  type: 'ip' as const
+  type: 'ip' as const,
 };
 
 const result = await rateLimiter.increment('user-ip', rule);
@@ -146,7 +151,8 @@ GET /api/health?detailed=true
 
 ### Service Factory Pattern
 
-The implementation uses a factory pattern to automatically choose the appropriate service:
+The implementation uses a factory pattern to automatically choose the
+appropriate service:
 
 ```
 ┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
@@ -307,6 +313,7 @@ For issues and questions:
 ## Changelog
 
 ### v1.0.0 - Initial Upstash Integration
+
 - ✅ Upstash Redis cache service
 - ✅ Upstash Redis rate limiter
 - ✅ Automatic fallback mechanism

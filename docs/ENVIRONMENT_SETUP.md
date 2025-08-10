@@ -30,20 +30,22 @@ NODE_ENV=development
 ## ☁️ Vercel Deployment
 
 ### Method 1: Vercel Dashboard
+
 1. Go to [Vercel Dashboard](https://vercel.com/dashboard)
 2. Select your project
 3. Navigate to **Settings** → **Environment Variables**
 4. Add these variables:
 
-| Name | Value | Environment |
-|------|-------|-------------|
-| `UPSTASH_REDIS_REST_URL` | `https://your-redis.upstash.io` | Production, Preview, Development |
-| `UPSTASH_REDIS_REST_TOKEN` | `your-token-here` | Production, Preview, Development |
-| `USE_UPSTASH_REDIS` | `true` | Production, Preview, Development |
-| `CACHING_ENABLED` | `true` | Production, Preview |
-| `RATE_LIMITING_ENABLED` | `true` | Production, Preview |
+| Name                       | Value                           | Environment                      |
+| -------------------------- | ------------------------------- | -------------------------------- |
+| `UPSTASH_REDIS_REST_URL`   | `https://your-redis.upstash.io` | Production, Preview, Development |
+| `UPSTASH_REDIS_REST_TOKEN` | `your-token-here`               | Production, Preview, Development |
+| `USE_UPSTASH_REDIS`        | `true`                          | Production, Preview, Development |
+| `CACHING_ENABLED`          | `true`                          | Production, Preview              |
+| `RATE_LIMITING_ENABLED`    | `true`                          | Production, Preview              |
 
 ### Method 2: Vercel CLI
+
 ```bash
 # Set production environment variables
 vercel env add UPSTASH_REDIS_REST_URL production
@@ -57,6 +59,7 @@ vercel env add USE_UPSTASH_REDIS preview
 ```
 
 ### Method 3: vercel.json
+
 ```json
 {
   "env": {
@@ -70,6 +73,7 @@ vercel env add USE_UPSTASH_REDIS preview
 ## 🐳 Docker Environment
 
 ### Dockerfile
+
 ```dockerfile
 ENV UPSTASH_REDIS_REST_URL=https://your-redis.upstash.io
 ENV UPSTASH_REDIS_REST_TOKEN=your-token
@@ -77,6 +81,7 @@ ENV USE_UPSTASH_REDIS=true
 ```
 
 ### docker-compose.yml
+
 ```yaml
 version: '3.8'
 services:
@@ -87,12 +92,13 @@ services:
       - UPSTASH_REDIS_REST_TOKEN=your-token
       - USE_UPSTASH_REDIS=true
     ports:
-      - "3000:3000"
+      - '3000:3000'
 ```
 
 ## 🚀 Other Deployment Platforms
 
 ### Netlify
+
 1. Go to Site Settings → Environment Variables
 2. Add the variables:
    - `UPSTASH_REDIS_REST_URL`
@@ -100,6 +106,7 @@ services:
    - `USE_UPSTASH_REDIS=true`
 
 ### Railway
+
 ```bash
 railway variables set UPSTASH_REDIS_REST_URL=https://your-redis.upstash.io
 railway variables set UPSTASH_REDIS_REST_TOKEN=your-token
@@ -107,6 +114,7 @@ railway variables set USE_UPSTASH_REDIS=true
 ```
 
 ### Heroku
+
 ```bash
 heroku config:set UPSTASH_REDIS_REST_URL=https://your-redis.upstash.io
 heroku config:set UPSTASH_REDIS_REST_TOKEN=your-token
@@ -116,7 +124,9 @@ heroku config:set USE_UPSTASH_REDIS=true
 ## 🔐 Security Best Practices
 
 ### 1. Never Commit Secrets
+
 Add to `.gitignore`:
+
 ```
 .env
 .env.local
@@ -124,11 +134,13 @@ Add to `.gitignore`:
 ```
 
 ### 2. Use Different Databases for Different Environments
+
 - **Development**: `timestamp-converter-dev`
-- **Staging**: `timestamp-converter-staging`  
+- **Staging**: `timestamp-converter-staging`
 - **Production**: `timestamp-converter-prod`
 
 ### 3. Rotate Tokens Regularly
+
 - Generate new tokens monthly
 - Update all environments simultaneously
 - Monitor for unauthorized access
@@ -136,6 +148,7 @@ Add to `.gitignore`:
 ## 🧪 Testing Configuration
 
 ### Test Environment Variables
+
 ```bash
 # .env.test
 UPSTASH_REDIS_REST_URL=https://test-redis.upstash.io
@@ -149,6 +162,7 @@ NODE_ENV=test
 ## 🔍 Verification
 
 ### Check if Variables are Set
+
 ```bash
 # Local development
 echo $UPSTASH_REDIS_REST_URL
@@ -159,6 +173,7 @@ console.log('Redis Token:', process.env.UPSTASH_REDIS_REST_TOKEN ? '***' : 'NOT 
 ```
 
 ### Test Connection
+
 ```bash
 # Test API health with Redis
 curl http://localhost:3000/api/health?detailed=true
@@ -172,16 +187,18 @@ curl http://localhost:3000/api/metrics?type=cache
 ### Common Issues
 
 1. **Variables Not Loading**
+
    ```bash
    # Check if .env file exists
    ls -la .env
-   
+
    # Restart development server
    npm run dev
    ```
 
 2. **Vercel Environment Variables Not Working**
-   - Ensure variables are set for correct environment (Production/Preview/Development)
+   - Ensure variables are set for correct environment
+     (Production/Preview/Development)
    - Redeploy after adding variables
    - Check Vercel function logs
 
@@ -193,6 +210,7 @@ curl http://localhost:3000/api/metrics?type=cache
    ```
 
 ### Debug Commands
+
 ```bash
 # Check environment in Node.js
 node -e "console.log(process.env.UPSTASH_REDIS_REST_URL)"

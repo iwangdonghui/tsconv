@@ -1,12 +1,14 @@
 # 🔐 GitHub Secrets Configuration
 
-This document outlines the required GitHub secrets for the CI/CD pipeline to function properly.
+This document outlines the required GitHub secrets for the CI/CD pipeline to
+function properly.
 
 ## Required Secrets
 
 ### Deployment Secrets
 
 #### Vercel Deployment
+
 ```
 VERCEL_TOKEN
 - Description: Vercel authentication token
@@ -25,6 +27,7 @@ VERCEL_PROJECT_ID
 ```
 
 #### Cloudflare Pages Deployment
+
 ```
 CLOUDFLARE_API_TOKEN
 - Description: Cloudflare API token with Pages permissions
@@ -40,6 +43,7 @@ CLOUDFLARE_ACCOUNT_ID
 ### Code Quality Secrets
 
 #### Codecov Integration
+
 ```
 CODECOV_TOKEN
 - Description: Codecov upload token
@@ -50,6 +54,7 @@ CODECOV_TOKEN
 ### Notification Secrets (Optional)
 
 #### Slack Integration
+
 ```
 SLACK_WEBHOOK_URL
 - Description: Slack webhook for deployment notifications
@@ -58,6 +63,7 @@ SLACK_WEBHOOK_URL
 ```
 
 #### Discord Integration
+
 ```
 DISCORD_WEBHOOK_URL
 - Description: Discord webhook for notifications
@@ -68,12 +74,14 @@ DISCORD_WEBHOOK_URL
 ## Setting Up Secrets
 
 ### Repository Secrets
+
 1. Go to your GitHub repository
 2. Navigate to Settings → Secrets and variables → Actions
 3. Click "New repository secret"
 4. Add each secret with the exact name and value
 
 ### Environment Secrets
+
 For production deployments, consider using environment-specific secrets:
 
 1. Go to Settings → Environments
@@ -84,6 +92,7 @@ For production deployments, consider using environment-specific secrets:
 ## Secret Validation
 
 ### Testing Secrets
+
 Use the following commands to test if secrets are properly configured:
 
 ```bash
@@ -98,12 +107,14 @@ curl -X GET "https://api.cloudflare.com/client/v4/user/tokens/verify" \
 ### Secret Security
 
 #### Best Practices
+
 - **Rotate regularly**: Update tokens every 90 days
 - **Minimum permissions**: Use least-privilege principle
 - **Environment separation**: Different tokens for staging/production
 - **Monitor usage**: Track token usage in service dashboards
 
 #### Security Checklist
+
 - [ ] Tokens have minimum required permissions
 - [ ] Tokens are environment-specific where possible
 - [ ] Token rotation schedule is established
@@ -115,15 +126,17 @@ curl -X GET "https://api.cloudflare.com/client/v4/user/tokens/verify" \
 ### Common Issues
 
 #### Vercel Deployment Fails
+
 ```
 Error: Invalid token or insufficient permissions
-Solution: 
+Solution:
 1. Verify VERCEL_TOKEN is valid
 2. Check token has deployment permissions
 3. Ensure VERCEL_ORG_ID and VERCEL_PROJECT_ID are correct
 ```
 
 #### Cloudflare Deployment Fails
+
 ```
 Error: Authentication failed
 Solution:
@@ -133,6 +146,7 @@ Solution:
 ```
 
 #### Codecov Upload Fails
+
 ```
 Error: Repository not found or token invalid
 Solution:
@@ -144,6 +158,7 @@ Solution:
 ### Debug Commands
 
 #### Check Secret Availability
+
 ```yaml
 # Add to workflow for debugging
 - name: Check secrets
@@ -154,6 +169,7 @@ Solution:
 ```
 
 #### Validate Token Format
+
 ```bash
 # Vercel token format: starts with 'vercel_'
 echo $VERCEL_TOKEN | grep -E '^vercel_[a-zA-Z0-9]{24}$'
@@ -165,18 +181,21 @@ echo $CLOUDFLARE_API_TOKEN | grep -E '^[a-f0-9]{40}$'
 ## Security Considerations
 
 ### Token Management
+
 - **Scope limitation**: Use project-specific tokens when possible
 - **Time-based rotation**: Implement automatic token rotation
 - **Access monitoring**: Monitor token usage patterns
 - **Incident response**: Have token revocation procedures
 
 ### Environment Isolation
+
 - **Separate tokens**: Different tokens for different environments
 - **Access control**: Limit who can view/modify secrets
 - **Audit logging**: Track secret access and modifications
 - **Backup procedures**: Maintain secure backup of critical tokens
 
 ### Compliance
+
 - **Data protection**: Ensure tokens comply with data protection regulations
 - **Access logs**: Maintain audit trails for compliance
 - **Regular reviews**: Periodic security reviews of token usage
@@ -185,6 +204,7 @@ echo $CLOUDFLARE_API_TOKEN | grep -E '^[a-f0-9]{40}$'
 ## Automation
 
 ### Secret Rotation Script
+
 ```bash
 #!/bin/bash
 # rotate-secrets.sh - Automated secret rotation
@@ -201,6 +221,7 @@ echo "Secret rotation completed"
 ```
 
 ### Monitoring Script
+
 ```bash
 #!/bin/bash
 # monitor-secrets.sh - Check secret health
@@ -224,6 +245,7 @@ fi
 ## Emergency Procedures
 
 ### Token Compromise
+
 1. **Immediate revocation**: Revoke compromised token immediately
 2. **Generate new token**: Create replacement token with same permissions
 3. **Update secrets**: Update GitHub secrets with new token
@@ -231,15 +253,18 @@ fi
 5. **Monitor activity**: Watch for any unauthorized usage
 
 ### Deployment Failure
+
 1. **Check token validity**: Verify all tokens are valid and not expired
 2. **Review permissions**: Ensure tokens have required permissions
 3. **Test locally**: Verify deployment works with same tokens locally
 4. **Rollback if needed**: Use previous working deployment if critical
 
 ### Access Recovery
+
 1. **Use backup tokens**: Switch to backup authentication method
 2. **Contact service support**: Reach out to Vercel/Cloudflare support if needed
 3. **Document incident**: Record what happened and how it was resolved
 4. **Update procedures**: Improve processes based on lessons learned
 
-This secrets configuration ensures secure and reliable CI/CD pipeline operation while maintaining proper security practices and compliance requirements.
+This secrets configuration ensures secure and reliable CI/CD pipeline operation
+while maintaining proper security practices and compliance requirements.

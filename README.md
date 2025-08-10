@@ -1,7 +1,8 @@
-
 # 🕐 tsconv.com - Timestamp Converter
 
-A fast, simple, and accurate Unix timestamp conversion tool built for developers. Convert between Unix timestamps and human-readable dates with real-time results and multiple format support.
+A fast, simple, and accurate Unix timestamp conversion tool built for
+developers. Convert between Unix timestamps and human-readable dates with
+real-time results and multiple format support.
 
 ![tsconv.com](./public/tsconv_logo.png)
 
@@ -28,22 +29,26 @@ A fast, simple, and accurate Unix timestamp conversion tool built for developers
 ## 🚀 Quick Start
 
 ### Online Tool
+
 Visit [tsconv.com](https://tsconv.com) to use the tool directly in your browser.
 
 ### Local Development
 
 1. **Clone the repository**
+
    ```bash
    git clone https://github.com/yourusername/tsconv.git
    cd tsconv
    ```
 
 2. **Install dependencies**
+
    ```bash
    npm install
    ```
 
 3. **Start development server**
+
    ```bash
    npm run dev
    ```
@@ -66,18 +71,21 @@ Visit [tsconv.com](https://tsconv.com) to use the tool directly in your browser.
 ## 📖 Usage Examples
 
 ### Basic Conversion
+
 ```
 Input: 1640995200
 Output: Sat, 01 Jan 2022 00:00:00 GMT
 ```
 
 ### Date to Timestamp
+
 ```
 Input: 2022-01-01
 Output: 1640995200
 ```
 
 ### Multiple Formats
+
 - ISO 8601: `2022-01-01T00:00:00.000Z`
 - RFC 2822: `Sat, 01 Jan 2022 00:00:00 GMT`
 - Local Time: `1/1/2022, 12:00:00 AM`
@@ -86,6 +94,7 @@ Output: 1640995200
 ## 🔧 API Usage
 
 ### Base URL
+
 ```
 https://api.tsconv.com
 ```
@@ -101,11 +110,13 @@ We provide comprehensive API documentation:
 - **OpenAPI Specification**: [/api/openapi.json](/api/openapi.json)
 
 ### Get Current Timestamp
+
 ```bash
 curl https://api.tsconv.com/now
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -118,11 +129,13 @@ curl https://api.tsconv.com/now
 ```
 
 ### Convert Timestamp to Date
+
 ```bash
 curl "https://api.tsconv.com/convert?timestamp=1640995200"
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -136,11 +149,13 @@ curl "https://api.tsconv.com/convert?timestamp=1640995200"
 ```
 
 ### Convert Date to Timestamp
+
 ```bash
 curl "https://api.tsconv.com/convert?date=2022-01-01"
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -187,18 +202,21 @@ tsconv/
 ## 🎨 Features Overview
 
 ### Converter Page
+
 - Real-time timestamp conversion
 - Multiple output formats
 - Copy to clipboard functionality
 - Input validation and error handling
 
 ### API Documentation
+
 - Complete REST API reference
 - Request/response examples
 - CORS support for cross-origin requests
 - Error handling with detailed messages
 
 ### Developer Guide
+
 - Common use cases and examples
 - Best practices for timestamp handling
 - Integration guides for popular frameworks
@@ -207,6 +225,7 @@ tsconv/
 ## 🌙 Theme Support
 
 The application supports both light and dark themes with:
+
 - System preference detection
 - Manual theme toggle
 - Persistent theme selection
@@ -215,6 +234,7 @@ The application supports both light and dark themes with:
 ## 📱 Responsive Design
 
 Optimized for all screen sizes:
+
 - **Mobile**: Touch-friendly interface
 - **Tablet**: Optimized layout
 - **Desktop**: Full feature set
@@ -223,16 +243,19 @@ Optimized for all screen sizes:
 ## 🚀 Deployment
 
 ### Build for Production
+
 ```bash
 npm run build
 ```
 
 ### Preview Production Build
+
 ```bash
 npm run preview
 ```
 
 ### Deploy to Vercel
+
 ```bash
 # Install Vercel CLI
 npm i -g vercel
@@ -242,11 +265,13 @@ vercel --prod
 ```
 
 ### Environment Variables
+
 No environment variables required for basic functionality.
 
 ## 🔧 API Configuration
 
-The API is configured to work with the custom domain `api.tsconv.com`. The configuration includes:
+The API is configured to work with the custom domain `api.tsconv.com`. The
+configuration includes:
 
 - **CORS Headers**: Enabled for cross-origin requests
 - **Error Handling**: Comprehensive error responses
@@ -255,7 +280,8 @@ The API is configured to work with the custom domain `api.tsconv.com`. The confi
 
 ## 🤝 Contributing
 
-We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
+We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md)
+for details.
 
 1. Fork the repository
 2. Create your feature branch (`git checkout -b feature/amazing-feature`)
@@ -265,14 +291,16 @@ We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) f
 
 ## 📝 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
+for details.
 
 ## 🙏 Acknowledgments
 
 - Built with [React](https://reactjs.org/) and [Vite](https://vitejs.dev/)
 - Styled with [Tailwind CSS](https://tailwindcss.com/)
 - Icons by [Lucide](https://lucide.dev/)
-- API powered by [Vercel Serverless Functions](https://vercel.com/docs/functions)
+- API powered by
+  [Vercel Serverless Functions](https://vercel.com/docs/functions)
 - Inspired by the developer community's need for simple, reliable tools
 
 ## 📞 Support
