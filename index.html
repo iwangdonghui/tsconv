@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -6,8 +6,8 @@
     <link rel="icon" type="image/x-icon" href="/favicon.ico" />
 
     <!-- Preload critical optimized images -->
-    <link rel="preload" as="image" href="/optimized/favicon-32x32.avif" type="image/avif">
-    <link rel="preload" as="image" href="/optimized/favicon-32x32.webp" type="image/webp">
+    <link rel="preload" as="image" href="/optimized/favicon-32x32.avif" type="image/avif" />
+    <link rel="preload" as="image" href="/optimized/favicon-32x32.webp" type="image/webp" />
 
     <!-- Optimized favicons -->
     <link rel="icon" type="image/png" sizes="32x32" href="/optimized/favicon-32x32.png" />
@@ -15,21 +15,34 @@
     <link rel="apple-touch-icon" sizes="180x180" href="/optimized/apple-touch-icon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Timestamp Converter - Unix & Epoch Time | tsconv.com</title>
-    
+
     <!-- Resource hints for critical assets -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    
-    <!-- Preload critical JavaScript files -->
-    <link rel="modulepreload" href="/assets/index-3d886579.js" fetchpriority="high" />
-    <link rel="modulepreload" href="/assets/Timestamp….js" />
-    
+
+    <!-- Vite will automatically inject the correct preload links -->
+
     <!-- Preload critical font files -->
-    <link rel="preload" href="https://fonts.gstatic.com/s/inter/v19/UcC73FwrK3iLTeHuS_fvQtMwCp50KnMa1ZL7.woff2" as="font" type="font/woff2" crossorigin />
-    
+    <link
+      rel="preload"
+      href="https://fonts.gstatic.com/s/inter/v19/UcC73FwrK3iLTeHuS_fvQtMwCp50KnMa1ZL7.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+
     <!-- Preload Google Fonts stylesheet -->
-    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'" />
-    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" /></noscript>
+    <link
+      rel="preload"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap"
+      as="style"
+      onload="this.onload=null;this.rel='stylesheet'"
+    />
+    <noscript
+      ><link
+        rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap"
+    /></noscript>
     <meta
       name="description"
       content="Convert Unix timestamps to human-readable dates and vice versa. Fast, simple, and accurate timestamp conversion tool with real-time results."
@@ -39,18 +52,15 @@
       content="timestamp converter, unix timestamp, epoch time, date converter, time conversion, unix time"
     />
     <meta name="author" content="tsconv.com" />
-    
+
     <!-- Canonical URL -->
     <link rel="canonical" href="https://tsconv.com/" />
-    
+
     <!-- Sitemap -->
     <link rel="sitemap" type="application/xml" href="/sitemap.xml" />
-    
+
     <!-- Open Graph -->
-    <meta
-      property="og:title"
-      content="Timestamp Converter - Unix & Epoch Time"
-    />
+    <meta property="og:title" content="Timestamp Converter - Unix & Epoch Time" />
     <meta
       property="og:description"
       content="Convert Unix timestamps to human-readable dates and vice versa. Fast, simple, and accurate timestamp conversion tool."
@@ -59,47 +69,44 @@
     <meta property="og:url" content="https://tsconv.com" />
     <meta property="og:image" content="https://tsconv.com/tsconv_logo.png" />
     <meta name="twitter:card" content="summary" />
-    <meta
-      name="twitter:title"
-      content="Timestamp Converter - Unix & Epoch Time"
-    />
+    <meta name="twitter:title" content="Timestamp Converter - Unix & Epoch Time" />
     <meta
       name="twitter:description"
       content="Convert Unix timestamps to human-readable dates and vice versa. Fast, simple, and accurate timestamp conversion tool."
     />
     <meta name="twitter:image" content="https://tsconv.com/tsconv_logo.png" />
-    
+
     <!-- JSON-LD Structured Data -->
     <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@type": "WebSite",
-      "name": "tsconv.com",
-      "alternateName": "Timestamp Converter",
-      "url": "https://tsconv.com",
-      "logo": "https://tsconv.com/tsconv_logo.png",
-      "description": "Convert Unix timestamps to human-readable dates and vice versa. Fast, simple, and accurate timestamp conversion tool with real-time results.",
-      "publisher": {
-        "@type": "Organization",
+      {
+        "@context": "https://schema.org",
+        "@type": "WebSite",
         "name": "tsconv.com",
-        "logo": {
-          "@type": "ImageObject",
-          "url": "https://tsconv.com/tsconv_logo.png",
-          "width": 512,
-          "height": 512
+        "alternateName": "Timestamp Converter",
+        "url": "https://tsconv.com",
+        "logo": "https://tsconv.com/tsconv_logo.png",
+        "description": "Convert Unix timestamps to human-readable dates and vice versa. Fast, simple, and accurate timestamp conversion tool with real-time results.",
+        "publisher": {
+          "@type": "Organization",
+          "name": "tsconv.com",
+          "logo": {
+            "@type": "ImageObject",
+            "url": "https://tsconv.com/tsconv_logo.png",
+            "width": 512,
+            "height": 512
+          }
+        },
+        "potentialAction": {
+          "@type": "SearchAction",
+          "target": "https://tsconv.com/?q={search_term_string}",
+          "query-input": "required name=search_term_string"
         }
-      },
-      "potentialAction": {
-        "@type": "SearchAction",
-        "target": "https://tsconv.com/?q={search_term_string}",
-        "query-input": "required name=search_term_string"
       }
-    }
     </script>
   </head>
   <body>
     <div id="root"></div>
-    
+
     <!-- Inline critical CSS for above-the-fold content -->
     <style>
       /* Critical CSS for initial render - minimal styles for header and main container */
@@ -114,7 +121,7 @@
       }
       /* Add any other critical styles needed for above-the-fold content */
     </style>
-    
+
     <!-- Async CSS loading -->
     <script>
       // Function to load CSS asynchronously
@@ -125,25 +132,10 @@
         link.media = 'all';
         document.head.appendChild(link);
       }
-      
-      // Load non-critical CSS asynchronously
-      loadCSS('/assets/index-c73fe8ca.css');
-      
-      // Preload additional JS modules after initial render
-      window.addEventListener('load', function() {
-        [
-          '/assets/Footer-f191671f.js',
-          '/assets/clock-ce486696.js',
-          '/assets/copy-71833557.js'
-        ].forEach(function(src) {
-          var preload = document.createElement('link');
-          preload.rel = 'modulepreload';
-          preload.href = src;
-          document.head.appendChild(preload);
-        });
-      });
+
+      // Vite will handle CSS and JS loading automatically
     </script>
-    
+
     <!-- Main application script with high priority -->
     <script type="module" src="/src/main.tsx" fetchpriority="high"></script>
   </body>
