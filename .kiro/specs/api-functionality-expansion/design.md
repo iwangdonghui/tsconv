@@ -2,7 +2,12 @@
 
 ## Overview
 
-This design document outlines the architecture for expanding the timestamp converter API with advanced functionality including batch conversion optimization, timezone conversion support, performance enhancements, and robust caching mechanisms. The design builds upon the existing Vercel serverless API structure while introducing new components for caching, rate limiting, and timezone handling.
+This design document outlines the architecture for expanding the timestamp
+converter API with advanced functionality including batch conversion
+optimization, timezone conversion support, performance enhancements, and robust
+caching mechanisms. The design builds upon the existing Vercel serverless API
+structure while introducing new components for caching, rate limiting, and
+timezone handling.
 
 ## Architecture
 
@@ -17,20 +22,20 @@ graph TB
     Router --> TimezoneAPI[Timezone Conversion API]
     Router --> FormatAPI[Custom Format API]
     Router --> ExistingAPIs[Existing APIs]
-    
+
     BatchAPI --> Validator[Input Validator]
     TimezoneAPI --> TZService[Timezone Service]
     FormatAPI --> Formatter[Format Service]
-    
+
     TZService --> TZData[IANA Timezone Data]
     Cache --> Storage[Cache Storage]
-    
+
     subgraph "Monitoring & Logging"
         Logger[Request Logger]
         Metrics[Performance Metrics]
         Alerts[Error Alerts]
     end
-    
+
     Router --> Logger
     Gateway --> Metrics
     Logger --> Alerts
@@ -42,7 +47,8 @@ The system will be organized into the following key components:
 
 1. **API Gateway Layer**: Handles CORS, rate limiting, and request routing
 2. **Cache Layer**: Redis-based caching for improved performance
-3. **Core Services**: Business logic for conversions, timezone handling, and formatting
+3. **Core Services**: Business logic for conversions, timezone handling, and
+   formatting
 4. **Data Layer**: IANA timezone data and configuration storage
 5. **Monitoring Layer**: Logging, metrics collection, and alerting
 
@@ -70,6 +76,7 @@ interface RateLimitResult {
 ```
 
 **Responsibilities:**
+
 - Request rate limiting based on IP and authentication status
 - CORS handling for all endpoints
 - Request/response logging and metrics collection
@@ -94,6 +101,7 @@ interface CacheableRequest {
 ```
 
 **Implementation:**
+
 - Redis-based caching with configurable TTL
 - LRU eviction policy for memory management
 - Cache key generation based on request parameters
@@ -132,6 +140,7 @@ interface BatchConversionResult {
 ```
 
 **Features:**
+
 - Parallel processing of batch items
 - Configurable batch size limits
 - Error isolation (continue processing on individual failures)
@@ -141,7 +150,11 @@ interface BatchConversionResult {
 
 ```typescript
 interface TimezoneService {
-  convert(timestamp: number, fromTz: string, toTz: string): Promise<TimezoneConversionResult>;
+  convert(
+    timestamp: number,
+    fromTz: string,
+    toTz: string
+  ): Promise<TimezoneConversionResult>;
   getTimezoneInfo(timezone: string): Promise<TimezoneInfo>;
   getCommonTimezones(): Promise<CommonTimezone[]>;
   validateTimezone(timezone: string): boolean;
@@ -172,6 +185,7 @@ interface CommonTimezone {
 ```
 
 **Features:**
+
 - IANA timezone database integration
 - DST transition handling
 - Timezone validation and suggestions
@@ -202,6 +216,7 @@ interface SupportedFormat {
 ```
 
 **Supported Formats:**
+
 - ISO 8601 variants
 - RFC 2822
 - Unix timestamp (seconds/milliseconds)
@@ -235,15 +250,15 @@ interface EnhancedConversionRequest {
   // Single conversion
   timestamp?: number;
   date?: string;
-  
+
   // Batch conversion
   items?: Array<string | number>;
-  
+
   // Common parameters
   outputFormats?: string[];
   timezone?: string;
   targetTimezone?: string;
-  
+
   // Options
   includeMetadata?: boolean;
   cacheControl?: 'no-cache' | 'force-refresh';
@@ -347,6 +362,7 @@ interface StandardErrorResponse {
 ### 1. Unit Testing
 
 **Components to Test:**
+
 - Timezone conversion logic
 - Format validation and conversion
 - Cache key generation
@@ -354,6 +370,7 @@ interface StandardErrorResponse {
 - Error handling functions
 
 **Test Coverage Goals:**
+
 - 90%+ code coverage for core services
 - 100% coverage for critical conversion logic
 - Edge case testing for timezone transitions
@@ -361,6 +378,7 @@ interface StandardErrorResponse {
 ### 2. Integration Testing
 
 **Test Scenarios:**
+
 - End-to-end API request flows
 - Cache integration with Redis
 - Rate limiting across multiple requests
@@ -370,12 +388,14 @@ interface StandardErrorResponse {
 ### 3. Performance Testing
 
 **Load Testing:**
+
 - Concurrent batch conversion requests
 - Rate limiting under high load
 - Cache performance with large datasets
 - Memory usage during peak traffic
 
 **Benchmarks:**
+
 - Single conversion: < 50ms response time
 - Batch conversion (100 items): < 500ms response time
 - Cache hit ratio: > 80% for repeated requests
@@ -384,6 +404,7 @@ interface StandardErrorResponse {
 ### 4. API Contract Testing
 
 **Contract Validation:**
+
 - Request/response schema validation
 - Error response format consistency
 - HTTP status code correctness
@@ -392,12 +413,14 @@ interface StandardErrorResponse {
 ### 5. Monitoring and Alerting Tests
 
 **Monitoring Coverage:**
+
 - Error rate thresholds
 - Response time monitoring
 - Cache hit rate tracking
 - Rate limiting effectiveness
 
 **Alert Testing:**
+
 - Error spike detection
 - Performance degradation alerts
 - Cache service failure notifications
