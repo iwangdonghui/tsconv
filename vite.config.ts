@@ -1,12 +1,12 @@
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
-import path from 'path'
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+import path from 'path';
 
 export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: {
-      "@": path.resolve(__dirname, "./src"),
+      '@': path.resolve(__dirname, './src'),
     },
   },
   server: {
@@ -16,9 +16,9 @@ export default defineConfig({
         target: 'http://localhost:3003',
         changeOrigin: true,
         secure: false,
-        rewrite: (path) => path.replace(/^\/api/, '/api')
-      }
-    }
+        rewrite: path => path.replace(/^\/api/, '/api'),
+      },
+    },
   },
   build: {
     // Enable strict mode for production builds
@@ -27,20 +27,20 @@ export default defineConfig({
       compress: {
         drop_console: true,
         drop_debugger: true,
-        pure_funcs: ['console.log', 'console.info', 'console.debug']
-      }
+        pure_funcs: ['console.log', 'console.info', 'console.debug'],
+      },
     },
     rollupOptions: {
       onwarn(warning, warn) {
-        if (warning.code === 'UNUSED_EXTERNAL_IMPORT') return
+        if (warning.code === 'UNUSED_EXTERNAL_IMPORT') return;
         // Treat warnings as errors in strict mode
         if (process.env.NODE_ENV === 'production') {
-          throw new Error(`Build warning: ${warning.message}`)
+          throw new Error(`Build warning: ${warning.message}`);
         }
-        warn(warning)
+        warn(warning);
       },
       output: {
-        manualChunks: (id) => {
+        manualChunks: id => {
           // Vendor chunks for better caching
           if (id.includes('node_modules')) {
             // React ecosystem
@@ -64,7 +64,11 @@ export default defineConfig({
             }
 
             // Utilities
-            if (id.includes('clsx') || id.includes('tailwind-merge') || id.includes('class-variance-authority')) {
+            if (
+              id.includes('clsx') ||
+              id.includes('tailwind-merge') ||
+              id.includes('class-variance-authority')
+            ) {
               return 'vendor-utils';
             }
 
@@ -113,14 +117,18 @@ export default defineConfig({
         },
 
         // Optimize asset file names with better organization
-        assetFileNames: (assetInfo) => {
+        assetFileNames: assetInfo => {
           const info = assetInfo.name.split('.');
           const ext = info[info.length - 1];
 
           // Image assets
           if (/png|jpe?g|svg|gif|tiff|bmp|ico|webp|avif/i.test(ext)) {
             // Optimized images go to optimized folder
-            if (assetInfo.name.includes('optimized') || assetInfo.name.includes('webp') || assetInfo.name.includes('avif')) {
+            if (
+              assetInfo.name.includes('optimized') ||
+              assetInfo.name.includes('webp') ||
+              assetInfo.name.includes('avif')
+            ) {
               return `assets/images/optimized/[name]-[hash][extname]`;
             }
             return `assets/images/[name]-[hash][extname]`;
@@ -137,16 +145,16 @@ export default defineConfig({
           }
 
           return `assets/[name]-[hash][extname]`;
-        }
-      }
+        },
+      },
     },
     // Enable source maps for better debugging
     sourcemap: true,
     // Chunk size optimization
-    chunkSizeWarningLimit: 300
+    chunkSizeWarningLimit: 300,
   },
   optimizeDeps: {
     // Pre-bundle lucide-react for better performance and tree shaking
-    include: ['lucide-react']
-  }
-})
+    include: ['lucide-react'],
+  },
+});
