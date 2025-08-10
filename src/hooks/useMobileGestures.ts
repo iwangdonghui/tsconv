@@ -11,30 +11,10 @@ export interface GestureHandlers {
 }
 
 export interface GestureOptions {
-  /**
-   * Minimum distance for swipe detection (px)
-   * @default 50
-   */
   swipeThreshold?: number;
-  /**
-   * Maximum time for swipe detection (ms)
-   * @default 300
-   */
   swipeTimeout?: number;
-  /**
-   * Long press duration (ms)
-   * @default 500
-   */
   longPressDelay?: number;
-  /**
-   * Double tap timeout (ms)
-   * @default 300
-   */
   doubleTapDelay?: number;
-  /**
-   * Prevent default touch behavior
-   * @default false
-   */
   preventDefault?: boolean;
 }
 
@@ -48,9 +28,6 @@ interface TouchState {
   tapCount: number;
 }
 
-/**
- * Hook for handling mobile gestures (swipe, long press, double tap)
- */
 export function useMobileGestures(
   handlers: GestureHandlers,
   options: GestureOptions = {}
@@ -99,10 +76,8 @@ export function useMobileGestures(
         isLongPress: false,
       };
 
-      // Clear any existing long press timer
       clearLongPressTimer();
 
-      // Start long press timer
       if (handlers.onLongPress) {
         touchState.current.longPressTimer = window.setTimeout(() => {
           touchState.current.isLongPress = true;
@@ -119,7 +94,6 @@ export function useMobileGestures(
         event.preventDefault();
       }
 
-      // Cancel long press if finger moves too much
       const touch = event.touches[0];
       if (!touch) return;
       
@@ -148,28 +122,23 @@ export function useMobileGestures(
       const deltaY = touch.clientY - touchState.current.startY;
       const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
 
-      // Clear long press timer
       clearLongPressTimer();
 
-      // If it was a long press, don't process other gestures
       if (touchState.current.isLongPress) {
         return;
       }
 
-      // Check for swipe gestures
       if (distance >= swipeThreshold && deltaTime <= swipeTimeout) {
         const absX = Math.abs(deltaX);
         const absY = Math.abs(deltaY);
 
         if (absX > absY) {
-          // Horizontal swipe
           if (deltaX > 0) {
             handlers.onSwipeRight?.();
           } else {
             handlers.onSwipeLeft?.();
           }
         } else {
-          // Vertical swipe
           if (deltaY > 0) {
             handlers.onSwipeDown?.();
           } else {
@@ -179,12 +148,10 @@ export function useMobileGestures(
         return;
       }
 
-      // Check for tap gestures (only if no significant movement)
       if (distance < 10) {
         const timeSinceLastTap = endTime - touchState.current.lastTapTime;
 
         if (timeSinceLastTap < doubleTapDelay) {
-          // Double tap
           touchState.current.tapCount++;
           if (touchState.current.tapCount === 2) {
             handlers.onDoubleTap?.();
@@ -193,13 +160,11 @@ export function useMobileGestures(
             return;
           }
         } else {
-          // Reset tap count
           touchState.current.tapCount = 1;
         }
 
         touchState.current.lastTapTime = endTime;
 
-        // Single tap (with delay to check for double tap)
         if (handlers.onTap && !handlers.onDoubleTap) {
           handlers.onTap();
         } else if (handlers.onTap) {
@@ -244,7 +209,6 @@ export function useMobileGestures(
     [handleTouchStart, handleTouchMove, handleTouchEnd, preventDefault]
   );
 
-  // Cleanup on unmount
   useEffect(() => {
     return () => {
       clearLongPressTimer();
@@ -254,9 +218,6 @@ export function useMobileGestures(
   return { attachGestures };
 }
 
-/**
- * Hook for detecting device capabilities
- */
 export function useDeviceCapabilities() {
   const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
