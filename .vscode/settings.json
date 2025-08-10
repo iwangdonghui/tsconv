@@ -51,6 +51,12 @@
     "**/.DS_Store": true,
     "**/coverage": true
   },
+  "files.associations": {
+    "_headers": "plaintext",
+    "_redirects": "plaintext",
+    "Dockerfile*": "dockerfile",
+    ".env*": "properties"
+  },
   "files.eol": "\n",
   "files.insertFinalNewline": true,
   "files.trimTrailingWhitespace": true,
