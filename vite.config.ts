@@ -46,8 +46,13 @@ export default defineConfig({
         manualChunks: id => {
           // Vendor chunks for better caching
           if (id.includes('node_modules')) {
-            // React ecosystem
-            if (id.includes('react') || id.includes('react-dom')) {
+            // React ecosystem - keep all React-related packages together
+            if (
+              id.includes('react') ||
+              id.includes('react-dom') ||
+              id.includes('use-callback-ref') ||
+              id.includes('react-remove-scroll')
+            ) {
               return 'vendor-react';
             }
 
@@ -162,11 +167,20 @@ export default defineConfig({
       'lucide-react',
       'react',
       'react-dom',
+      'react/jsx-runtime',
       '@radix-ui/react-select',
       '@radix-ui/react-tabs',
       'react-router-dom',
+      'use-callback-ref',
+      'react-remove-scroll',
     ],
     // Force optimization of problematic dependencies
     force: true,
+    // Ensure React is available globally
+    esbuildOptions: {
+      define: {
+        global: 'globalThis',
+      },
+    },
   },
 });
