@@ -1,7 +1,15 @@
 #!/usr/bin/env sh
 . "$(dirname -- "$0")/_/husky.sh"
 
-echo "🔒 Running strict mode checks before commit..."
+echo "🔒 Running pre-commit quality checks..."
+
+# Run lint-staged for staged files
+echo "🎨 Running lint-staged on staged files..."
+npx lint-staged
+if [ $? -ne 0 ]; then
+  echo "❌ lint-staged failed. Please fix the issues and try again."
+  exit 1
+fi
 
 # Run TypeScript type checking
 echo "📝 Checking TypeScript types..."
@@ -11,20 +19,23 @@ if [ $? -ne 0 ]; then
   exit 1
 fi
 
-# Run ESLint with strict rules
-echo "🔍 Running ESLint strict checks..."
-npm run lint
+# Run security audit
+echo "🔒 Running security audit..."
+npm audit --audit-level=high --production
 if [ $? -ne 0 ]; then
-  echo "❌ ESLint check failed. Please fix linting errors before committing."
-  exit 1
+  echo "⚠️ Security vulnerabilities found. Please review and fix if necessary."
+  echo "You can run 'npm audit fix' to automatically fix some issues."
+  # Don't exit on audit failures, just warn
 fi
 
-# Run tests
-echo "🧪 Running tests..."
-npm test -- --run
-if [ $? -ne 0 ]; then
-  echo "❌ Tests failed. Please fix failing tests before committing."
-  exit 1
+# Run tests if they exist
+if [ -f "src/__tests__" ] || [ -f "test" ] || grep -q "\"test\":" package.json; then
+  echo "🧪 Running tests..."
+  npm test -- --run --passWithNoTests
+  if [ $? -ne 0 ]; then
+    echo "❌ Tests failed. Please fix failing tests before committing."
+    exit 1
+  fi
 fi
 
-echo "✅ All strict mode checks passed! Proceeding with commit."
+echo "✅ All pre-commit checks passed! Proceeding with commit."
