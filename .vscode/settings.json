@@ -2,14 +2,14 @@
   "editor.formatOnSave": true,
   "editor.formatOnPaste": true,
   "editor.codeActionsOnSave": {
-    "source.fixAll.eslint": true,
-    "source.organizeImports": true
+    "source.fixAll.eslint": "explicit",
+    "source.organizeImports": "explicit"
   },
   "editor.defaultFormatter": "esbenp.prettier-vscode",
   "editor.tabSize": 2,
   "editor.insertSpaces": true,
   "editor.rulers": [100],
-  
+
   "[javascript]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
@@ -28,7 +28,7 @@
   "[markdown]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
-  
+
   "eslint.enable": true,
   "eslint.validate": [
     "javascript",
@@ -36,13 +36,13 @@
     "typescript",
     "typescriptreact"
   ],
-  
+
   "prettier.enable": true,
   "prettier.requireConfig": true,
-  
+
   "typescript.format.enable": false,
   "javascript.format.enable": false,
-  
+
   "files.exclude": {
     "**/node_modules": true,
     "**/dist": true,
