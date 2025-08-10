@@ -2,9 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
 import { ErrorBoundary } from './components/ErrorBoundary';
-import { ErrorMonitoringDashboard } from './components/ErrorMonitoringDashboard';
-import { ErrorTestComponent } from './components/ErrorTestComponent';
-import { PerformanceMonitoringDashboard } from './components/PerformanceMonitoringDashboard';
+// Debug components removed for production
 import './index.css';
 import { ErrorTracking } from './lib/error-tracking';
 import { initializePerformanceMonitoring } from './lib/performance-monitoring';
@@ -38,9 +36,6 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <ErrorBoundary>
       <App />
-      <ErrorMonitoringDashboard />
-      <PerformanceMonitoringDashboard />
-      <ErrorTestComponent />
     </ErrorBoundary>
   </React.StrictMode>
 );
