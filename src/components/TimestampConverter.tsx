@@ -56,52 +56,49 @@ export default function TimestampConverter() {
     debounceMs: 300,
     enableCache: true,
   });
-  const {
-    validationResult: manualDateValidation,
-    validateInput: validateManualDateInput,
-    resetValidation: _resetManualValidation,
-  } = useInputValidation({
-    debounceMs: 100,
-    validator: () => {
-      const now = new Date();
-      const year = getNumericValue(manualDate.year, now.getFullYear());
-      const month = getNumericValue(manualDate.month, now.getMonth() + 1);
-      const day = getNumericValue(manualDate.day, now.getDate());
-      const hour = getNumericValue(manualDate.hour, now.getHours());
-      const minute = getNumericValue(manualDate.minute, now.getMinutes());
-      const second = getNumericValue(manualDate.second, now.getSeconds());
+  const { validationResult: manualDateValidation, validateInput: validateManualDateInput } =
+    useInputValidation({
+      debounceMs: 100,
+      validator: () => {
+        const now = new Date();
+        const year = getNumericValue(manualDate.year, now.getFullYear());
+        const month = getNumericValue(manualDate.month, now.getMonth() + 1);
+        const day = getNumericValue(manualDate.day, now.getDate());
+        const hour = getNumericValue(manualDate.hour, now.getHours());
+        const minute = getNumericValue(manualDate.minute, now.getMinutes());
+        const second = getNumericValue(manualDate.second, now.getSeconds());
 
-      const date = new Date(year, month - 1, day, hour, minute, second);
-      if (isNaN(date.getTime())) {
+        const date = new Date(year, month - 1, day, hour, minute, second);
+        if (isNaN(date.getTime())) {
+          return {
+            isValid: false,
+            errorType: 'syntax' as const,
+            message: 'Invalid manual date configuration',
+            severity: 'error' as const,
+            suggestions: [
+              'Check if the date exists',
+              'Verify month has correct number of days',
+              'Ensure all values are within valid ranges',
+            ],
+          };
+        }
+        if (date.getFullYear() < 1970) {
+          return {
+            isValid: false,
+            errorType: 'range' as const,
+            message: 'Year must be 1970 or later',
+            severity: 'error' as const,
+            suggestions: ['Unix timestamps start from January 1970', 'Use a year of 1970 or later'],
+          };
+        }
         return {
-          isValid: false,
-          errorType: 'syntax' as const,
-          message: 'Invalid manual date configuration',
-          severity: 'error' as const,
-          suggestions: [
-            'Check if the date exists',
-            'Verify month has correct number of days',
-            'Ensure all values are within valid ranges',
-          ],
+          isValid: true,
+          errorType: undefined,
+          message: 'Valid date configuration',
+          severity: 'info' as const,
         };
-      }
-      if (date.getFullYear() < 1970) {
-        return {
-          isValid: false,
-          errorType: 'range' as const,
-          message: 'Year must be 1970 or later',
-          severity: 'error' as const,
-          suggestions: ['Unix timestamps start from January 1970', 'Use a year of 1970 or later'],
-        };
-      }
-      return {
-        isValid: true,
-        errorType: undefined,
-        message: 'Valid date configuration',
-        severity: 'info' as const,
-      };
-    },
-  });
+      },
+    });
 
   // Add keyboard shortcuts
   useKeyboardShortcuts({
@@ -382,11 +379,7 @@ export default function TimestampConverter() {
                 validateMainInput(e.target.value);
               }}
               placeholder={t('converter.placeholder')}
-              className={`w-full p-4 sm:p-6 text-base sm:text-lg border-2 rounded-xl transition-all duration-200 pr-24 ${
-                isDark
-                  ? 'bg-slate-800 border-slate-600 text-white placeholder-slate-400 focus:border-blue-500'
-                  : 'bg-white border-slate-300 placeholder-slate-500 focus:border-blue-500'
-              } ${
+              className={`w-full p-4 sm:p-6 text-base sm:text-lg border-2 rounded-xl transition-all duration-200 pr-24 bg-background text-foreground placeholder:text-muted-foreground border-input focus:border-ring focus:ring-2 focus:ring-ring/20 ${
                 validationState === 'invalid'
                   ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20'
                   : ''
@@ -723,11 +716,7 @@ export default function TimestampConverter() {
                       updateManualDate('year', Math.max(1970, Math.min(3000, numValue)));
                     }
                   }}
-                  className={`w-full p-2 text-sm border rounded ${
-                    isDark
-                      ? 'bg-slate-700 border-slate-600 text-white'
-                      : 'bg-white border-slate-300'
-                  } ${manualDateValidation?.severity === 'error' ? 'border-red-500' : ''}
+                  className={`w-full p-2 text-sm border rounded bg-background text-foreground border-input focus:border-ring focus:ring-2 focus:ring-ring/20 ${manualDateValidation?.severity === 'error' ? 'border-red-500' : ''}
                   ${manualDateValidation?.severity === 'info' ? 'border-green-500' : ''}`}
                   aria-invalid={
                     manualDateValidation?.severity === 'error' ||
@@ -760,11 +749,7 @@ export default function TimestampConverter() {
                       updateManualDate('month', Math.max(1, Math.min(12, numValue)));
                     }
                   }}
-                  className={`w-full p-2 text-sm border rounded ${
-                    isDark
-                      ? 'bg-slate-700 border-slate-600 text-white'
-                      : 'bg-white border-slate-300'
-                  }`}
+                  className='w-full p-2 text-sm border rounded bg-background text-foreground border-input focus:border-ring focus:ring-2 focus:ring-ring/20'
                   aria-describedby={manualDateValidation ? 'manual-date-validation' : undefined}
                   aria-invalid={
                     manualDateValidation?.severity === 'error' ||
@@ -796,11 +781,7 @@ export default function TimestampConverter() {
                       updateManualDate('day', Math.max(1, Math.min(31, numValue)));
                     }
                   }}
-                  className={`w-full p-2 text-sm border rounded ${
-                    isDark
-                      ? 'bg-slate-700 border-slate-600 text-white'
-                      : 'bg-white border-slate-300'
-                  }`}
+                  className='w-full p-2 text-sm border rounded bg-background text-foreground border-input focus:border-ring focus:ring-2 focus:ring-ring/20'
                 />
               </div>
               <div>
@@ -827,11 +808,7 @@ export default function TimestampConverter() {
                       updateManualDate('hour', Math.max(0, Math.min(23, numValue)));
                     }
                   }}
-                  className={`w-full p-2 text-sm border rounded ${
-                    isDark
-                      ? 'bg-slate-700 border-slate-600 text-white'
-                      : 'bg-white border-slate-300'
-                  }`}
+                  className='w-full p-2 text-sm border rounded bg-background text-foreground border-input focus:border-ring focus:ring-2 focus:ring-ring/20'
                 />
               </div>
               <div>
@@ -858,11 +835,7 @@ export default function TimestampConverter() {
                       updateManualDate('minute', Math.max(0, Math.min(59, numValue)));
                     }
                   }}
-                  className={`w-full p-2 text-sm border rounded ${
-                    isDark
-                      ? 'bg-slate-700 border-slate-600 text-white'
-                      : 'bg-white border-slate-300'
-                  }`}
+                  className='w-full p-2 text-sm border rounded bg-background text-foreground border-input focus:border-ring focus:ring-2 focus:ring-ring/20'
                 />
               </div>
               <div>
@@ -889,11 +862,7 @@ export default function TimestampConverter() {
                       updateManualDate('second', Math.max(0, Math.min(59, numValue)));
                     }
                   }}
-                  className={`w-full p-2 text-sm border rounded ${
-                    isDark
-                      ? 'bg-slate-700 border-slate-600 text-white'
-                      : 'bg-white border-slate-300'
-                  }`}
+                  className='w-full p-2 text-sm border rounded bg-background text-foreground border-input focus:border-ring focus:ring-2 focus:ring-ring/20'
                 />
               </div>
             </div>
@@ -1052,11 +1021,7 @@ export default function TimestampConverter() {
                 onChange={e => setBatchInput(e.target.value)}
                 placeholder='1640995200&#10;2022-01-01&#10;1672531200'
                 rows={4}
-                className={`w-full p-3 border rounded-lg text-sm font-mono ${
-                  isDark
-                    ? 'bg-slate-700 border-slate-600 text-white placeholder-slate-400'
-                    : 'bg-white border-slate-300 placeholder-slate-500'
-                }`}
+                className='w-full p-3 border rounded-lg text-sm font-mono bg-background text-foreground border-input placeholder:text-muted-foreground focus:border-ring focus:ring-2 focus:ring-ring/20'
               />
               {batchInput.trim() && (
                 <div className='mt-3'>
