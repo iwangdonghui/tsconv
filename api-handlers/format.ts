@@ -20,23 +20,23 @@ interface FormatRequest {
 
 // Predefined format templates
 const FORMAT_TEMPLATES = {
-  'iso': 'YYYY-MM-DDTHH:mm:ss.sssZ',
+  iso: 'YYYY-MM-DDTHH:mm:ss.sssZ',
   'iso-date': 'YYYY-MM-DD',
   'iso-time': 'HH:mm:ss',
   'us-date': 'MM/DD/YYYY',
   'us-datetime': 'MM/DD/YYYY HH:mm:ss',
   'eu-date': 'DD/MM/YYYY',
   'eu-datetime': 'DD/MM/YYYY HH:mm:ss',
-  'readable': 'MMMM Do, YYYY',
+  readable: 'MMMM Do, YYYY',
   'readable-full': 'dddd, MMMM Do, YYYY [at] h:mm A',
-  'compact': 'YYYYMMDD',
+  compact: 'YYYYMMDD',
   'compact-time': 'YYYYMMDDHHmmss',
-  'unix': 'X',
+  unix: 'X',
   'unix-ms': 'x',
-  'rfc2822': 'ddd, DD MMM YYYY HH:mm:ss ZZ',
-  'sql': 'YYYY-MM-DD HH:mm:ss',
-  'filename': 'YYYY-MM-DD_HH-mm-ss',
-  'log': 'YYYY-MM-DD HH:mm:ss.SSS'
+  rfc2822: 'ddd, DD MMM YYYY HH:mm:ss ZZ',
+  sql: 'YYYY-MM-DD HH:mm:ss',
+  filename: 'YYYY-MM-DD_HH-mm-ss',
+  log: 'YYYY-MM-DD HH:mm:ss.SSS',
 };
 
 export async function handleFormat(request: Request, env: Env): Promise<Response> {
@@ -47,23 +47,29 @@ export async function handleFormat(request: Request, env: Env): Promise<Response
   // Apply security middleware
   const securityCheck = await securityManager.checkRateLimit(request, RATE_LIMITS.API_GENERAL);
   if (!securityCheck.allowed) {
-    return new Response(JSON.stringify({
-      error: 'Rate Limit Exceeded',
-      message: 'Too many requests. Please try again later.'
-    }), {
-      status: 429,
-      headers: { 'Content-Type': 'application/json' }
-    });
+    return new Response(
+      JSON.stringify({
+        error: 'Rate Limit Exceeded',
+        message: 'Too many requests. Please try again later.',
+      }),
+      {
+        status: 429,
+        headers: { 'Content-Type': 'application/json' },
+      }
+    );
   }
 
   if (request.method !== 'GET' && request.method !== 'POST') {
-    return new Response(JSON.stringify({
-      error: 'Method Not Allowed',
-      message: 'Only GET and POST methods are supported'
-    }), {
-      status: 405,
-      headers: { 'Content-Type': 'application/json' }
-    });
+    return new Response(
+      JSON.stringify({
+        error: 'Method Not Allowed',
+        message: 'Only GET and POST methods are supported',
+      }),
+      {
+        status: 405,
+        headers: { 'Content-Type': 'application/json' },
+      }
+    );
   }
 
   try {
@@ -71,37 +77,42 @@ export async function handleFormat(request: Request, env: Env): Promise<Response
 
     if (request.method === 'GET') {
       const url = new URL(request.url);
-      
+
       // Special endpoint to list available templates
       if (url.pathname.endsWith('/templates')) {
-        return new Response(JSON.stringify({
-          success: true,
-          data: {
-            templates: FORMAT_TEMPLATES,
-            examples: generateTemplateExamples()
-          },
-          metadata: {
-            timestamp: new Date().toISOString(),
-            processingTime: Date.now() - startTime + 'ms'
+        return new Response(
+          JSON.stringify({
+            success: true,
+            data: {
+              templates: FORMAT_TEMPLATES,
+              examples: generateTemplateExamples(),
+            },
+            metadata: {
+              timestamp: new Date().toISOString(),
+              processingTime: `${Date.now() - startTime}ms`,
+            },
+          }),
+          {
+            headers: { 'Content-Type': 'application/json' },
           }
-        }), {
-          headers: { 'Content-Type': 'application/json' }
-        });
+        );
       }
 
       params = {
-        timestamp: url.searchParams.get('timestamp') ? parseInt(url.searchParams.get('timestamp')!) : undefined,
+        timestamp: url.searchParams.get('timestamp')
+          ? parseInt(url.searchParams.get('timestamp')!)
+          : undefined,
         date: url.searchParams.get('date') || undefined,
         format: url.searchParams.get('format') || 'iso',
         timezone: url.searchParams.get('timezone') || undefined,
-        locale: url.searchParams.get('locale') || 'en'
+        locale: url.searchParams.get('locale') || 'en',
       };
     } else {
       const body = await request.json();
       params = {
         format: 'iso',
         locale: 'en',
-        ...body
+        ...body,
       };
     }
 
@@ -109,47 +120,56 @@ export async function handleFormat(request: Request, env: Env): Promise<Response
     const validation = securityManager.validateInput(params, {
       format: { required: true, type: 'string', maxLength: 100 },
       timezone: { type: 'string', maxLength: 50 },
-      locale: { type: 'string', maxLength: 10 }
+      locale: { type: 'string', maxLength: 10 },
     });
 
     if (!validation.valid) {
-      return new Response(JSON.stringify({
-        error: 'Bad Request',
-        message: 'Invalid input parameters',
-        details: validation.errors
-      }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json' }
-      });
+      return new Response(
+        JSON.stringify({
+          error: 'Bad Request',
+          message: 'Invalid input parameters',
+          details: validation.errors,
+        }),
+        {
+          status: 400,
+          headers: { 'Content-Type': 'application/json' },
+        }
+      );
     }
 
     if (!params.timestamp && !params.date) {
-      return new Response(JSON.stringify({
-        error: 'Bad Request',
-        message: 'Either timestamp or date parameter is required'
-      }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json' }
-      });
+      return new Response(
+        JSON.stringify({
+          error: 'Bad Request',
+          message: 'Either timestamp or date parameter is required',
+        }),
+        {
+          status: 400,
+          headers: { 'Content-Type': 'application/json' },
+        }
+      );
     }
 
     // Generate cache key
     const cacheKey = JSON.stringify(params);
-    
+
     // Try to get cached result
     const cachedResult = await cacheManager.get('CONVERT_API', cacheKey);
     if (cachedResult) {
-      const response = new Response(JSON.stringify({
-        success: true,
-        data: cachedResult,
-        metadata: {
-          timestamp: new Date().toISOString(),
-          processingTime: Date.now() - startTime + 'ms',
-          cached: true
+      const response = new Response(
+        JSON.stringify({
+          success: true,
+          data: cachedResult,
+          metadata: {
+            timestamp: new Date().toISOString(),
+            processingTime: `${Date.now() - startTime}ms`,
+            cached: true,
+          },
+        }),
+        {
+          headers: { 'Content-Type': 'application/json' },
         }
-      }), {
-        headers: { 'Content-Type': 'application/json' }
-      });
+      );
 
       recordAnalyticsMiddleware(request, response, env, startTime);
       return response;
@@ -165,31 +185,36 @@ export async function handleFormat(request: Request, env: Env): Promise<Response
       console.error('Failed to cache format result:', error);
     }
 
-    const response = new Response(JSON.stringify({
-      success: true,
-      data: result,
-      metadata: {
-        timestamp: new Date().toISOString(),
-        processingTime: Date.now() - startTime + 'ms',
-        cached: false
+    const response = new Response(
+      JSON.stringify({
+        success: true,
+        data: result,
+        metadata: {
+          timestamp: new Date().toISOString(),
+          processingTime: `${Date.now() - startTime}ms`,
+          cached: false,
+        },
+      }),
+      {
+        headers: { 'Content-Type': 'application/json' },
       }
-    }), {
-      headers: { 'Content-Type': 'application/json' }
-    });
+    );
 
     recordAnalyticsMiddleware(request, response, env, startTime);
     return response;
-
   } catch (error) {
     console.error('Format API error:', error);
-    
-    const response = new Response(JSON.stringify({
-      error: 'Internal Server Error',
-      message: error instanceof Error ? error.message : 'Unknown error'
-    }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json' }
-    });
+
+    const response = new Response(
+      JSON.stringify({
+        error: 'Internal Server Error',
+        message: error instanceof Error ? error.message : 'Unknown error',
+      }),
+      {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' },
+      }
+    );
 
     recordAnalyticsMiddleware(request, response, env, startTime);
     return response;
@@ -199,7 +224,7 @@ export async function handleFormat(request: Request, env: Env): Promise<Response
 function formatDate(params: FormatRequest): any {
   // Get the date object
   let date: Date;
-  
+
   if (params.timestamp) {
     date = new Date(params.timestamp * 1000);
   } else if (params.date) {
@@ -227,17 +252,19 @@ function formatDate(params: FormatRequest): any {
       date: params.date,
       format: params.format,
       timezone: params.timezone,
-      locale: params.locale
+      locale: params.locale,
     },
     output: {
       formatted,
       formatString,
-      originalDate: date.toISOString()
+      originalDate: date.toISOString(),
     },
-    template: FORMAT_TEMPLATES[params.format as keyof typeof FORMAT_TEMPLATES] ? {
-      name: params.format,
-      pattern: FORMAT_TEMPLATES[params.format as keyof typeof FORMAT_TEMPLATES]
-    } : null
+    template: FORMAT_TEMPLATES[params.format as keyof typeof FORMAT_TEMPLATES]
+      ? {
+          name: params.format,
+          pattern: FORMAT_TEMPLATES[params.format as keyof typeof FORMAT_TEMPLATES],
+        }
+      : null,
   };
 }
 
@@ -254,13 +281,33 @@ function applyFormat(date: Date, format: string, timezone?: string, locale?: str
 
   // Month names
   const monthNames = [
-    'January', 'February', 'March', 'April', 'May', 'June',
-    'July', 'August', 'September', 'October', 'November', 'December'
+    'January',
+    'February',
+    'March',
+    'April',
+    'May',
+    'June',
+    'July',
+    'August',
+    'September',
+    'October',
+    'November',
+    'December',
   ];
 
   const monthNamesShort = [
-    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
   ];
 
   // Day names
@@ -271,10 +318,14 @@ function applyFormat(date: Date, format: string, timezone?: string, locale?: str
   const getOrdinalSuffix = (day: number): string => {
     if (day >= 11 && day <= 13) return 'th';
     switch (day % 10) {
-      case 1: return 'st';
-      case 2: return 'nd';
-      case 3: return 'rd';
-      default: return 'th';
+      case 1:
+        return 'st';
+      case 2:
+        return 'nd';
+      case 3:
+        return 'rd';
+      default:
+        return 'th';
     }
   };
 

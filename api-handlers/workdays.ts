@@ -44,17 +44,29 @@ interface WorkdaysResponse {
 // Common holidays by country (simplified)
 const COMMON_HOLIDAYS: Record<string, string[]> = {
   US: [
-    '2024-01-01', '2024-07-04', '2024-12-25', // New Year, Independence Day, Christmas
-    '2025-01-01', '2025-07-04', '2025-12-25'
+    '2024-01-01',
+    '2024-07-04',
+    '2024-12-25', // New Year, Independence Day, Christmas
+    '2025-01-01',
+    '2025-07-04',
+    '2025-12-25',
   ],
   UK: [
-    '2024-01-01', '2024-12-25', '2024-12-26', // New Year, Christmas, Boxing Day
-    '2025-01-01', '2025-12-25', '2025-12-26'
+    '2024-01-01',
+    '2024-12-25',
+    '2024-12-26', // New Year, Christmas, Boxing Day
+    '2025-01-01',
+    '2025-12-25',
+    '2025-12-26',
   ],
   CN: [
-    '2024-01-01', '2024-02-10', '2024-10-01', // New Year, Spring Festival, National Day
-    '2025-01-01', '2025-01-29', '2025-10-01'
-  ]
+    '2024-01-01',
+    '2024-02-10',
+    '2024-10-01', // New Year, Spring Festival, National Day
+    '2025-01-01',
+    '2025-01-29',
+    '2025-10-01',
+  ],
 };
 
 export async function handleWorkdays(request: Request, env: Env): Promise<Response> {
@@ -65,23 +77,29 @@ export async function handleWorkdays(request: Request, env: Env): Promise<Respon
   // Apply security middleware
   const securityCheck = await securityManager.checkRateLimit(request, RATE_LIMITS.API_GENERAL);
   if (!securityCheck.allowed) {
-    return new Response(JSON.stringify({
-      error: 'Rate Limit Exceeded',
-      message: 'Too many requests. Please try again later.'
-    }), {
-      status: 429,
-      headers: { 'Content-Type': 'application/json' }
-    });
+    return new Response(
+      JSON.stringify({
+        error: 'Rate Limit Exceeded',
+        message: 'Too many requests. Please try again later.',
+      }),
+      {
+        status: 429,
+        headers: { 'Content-Type': 'application/json' },
+      }
+    );
   }
 
   if (request.method !== 'GET' && request.method !== 'POST') {
-    return new Response(JSON.stringify({
-      error: 'Method Not Allowed',
-      message: 'Only GET and POST methods are supported'
-    }), {
-      status: 405,
-      headers: { 'Content-Type': 'application/json' }
-    });
+    return new Response(
+      JSON.stringify({
+        error: 'Method Not Allowed',
+        message: 'Only GET and POST methods are supported',
+      }),
+      {
+        status: 405,
+        headers: { 'Content-Type': 'application/json' },
+      }
+    );
   }
 
   try {
@@ -97,7 +115,7 @@ export async function handleWorkdays(request: Request, env: Env): Promise<Respon
         excludeHolidays: url.searchParams.get('excludeHolidays') === 'true',
         country: url.searchParams.get('country') || undefined,
         includeStartDate: url.searchParams.get('includeStartDate') !== 'false',
-        includeEndDate: url.searchParams.get('includeEndDate') !== 'false'
+        includeEndDate: url.searchParams.get('includeEndDate') !== 'false',
       };
     } else {
       const body = await request.json();
@@ -106,7 +124,7 @@ export async function handleWorkdays(request: Request, env: Env): Promise<Respon
         excludeHolidays: false,
         includeStartDate: true,
         includeEndDate: true,
-        ...body
+        ...body,
       };
     }
 
@@ -115,37 +133,43 @@ export async function handleWorkdays(request: Request, env: Env): Promise<Respon
       startDate: { required: true, type: 'string', pattern: /^\d{4}-\d{2}-\d{2}$/ },
       endDate: { type: 'string', pattern: /^\d{4}-\d{2}-\d{2}$/ },
       days: { type: 'number', min: 1, max: 3650 }, // Max 10 years
-      country: { type: 'string', maxLength: 2 }
+      country: { type: 'string', maxLength: 2 },
     });
 
     if (!validation.valid) {
-      return new Response(JSON.stringify({
-        error: 'Bad Request',
-        message: 'Invalid input parameters',
-        details: validation.errors
-      }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json' }
-      });
+      return new Response(
+        JSON.stringify({
+          error: 'Bad Request',
+          message: 'Invalid input parameters',
+          details: validation.errors,
+        }),
+        {
+          status: 400,
+          headers: { 'Content-Type': 'application/json' },
+        }
+      );
     }
 
     // Generate cache key
     const cacheKey = JSON.stringify(params);
-    
+
     // Try to get cached result
     const cachedResult = await cacheManager.get('CONVERT_API', cacheKey);
     if (cachedResult) {
-      const response = new Response(JSON.stringify({
-        success: true,
-        data: cachedResult,
-        metadata: {
-          timestamp: new Date().toISOString(),
-          processingTime: Date.now() - startTime + 'ms',
-          cached: true
+      const response = new Response(
+        JSON.stringify({
+          success: true,
+          data: cachedResult,
+          metadata: {
+            timestamp: new Date().toISOString(),
+            processingTime: `${Date.now() - startTime}ms`,
+            cached: true,
+          },
+        }),
+        {
+          headers: { 'Content-Type': 'application/json' },
         }
-      }), {
-        headers: { 'Content-Type': 'application/json' }
-      });
+      );
 
       // Record analytics
       recordAnalyticsMiddleware(request, response, env, startTime);
@@ -162,32 +186,37 @@ export async function handleWorkdays(request: Request, env: Env): Promise<Respon
       console.error('Failed to cache workdays result:', error);
     }
 
-    const response = new Response(JSON.stringify({
-      success: true,
-      data: result,
-      metadata: {
-        timestamp: new Date().toISOString(),
-        processingTime: Date.now() - startTime + 'ms',
-        cached: false
+    const response = new Response(
+      JSON.stringify({
+        success: true,
+        data: result,
+        metadata: {
+          timestamp: new Date().toISOString(),
+          processingTime: `${Date.now() - startTime}ms`,
+          cached: false,
+        },
+      }),
+      {
+        headers: { 'Content-Type': 'application/json' },
       }
-    }), {
-      headers: { 'Content-Type': 'application/json' }
-    });
+    );
 
     // Record analytics
     recordAnalyticsMiddleware(request, response, env, startTime);
     return response;
-
   } catch (error) {
     console.error('Workdays API error:', error);
-    
-    const response = new Response(JSON.stringify({
-      error: 'Internal Server Error',
-      message: error instanceof Error ? error.message : 'Unknown error'
-    }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json' }
-    });
+
+    const response = new Response(
+      JSON.stringify({
+        error: 'Internal Server Error',
+        message: error instanceof Error ? error.message : 'Unknown error',
+      }),
+      {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' },
+      }
+    );
 
     recordAnalyticsMiddleware(request, response, env, startTime);
     return response;
@@ -218,7 +247,8 @@ function calculateWorkdays(params: WorkdaysRequest): any {
   }
 
   // Get holidays
-  const holidays = params.holidays || (params.country ? COMMON_HOLIDAYS[params.country.toUpperCase()] || [] : []);
+  const holidays =
+    params.holidays || (params.country ? COMMON_HOLIDAYS[params.country.toUpperCase()] || [] : []);
   const holidaySet = new Set(holidays);
 
   // Calculate days
@@ -229,34 +259,34 @@ function calculateWorkdays(params: WorkdaysRequest): any {
   const excludedDates: string[] = [];
 
   const currentDate = new Date(startDate);
-  
+
   while (currentDate <= endDate) {
     const dateStr = currentDate.toISOString().split('T')[0];
     const dayOfWeek = currentDate.getDay(); // 0 = Sunday, 6 = Saturday
-    
+
     totalDays++;
-    
+
     let isExcluded = false;
-    
+
     // Check if weekend
     if (params.excludeWeekends && (dayOfWeek === 0 || dayOfWeek === 6)) {
       weekends++;
       isExcluded = true;
-      excludedDates.push(dateStr + ' (weekend)');
+      excludedDates.push(`${dateStr} (weekend)`);
     }
-    
+
     // Check if holiday
     if (params.excludeHolidays && holidaySet.has(dateStr)) {
       holidayCount++;
       isExcluded = true;
-      excludedDates.push(dateStr + ' (holiday)');
+      excludedDates.push(`${dateStr} (holiday)`);
     }
-    
+
     // Count as workday if not excluded
     if (!isExcluded) {
       workdays++;
     }
-    
+
     currentDate.setDate(currentDate.getDate() + 1);
   }
 
@@ -279,6 +309,6 @@ function calculateWorkdays(params: WorkdaysRequest): any {
     weekends,
     holidays: holidayCount,
     excludedDates,
-    businessDaysOnly
+    businessDaysOnly,
   };
 }

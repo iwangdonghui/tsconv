@@ -10,18 +10,21 @@ interface Env {
 
 export async function handleCacheTest(request: Request, env: Env): Promise<Response> {
   if (request.method !== 'GET') {
-    return new Response(JSON.stringify({
-      error: 'Method Not Allowed',
-      message: 'Only GET method is supported'
-    }), {
-      status: 405,
-      headers: { 'Content-Type': 'application/json' }
-    });
+    return new Response(
+      JSON.stringify({
+        error: 'Method Not Allowed',
+        message: 'Only GET method is supported',
+      }),
+      {
+        status: 405,
+        headers: { 'Content-Type': 'application/json' },
+      }
+    );
   }
 
   try {
     const cacheManager = new CacheManager(env);
-    const testKey = 'test-key-' + Date.now();
+    const testKey = `test-key-${Date.now()}`;
     const testValue = { message: 'Hello Cache!', timestamp: new Date().toISOString() };
 
     // Test 1: Set a value
@@ -38,33 +41,38 @@ export async function handleCacheTest(request: Request, env: Env): Promise<Respo
     const redisStats = cacheManager.getRedisStats();
     const cacheStats = cacheManager.getStats();
 
-    return new Response(JSON.stringify({
-      success: true,
-      data: {
-        test: {
-          key: testKey,
-          setValue: testValue,
-          setResult,
-          getValue: getResult,
-          cacheWorking: !!getResult && JSON.stringify(getResult) === JSON.stringify(testValue)
+    return new Response(
+      JSON.stringify({
+        success: true,
+        data: {
+          test: {
+            key: testKey,
+            setValue: testValue,
+            setResult,
+            getValue: getResult,
+            cacheWorking: !!getResult && JSON.stringify(getResult) === JSON.stringify(testValue),
+          },
+          redis: redisStats,
+          cache: cacheStats,
         },
-        redis: redisStats,
-        cache: cacheStats
-      },
-      timestamp: new Date().toISOString()
-    }), {
-      headers: { 'Content-Type': 'application/json' }
-    });
-
+        timestamp: new Date().toISOString(),
+      }),
+      {
+        headers: { 'Content-Type': 'application/json' },
+      }
+    );
   } catch (error) {
     console.error('Cache test error:', error);
-    
-    return new Response(JSON.stringify({
-      error: 'Internal Server Error',
-      message: error instanceof Error ? error.message : 'Unknown error'
-    }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json' }
-    });
+
+    return new Response(
+      JSON.stringify({
+        error: 'Internal Server Error',
+        message: error instanceof Error ? error.message : 'Unknown error',
+      }),
+      {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' },
+      }
+    );
   }
 }

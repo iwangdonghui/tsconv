@@ -42,32 +42,31 @@ export class AnalyticsManager {
     try {
       const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
       const hour = new Date().getHours();
-      
+
       // Store daily stats
       await this.incrementCounter(`analytics:daily:${today}:requests`);
       await this.incrementCounter(`analytics:daily:${today}:endpoint:${event.endpoint}`);
       await this.incrementCounter(`analytics:daily:${today}:status:${event.status}`);
-      
+
       // Store hourly stats for more granular analysis
       await this.incrementCounter(`analytics:hourly:${today}:${hour}:requests`);
-      
+
       // Track response times (store in buckets)
       const responseTimeBucket = this.getResponseTimeBucket(event.responseTime);
       await this.incrementCounter(`analytics:daily:${today}:response_time:${responseTimeBucket}`);
-      
+
       // Track cache hits
       if (event.cached) {
         await this.incrementCounter(`analytics:daily:${today}:cache_hits`);
       }
-      
+
       // Track countries if available
       if (event.country) {
         await this.incrementCounter(`analytics:daily:${today}:country:${event.country}`);
       }
-      
+
       // Store recent events for real-time monitoring (keep last 1000)
       await this.addToRecentEvents(event);
-      
     } catch (error) {
       console.error('Failed to record analytics event:', error);
     }
@@ -76,31 +75,31 @@ export class AnalyticsManager {
   // Get analytics stats for a specific date
   async getStats(date?: string): Promise<AnalyticsStats> {
     const targetDate = date || new Date().toISOString().split('T')[0];
-    
+
     try {
       // Get basic counters
-      const totalRequests = await this.getCounter(`analytics:daily:${targetDate}:requests`) || 0;
-      const cacheHits = await this.getCounter(`analytics:daily:${targetDate}:cache_hits`) || 0;
-      
+      const totalRequests = (await this.getCounter(`analytics:daily:${targetDate}:requests`)) || 0;
+      const cacheHits = (await this.getCounter(`analytics:daily:${targetDate}:cache_hits`)) || 0;
+
       // Get endpoint stats
       const endpointStats = await this.getEndpointStats(targetDate);
-      
+
       // Get status code distribution
       const statusCodes = await this.getStatusCodeStats(targetDate);
-      
+
       // Get country distribution
       const countries = await this.getCountryStats(targetDate);
-      
+
       // Calculate response time stats
       const avgResponseTime = await this.getAverageResponseTime(targetDate);
-      
+
       // Calculate error rate
       const errorRequests = (statusCodes['4'] || 0) + (statusCodes['5'] || 0);
       const errorRate = totalRequests > 0 ? (errorRequests / totalRequests) * 100 : 0;
-      
+
       // Calculate cache hit rate
       const cacheHitRate = totalRequests > 0 ? (cacheHits / totalRequests) * 100 : 0;
-      
+
       return {
         totalRequests,
         uniqueEndpoints: endpointStats.length,
@@ -109,9 +108,8 @@ export class AnalyticsManager {
         cacheHitRate,
         topEndpoints: endpointStats.slice(0, 10),
         statusCodes,
-        countries
+        countries,
       };
-      
     } catch (error) {
       console.error('Failed to get analytics stats:', error);
       return this.getEmptyStats();
@@ -123,31 +121,31 @@ export class AnalyticsManager {
     const now = new Date();
     const currentHour = now.getHours();
     const today = now.toISOString().split('T')[0];
-    
+
     try {
-      const hourlyRequests = await this.getCounter(`analytics:hourly:${today}:${currentHour}:requests`) || 0;
+      const hourlyRequests =
+        (await this.getCounter(`analytics:hourly:${today}:${currentHour}:requests`)) || 0;
       const recentEvents = await this.getRecentEvents(100); // Last 100 events
-      
+
       // Calculate real-time metrics
       const last5MinEvents = recentEvents.filter(event => {
         const eventTime = new Date(event.timestamp);
-        return (now.getTime() - eventTime.getTime()) < 5 * 60 * 1000; // 5 minutes
+        return now.getTime() - eventTime.getTime() < 5 * 60 * 1000; // 5 minutes
       });
-      
+
       return {
         currentHourRequests: hourlyRequests,
         last5MinRequests: last5MinEvents.length,
         recentEvents: recentEvents.slice(0, 20),
-        timestamp: now.toISOString()
+        timestamp: now.toISOString(),
       };
-      
     } catch (error) {
       console.error('Failed to get real-time stats:', error);
       return {
         currentHourRequests: 0,
         last5MinRequests: 0,
         recentEvents: [],
-        timestamp: now.toISOString()
+        timestamp: now.toISOString(),
       };
     }
   }
@@ -198,7 +196,9 @@ export class AnalyticsManager {
     }
   }
 
-  private async getEndpointStats(date: string): Promise<Array<{ endpoint: string; count: number }>> {
+  private async getEndpointStats(
+    date: string
+  ): Promise<Array<{ endpoint: string; count: number }>> {
     // This would need to be implemented based on available data
     // For now, return empty array
     return [];
@@ -206,14 +206,14 @@ export class AnalyticsManager {
 
   private async getStatusCodeStats(date: string): Promise<Record<string, number>> {
     const stats: Record<string, number> = {};
-    
+
     for (const statusPrefix of ['2', '3', '4', '5']) {
       const count = await this.getCounter(`analytics:daily:${date}:status:${statusPrefix}xx`);
       if (count > 0) {
         stats[statusPrefix] = count;
       }
     }
-    
+
     return stats;
   }
 
@@ -224,16 +224,17 @@ export class AnalyticsManager {
 
   private async getAverageResponseTime(date: string): Promise<number> {
     // Calculate weighted average based on response time buckets
-    const fast = await this.getCounter(`analytics:daily:${date}:response_time:fast`) || 0;
-    const medium = await this.getCounter(`analytics:daily:${date}:response_time:medium`) || 0;
-    const slow = await this.getCounter(`analytics:daily:${date}:response_time:slow`) || 0;
-    const verySlow = await this.getCounter(`analytics:daily:${date}:response_time:very_slow`) || 0;
-    
+    const fast = (await this.getCounter(`analytics:daily:${date}:response_time:fast`)) || 0;
+    const medium = (await this.getCounter(`analytics:daily:${date}:response_time:medium`)) || 0;
+    const slow = (await this.getCounter(`analytics:daily:${date}:response_time:slow`)) || 0;
+    const verySlow =
+      (await this.getCounter(`analytics:daily:${date}:response_time:very_slow`)) || 0;
+
     const total = fast + medium + slow + verySlow;
     if (total === 0) return 0;
-    
+
     // Use bucket midpoints for calculation
-    const weightedSum = (fast * 50) + (medium * 300) + (slow * 750) + (verySlow * 1500);
+    const weightedSum = fast * 50 + medium * 300 + slow * 750 + verySlow * 1500;
     return Math.round(weightedSum / total);
   }
 
@@ -246,7 +247,7 @@ export class AnalyticsManager {
       cacheHitRate: 0,
       topEndpoints: [],
       statusCodes: {},
-      countries: {}
+      countries: {},
     };
   }
 }

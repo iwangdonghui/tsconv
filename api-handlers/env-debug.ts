@@ -8,25 +8,34 @@ interface Env {
 
 export async function handleEnvDebug(request: Request, env: Env): Promise<Response> {
   if (request.method !== 'GET') {
-    return new Response(JSON.stringify({
-      error: 'Method Not Allowed',
-      message: 'Only GET method is supported'
-    }), {
-      status: 405,
-      headers: { 'Content-Type': 'application/json' }
-    });
+    return new Response(
+      JSON.stringify({
+        error: 'Method Not Allowed',
+        message: 'Only GET method is supported',
+      }),
+      {
+        status: 405,
+        headers: { 'Content-Type': 'application/json' },
+      }
+    );
   }
 
   // Simple auth check - allow 'debug' token for testing
   const authHeader = request.headers.get('Authorization');
-  if (!authHeader || (!authHeader.includes('Bearer debug') && !authHeader.includes('Bearer test'))) {
-    return new Response(JSON.stringify({
-      error: 'Unauthorized',
-      message: 'Use "Bearer debug" token for environment debugging'
-    }), {
-      status: 401,
-      headers: { 'Content-Type': 'application/json' }
-    });
+  if (
+    !authHeader ||
+    (!authHeader.includes('Bearer debug') && !authHeader.includes('Bearer test'))
+  ) {
+    return new Response(
+      JSON.stringify({
+        error: 'Unauthorized',
+        message: 'Use "Bearer debug" token for environment debugging',
+      }),
+      {
+        status: 401,
+        headers: { 'Content-Type': 'application/json' },
+      }
+    );
   }
 
   try {
@@ -39,18 +48,18 @@ export async function handleEnvDebug(request: Request, env: Env): Promise<Respon
       UPSTASH_REDIS_REST_URL: {
         configured: !!redisUrl,
         value: redisUrl ? `${redisUrl.substring(0, 20)}...` : null,
-        length: redisUrl?.length || 0
+        length: redisUrl?.length || 0,
       },
       UPSTASH_REDIS_REST_TOKEN: {
         configured: !!redisToken,
         value: redisToken ? `${redisToken.substring(0, 10)}...` : null,
-        length: redisToken?.length || 0
+        length: redisToken?.length || 0,
       },
       REDIS_ENABLED: {
         configured: redisEnabled !== undefined,
         value: redisEnabled,
-        type: typeof redisEnabled
-      }
+        type: typeof redisEnabled,
+      },
     };
 
     // Test Redis connection if configured
@@ -60,7 +69,7 @@ export async function handleEnvDebug(request: Request, env: Env): Promise<Respon
         const response = await fetch(redisUrl, {
           method: 'POST',
           headers: {
-            'Authorization': `Bearer ${redisToken}`,
+            Authorization: `Bearer ${redisToken}`,
             'Content-Type': 'application/json',
           },
           body: JSON.stringify(['PING']),
@@ -71,19 +80,19 @@ export async function handleEnvDebug(request: Request, env: Env): Promise<Respon
           connectionTest = {
             success: true,
             status: response.status,
-            result: result.result
+            result: result.result,
           };
         } else {
           connectionTest = {
             success: false,
             status: response.status,
-            error: `HTTP ${response.status}`
+            error: `HTTP ${response.status}`,
           };
         }
       } catch (error) {
         connectionTest = {
           success: false,
-          error: error instanceof Error ? error.message : 'Unknown error'
+          error: error instanceof Error ? error.message : 'Unknown error',
         };
       }
     }
@@ -91,44 +100,57 @@ export async function handleEnvDebug(request: Request, env: Env): Promise<Respon
     // Calculate Redis enabled status
     const shouldBeEnabled = !!(redisUrl && redisToken && redisEnabled !== 'false');
 
-    return new Response(JSON.stringify({
-      success: true,
-      data: {
-        environment: envCheck,
-        redis: {
-          shouldBeEnabled,
-          connectionTest,
-          configurationComplete: !!(redisUrl && redisToken)
+    return new Response(
+      JSON.stringify({
+        success: true,
+        data: {
+          environment: envCheck,
+          redis: {
+            shouldBeEnabled,
+            connectionTest,
+            configurationComplete: !!(redisUrl && redisToken),
+          },
+          recommendations: generateRecommendations(envCheck, connectionTest, shouldBeEnabled),
         },
-        recommendations: generateRecommendations(envCheck, connectionTest, shouldBeEnabled)
-      },
-      timestamp: new Date().toISOString()
-    }), {
-      headers: { 'Content-Type': 'application/json' }
-    });
-
+        timestamp: new Date().toISOString(),
+      }),
+      {
+        headers: { 'Content-Type': 'application/json' },
+      }
+    );
   } catch (error) {
     console.error('Environment debug error:', error);
-    
-    return new Response(JSON.stringify({
-      error: 'Internal Server Error',
-      message: error instanceof Error ? error.message : 'Unknown error'
-    }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json' }
-    });
+
+    return new Response(
+      JSON.stringify({
+        error: 'Internal Server Error',
+        message: error instanceof Error ? error.message : 'Unknown error',
+      }),
+      {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' },
+      }
+    );
   }
 }
 
-function generateRecommendations(envCheck: any, connectionTest: any, shouldBeEnabled: boolean): string[] {
+function generateRecommendations(
+  envCheck: any,
+  connectionTest: any,
+  shouldBeEnabled: boolean
+): string[] {
   const recommendations = [];
 
   if (!envCheck.UPSTASH_REDIS_REST_URL.configured) {
-    recommendations.push('Configure UPSTASH_REDIS_REST_URL in Cloudflare Pages environment variables');
+    recommendations.push(
+      'Configure UPSTASH_REDIS_REST_URL in Cloudflare Pages environment variables'
+    );
   }
 
   if (!envCheck.UPSTASH_REDIS_REST_TOKEN.configured) {
-    recommendations.push('Configure UPSTASH_REDIS_REST_TOKEN in Cloudflare Pages environment variables');
+    recommendations.push(
+      'Configure UPSTASH_REDIS_REST_TOKEN in Cloudflare Pages environment variables'
+    );
   }
 
   if (envCheck.REDIS_ENABLED.value === 'false') {

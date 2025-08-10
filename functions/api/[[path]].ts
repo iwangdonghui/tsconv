@@ -34,7 +34,7 @@ export async function onRequest(context: {
   // Handle api.tsconv.com subdomain - remove /api prefix from path
   const isApiSubdomain = hostname === 'api.tsconv.com';
   const apiPath = isApiSubdomain ? path : path;
-  
+
   // Add CORS headers
   const corsHeaders = {
     'Access-Control-Allow-Origin': '*',
@@ -53,16 +53,51 @@ export async function onRequest(context: {
     // Route to appropriate handler based on path
     if (apiPath.length === 0) {
       // Root API endpoint
-      response = new Response(JSON.stringify({
-        message: 'Timestamp Converter API',
-        version: '1.0.0',
-        domain: hostname,
-        endpoints: isApiSubdomain
-          ? ['/convert', '/now', '/health', '/workdays', '/date-diff', '/format', '/timezones', '/timezone-convert', '/timezone-difference', '/timezone-info', '/batch-convert', '/formats', '/visualization', '/v1/*', '/admin/*']
-          : ['/api/convert', '/api/now', '/api/health', '/api/workdays', '/api/date-diff', '/api/format', '/api/timezones', '/api/timezone-convert', '/api/timezone-difference', '/api/timezone-info', '/api/batch-convert', '/api/formats', '/api/visualization', '/api/v1/*', '/api/admin/*']
-      }), {
-        headers: { 'Content-Type': 'application/json' }
-      });
+      response = new Response(
+        JSON.stringify({
+          message: 'Timestamp Converter API',
+          version: '1.0.0',
+          domain: hostname,
+          endpoints: isApiSubdomain
+            ? [
+                '/convert',
+                '/now',
+                '/health',
+                '/workdays',
+                '/date-diff',
+                '/format',
+                '/timezones',
+                '/timezone-convert',
+                '/timezone-difference',
+                '/timezone-info',
+                '/batch-convert',
+                '/formats',
+                '/visualization',
+                '/v1/*',
+                '/admin/*',
+              ]
+            : [
+                '/api/convert',
+                '/api/now',
+                '/api/health',
+                '/api/workdays',
+                '/api/date-diff',
+                '/api/format',
+                '/api/timezones',
+                '/api/timezone-convert',
+                '/api/timezone-difference',
+                '/api/timezone-info',
+                '/api/batch-convert',
+                '/api/formats',
+                '/api/visualization',
+                '/api/v1/*',
+                '/api/admin/*',
+              ],
+        }),
+        {
+          headers: { 'Content-Type': 'application/json' },
+        }
+      );
     } else if (apiPath[0] === 'convert') {
       response = await handleConvert(request, env);
     } else if (apiPath[0] === 'now') {
@@ -82,17 +117,20 @@ export async function onRequest(context: {
     } else if (apiPath[0] === 'timezones') {
       response = await handleTimezonesEnhanced(request, env);
     } else {
-      response = new Response(JSON.stringify({
-        error: 'Not Found',
-        message: `API endpoint /${apiPath.join('/')} not found`,
-        domain: hostname,
-        availableEndpoints: isApiSubdomain
-          ? ['/convert', '/now', '/health', '/v1/*', '/admin/*']
-          : ['/api/convert', '/api/now', '/api/health', '/api/v1/*', '/api/admin/*']
-      }), {
-        status: 404,
-        headers: { 'Content-Type': 'application/json' }
-      });
+      response = new Response(
+        JSON.stringify({
+          error: 'Not Found',
+          message: `API endpoint /${apiPath.join('/')} not found`,
+          domain: hostname,
+          availableEndpoints: isApiSubdomain
+            ? ['/convert', '/now', '/health', '/v1/*', '/admin/*']
+            : ['/api/convert', '/api/now', '/api/health', '/api/v1/*', '/api/admin/*'],
+        }),
+        {
+          status: 404,
+          headers: { 'Content-Type': 'application/json' },
+        }
+      );
     }
 
     // Add CORS headers to response
@@ -101,17 +139,19 @@ export async function onRequest(context: {
     });
 
     return response;
-
   } catch (error) {
     console.error('API Error:', error);
-    
-    const errorResponse = new Response(JSON.stringify({
-      error: 'Internal Server Error',
-      message: error instanceof Error ? error.message : 'Unknown error'
-    }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json', ...corsHeaders }
-    });
+
+    const errorResponse = new Response(
+      JSON.stringify({
+        error: 'Internal Server Error',
+        message: error instanceof Error ? error.message : 'Unknown error',
+      }),
+      {
+        status: 500,
+        headers: { 'Content-Type': 'application/json', ...corsHeaders },
+      }
+    );
 
     return errorResponse;
   }

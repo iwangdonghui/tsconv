@@ -21,44 +21,44 @@ export const CACHE_CONFIGS = {
   CONVERT_API: {
     ttl: 3600, // 1 hour
     keyPrefix: 'api:convert:',
-    enabled: true
+    enabled: true,
   },
   NOW_API: {
     ttl: 60, // 1 minute (current time changes frequently)
     keyPrefix: 'api:now:',
-    enabled: true
+    enabled: true,
   },
   HEALTH_API: {
     ttl: 300, // 5 minutes
     keyPrefix: 'api:health:',
-    enabled: true
+    enabled: true,
   },
-  
+
   // Static data
   TIMEZONES: {
     ttl: 86400, // 24 hours
     keyPrefix: 'data:timezones:',
-    enabled: true
+    enabled: true,
   },
   FORMATS: {
     ttl: 86400, // 24 hours
     keyPrefix: 'data:formats:',
-    enabled: true
+    enabled: true,
   },
-  
+
   // User data
   USER_PREFERENCES: {
     ttl: 7200, // 2 hours
     keyPrefix: 'user:prefs:',
-    enabled: true
+    enabled: true,
   },
-  
+
   // Analytics
   STATS: {
     ttl: 1800, // 30 minutes
     keyPrefix: 'stats:',
-    enabled: true
-  }
+    enabled: true,
+  },
 } as const;
 
 export class CacheManager {
@@ -83,7 +83,7 @@ export class CacheManager {
       hits: 0,
       misses: 0,
       hitRate: 0,
-      totalRequests: 0
+      totalRequests: 0,
     };
 
     if (hit) {
@@ -91,10 +91,10 @@ export class CacheManager {
     } else {
       current.misses++;
     }
-    
+
     current.totalRequests = current.hits + current.misses;
     current.hitRate = current.totalRequests > 0 ? (current.hits / current.totalRequests) * 100 : 0;
-    
+
     this.stats.set(configKey, current);
   }
 
@@ -106,10 +106,10 @@ export class CacheManager {
     try {
       const key = this.generateKey(config, identifier);
       const cached = await this.redis.get(key);
-      
+
       const hit = cached !== null;
       this.updateStats(configKey, hit);
-      
+
       if (hit) {
         console.log(`Cache HIT: ${key}`);
         return cached as T;
@@ -125,18 +125,22 @@ export class CacheManager {
   }
 
   // Set cached data
-  async set<T>(configKey: keyof typeof CACHE_CONFIGS, identifier: string, data: T): Promise<boolean> {
+  async set<T>(
+    configKey: keyof typeof CACHE_CONFIGS,
+    identifier: string,
+    data: T
+  ): Promise<boolean> {
     const config = CACHE_CONFIGS[configKey];
     if (!config.enabled) return false;
 
     try {
       const key = this.generateKey(config, identifier);
       const success = await this.redis.set(key, data, config.ttl);
-      
+
       if (success) {
         console.log(`Cache SET: ${key} (TTL: ${config.ttl}s)`);
       }
-      
+
       return success;
     } catch (error) {
       console.error(`Cache SET error for ${configKey}:`, error);
@@ -147,15 +151,15 @@ export class CacheManager {
   // Delete cached data
   async del(configKey: keyof typeof CACHE_CONFIGS, identifier: string): Promise<boolean> {
     const config = CACHE_CONFIGS[configKey];
-    
+
     try {
       const key = this.generateKey(config, identifier);
       const success = await this.redis.del(key);
-      
+
       if (success) {
         console.log(`Cache DEL: ${key}`);
       }
-      
+
       return success;
     } catch (error) {
       console.error(`Cache DEL error for ${configKey}:`, error);
@@ -178,12 +182,12 @@ export class CacheManager {
     // If not in cache, fetch data
     try {
       const data = await fetchFunction();
-      
+
       // Cache the result (don't await to avoid blocking response)
       this.set(configKey, identifier, data).catch(error => {
         console.error(`Background cache SET failed for ${configKey}:`, error);
       });
-      
+
       return data;
     } catch (error) {
       console.error(`Fetch function failed for ${configKey}:`, error);
@@ -195,7 +199,7 @@ export class CacheManager {
   async increment(configKey: keyof typeof CACHE_CONFIGS, identifier: string): Promise<number> {
     const config = CACHE_CONFIGS[configKey];
     const key = this.generateKey(config, identifier);
-    
+
     try {
       const count = await this.redis.incr(key);
       // Set expiry if this is a new key
@@ -229,20 +233,20 @@ export class CacheManager {
       const redisPing = await this.redis.ping();
       const redisStats = this.redis.getStats();
       const cacheStats = this.getStats();
-      
+
       return {
         status: redisPing ? 'healthy' : 'degraded',
         redis: redisPing,
         stats: {
           redis: redisStats,
-          cache: cacheStats
-        }
+          cache: cacheStats,
+        },
       };
     } catch (error) {
       return {
         status: 'unhealthy',
         redis: false,
-        stats: { error: error instanceof Error ? error.message : 'Unknown error' }
+        stats: { error: error instanceof Error ? error.message : 'Unknown error' },
       };
     }
   }

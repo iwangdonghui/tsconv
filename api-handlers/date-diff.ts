@@ -13,7 +13,16 @@ interface Env {
 interface DateDiffRequest {
   startDate: string;
   endDate: string;
-  unit?: 'milliseconds' | 'seconds' | 'minutes' | 'hours' | 'days' | 'weeks' | 'months' | 'years' | 'all';
+  unit?:
+    | 'milliseconds'
+    | 'seconds'
+    | 'minutes'
+    | 'hours'
+    | 'days'
+    | 'weeks'
+    | 'months'
+    | 'years'
+    | 'all';
   absolute?: boolean;
   includeTime?: boolean;
 }
@@ -52,23 +61,29 @@ export async function handleDateDiff(request: Request, env: Env): Promise<Respon
   // Apply security middleware
   const securityCheck = await securityManager.checkRateLimit(request, RATE_LIMITS.API_GENERAL);
   if (!securityCheck.allowed) {
-    return new Response(JSON.stringify({
-      error: 'Rate Limit Exceeded',
-      message: 'Too many requests. Please try again later.'
-    }), {
-      status: 429,
-      headers: { 'Content-Type': 'application/json' }
-    });
+    return new Response(
+      JSON.stringify({
+        error: 'Rate Limit Exceeded',
+        message: 'Too many requests. Please try again later.',
+      }),
+      {
+        status: 429,
+        headers: { 'Content-Type': 'application/json' },
+      }
+    );
   }
 
   if (request.method !== 'GET' && request.method !== 'POST') {
-    return new Response(JSON.stringify({
-      error: 'Method Not Allowed',
-      message: 'Only GET and POST methods are supported'
-    }), {
-      status: 405,
-      headers: { 'Content-Type': 'application/json' }
-    });
+    return new Response(
+      JSON.stringify({
+        error: 'Method Not Allowed',
+        message: 'Only GET and POST methods are supported',
+      }),
+      {
+        status: 405,
+        headers: { 'Content-Type': 'application/json' },
+      }
+    );
   }
 
   try {
@@ -81,7 +96,7 @@ export async function handleDateDiff(request: Request, env: Env): Promise<Respon
         endDate: url.searchParams.get('endDate') || '',
         unit: (url.searchParams.get('unit') as any) || 'all',
         absolute: url.searchParams.get('absolute') !== 'false',
-        includeTime: url.searchParams.get('includeTime') === 'true'
+        includeTime: url.searchParams.get('includeTime') === 'true',
       };
     } else {
       const body = await request.json();
@@ -89,7 +104,7 @@ export async function handleDateDiff(request: Request, env: Env): Promise<Respon
         unit: 'all',
         absolute: true,
         includeTime: false,
-        ...body
+        ...body,
       };
     }
 
@@ -97,37 +112,43 @@ export async function handleDateDiff(request: Request, env: Env): Promise<Respon
     const validation = securityManager.validateInput(params, {
       startDate: { required: true, type: 'string' },
       endDate: { required: true, type: 'string' },
-      unit: { type: 'string' }
+      unit: { type: 'string' },
     });
 
     if (!validation.valid) {
-      return new Response(JSON.stringify({
-        error: 'Bad Request',
-        message: 'Invalid input parameters',
-        details: validation.errors
-      }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json' }
-      });
+      return new Response(
+        JSON.stringify({
+          error: 'Bad Request',
+          message: 'Invalid input parameters',
+          details: validation.errors,
+        }),
+        {
+          status: 400,
+          headers: { 'Content-Type': 'application/json' },
+        }
+      );
     }
 
     // Generate cache key
     const cacheKey = JSON.stringify(params);
-    
+
     // Try to get cached result
     const cachedResult = await cacheManager.get('CONVERT_API', cacheKey);
     if (cachedResult) {
-      const response = new Response(JSON.stringify({
-        success: true,
-        data: cachedResult,
-        metadata: {
-          timestamp: new Date().toISOString(),
-          processingTime: Date.now() - startTime + 'ms',
-          cached: true
+      const response = new Response(
+        JSON.stringify({
+          success: true,
+          data: cachedResult,
+          metadata: {
+            timestamp: new Date().toISOString(),
+            processingTime: `${Date.now() - startTime}ms`,
+            cached: true,
+          },
+        }),
+        {
+          headers: { 'Content-Type': 'application/json' },
         }
-      }), {
-        headers: { 'Content-Type': 'application/json' }
-      });
+      );
 
       recordAnalyticsMiddleware(request, response, env, startTime);
       return response;
@@ -143,31 +164,36 @@ export async function handleDateDiff(request: Request, env: Env): Promise<Respon
       console.error('Failed to cache date diff result:', error);
     }
 
-    const response = new Response(JSON.stringify({
-      success: true,
-      data: result,
-      metadata: {
-        timestamp: new Date().toISOString(),
-        processingTime: Date.now() - startTime + 'ms',
-        cached: false
+    const response = new Response(
+      JSON.stringify({
+        success: true,
+        data: result,
+        metadata: {
+          timestamp: new Date().toISOString(),
+          processingTime: `${Date.now() - startTime}ms`,
+          cached: false,
+        },
+      }),
+      {
+        headers: { 'Content-Type': 'application/json' },
       }
-    }), {
-      headers: { 'Content-Type': 'application/json' }
-    });
+    );
 
     recordAnalyticsMiddleware(request, response, env, startTime);
     return response;
-
   } catch (error) {
     console.error('Date diff API error:', error);
-    
-    const response = new Response(JSON.stringify({
-      error: 'Internal Server Error',
-      message: error instanceof Error ? error.message : 'Unknown error'
-    }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json' }
-    });
+
+    const response = new Response(
+      JSON.stringify({
+        error: 'Internal Server Error',
+        message: error instanceof Error ? error.message : 'Unknown error',
+      }),
+      {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' },
+      }
+    );
 
     recordAnalyticsMiddleware(request, response, env, startTime);
     return response;
@@ -218,19 +244,20 @@ function calculateDateDifference(params: DateDiffRequest): any {
     // More accurate calculation using date arithmetic
     const tempStart = new Date(startDate);
     const tempEnd = new Date(endDate);
-    
+
     // Calculate years
     years = tempEnd.getFullYear() - tempStart.getFullYear();
-    
+
     // Calculate months
-    months = (tempEnd.getFullYear() - tempStart.getFullYear()) * 12 + 
-             (tempEnd.getMonth() - tempStart.getMonth());
-    
+    months =
+      (tempEnd.getFullYear() - tempStart.getFullYear()) * 12 +
+      (tempEnd.getMonth() - tempStart.getMonth());
+
     // Adjust if end day is before start day in the month
     if (tempEnd.getDate() < tempStart.getDate()) {
       months--;
     }
-    
+
     // Adjust years based on months
     years = Math.floor(months / 12);
   }
@@ -249,11 +276,11 @@ function calculateDateDifference(params: DateDiffRequest): any {
       days,
       weeks,
       months: Math.abs(months),
-      years: Math.abs(years)
+      years: Math.abs(years),
     },
     humanReadable,
     direction,
-    absolute: params.absolute || false
+    absolute: params.absolute || false,
   };
 }
 
@@ -264,7 +291,7 @@ function generateHumanReadable(diff: number, direction: string, absolute: boolea
   const seconds = Math.floor((diff % (1000 * 60)) / 1000);
 
   const parts: string[] = [];
-  
+
   if (days > 0) {
     parts.push(`${days} day${days !== 1 ? 's' : ''}`);
   }
@@ -274,7 +301,8 @@ function generateHumanReadable(diff: number, direction: string, absolute: boolea
   if (minutes > 0) {
     parts.push(`${minutes} minute${minutes !== 1 ? 's' : ''}`);
   }
-  if (seconds > 0 && parts.length < 2) { // Only show seconds if not too many other units
+  if (seconds > 0 && parts.length < 2) {
+    // Only show seconds if not too many other units
     parts.push(`${seconds} second${seconds !== 1 ? 's' : ''}`);
   }
 
@@ -283,11 +311,11 @@ function generateHumanReadable(diff: number, direction: string, absolute: boolea
   }
 
   let result = parts.slice(0, 2).join(', '); // Show max 2 units
-  
+
   if (!absolute && direction === 'past') {
     result += ' ago';
   } else if (!absolute && direction === 'future') {
-    result = 'in ' + result;
+    result = `in ${result}`;
   }
 
   return result;

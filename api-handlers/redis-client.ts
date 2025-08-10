@@ -21,7 +21,7 @@ class MemoryCache {
       this.cleanup();
     }
 
-    const expiry = Date.now() + (ttlSeconds * 1000);
+    const expiry = Date.now() + ttlSeconds * 1000;
     this.cache.set(key, { value, expiry });
     return true;
   }
@@ -102,7 +102,7 @@ export class RedisClient {
       const response = await fetch(this.redisUrl, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${this.redisToken}`,
+          Authorization: `Bearer ${this.redisToken}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(command),
@@ -123,7 +123,12 @@ export class RedisClient {
     try {
       if (this.enabled) {
         const serialized = JSON.stringify(value);
-        const result = await this.makeRedisRequest(['SETEX', key, ttlSeconds.toString(), serialized]);
+        const result = await this.makeRedisRequest([
+          'SETEX',
+          key,
+          ttlSeconds.toString(),
+          serialized,
+        ]);
         return result.result === 'OK';
       } else {
         // Fallback to memory cache
@@ -243,7 +248,7 @@ export class RedisClient {
     return {
       enabled: this.enabled,
       type: this.enabled ? 'redis' : 'memory',
-      size: this.enabled ? undefined : this.memoryCache.size()
+      size: this.enabled ? undefined : this.memoryCache.size(),
     };
   }
 }

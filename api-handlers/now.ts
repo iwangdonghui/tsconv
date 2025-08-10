@@ -7,13 +7,16 @@ interface Env {
 
 export async function handleNow(request: Request, env: Env): Promise<Response> {
   if (request.method !== 'GET') {
-    return new Response(JSON.stringify({
-      error: 'Method Not Allowed',
-      message: 'Only GET method is supported'
-    }), {
-      status: 405,
-      headers: { 'Content-Type': 'application/json' }
-    });
+    return new Response(
+      JSON.stringify({
+        error: 'Method Not Allowed',
+        message: 'Only GET method is supported',
+      }),
+      {
+        status: 405,
+        headers: { 'Content-Type': 'application/json' },
+      }
+    );
   }
 
   try {
@@ -29,7 +32,7 @@ export async function handleNow(request: Request, env: Env): Promise<Response> {
       milliseconds: now.getTime(),
       iso: now.toISOString(),
       utc: now.toUTCString(),
-      local: now.toLocaleString()
+      local: now.toLocaleString(),
     };
 
     // Add timezone-specific time if requested
@@ -38,7 +41,7 @@ export async function handleNow(request: Request, env: Env): Promise<Response> {
         result.timezone = {
           name: timezone,
           time: now.toLocaleString('en-US', { timeZone: timezone }),
-          iso: now.toLocaleString('sv-SE', { timeZone: timezone }).replace(' ', 'T') + 'Z'
+          iso: `${now.toLocaleString('sv-SE', { timeZone: timezone }).replace(' ', 'T')}Z`,
         };
       } catch (error) {
         result.timezoneError = 'Invalid timezone';
@@ -48,7 +51,7 @@ export async function handleNow(request: Request, env: Env): Promise<Response> {
     // Filter result based on format parameter
     if (format !== 'all') {
       const filteredResult: any = { timestamp };
-      
+
       switch (format.toLowerCase()) {
         case 'iso':
           filteredResult.iso = result.iso;
@@ -65,28 +68,30 @@ export async function handleNow(request: Request, env: Env): Promise<Response> {
         default:
           // Return all if format is unrecognized
           return new Response(JSON.stringify(result), {
-            headers: { 'Content-Type': 'application/json' }
+            headers: { 'Content-Type': 'application/json' },
           });
       }
-      
+
       return new Response(JSON.stringify(filteredResult), {
-        headers: { 'Content-Type': 'application/json' }
+        headers: { 'Content-Type': 'application/json' },
       });
     }
 
     return new Response(JSON.stringify(result), {
-      headers: { 'Content-Type': 'application/json' }
+      headers: { 'Content-Type': 'application/json' },
     });
-
   } catch (error) {
     console.error('Now API Error:', error);
-    
-    return new Response(JSON.stringify({
-      error: 'Internal Server Error',
-      message: error instanceof Error ? error.message : 'Unknown error'
-    }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json' }
-    });
+
+    return new Response(
+      JSON.stringify({
+        error: 'Internal Server Error',
+        message: error instanceof Error ? error.message : 'Unknown error',
+      }),
+      {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' },
+      }
+    );
   }
 }

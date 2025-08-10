@@ -9,13 +9,16 @@ interface Env {
 
 export async function handleHealth(request: Request, env: Env): Promise<Response> {
   if (request.method !== 'GET') {
-    return new Response(JSON.stringify({
-      error: 'Method Not Allowed',
-      message: 'Only GET method is supported'
-    }), {
-      status: 405,
-      headers: { 'Content-Type': 'application/json' }
-    });
+    return new Response(
+      JSON.stringify({
+        error: 'Method Not Allowed',
+        message: 'Only GET method is supported',
+      }),
+      {
+        status: 405,
+        headers: { 'Content-Type': 'application/json' },
+      }
+    );
   }
 
   try {
@@ -24,7 +27,7 @@ export async function handleHealth(request: Request, env: Env): Promise<Response
 
     const startTime = Date.now();
     const cacheManager = new CacheManager(env);
-    
+
     // Basic health check
     const health = {
       status: 'healthy',
@@ -32,7 +35,7 @@ export async function handleHealth(request: Request, env: Env): Promise<Response
       uptime: 0, // Not available in Cloudflare Workers
       version: '1.0.0',
       environment: env.NODE_ENV || 'production',
-      responseTime: 0
+      responseTime: 0,
     };
 
     // Test cache system (Redis + fallback)
@@ -47,28 +50,28 @@ export async function handleHealth(request: Request, env: Env): Promise<Response
       services: {
         api: 'healthy',
         cache: cacheHealth.status,
-        redis: redisStatus
-      }
+        redis: redisStatus,
+      },
     };
 
     if (detailed) {
       result.details = {
         memory: {
           used: 'N/A (Cloudflare)',
-          total: 'N/A (Cloudflare)'
+          total: 'N/A (Cloudflare)',
         },
         system: {
           platform: 'cloudflare-pages',
-          runtime: 'cloudflare-workers'
+          runtime: 'cloudflare-workers',
         },
         performance: {
           responseTime: `${responseTime}ms`,
-          requestsPerSecond: 'N/A'
+          requestsPerSecond: 'N/A',
         },
         cache: {
           ...cacheHealth.stats,
-          enabled: cacheManager.getRedisStats().enabled
-        }
+          enabled: cacheManager.getRedisStats().enabled,
+        },
       };
     }
 
@@ -77,24 +80,25 @@ export async function handleHealth(request: Request, env: Env): Promise<Response
       result.status = 'degraded';
     }
 
-    const statusCode = result.status === 'healthy' ? 200 : 
-                      result.status === 'degraded' ? 200 : 503;
+    const statusCode = result.status === 'healthy' ? 200 : result.status === 'degraded' ? 200 : 503;
 
     return new Response(JSON.stringify(result), {
       status: statusCode,
-      headers: { 'Content-Type': 'application/json' }
+      headers: { 'Content-Type': 'application/json' },
     });
-
   } catch (error) {
     console.error('Health API Error:', error);
-    
-    return new Response(JSON.stringify({
-      status: 'unhealthy',
-      timestamp: new Date().toISOString(),
-      error: error instanceof Error ? error.message : 'Unknown error'
-    }), {
-      status: 503,
-      headers: { 'Content-Type': 'application/json' }
-    });
+
+    return new Response(
+      JSON.stringify({
+        status: 'unhealthy',
+        timestamp: new Date().toISOString(),
+        error: error instanceof Error ? error.message : 'Unknown error',
+      }),
+      {
+        status: 503,
+        headers: { 'Content-Type': 'application/json' },
+      }
+    );
   }
 }

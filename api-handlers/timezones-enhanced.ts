@@ -35,7 +35,7 @@ const TIMEZONE_DATA: TimezoneInfo[] = [
     region: 'America',
     city: 'New York',
     isDST: false,
-    utcOffset: 'UTC-5'
+    utcOffset: 'UTC-5',
   },
   {
     id: 'America/Los_Angeles',
@@ -47,7 +47,7 @@ const TIMEZONE_DATA: TimezoneInfo[] = [
     region: 'America',
     city: 'Los Angeles',
     isDST: false,
-    utcOffset: 'UTC-8'
+    utcOffset: 'UTC-8',
   },
   {
     id: 'Europe/London',
@@ -59,7 +59,7 @@ const TIMEZONE_DATA: TimezoneInfo[] = [
     region: 'Europe',
     city: 'London',
     isDST: false,
-    utcOffset: 'UTC+0'
+    utcOffset: 'UTC+0',
   },
   {
     id: 'Europe/Paris',
@@ -71,7 +71,7 @@ const TIMEZONE_DATA: TimezoneInfo[] = [
     region: 'Europe',
     city: 'Paris',
     isDST: false,
-    utcOffset: 'UTC+1'
+    utcOffset: 'UTC+1',
   },
   {
     id: 'Asia/Tokyo',
@@ -83,7 +83,7 @@ const TIMEZONE_DATA: TimezoneInfo[] = [
     region: 'Asia',
     city: 'Tokyo',
     isDST: false,
-    utcOffset: 'UTC+9'
+    utcOffset: 'UTC+9',
   },
   {
     id: 'Asia/Shanghai',
@@ -95,7 +95,7 @@ const TIMEZONE_DATA: TimezoneInfo[] = [
     region: 'Asia',
     city: 'Shanghai',
     isDST: false,
-    utcOffset: 'UTC+8'
+    utcOffset: 'UTC+8',
   },
   {
     id: 'Australia/Sydney',
@@ -107,7 +107,7 @@ const TIMEZONE_DATA: TimezoneInfo[] = [
     region: 'Australia',
     city: 'Sydney',
     isDST: false,
-    utcOffset: 'UTC+10'
+    utcOffset: 'UTC+10',
   },
   {
     id: 'UTC',
@@ -119,8 +119,8 @@ const TIMEZONE_DATA: TimezoneInfo[] = [
     region: 'UTC',
     city: '',
     isDST: false,
-    utcOffset: 'UTC+0'
-  }
+    utcOffset: 'UTC+0',
+  },
 ];
 
 export async function handleTimezonesEnhanced(request: Request, env: Env): Promise<Response> {
@@ -131,23 +131,29 @@ export async function handleTimezonesEnhanced(request: Request, env: Env): Promi
   // Apply security middleware
   const securityCheck = await securityManager.checkRateLimit(request, RATE_LIMITS.API_GENERAL);
   if (!securityCheck.allowed) {
-    return new Response(JSON.stringify({
-      error: 'Rate Limit Exceeded',
-      message: 'Too many requests. Please try again later.'
-    }), {
-      status: 429,
-      headers: { 'Content-Type': 'application/json' }
-    });
+    return new Response(
+      JSON.stringify({
+        error: 'Rate Limit Exceeded',
+        message: 'Too many requests. Please try again later.',
+      }),
+      {
+        status: 429,
+        headers: { 'Content-Type': 'application/json' },
+      }
+    );
   }
 
   if (request.method !== 'GET') {
-    return new Response(JSON.stringify({
-      error: 'Method Not Allowed',
-      message: 'Only GET method is supported'
-    }), {
-      status: 405,
-      headers: { 'Content-Type': 'application/json' }
-    });
+    return new Response(
+      JSON.stringify({
+        error: 'Method Not Allowed',
+        message: 'Only GET method is supported',
+      }),
+      {
+        status: 405,
+        headers: { 'Content-Type': 'application/json' },
+      }
+    );
   }
 
   try {
@@ -161,21 +167,24 @@ export async function handleTimezonesEnhanced(request: Request, env: Env): Promi
 
     // Generate cache key
     const cacheKey = `timezones:${query}:${region}:${country}:${offset}:${limit}:${format}`;
-    
+
     // Try to get cached result
     const cachedResult = await cacheManager.get('TIMEZONES', cacheKey);
     if (cachedResult) {
-      const response = new Response(JSON.stringify({
-        success: true,
-        data: cachedResult,
-        metadata: {
-          timestamp: new Date().toISOString(),
-          processingTime: Date.now() - startTime + 'ms',
-          cached: true
+      const response = new Response(
+        JSON.stringify({
+          success: true,
+          data: cachedResult,
+          metadata: {
+            timestamp: new Date().toISOString(),
+            processingTime: `${Date.now() - startTime}ms`,
+            cached: true,
+          },
+        }),
+        {
+          headers: { 'Content-Type': 'application/json' },
         }
-      }), {
-        headers: { 'Content-Type': 'application/json' }
-      });
+      );
 
       recordAnalyticsMiddleware(request, response, env, startTime);
       return response;
@@ -187,29 +196,30 @@ export async function handleTimezonesEnhanced(request: Request, env: Env): Promi
     // Apply filters
     if (query) {
       const searchTerm = query.toLowerCase();
-      filteredTimezones = filteredTimezones.filter(tz => 
-        tz.id.toLowerCase().includes(searchTerm) ||
-        tz.name.toLowerCase().includes(searchTerm) ||
-        tz.city.toLowerCase().includes(searchTerm) ||
-        tz.abbreviation.toLowerCase().includes(searchTerm)
+      filteredTimezones = filteredTimezones.filter(
+        tz =>
+          tz.id.toLowerCase().includes(searchTerm) ||
+          tz.name.toLowerCase().includes(searchTerm) ||
+          tz.city.toLowerCase().includes(searchTerm) ||
+          tz.abbreviation.toLowerCase().includes(searchTerm)
       );
     }
 
     if (region) {
-      filteredTimezones = filteredTimezones.filter(tz => 
-        tz.region.toLowerCase() === region.toLowerCase()
+      filteredTimezones = filteredTimezones.filter(
+        tz => tz.region.toLowerCase() === region.toLowerCase()
       );
     }
 
     if (country) {
-      filteredTimezones = filteredTimezones.filter(tz => 
-        tz.country.toLowerCase() === country.toLowerCase()
+      filteredTimezones = filteredTimezones.filter(
+        tz => tz.country.toLowerCase() === country.toLowerCase()
       );
     }
 
     if (offset) {
-      filteredTimezones = filteredTimezones.filter(tz => 
-        tz.offset === offset || tz.utcOffset.toLowerCase().includes(offset.toLowerCase())
+      filteredTimezones = filteredTimezones.filter(
+        tz => tz.offset === offset || tz.utcOffset.toLowerCase().includes(offset.toLowerCase())
       );
     }
 
@@ -223,10 +233,10 @@ export async function handleTimezonesEnhanced(request: Request, env: Env): Promi
         timezones: limitedTimezones.map(tz => ({
           id: tz.id,
           name: tz.name,
-          offset: tz.offset
+          offset: tz.offset,
         })),
         total: limitedTimezones.length,
-        filtered: filteredTimezones.length
+        filtered: filteredTimezones.length,
       };
     } else {
       result = {
@@ -241,8 +251,8 @@ export async function handleTimezonesEnhanced(request: Request, env: Env): Promi
           region,
           country,
           offset,
-          limit
-        }
+          limit,
+        },
       };
     }
 
@@ -253,31 +263,36 @@ export async function handleTimezonesEnhanced(request: Request, env: Env): Promi
       console.error('Failed to cache timezones result:', error);
     }
 
-    const response = new Response(JSON.stringify({
-      success: true,
-      data: result,
-      metadata: {
-        timestamp: new Date().toISOString(),
-        processingTime: Date.now() - startTime + 'ms',
-        cached: false
+    const response = new Response(
+      JSON.stringify({
+        success: true,
+        data: result,
+        metadata: {
+          timestamp: new Date().toISOString(),
+          processingTime: `${Date.now() - startTime}ms`,
+          cached: false,
+        },
+      }),
+      {
+        headers: { 'Content-Type': 'application/json' },
       }
-    }), {
-      headers: { 'Content-Type': 'application/json' }
-    });
+    );
 
     recordAnalyticsMiddleware(request, response, env, startTime);
     return response;
-
   } catch (error) {
     console.error('Timezones API error:', error);
-    
-    const response = new Response(JSON.stringify({
-      error: 'Internal Server Error',
-      message: error instanceof Error ? error.message : 'Unknown error'
-    }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json' }
-    });
+
+    const response = new Response(
+      JSON.stringify({
+        error: 'Internal Server Error',
+        message: error instanceof Error ? error.message : 'Unknown error',
+      }),
+      {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' },
+      }
+    );
 
     recordAnalyticsMiddleware(request, response, env, startTime);
     return response;
@@ -317,7 +332,7 @@ export function convertBetweenTimezones(
 
     // Simple conversion (in real implementation, use proper timezone library)
     const offsetDiff = toTz.offsetMinutes - fromTz.offsetMinutes;
-    const convertedTimestamp = timestamp + (offsetDiff * 60);
+    const convertedTimestamp = timestamp + offsetDiff * 60;
 
     return {
       success: true,
@@ -328,13 +343,13 @@ export function convertBetweenTimezones(
         toTimezone: toTz,
         offsetDifference: offsetDiff,
         originalDate: new Date(timestamp * 1000).toISOString(),
-        convertedDate: new Date(convertedTimestamp * 1000).toISOString()
-      }
+        convertedDate: new Date(convertedTimestamp * 1000).toISOString(),
+      },
     };
   } catch (error) {
-    return { 
-      success: false, 
-      error: error instanceof Error ? error.message : 'Unknown error' 
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error',
     };
   }
 }

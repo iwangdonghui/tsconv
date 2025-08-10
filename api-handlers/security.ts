@@ -32,7 +32,10 @@ export class SecurityManager {
   }
 
   // Rate limiting middleware
-  async checkRateLimit(request: Request, config: RateLimitConfig): Promise<{ allowed: boolean; remaining: number; resetTime: number }> {
+  async checkRateLimit(
+    request: Request,
+    config: RateLimitConfig
+  ): Promise<{ allowed: boolean; remaining: number; resetTime: number }> {
     try {
       const key = config.keyGenerator(request);
       const now = Date.now();
@@ -40,36 +43,35 @@ export class SecurityManager {
       const rateLimitKey = `rate_limit:${key}:${windowStart}`;
 
       // Get current count
-      const currentCount = await this.cacheManager.get('STATS', rateLimitKey) || 0;
-      
+      const currentCount = (await this.cacheManager.get('STATS', rateLimitKey)) || 0;
+
       if (currentCount >= config.maxRequests) {
         return {
           allowed: false,
           remaining: 0,
-          resetTime: windowStart + config.windowMs
+          resetTime: windowStart + config.windowMs,
         };
       }
 
       // Increment counter
       await this.cacheManager.increment('STATS', rateLimitKey);
-      
+
       // Set expiry for the key (cleanup)
       const ttl = Math.ceil((windowStart + config.windowMs - now) / 1000);
       // Note: We should set TTL here, but our current cache implementation doesn't support it easily
-      
+
       return {
         allowed: true,
         remaining: config.maxRequests - currentCount - 1,
-        resetTime: windowStart + config.windowMs
+        resetTime: windowStart + config.windowMs,
       };
-
     } catch (error) {
       console.error('Rate limit check failed:', error);
       // Fail open - allow request if rate limiting fails
       return {
         allowed: true,
         remaining: config.maxRequests - 1,
-        resetTime: Date.now() + config.windowMs
+        resetTime: Date.now() + config.windowMs,
       };
     }
   }
@@ -77,19 +79,22 @@ export class SecurityManager {
   // Generate rate limit key based on IP and endpoint
   generateRateLimitKey(request: Request): string {
     const url = new URL(request.url);
-    const ip = request.headers.get('CF-Connecting-IP') || 
-               request.headers.get('X-Forwarded-For') || 
-               'unknown';
+    const ip =
+      request.headers.get('CF-Connecting-IP') ||
+      request.headers.get('X-Forwarded-For') ||
+      'unknown';
     const endpoint = url.pathname;
     return `${ip}:${endpoint}`;
   }
 
   // Check for suspicious activity
-  async checkSuspiciousActivity(request: Request): Promise<{ suspicious: boolean; reason?: string }> {
+  async checkSuspiciousActivity(
+    request: Request
+  ): Promise<{ suspicious: boolean; reason?: string }> {
     try {
       const userAgent = request.headers.get('User-Agent') || '';
       const ip = request.headers.get('CF-Connecting-IP') || 'unknown';
-      
+
       // Check for common bot patterns
       const botPatterns = [
         /bot/i,
@@ -98,29 +103,28 @@ export class SecurityManager {
         /scraper/i,
         /curl/i,
         /wget/i,
-        /python-requests/i
+        /python-requests/i,
       ];
 
       const isBot = botPatterns.some(pattern => pattern.test(userAgent));
-      
+
       // Check for suspicious IP patterns (this is basic - in production you'd use threat intelligence)
       const suspiciousIPs = ['127.0.0.1']; // Add known bad IPs
       const isSuspiciousIP = suspiciousIPs.includes(ip);
-      
+
       // Check request frequency from this IP
       const recentRequestCount = await this.getRecentRequestCount(ip);
       const isHighFrequency = recentRequestCount > 100; // More than 100 requests in last minute
-      
+
       if (isBot && isHighFrequency) {
         return { suspicious: true, reason: 'High frequency bot traffic' };
       }
-      
+
       if (isSuspiciousIP) {
         return { suspicious: true, reason: 'Suspicious IP address' };
       }
-      
-      return { suspicious: false };
 
+      return { suspicious: false };
     } catch (error) {
       console.error('Suspicious activity check failed:', error);
       return { suspicious: false };
@@ -130,13 +134,14 @@ export class SecurityManager {
   // Get security headers
   getSecurityHeaders(): SecurityHeaders {
     return {
-      'Content-Security-Policy': "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https:; frame-ancestors 'none';",
+      'Content-Security-Policy':
+        "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https:; frame-ancestors 'none';",
       'X-Content-Type-Options': 'nosniff',
       'X-Frame-Options': 'DENY',
       'X-XSS-Protection': '1; mode=block',
       'Referrer-Policy': 'strict-origin-when-cross-origin',
       'Permissions-Policy': 'camera=(), microphone=(), geolocation=(), payment=()',
-      'Strict-Transport-Security': 'max-age=31536000; includeSubDomains; preload'
+      'Strict-Transport-Security': 'max-age=31536000; includeSubDomains; preload',
     };
   }
 
@@ -146,17 +151,17 @@ export class SecurityManager {
       'https://tsconv.com',
       'https://www.tsconv.com',
       'http://localhost:3000',
-      'http://localhost:5173'
+      'http://localhost:5173',
     ];
 
     const isAllowedOrigin = origin && allowedOrigins.includes(origin);
-    
+
     return {
       'Access-Control-Allow-Origin': isAllowedOrigin ? origin : 'https://tsconv.com',
       'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
       'Access-Control-Allow-Headers': 'Content-Type, Authorization',
       'Access-Control-Max-Age': '86400',
-      'Access-Control-Allow-Credentials': 'false'
+      'Access-Control-Allow-Credentials': 'false',
     };
   }
 
@@ -201,7 +206,7 @@ export class SecurityManager {
 
     return {
       valid: errors.length === 0,
-      errors
+      errors,
     };
   }
 
@@ -210,20 +215,19 @@ export class SecurityManager {
     try {
       const securityLog = {
         ...event,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       };
 
       // Store in recent security events
-      const recentEvents = await this.cacheManager.get('STATS', 'security_events') || [];
+      const recentEvents = (await this.cacheManager.get('STATS', 'security_events')) || [];
       recentEvents.unshift(securityLog);
-      
+
       // Keep only last 1000 events
       await this.cacheManager.set('STATS', 'security_events', recentEvents.slice(0, 1000));
 
       // Increment security event counters
       const today = new Date().toISOString().split('T')[0];
       await this.cacheManager.increment('STATS', `security:daily:${today}:${event.type}`);
-
     } catch (error) {
       console.error('Failed to log security event:', error);
     }
@@ -235,8 +239,8 @@ export class SecurityManager {
       const now = Date.now();
       const oneMinuteAgo = now - 60000; // 1 minute ago
       const key = `ip_requests:${ip}:${Math.floor(now / 60000)}`; // Per minute bucket
-      
-      return await this.cacheManager.get('STATS', key) || 0;
+
+      return (await this.cacheManager.get('STATS', key)) || 0;
     } catch (error) {
       console.error('Failed to get recent request count:', error);
       return 0;
@@ -252,7 +256,7 @@ export const RATE_LIMITS = {
     keyGenerator: (request: Request) => {
       const ip = request.headers.get('CF-Connecting-IP') || 'unknown';
       return `general:${ip}`;
-    }
+    },
   },
   API_CONVERT: {
     windowMs: 60000, // 1 minute
@@ -260,7 +264,7 @@ export const RATE_LIMITS = {
     keyGenerator: (request: Request) => {
       const ip = request.headers.get('CF-Connecting-IP') || 'unknown';
       return `convert:${ip}`;
-    }
+    },
   },
   API_ADMIN: {
     windowMs: 60000, // 1 minute
@@ -268,8 +272,8 @@ export const RATE_LIMITS = {
     keyGenerator: (request: Request) => {
       const ip = request.headers.get('CF-Connecting-IP') || 'unknown';
       return `admin:${ip}`;
-    }
-  }
+    },
+  },
 } as const;
 
 // Validation rules interface
