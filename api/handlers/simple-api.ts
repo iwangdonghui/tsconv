@@ -1,9 +1,9 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
-import { ResponseBuilder, withCors, APIErrorHandler } from '../utils/response';
 import { createCacheMiddleware } from '../middleware/cache';
 import { createRateLimitMiddleware } from '../middleware/rate-limit';
 import cacheService from '../services/cache-service';
 import formatService from '../services/format-service';
+import { APIErrorHandler, ResponseBuilder, withCors } from '../utils/response';
 // import { formatDate, parseTimestamp } from '../utils/conversion-utils'; // Unused import
 
 // 基础时间戳转换处理
@@ -100,7 +100,7 @@ async function handleFormats(req: VercelRequest, res: VercelResponse) {
 }
 
 // 健康检查处理
-async function handleHealth(req: VercelRequest, res: VercelResponse) {
+async function handleHealth(_req: VercelRequest, res: VercelResponse) {
   try {
     const cacheHealth = await cacheService.healthCheck();
 

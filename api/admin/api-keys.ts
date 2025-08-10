@@ -6,10 +6,10 @@
  */
 
 import { VercelRequest, VercelResponse } from '@vercel/node';
-import { createCorsHeaders } from '../utils/response';
-import { adminAuthMiddleware, apiKeyManager, APIKeyInfo } from '../middleware/auth';
 import { defaultAPISecurityMiddleware } from '../middleware/api-security';
+import { adminAuthMiddleware, APIKeyInfo, apiKeyManager } from '../middleware/auth';
 import { createValidationMiddleware } from '../middleware/type-validation';
+import { createCorsHeaders } from '../utils/response';
 
 // ============================================================================
 // Types
@@ -72,7 +72,7 @@ const createAPIKeySchema = {
   },
 };
 
-const updateAPIKeySchema = {
+const _updateAPIKeySchema = {
   name: {
     type: 'string' as const,
     min: 1,
@@ -115,7 +115,7 @@ function parseExpiration(expiresIn: string): number | undefined {
     throw new Error('Invalid expiration format');
   }
 
-  const value = parseInt(match[1]);
+  const value = parseInt(match[1] || '0');
   const unit = match[2];
 
   const now = Date.now();

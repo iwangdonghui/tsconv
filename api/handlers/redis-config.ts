@@ -1,6 +1,6 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
-import { APIErrorHandler, createCorsHeaders } from '../utils/response';
 import config from '../config/config';
+import { APIErrorHandler, createCorsHeaders } from '../utils/response';
 
 interface RedisConfigRequest {
   action: 'get' | 'test' | 'validate';
@@ -152,7 +152,7 @@ function maskRedisUrl(url: string): string {
   }
 }
 
-async function testRedisConnection(settings?: any): Promise<any> {
+async function testRedisConnection(_settings?: any): Promise<any> {
   const startTime = Date.now();
 
   try {

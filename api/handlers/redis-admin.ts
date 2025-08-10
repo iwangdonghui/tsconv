@@ -1,6 +1,6 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
-import { APIErrorHandler, createCorsHeaders } from '../utils/response';
 import { createRedisClient } from '../services/redis-client';
+import { APIErrorHandler, createCorsHeaders } from '../utils/response';
 
 interface RedisAdminRequest {
   action: 'info' | 'flushall' | 'keys' | 'get' | 'set' | 'del' | 'stats';
@@ -73,7 +73,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         // Upstash doesn't have info(), use alternative approach
         await redis.ping();
         const keys = await redis.keys('*');
-        const ___dbSize = await redis.dbsize(); // Available for future use
+        const _dbSize = await redis.dbsize(); // Available for future use
 
         // Since Upstash doesn't provide detailed info, use basic stats
         const stats: RedisStats = {
@@ -151,7 +151,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 }
 
-function extractInfoValue(lines: string[], key: string): string | null {
+function _extractInfoValue(lines: string[], key: string): string | null {
   const line = lines.find(l => l.startsWith(`${key}:`));
-  return line ? line.split(':')[1]?.trim() : null;
+  return line ? line.split(':')[1]?.trim() || null : null;
 }

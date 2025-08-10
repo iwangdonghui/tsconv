@@ -1,6 +1,6 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
-import { APIErrorHandler, createCorsHeaders, validateRequest } from '../utils/response';
 import { TimezoneConversionRequest, TimezoneConversionResponse, TimezoneInfo } from '../types/api';
+import { APIErrorHandler, createCorsHeaders, validateRequest } from '../utils/response';
 
 // Common timezone mappings
 const TIMEZONE_ALIASES: Record<string, string> = {
@@ -198,7 +198,7 @@ async function performTimezoneConversion(request: TimezoneConversionRequest): Pr
 function normalizeTimezone(timezone: string): string {
   // Check if it's an alias
   if (TIMEZONE_ALIASES[timezone.toUpperCase()]) {
-    return TIMEZONE_ALIASES[timezone.toUpperCase()];
+    return TIMEZONE_ALIASES[timezone.toUpperCase()] || timezone;
   }
 
   // Return as-is if it looks like a valid IANA timezone

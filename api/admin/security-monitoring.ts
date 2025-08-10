@@ -6,9 +6,9 @@
  */
 
 import { VercelRequest, VercelResponse } from '@vercel/node';
-import { createCorsHeaders } from '../utils/response';
+import { SecurityLogEntry, SecurityLogger } from '../middleware/api-security';
 import { adminAuthMiddleware } from '../middleware/auth';
-import { SecurityLogger, SecurityLogEntry } from '../middleware/api-security';
+import { createCorsHeaders } from '../utils/response';
 
 // ============================================================================
 // Types
@@ -139,9 +139,10 @@ export class SecurityAnalytics {
       if (!ipCounts[log.ip]) {
         ipCounts[log.ip] = { requests: 0, threats: 0 };
       }
-      ipCounts[log.ip].requests++;
+      const ipData = ipCounts[log.ip]!; // Non-null assertion since we just ensured it exists
+      ipData.requests++;
       if (log.threat) {
-        ipCounts[log.ip].threats++;
+        ipData.threats++;
       }
     });
 
@@ -156,9 +157,10 @@ export class SecurityAnalytics {
       if (!endpointCounts[log.endpoint]) {
         endpointCounts[log.endpoint] = { requests: 0, threats: 0 };
       }
-      endpointCounts[log.endpoint].requests++;
+      const endpointData = endpointCounts[log.endpoint]!; // Non-null assertion since we just ensured it exists
+      endpointData.requests++;
       if (log.threat) {
-        endpointCounts[log.endpoint].threats++;
+        endpointData.threats++;
       }
     });
 
@@ -245,9 +247,10 @@ export class SecurityAnalytics {
             threatTypes: new Set(),
           };
         }
-        attackerData[log.ip].events++;
-        attackerData[log.ip].lastSeen = Math.max(attackerData[log.ip].lastSeen, log.timestamp);
-        attackerData[log.ip].threatTypes.add(log.threat.type);
+        const attacker = attackerData[log.ip]!; // Non-null assertion since we just ensured it exists
+        attacker.events++;
+        attacker.lastSeen = Math.max(attacker.lastSeen, log.timestamp);
+        attacker.threatTypes.add(log.threat.type);
       }
     });
 
@@ -280,12 +283,10 @@ export class SecurityAnalytics {
             threatTypes: new Set(),
           };
         }
-        endpointData[log.endpoint].threats++;
-        endpointData[log.endpoint].lastThreat = Math.max(
-          endpointData[log.endpoint].lastThreat,
-          log.timestamp
-        );
-        endpointData[log.endpoint].threatTypes.add(log.threat.type);
+        const endpoint = endpointData[log.endpoint]!; // Non-null assertion since we just ensured it exists
+        endpoint.threats++;
+        endpoint.lastThreat = Math.max(endpoint.lastThreat, log.timestamp);
+        endpoint.threatTypes.add(log.threat.type);
       }
     });
 
@@ -378,8 +379,8 @@ export class SecurityAnalytics {
       return 24 * 60 * 60 * 1000; // Default to 24 hours
     }
 
-    const value = parseInt(match[1]);
-    const unit = match[2];
+    const value = parseInt(match[1] || '0');
+    const unit = match[2] || 'h';
 
     switch (unit) {
       case 'h':

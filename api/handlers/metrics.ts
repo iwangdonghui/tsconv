@@ -1,6 +1,6 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
-import { APIErrorHandler, createCorsHeaders } from '../utils/response';
 import { createRedisClient } from '../services/redis-client';
+import { APIErrorHandler, createCorsHeaders } from '../utils/response';
 
 interface SystemMetrics {
   timestamp: number;
@@ -109,7 +109,7 @@ async function getCacheMetrics() {
 
     // Get cache keys and basic stats
     const keys = await redis.keys('tsconv:cache:*');
-    const ___dbSize = await redis.dbsize(); // Available for future use
+    const _dbSize = await redis.dbsize(); // Available for future use
 
     // Upstash Redis doesn't support INFO command, use default values
     let memoryUsage = '0B';
@@ -259,7 +259,7 @@ async function getRedisMetrics() {
 
     // Test connection with ping and get basic stats
     await redis.ping();
-    const ___dbSize = await redis.dbsize(); // Available for future use
+    const _dbSize = await redis.dbsize(); // Available for future use
 
     const responseTime = Date.now() - startTime;
     // Upstash doesn't provide detailed info, use basic metrics
