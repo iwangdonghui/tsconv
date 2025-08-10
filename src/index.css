@@ -89,4 +89,74 @@
   .focus-ring {
     @apply focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-slate-900;
   }
+
+  /* Mobile-specific optimizations */
+  .mobile-input {
+    font-size: 16px; /* Prevent iOS zoom */
+    -webkit-appearance: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .mobile-button {
+    min-height: 44px;
+    min-width: 44px;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+
+  .mobile-touch-target {
+    min-height: 44px;
+    min-width: 44px;
+    touch-action: manipulation;
+  }
+
+  /* Improve touch feedback */
+  .touch-feedback {
+    transition:
+      transform 0.1s ease-in-out,
+      background-color 0.15s ease-in-out;
+  }
+
+  .touch-feedback:active {
+    transform: scale(0.98);
+  }
+
+  /* Optimize for mobile viewport */
+  @media (max-width: 640px) {
+    .mobile-optimized {
+      padding-left: 1rem;
+      padding-right: 1rem;
+    }
+
+    .mobile-spacing {
+      margin-bottom: 1rem;
+    }
+
+    .mobile-text {
+      font-size: 16px;
+      line-height: 1.5;
+    }
+  }
+
+  /* Prevent zoom on input focus for iOS */
+  @media screen and (-webkit-min-device-pixel-ratio: 0) {
+    select,
+    textarea,
+    input[type='text'],
+    input[type='password'],
+    input[type='datetime'],
+    input[type='datetime-local'],
+    input[type='date'],
+    input[type='month'],
+    input[type='time'],
+    input[type='week'],
+    input[type='number'],
+    input[type='email'],
+    input[type='url'],
+    input[type='search'],
+    input[type='tel'],
+    input[type='color'] {
+      font-size: 16px;
+    }
+  }
 }

@@ -6,6 +6,7 @@ import { useTheme } from '../contexts/ThemeContext';
 import { useHistory } from '../hooks/useHistory';
 import { useInputValidation } from '../hooks/useInputValidation';
 import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts';
+import { useDeviceCapabilities, useMobileGestures } from '../hooks/useMobileGestures';
 import FAQ from './FAQ';
 import Footer from './Footer';
 import Header from './Header';
@@ -44,9 +45,11 @@ export default function TimestampConverter() {
     second: new Date().getSeconds(),
   });
   const inputRef = useRef<HTMLInputElement>(null);
+  const historyPanelRef = useRef<HTMLDivElement>(null);
   const { isDark } = useTheme();
   const { t } = useLanguage();
   const { history, addToHistory, clearHistory } = useHistory();
+  const { isMobile, isTouchDevice } = useDeviceCapabilities();
   const {
     validationResult,
     validateInput: validateMainInput,
@@ -121,6 +124,43 @@ export default function TimestampConverter() {
       inputRef.current?.focus();
     },
   });
+
+  // Add mobile gesture support for history navigation
+  const { attachGestures } = useMobileGestures({
+    onSwipeLeft: () => {
+      if (showHistory && history.length > 0) {
+        // Navigate to next history item
+        const currentIndex = history.findIndex(item => item.input === input);
+        const nextIndex = (currentIndex + 1) % history.length;
+        const nextItem = history[nextIndex];
+        if (nextItem) {
+          setInput(nextItem.input);
+        }
+      }
+    },
+    onSwipeRight: () => {
+      if (showHistory && history.length > 0) {
+        // Navigate to previous history item
+        const currentIndex = history.findIndex(item => item.input === input);
+        const prevIndex = currentIndex <= 0 ? history.length - 1 : currentIndex - 1;
+        const prevItem = history[prevIndex];
+        if (prevItem) {
+          setInput(prevItem.input);
+        }
+      }
+    },
+    onLongPress: () => {
+      // Long press to show/hide history
+      setShowHistory(!showHistory);
+    },
+  });
+
+  // Attach gestures to history panel
+  useEffect(() => {
+    if (historyPanelRef.current && isTouchDevice) {
+      return attachGestures(historyPanelRef.current);
+    }
+  }, [attachGestures, isTouchDevice]);
 
   // 初始化
   useEffect(() => {
@@ -197,7 +237,7 @@ export default function TimestampConverter() {
         setCopiedStates(prev => ({ ...prev, [key]: false }));
       }, 2000);
     } catch (err) {
-      console.error('Copy failed:', err);
+      // Copy failed silently
     }
   };
 
@@ -374,13 +414,19 @@ export default function TimestampConverter() {
             <input
               ref={inputRef}
               type='text'
+              inputMode='text'
               value={input}
               onChange={e => {
                 setInput(e.target.value);
                 validateMainInput(e.target.value);
               }}
               placeholder={t('converter.placeholder')}
-              className={`w-full p-4 sm:p-6 text-base sm:text-lg border-2 rounded-xl transition-all duration-200 pr-24 bg-background text-foreground placeholder:text-muted-foreground border-input focus:border-ring focus:ring-2 focus:ring-ring/20 ${
+              className={`w-full border-2 rounded-xl transition-all duration-200 pr-24 bg-background text-foreground placeholder:text-muted-foreground border-input focus:border-ring focus:ring-2 focus:ring-ring/20 touch-manipulation ${
+                // Mobile optimizations
+                isMobile
+                  ? 'p-4 text-base min-h-[56px]' // 16px font size to prevent iOS zoom, larger touch target
+                  : 'p-4 sm:p-6 text-base sm:text-lg'
+              } ${
                 validationState === 'invalid'
                   ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20'
                   : ''
@@ -396,6 +442,10 @@ export default function TimestampConverter() {
               aria-busy={isValidating}
               role='combobox'
               aria-expanded={showHistory}
+              autoComplete='off'
+              autoCorrect='off'
+              autoCapitalize='off'
+              spellCheck='false'
             />
             <div className='absolute right-3 sm:right-4 top-1/2 transform -translate-y-1/2 flex items-center gap-2'>
               <ValidationIndicator state={validationState} size='md' animated={true} />
@@ -430,6 +480,7 @@ export default function TimestampConverter() {
 
             {/* History Panel */}
             <HistoryPanel
+              ref={historyPanelRef}
               history={history}
               onSelectItem={(value: string) => setInput(value)}
               onClear={clearHistory}
@@ -483,15 +534,23 @@ export default function TimestampConverter() {
                   </div>
                   <button
                     onClick={() => copyToClipboard(results.utcDate, 'utc')}
-                    className={`flex-shrink-0 p-2 rounded transition-colors ${
-                      isDark ? 'hover:bg-slate-700' : 'hover:bg-slate-200'
+                    className={`flex-shrink-0 rounded transition-colors touch-manipulation ${
+                      isMobile
+                        ? 'p-3 min-h-[44px] min-w-[44px]' // Mobile touch target
+                        : 'p-2'
+                    } ${
+                      isDark
+                        ? 'hover:bg-slate-700 active:bg-slate-600'
+                        : 'hover:bg-slate-200 active:bg-slate-300'
                     }`}
                     aria-label='Copy UTC date'
                   >
                     {copiedStates.utc ? (
-                      <Check className='w-4 h-4 text-green-500' />
+                      <Check
+                        className={isMobile ? 'w-5 h-5 text-green-500' : 'w-4 h-4 text-green-500'}
+                      />
                     ) : (
-                      <Copy className='w-4 h-4' />
+                      <Copy className={isMobile ? 'w-5 h-5' : 'w-4 h-4'} />
                     )}
                   </button>
                 </div>
@@ -703,6 +762,7 @@ export default function TimestampConverter() {
                 <input
                   id='manual-year'
                   type='number'
+                  inputMode='numeric'
                   min='1970'
                   max='3000'
                   value={manualDate.year}
@@ -717,13 +777,18 @@ export default function TimestampConverter() {
                       updateManualDate('year', Math.max(1970, Math.min(3000, numValue)));
                     }
                   }}
-                  className={`w-full p-2 text-sm border rounded bg-background text-foreground border-input focus:border-ring focus:ring-2 focus:ring-ring/20 ${manualDateValidation?.severity === 'error' ? 'border-red-500' : ''}
+                  className={`w-full border rounded bg-background text-foreground border-input focus:border-ring focus:ring-2 focus:ring-ring/20 touch-manipulation ${
+                    isMobile
+                      ? 'p-3 text-base min-h-[44px]' // Mobile optimizations
+                      : 'p-2 text-sm'
+                  } ${manualDateValidation?.severity === 'error' ? 'border-red-500' : ''}
                   ${manualDateValidation?.severity === 'info' ? 'border-green-500' : ''}`}
                   aria-invalid={
                     manualDateValidation?.severity === 'error' ||
                     manualDateValidation?.severity === 'warning'
                   }
                   aria-describedby={manualDateValidation ? 'manual-date-validation' : undefined}
+                  autoComplete='off'
                 />
               </div>
               <div>
@@ -736,6 +801,7 @@ export default function TimestampConverter() {
                 <input
                   id='manual-month'
                   type='number'
+                  inputMode='numeric'
                   min='1'
                   max='12'
                   value={manualDate.month}
@@ -750,12 +816,17 @@ export default function TimestampConverter() {
                       updateManualDate('month', Math.max(1, Math.min(12, numValue)));
                     }
                   }}
-                  className='w-full p-2 text-sm border rounded bg-background text-foreground border-input focus:border-ring focus:ring-2 focus:ring-ring/20'
+                  className={`w-full border rounded bg-background text-foreground border-input focus:border-ring focus:ring-2 focus:ring-ring/20 touch-manipulation ${
+                    isMobile
+                      ? 'p-3 text-base min-h-[44px]' // Mobile optimizations
+                      : 'p-2 text-sm'
+                  }`}
                   aria-describedby={manualDateValidation ? 'manual-date-validation' : undefined}
                   aria-invalid={
                     manualDateValidation?.severity === 'error' ||
                     manualDateValidation?.severity === 'warning'
                   }
+                  autoComplete='off'
                 />
               </div>
               <div>
