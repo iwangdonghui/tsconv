@@ -26,7 +26,7 @@ const HealthPage = lazy(() => import('./components/HealthPage'));
 
 function App() {
   // Initialize performance monitoring for the main App component
-  const { markStart, markEnd, measureTime } = usePerformanceMonitoring({
+  usePerformanceMonitoring({
     componentName: 'App',
     trackRenders: true,
     trackEffects: true,

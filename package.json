@@ -14,7 +14,7 @@
     "build": "tsc --noEmit --project tsconfig.build.json && vite build",
     "build:frontend": "tsc && vite build",
     "build:api": "tsc -p api/tsconfig.json",
-    "build:cloudflare": "tsc --noEmit && vite build",
+    "build:cloudflare": "tsc --noEmit --project tsconfig.frontend.json && vite build",
     "deploy:cloudflare": "npm run build:cloudflare && wrangler pages deploy dist",
     "preview:cloudflare": "wrangler pages dev dist",
     "test:migration": "node scripts/test-migration.js",
