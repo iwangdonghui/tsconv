@@ -4,16 +4,16 @@ import { TimezoneConversionRequest, TimezoneConversionResponse, TimezoneInfo } f
 
 // Common timezone mappings
 const TIMEZONE_ALIASES: Record<string, string> = {
-  'EST': 'America/New_York',
-  'PST': 'America/Los_Angeles',
-  'CST': 'America/Chicago',
-  'MST': 'America/Denver',
-  'GMT': 'UTC',
-  'BST': 'Europe/London',
-  'CET': 'Europe/Paris',
-  'JST': 'Asia/Tokyo',
-  'IST': 'Asia/Kolkata',
-  'AEST': 'Australia/Sydney'
+  EST: 'America/New_York',
+  PST: 'America/Los_Angeles',
+  CST: 'America/Chicago',
+  MST: 'America/Denver',
+  GMT: 'UTC',
+  BST: 'Europe/London',
+  CET: 'Europe/Paris',
+  JST: 'Asia/Tokyo',
+  IST: 'Asia/Kolkata',
+  AEST: 'Australia/Sydney',
 };
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -41,11 +41,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     if (req.method === 'GET') {
       const { timestamp, from, to, formats } = req.query;
-      
+
       if (!timestamp || !from || !to) {
         return APIErrorHandler.handleBadRequest(res, 'Missing required parameters', {
           required: ['timestamp', 'from', 'to'],
-          received: { timestamp: !!timestamp, from: !!from, to: !!to }
+          received: { timestamp: !!timestamp, from: !!from, to: !!to },
         });
       }
 
@@ -53,7 +53,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         timestamp: parseInt(timestamp as string),
         fromTimezone: from as string,
         toTimezone: to as string,
-        formats: formats ? (formats as string).split(',') : undefined
+        formats: formats ? (formats as string).split(',') : undefined,
       };
     } else {
       // Validate request body
@@ -68,7 +68,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // Validate conversion request
     const validationResult = validateTimezoneConversionRequest(conversionRequest);
     if (!validationResult.valid) {
-      return APIErrorHandler.handleBadRequest(res, validationResult.message || 'Invalid request', validationResult.details);
+      return APIErrorHandler.handleBadRequest(
+        res,
+        validationResult.message || 'Invalid request',
+        validationResult.details
+      );
     }
 
     // Perform timezone conversion
@@ -76,41 +80,48 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const response: TimezoneConversionResponse = {
       success: true,
-      data: conversionResult
+      data: conversionResult,
     };
 
     APIErrorHandler.sendSuccess(res, response, {
       processingTime: Date.now() - startTime,
       itemCount: 1,
-      cacheHit: false
+      cacheHit: false,
     });
-
   } catch (error) {
     console.error('Timezone conversion error:', error);
     APIErrorHandler.handleServerError(res, error as Error, {
-      endpoint: 'timezone-convert'
+      endpoint: 'timezone-convert',
     });
   }
 }
 
-function validateTimezoneConversionRequest(request: TimezoneConversionRequest): { valid: boolean; message?: string; details?: any } {
+function validateTimezoneConversionRequest(request: TimezoneConversionRequest): {
+  valid: boolean;
+  message?: string;
+  details?: any;
+} {
   if (!request.timestamp) {
     return {
       valid: false,
       message: 'Timestamp is required',
-      details: { field: 'timestamp', type: 'number' }
+      details: { field: 'timestamp', type: 'number' },
     };
   }
 
-  if (typeof request.timestamp !== 'number' || isNaN(request.timestamp) || !isFinite(request.timestamp)) {
+  if (
+    typeof request.timestamp !== 'number' ||
+    isNaN(request.timestamp) ||
+    !isFinite(request.timestamp)
+  ) {
     return {
       valid: false,
       message: 'Timestamp must be a valid number',
-      details: { 
-        field: 'timestamp', 
+      details: {
+        field: 'timestamp',
         received: typeof request.timestamp,
-        value: request.timestamp
-      }
+        value: request.timestamp,
+      },
     };
   }
 
@@ -118,7 +129,7 @@ function validateTimezoneConversionRequest(request: TimezoneConversionRequest): 
     return {
       valid: false,
       message: 'From timezone is required',
-      details: { field: 'fromTimezone', type: 'string' }
+      details: { field: 'fromTimezone', type: 'string' },
     };
   }
 
@@ -126,14 +137,14 @@ function validateTimezoneConversionRequest(request: TimezoneConversionRequest): 
     return {
       valid: false,
       message: 'To timezone is required',
-      details: { field: 'toTimezone', type: 'string' }
+      details: { field: 'toTimezone', type: 'string' },
     };
   }
 
   // Validate timestamp range (reasonable bounds)
   const minTimestamp = -2147483648; // 1901
-  const maxTimestamp = 2147483647;  // 2038
-  
+  const maxTimestamp = 2147483647; // 2038
+
   if (request.timestamp < minTimestamp || request.timestamp > maxTimestamp) {
     return {
       valid: false,
@@ -142,8 +153,8 @@ function validateTimezoneConversionRequest(request: TimezoneConversionRequest): 
         field: 'timestamp',
         minValue: minTimestamp,
         maxValue: maxTimestamp,
-        received: request.timestamp
-      }
+        received: request.timestamp,
+      },
     };
   }
 
@@ -161,13 +172,13 @@ async function performTimezoneConversion(request: TimezoneConversionRequest): Pr
 
   // Calculate the converted timestamp
   const originalDate = new Date(request.timestamp * 1000);
-  
+
   // Create date in source timezone
   const fromDate = new Date(originalDate.toLocaleString('en-US', { timeZone: fromTimezone }));
-  
+
   // Convert to target timezone
   const toDate = new Date(originalDate.toLocaleString('en-US', { timeZone: toTimezone }));
-  
+
   // Calculate offset difference
   const offsetDifference = (toDate.getTime() - fromDate.getTime()) / (1000 * 60); // in minutes
 
@@ -180,7 +191,7 @@ async function performTimezoneConversion(request: TimezoneConversionRequest): Pr
     fromTimezone: fromTimezoneInfo,
     toTimezone: toTimezoneInfo,
     offsetDifference,
-    formats
+    formats,
   };
 }
 
@@ -197,7 +208,7 @@ function normalizeTimezone(timezone: string): string {
 
   // Try to match common patterns
   const upperTimezone = timezone.toUpperCase();
-  
+
   // Handle UTC variations
   if (['UTC', 'GMT', 'Z'].includes(upperTimezone)) {
     return 'UTC';
@@ -217,7 +228,7 @@ function normalizeTimezone(timezone: string): string {
 function getTimezoneInfo(timezone: string, timestamp: number): TimezoneInfo {
   try {
     const date = new Date(timestamp * 1000);
-    
+
     // Get timezone offset
     const tempDate = new Date(date.toLocaleString('en-US', { timeZone: timezone }));
     const utcDate = new Date(date.toLocaleString('en-US', { timeZone: 'UTC' }));
@@ -235,7 +246,7 @@ function getTimezoneInfo(timezone: string, timestamp: number): TimezoneInfo {
       displayName: getTimezoneDisplayName(timezone),
       currentOffset: offset,
       isDST,
-      aliases: getTimezoneAliases(timezone)
+      aliases: getTimezoneAliases(timezone),
     };
   } catch (error) {
     // Fallback for invalid timezones
@@ -243,7 +254,7 @@ function getTimezoneInfo(timezone: string, timestamp: number): TimezoneInfo {
       identifier: timezone,
       displayName: timezone,
       currentOffset: 0,
-      isDST: false
+      isDST: false,
     };
   }
 }
@@ -263,12 +274,12 @@ function getTimezoneDisplayName(timezone: string): string {
     // Try to get a human-readable name
     const formatter = new Intl.DateTimeFormat('en', {
       timeZone: timezone,
-      timeZoneName: 'long'
+      timeZoneName: 'long',
     });
-    
+
     const parts = formatter.formatToParts(new Date());
     const timeZonePart = parts.find(part => part.type === 'timeZoneName');
-    
+
     return timeZonePart?.value || timezone;
   } catch (error) {
     return timezone;
@@ -277,18 +288,22 @@ function getTimezoneDisplayName(timezone: string): string {
 
 function getTimezoneAliases(timezone: string): string[] {
   const aliases: string[] = [];
-  
+
   // Find aliases that map to this timezone
   for (const [alias, target] of Object.entries(TIMEZONE_ALIASES)) {
     if (target === timezone) {
       aliases.push(alias);
     }
   }
-  
+
   return aliases;
 }
 
-function generateFormats(date: Date, timezone: string, requestedFormats?: string[]): Record<string, string> {
+function generateFormats(
+  date: Date,
+  timezone: string,
+  requestedFormats?: string[]
+): Record<string, string> {
   const formats: Record<string, string> = {};
   const defaultFormats = ['iso', 'unix', 'human', 'local'];
   const formatsToGenerate = requestedFormats || defaultFormats;
@@ -311,7 +326,7 @@ function generateFormats(date: Date, timezone: string, requestedFormats?: string
             day: 'numeric',
             hour: '2-digit',
             minute: '2-digit',
-            second: '2-digit'
+            second: '2-digit',
           });
           break;
         case 'local':

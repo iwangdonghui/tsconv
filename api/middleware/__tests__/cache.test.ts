@@ -1,6 +1,12 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { VercelRequest, VercelResponse } from '@vercel/node';
-import { cacheMiddleware, createCacheMiddleware, invalidateCache, warmCache, getCacheStats } from '../cache';
+import {
+  cacheMiddleware,
+  createCacheMiddleware,
+  invalidateCache,
+  warmCache,
+  getCacheStats,
+} from '../cache';
 import { CacheService, CacheStats } from '../../types/api';
 
 // Mock cache service
@@ -11,7 +17,7 @@ const mockCacheService: CacheService = {
   exists: vi.fn(),
   generateKey: vi.fn(),
   clear: vi.fn(),
-  stats: vi.fn()
+  stats: vi.fn(),
 };
 
 // Mock config
@@ -19,21 +25,22 @@ vi.mock('../../config/config', () => ({
   default: {
     caching: {
       enabled: true,
-      defaultTTL: 300000
-    }
+      defaultTTL: 300000,
+    },
   },
-  getCacheTTL: vi.fn(() => 300000)
+  getCacheTTL: vi.fn(() => 300000),
 }));
 
 // Helper to create mock request/response
-const createMockReq = (overrides: Partial<VercelRequest> = {}): VercelRequest => ({
-  method: 'GET',
-  url: '/api/convert',
-  query: { timestamp: '1234567890' },
-  headers: {},
-  body: {},
-  ...overrides
-} as VercelRequest);
+const createMockReq = (overrides: Partial<VercelRequest> = {}): VercelRequest =>
+  ({
+    method: 'GET',
+    url: '/api/convert',
+    query: { timestamp: '1234567890' },
+    headers: {},
+    body: {},
+    ...overrides,
+  }) as VercelRequest;
 
 const createMockRes = (): VercelResponse => {
   const res = {
@@ -41,9 +48,9 @@ const createMockRes = (): VercelResponse => {
     json: vi.fn().mockReturnThis(),
     send: vi.fn().mockReturnThis(),
     status: vi.fn().mockReturnThis(),
-    setHeader: vi.fn().mockReturnThis()
+    setHeader: vi.fn().mockReturnThis(),
   } as unknown as VercelResponse;
-  
+
   return res;
 };
 
@@ -67,7 +74,7 @@ describe('Cache Middleware', () => {
 
       const middleware = cacheMiddleware({
         cacheService: mockCacheService,
-        ttl: 300000
+        ttl: 300000,
       });
 
       await middleware(req, res, next);
@@ -78,8 +85,8 @@ describe('Cache Middleware', () => {
         expect.objectContaining({
           ...cachedData,
           cache: expect.objectContaining({
-            hit: true
-          })
+            hit: true,
+          }),
         })
       );
       expect(res.setHeader).toHaveBeenCalledWith('X-Cache', 'HIT');
@@ -92,14 +99,14 @@ describe('Cache Middleware', () => {
       const req = createMockReq();
       const res = createMockRes();
       const responseData = { success: true, data: { timestamp: 1234567890 } };
-      
+
       const next = vi.fn().mockImplementation(() => {
         res.json(responseData);
       });
 
       const middleware = cacheMiddleware({
         cacheService: mockCacheService,
-        ttl: 300000
+        ttl: 300000,
       });
 
       await middleware(req, res, next);
@@ -116,7 +123,7 @@ describe('Cache Middleware', () => {
       const next = vi.fn();
 
       const middleware = cacheMiddleware({
-        cacheService: mockCacheService
+        cacheService: mockCacheService,
       });
 
       await middleware(req, res, next);
@@ -128,13 +135,13 @@ describe('Cache Middleware', () => {
 
     it('should skip caching when cache-control header is no-cache', async () => {
       const req = createMockReq({
-        headers: { 'cache-control': 'no-cache' }
+        headers: { 'cache-control': 'no-cache' },
       });
       const res = createMockRes();
       const next = vi.fn();
 
       const middleware = cacheMiddleware({
-        cacheService: mockCacheService
+        cacheService: mockCacheService,
       });
 
       await middleware(req, res, next);
@@ -154,15 +161,12 @@ describe('Cache Middleware', () => {
 
       const middleware = cacheMiddleware({
         cacheService: mockCacheService,
-        onCacheHit
+        onCacheHit,
       });
 
       await middleware(req, res, next);
 
-      expect(onCacheHit).toHaveBeenCalledWith(
-        expect.any(String),
-        cachedData
-      );
+      expect(onCacheHit).toHaveBeenCalledWith(expect.any(String), cachedData);
     });
 
     it('should call onCacheMiss callback when cache misses', async () => {
@@ -175,7 +179,7 @@ describe('Cache Middleware', () => {
 
       const middleware = cacheMiddleware({
         cacheService: mockCacheService,
-        onCacheMiss
+        onCacheMiss,
       });
 
       await middleware(req, res, next);
@@ -193,7 +197,7 @@ describe('Cache Middleware', () => {
 
       const middleware = cacheMiddleware({
         cacheService: mockCacheService,
-        keyGenerator: customKeyGenerator
+        keyGenerator: customKeyGenerator,
       });
 
       await middleware(req, res, next);
@@ -210,7 +214,7 @@ describe('Cache Middleware', () => {
       const next = vi.fn();
 
       const middleware = cacheMiddleware({
-        cacheService: mockCacheService
+        cacheService: mockCacheService,
       });
 
       await middleware(req, res, next);
@@ -226,7 +230,7 @@ describe('Cache Middleware', () => {
       const next = vi.fn();
 
       const middleware = await createCacheMiddleware();
-      
+
       // Should not throw
       expect(typeof middleware).toBe('function');
     });
@@ -246,8 +250,9 @@ describe('Cache Middleware', () => {
         const error = new Error('Clear failed');
         (mockCacheService.clear as any).mockRejectedValue(error);
 
-        await expect(invalidateCache(mockCacheService, 'pattern:*'))
-          .rejects.toThrow('Clear failed');
+        await expect(invalidateCache(mockCacheService, 'pattern:*')).rejects.toThrow(
+          'Clear failed'
+        );
       });
     });
 
@@ -257,7 +262,7 @@ describe('Cache Middleware', () => {
 
         const requests = [
           { key: 'key1', data: 'data1', ttl: 1000 },
-          { key: 'key2', data: 'data2' }
+          { key: 'key2', data: 'data2' },
         ];
 
         await warmCache(mockCacheService, requests);
@@ -273,8 +278,7 @@ describe('Cache Middleware', () => {
 
         const requests = [{ key: 'key1', data: 'data1' }];
 
-        await expect(warmCache(mockCacheService, requests))
-          .rejects.toThrow('Set failed');
+        await expect(warmCache(mockCacheService, requests)).rejects.toThrow('Set failed');
       });
     });
 
@@ -284,7 +288,7 @@ describe('Cache Middleware', () => {
           hits: 100,
           misses: 20,
           size: 50,
-          keys: ['key1', 'key2']
+          keys: ['key1', 'key2'],
         };
         (mockCacheService.stats as any).mockResolvedValue(stats);
 
@@ -303,7 +307,7 @@ describe('Cache Middleware', () => {
           hits: 0,
           misses: 0,
           size: 0,
-          keys: []
+          keys: [],
         });
       });
     });

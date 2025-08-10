@@ -20,11 +20,13 @@ export function createRedisClient(purpose: 'cache' | 'rate-limit' | 'general' = 
     url: process.env.UPSTASH_REDIS_REST_URL || config.caching?.redis?.url,
     token: process.env.UPSTASH_REDIS_REST_TOKEN || config.caching?.redis?.password,
     maxRetries: 3,
-    retryDelayOnFailure: 1000
+    retryDelayOnFailure: 1000,
   };
 
   if (!options.url || !options.token) {
-    throw new Error(`Redis configuration missing for ${purpose}. Please set UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN environment variables.`);
+    throw new Error(
+      `Redis configuration missing for ${purpose}. Please set UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN environment variables.`
+    );
   }
 
   return new Redis({
@@ -32,8 +34,8 @@ export function createRedisClient(purpose: 'cache' | 'rate-limit' | 'general' = 
     token: options.token,
     retry: {
       retries: options.maxRetries || 3,
-      backoff: (retryCount) => Math.min(1000 * Math.pow(2, retryCount), 10000)
-    }
+      backoff: retryCount => Math.min(1000 * Math.pow(2, retryCount), 10000),
+    },
   });
 }
 
@@ -50,8 +52,8 @@ export function createRedisClientWithConfig(config: RedisClientOptions): Redis {
     token: config.token,
     retry: {
       retries: config.maxRetries || 3,
-      backoff: (retryCount) => Math.min(1000 * Math.pow(2, retryCount), 10000)
-    }
+      backoff: retryCount => Math.min(1000 * Math.pow(2, retryCount), 10000),
+    },
   });
 }
 

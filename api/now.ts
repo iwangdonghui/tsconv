@@ -26,7 +26,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(405).json({
       success: false,
       error: 'Method not allowed',
-      message: 'Only GET method is allowed'
+      message: 'Only GET method is allowed',
     });
   }
 
@@ -53,7 +53,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         hour: '2-digit',
         minute: '2-digit',
         second: '2-digit',
-        timeZoneName: 'short'
+        timeZoneName: 'short',
       });
 
       // Get timezone offset
@@ -68,7 +68,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         offset: offsetMinutes,
         offsetHours,
         offsetString: `UTC${offsetString}`,
-        localTime
+        localTime,
       };
     } catch (error) {
       localTime = now.toLocaleString();
@@ -78,7 +78,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         offsetHours: 0,
         offsetString: 'UTC+0.00',
         localTime: now.toISOString(),
-        error: 'Invalid timezone'
+        error: 'Invalid timezone',
       };
     }
 
@@ -93,10 +93,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         weekday: 'long',
         year: 'numeric',
         month: 'long',
-        day: 'numeric'
+        day: 'numeric',
       }),
       time24: now.toLocaleTimeString('en-US', { hour12: false }),
-      time12: now.toLocaleTimeString('en-US', { hour12: true })
+      time12: now.toLocaleTimeString('en-US', { hour12: true }),
     };
 
     // If specific format requested, return just that
@@ -104,14 +104,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(200).json({
         success: true,
         data: {
-          format: format,
+          format,
           value: formats[format as keyof typeof formats],
-          timestamp
+          timestamp,
         },
         metadata: {
           processingTime: Date.now() - startTime,
-          timestamp: Math.floor(Date.now() / 1000)
-        }
+          timestamp: Math.floor(Date.now() / 1000),
+        },
       });
     }
 
@@ -123,25 +123,22 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           timestamp,
           timestampMs,
           date: now.toISOString(),
-          formats
+          formats,
         },
         timezone: timezoneInfo,
         metadata: {
           processingTime: Date.now() - startTime,
           timestamp: Math.floor(Date.now() / 1000),
-          requestedTimezone: tz
-        }
-      }
+          requestedTimezone: tz,
+        },
+      },
     });
-
   } catch (error) {
     console.error('Now API error:', error);
     return res.status(500).json({
       success: false,
       error: 'Internal Server Error',
-      message: error instanceof Error ? error.message : 'Unknown error occurred'
+      message: error instanceof Error ? error.message : 'Unknown error occurred',
     });
   }
 }
-
-

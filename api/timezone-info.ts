@@ -2,12 +2,12 @@ import { VercelRequest, VercelResponse } from '@vercel/node';
 
 /**
  * Timezone Info API Endpoint
- * 
+ *
  * Get detailed information about a specific timezone
- * 
+ *
  * GET /api/timezone-info?timezone=America/New_York
  * GET /api/timezone-info?timezone=America/New_York&timestamp=1640995200
- * 
+ *
  * Query Parameters:
  * - timezone: IANA timezone identifier (required)
  * - timestamp: Unix timestamp for specific time info (optional, defaults to current time)
@@ -29,7 +29,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(405).json({
       success: false,
       error: 'Method not allowed',
-      message: 'Only GET method is allowed'
+      message: 'Only GET method is allowed',
     });
   }
 
@@ -43,7 +43,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         success: false,
         error: 'Bad Request',
         message: 'timezone parameter is required',
-        required: ['timezone']
+        required: ['timezone'],
       });
     }
 
@@ -56,7 +56,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(400).json({
         success: false,
         error: 'Bad Request',
-        message: 'timestamp must be a valid number'
+        message: 'timestamp must be a valid number',
       });
     }
 
@@ -68,16 +68,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       data: result,
       metadata: {
         processingTime: Date.now() - startTime,
-        timestamp: Math.floor(Date.now() / 1000)
-      }
+        timestamp: Math.floor(Date.now() / 1000),
+      },
     });
-
   } catch (error) {
     console.error('Timezone info error:', error);
     return res.status(500).json({
       success: false,
       error: 'Internal Server Error',
-      message: error instanceof Error ? error.message : 'Unknown error occurred'
+      message: error instanceof Error ? error.message : 'Unknown error occurred',
     });
   }
 }
@@ -85,16 +84,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 function getTimezoneInfo(timezone: string, timestamp: number, includeHistory: boolean) {
   try {
     const date = new Date(timestamp * 1000);
-    
+
     // Get basic timezone information
     const formatter = new Intl.DateTimeFormat('en', {
       timeZone: timezone,
-      timeZoneName: 'long'
+      timeZoneName: 'long',
     });
-    
+
     const parts = formatter.formatToParts(date);
     const timeZoneName = parts.find(part => part.type === 'timeZoneName')?.value || timezone;
-    
+
     // Get current time in timezone
     const currentTime = date.toLocaleString('en-US', {
       timeZone: timezone,
@@ -105,7 +104,7 @@ function getTimezoneInfo(timezone: string, timestamp: number, includeHistory: bo
       hour: '2-digit',
       minute: '2-digit',
       second: '2-digit',
-      timeZoneName: 'short'
+      timeZoneName: 'short',
     });
 
     // Get offset information
@@ -113,10 +112,10 @@ function getTimezoneInfo(timezone: string, timestamp: number, includeHistory: bo
     const offsetHours = Math.floor(Math.abs(offset) / 60);
     const offsetMinutes = Math.abs(offset) % 60;
     const offsetString = `${offset >= 0 ? '+' : '-'}${offsetHours.toString().padStart(2, '0')}:${offsetMinutes.toString().padStart(2, '0')}`;
-    
+
     // Check if DST is in effect
     const isDST = isDaylightSavingTime(timezone, date);
-    
+
     // Get abbreviation
     const abbreviation = getTimezoneAbbreviation(timezone, date);
 
@@ -129,17 +128,17 @@ function getTimezoneInfo(timezone: string, timestamp: number, includeHistory: bo
           minutes: offset,
           hours: offset / 60,
           string: offsetString,
-          utc: `UTC${offsetString}`
-        }
+          utc: `UTC${offsetString}`,
+        },
       },
       current: {
         timestamp,
         utc: date.toISOString(),
         local: currentTime,
         isDST,
-        dstOffset: isDST ? getDSTOffset(timezone, date) : 0
+        dstOffset: isDST ? getDSTOffset(timezone, date) : 0,
       },
-      location: getTimezoneLocation(timezone)
+      location: getTimezoneLocation(timezone),
     };
 
     // Add DST transition history if requested
@@ -149,7 +148,9 @@ function getTimezoneInfo(timezone: string, timestamp: number, includeHistory: bo
 
     return result;
   } catch (error) {
-    throw new Error(`Failed to get timezone info: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    throw new Error(
+      `Failed to get timezone info: ${error instanceof Error ? error.message : 'Unknown error'}`
+    );
   }
 }
 
@@ -168,7 +169,7 @@ function isDaylightSavingTime(timezone: string, date: Date): boolean {
     const januaryOffset = getTimezoneOffset(timezone, new Date(date.getFullYear(), 0, 1));
     const julyOffset = getTimezoneOffset(timezone, new Date(date.getFullYear(), 6, 1));
     const currentOffset = getTimezoneOffset(timezone, date);
-    
+
     const standardOffset = Math.min(januaryOffset, julyOffset);
     return currentOffset !== standardOffset;
   } catch (error) {
@@ -180,9 +181,9 @@ function getTimezoneAbbreviation(timezone: string, date: Date): string {
   try {
     const formatter = new Intl.DateTimeFormat('en', {
       timeZone: timezone,
-      timeZoneName: 'short'
+      timeZoneName: 'short',
     });
-    
+
     const parts = formatter.formatToParts(date);
     return parts.find(part => part.type === 'timeZoneName')?.value || timezone;
   } catch (error) {
@@ -195,7 +196,7 @@ function getDSTOffset(timezone: string, date: Date): number {
     const januaryOffset = getTimezoneOffset(timezone, new Date(date.getFullYear(), 0, 1));
     const julyOffset = getTimezoneOffset(timezone, new Date(date.getFullYear(), 6, 1));
     const currentOffset = getTimezoneOffset(timezone, date);
-    
+
     const standardOffset = Math.min(januaryOffset, julyOffset);
     return currentOffset - standardOffset;
   } catch (error) {
@@ -209,13 +210,13 @@ function getTimezoneLocation(timezone: string) {
     return {
       continent: parts[0],
       city: parts[1].replace(/_/g, ' '),
-      region: parts.length > 2 ? parts[2].replace(/_/g, ' ') : null
+      region: parts.length > 2 ? parts[2].replace(/_/g, ' ') : null,
     };
   }
   return {
     continent: null,
     city: timezone,
-    region: null
+    region: null,
   };
 }
 
@@ -224,24 +225,24 @@ function getDSTTransitions(timezone: string, year: number) {
   // In a real application, you would use a proper timezone database
   try {
     const transitions: any[] = [];
-    
+
     // Check each month for DST transitions
     for (let month = 0; month < 12; month++) {
       const firstDay = new Date(year, month, 1);
       const lastDay = new Date(year, month + 1, 0);
-      
+
       const firstOffset = getTimezoneOffset(timezone, firstDay);
       const lastOffset = getTimezoneOffset(timezone, lastDay);
-      
+
       if (firstOffset !== lastOffset) {
         transitions.push({
           month: month + 1,
           type: lastOffset > firstOffset ? 'spring_forward' : 'fall_back',
-          offsetChange: lastOffset - firstOffset
+          offsetChange: lastOffset - firstOffset,
         });
       }
     }
-    
+
     return transitions;
   } catch (error) {
     return [];

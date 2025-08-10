@@ -27,16 +27,19 @@ export class RateLimiterFactory {
 
     // Determine rate limiter provider based on environment
     const rateLimiterProvider = this.determineRateLimiterProvider();
-    
+
     try {
       this.instance = this.createRateLimiterService(rateLimiterProvider);
       console.log(`✅ Rate limiter service initialized: ${rateLimiterProvider}`);
       return this.instance;
     } catch (error) {
-      console.warn(`⚠️ Failed to initialize ${rateLimiterProvider} rate limiter, falling back to memory rate limiter:`, error);
+      console.warn(
+        `⚠️ Failed to initialize ${rateLimiterProvider} rate limiter, falling back to memory rate limiter:`,
+        error
+      );
       this.instance = new MemoryRateLimiter({
         windowMs: 60000, // 1 minute
-        maxRequests: 100
+        maxRequests: 100,
       });
       return this.instance;
     }
@@ -67,10 +70,10 @@ export class RateLimiterFactory {
     switch (provider) {
       case 'upstash':
         return this.createUpstashRateLimiter();
-      
+
       case 'redis':
         return this.createRedisRateLimiter();
-      
+
       case 'memory':
       default:
         return this.createMemoryRateLimiter();
@@ -111,7 +114,7 @@ export class RateLimiterFactory {
   private static createMemoryRateLimiter(): RateLimiter {
     return new MemoryRateLimiter({
       windowMs: 60000, // 1 minute
-      maxRequests: 100
+      maxRequests: 100,
     });
   }
 
@@ -160,7 +163,10 @@ export class RateLimiterFactory {
     }
 
     // Validate default limits
-    if (!config.rateLimiting.defaultLimits.anonymous || !config.rateLimiting.defaultLimits.authenticated) {
+    if (
+      !config.rateLimiting.defaultLimits.anonymous ||
+      !config.rateLimiting.defaultLimits.authenticated
+    ) {
       issues.push('Default rate limits not properly configured');
     }
 
@@ -190,7 +196,7 @@ export class RateLimiterFactory {
     return {
       valid: issues.length === 0,
       provider,
-      issues
+      issues,
     };
   }
 
@@ -218,18 +224,18 @@ export class RateLimiterFactory {
       defaultLimits: {
         anonymous: {
           limit: config.rateLimiting.defaultLimits.anonymous.limit,
-          window: config.rateLimiting.defaultLimits.anonymous.window
+          window: config.rateLimiting.defaultLimits.anonymous.window,
         },
         authenticated: {
           limit: config.rateLimiting.defaultLimits.authenticated.limit,
-          window: config.rateLimiting.defaultLimits.authenticated.window
-        }
+          window: config.rateLimiting.defaultLimits.authenticated.window,
+        },
       },
       redisConfig: {
         url: config.caching.redis.url ? '[CONFIGURED]' : undefined,
         useUpstash: config.caching.redis.useUpstash ?? false,
-        fallbackToMemory: config.caching.redis.fallbackToMemory ?? false
-      }
+        fallbackToMemory: config.caching.redis.fallbackToMemory ?? false,
+      },
     };
   }
 
@@ -250,7 +256,7 @@ export class RateLimiterFactory {
     try {
       const result = await rateLimiter.checkLimit(testIdentifier, testRule);
       const responseTime = Date.now() - startTime;
-      
+
       let status: 'healthy' | 'degraded' | 'unhealthy' = 'healthy';
       if (responseTime > 200) {
         status = 'unhealthy';
@@ -265,8 +271,8 @@ export class RateLimiterFactory {
         details: {
           testResult: result,
           rules: config.rateLimiting.rules.length,
-          enabled: config.rateLimiting.enabled
-        }
+          enabled: config.rateLimiting.enabled,
+        },
       };
     } catch (error) {
       return {
@@ -276,8 +282,8 @@ export class RateLimiterFactory {
         details: {
           error: error instanceof Error ? error.message : 'Unknown error',
           rules: config.rateLimiting.rules.length,
-          enabled: config.rateLimiting.enabled
-        }
+          enabled: config.rateLimiting.enabled,
+        },
       };
     }
   }
@@ -293,7 +299,7 @@ class DisabledRateLimiter implements RateLimiter {
       allowed: true,
       remaining: Infinity,
       resetTime: Date.now() + 60000,
-      totalLimit: Infinity
+      totalLimit: Infinity,
     };
   }
 
@@ -302,7 +308,7 @@ class DisabledRateLimiter implements RateLimiter {
       allowed: true,
       remaining: Infinity,
       resetTime: Date.now() + 60000,
-      totalLimit: Infinity
+      totalLimit: Infinity,
     };
   }
 
@@ -316,7 +322,7 @@ class DisabledRateLimiter implements RateLimiter {
       currentCount: 0,
       limit: Infinity,
       window: 60000,
-      resetTime: Date.now() + 60000
+      resetTime: Date.now() + 60000,
     };
   }
 }
@@ -344,13 +350,13 @@ export async function getRateLimiterHealth(): Promise<{
       status: healthResult.status,
       provider: healthResult.provider,
       responseTime: healthResult.responseTime,
-      details: healthResult.details
+      details: healthResult.details,
     };
   } catch (error) {
     return {
       status: 'unhealthy',
       provider: RateLimiterFactory.getConfigurationSummary().provider,
-      error: error instanceof Error ? error.message : 'Unknown error'
+      error: error instanceof Error ? error.message : 'Unknown error',
     };
   }
 }
@@ -379,23 +385,24 @@ export function getClientIdentifier(req: any): string {
   }
 
   // Fallback to IP address
-  const ip = req.headers['x-forwarded-for'] || 
-            req.headers['x-real-ip'] || 
-            req.connection?.remoteAddress || 
-            req.socket?.remoteAddress ||
-            'unknown';
-  
+  const ip =
+    req.headers['x-forwarded-for'] ||
+    req.headers['x-real-ip'] ||
+    req.connection?.remoteAddress ||
+    req.socket?.remoteAddress ||
+    'unknown';
+
   return `ip:${ip.toString().split(',')[0].trim()}`;
 }
 
 export function getRateLimitRule(req: any): import('../types/api').RateLimitRule {
   const authHeader = req.headers.authorization;
   const apiKey = req.headers['x-api-key'];
-  
+
   if (authHeader || apiKey) {
     return config.rateLimiting.defaultLimits.authenticated;
   }
-  
+
   return config.rateLimiting.defaultLimits.anonymous;
 }
 
@@ -415,21 +422,23 @@ export async function applyRateLimit(
   const limitRule = rule || getRateLimitRule(req);
 
   const result = await rateLimiter.increment(clientId, limitRule);
-  
+
   return {
     allowed: result.allowed,
-    result
+    result,
   };
 }
 
 /**
  * Creates rate limit headers for HTTP responses
  */
-export function createRateLimitHeaders(result: import('../types/api').RateLimitResult): Record<string, string> {
+export function createRateLimitHeaders(
+  result: import('../types/api').RateLimitResult
+): Record<string, string> {
   return {
     'X-RateLimit-Limit': result.totalLimit.toString(),
     'X-RateLimit-Remaining': result.remaining.toString(),
     'X-RateLimit-Reset': Math.ceil(result.resetTime / 1000).toString(),
-    'X-RateLimit-Window': Math.ceil((result.resetTime - Date.now()) / 1000).toString()
+    'X-RateLimit-Window': Math.ceil((result.resetTime - Date.now()) / 1000).toString(),
   };
 }

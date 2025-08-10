@@ -16,10 +16,10 @@ class UpstashRateLimiter implements RateLimiter {
       url: process.env.UPSTASH_REDIS_REST_URL || config.caching.redis.url,
       token: process.env.UPSTASH_REDIS_REST_TOKEN || config.caching.redis.password,
     });
-    
+
     // Initialize fallback memory rate limiter
     this.fallbackLimiter = new MemoryRateLimiter();
-    
+
     // Test connection on initialization
     this.testConnection();
   }
@@ -33,8 +33,11 @@ class UpstashRateLimiter implements RateLimiter {
     } catch (error) {
       this.connectionAttempts++;
       this.isConnected = false;
-      console.warn(`⚠️ Upstash Redis rate limiter connection failed (attempt ${this.connectionAttempts}):`, error);
-      
+      console.warn(
+        `⚠️ Upstash Redis rate limiter connection failed (attempt ${this.connectionAttempts}):`,
+        error
+      );
+
       // Retry connection with exponential backoff
       if (this.connectionAttempts < this.maxConnectionAttempts) {
         const delay = Math.pow(2, this.connectionAttempts) * 1000; // 2s, 4s, 8s
@@ -55,7 +58,7 @@ class UpstashRateLimiter implements RateLimiter {
       this.isConnected = false;
       this.testConnection(); // Attempt to reconnect
     }
-    
+
     // Fallback to memory rate limiter
     return this.fallbackLimiter.checkLimit(identifier, rule);
   }
@@ -70,7 +73,7 @@ class UpstashRateLimiter implements RateLimiter {
       this.isConnected = false;
       this.testConnection(); // Attempt to reconnect
     }
-    
+
     // Fallback to memory rate limiter
     return this.fallbackLimiter.increment(identifier, rule);
   }
@@ -83,18 +86,18 @@ class UpstashRateLimiter implements RateLimiter {
 
     // Use sliding window with sorted sets
     const pipeline = this.redis.pipeline();
-    
+
     // Remove expired entries
     pipeline.zremrangebyscore(key, 0, windowStart - 1);
-    
+
     // Count current entries
     pipeline.zcard(key);
-    
+
     // Set expiration for the key
     pipeline.expire(key, Math.ceil(rule.window / 1000));
-    
+
     const results = await pipeline.exec();
-    
+
     if (!results || results.length < 2) {
       throw new Error('Invalid pipeline results');
     }
@@ -107,7 +110,7 @@ class UpstashRateLimiter implements RateLimiter {
       allowed,
       remaining,
       resetTime: nextResetTime,
-      totalLimit: rule.limit
+      totalLimit: rule.limit,
     };
   }
 
@@ -119,21 +122,21 @@ class UpstashRateLimiter implements RateLimiter {
 
     // Use sliding window with sorted sets
     const pipeline = this.redis.pipeline();
-    
+
     // Remove expired entries
     pipeline.zremrangebyscore(key, 0, windowStart - 1);
-    
+
     // Add current request
     pipeline.zadd(key, { score: now, member: `${now}-${Math.random()}` });
-    
+
     // Count current entries
     pipeline.zcard(key);
-    
+
     // Set expiration for the key
     pipeline.expire(key, Math.ceil(rule.window / 1000));
-    
+
     const results = await pipeline.exec();
-    
+
     if (!results || results.length < 3) {
       throw new Error('Invalid pipeline results');
     }
@@ -146,7 +149,7 @@ class UpstashRateLimiter implements RateLimiter {
       allowed,
       remaining,
       resetTime: nextResetTime,
-      totalLimit: rule.limit
+      totalLimit: rule.limit,
     };
   }
 
@@ -162,7 +165,7 @@ class UpstashRateLimiter implements RateLimiter {
       this.isConnected = false;
       this.testConnection(); // Attempt to reconnect
     }
-    
+
     // Fallback to memory rate limiter
     return this.fallbackLimiter.reset(identifier, rule);
   }
@@ -180,7 +183,7 @@ class UpstashRateLimiter implements RateLimiter {
         const pipeline = this.redis.pipeline();
         pipeline.zremrangebyscore(key, 0, windowStart - 1);
         pipeline.zcard(key);
-        
+
         const results = await pipeline.exec();
         const currentCount = (results?.[1] as any)?.[1] || 0;
 
@@ -189,7 +192,7 @@ class UpstashRateLimiter implements RateLimiter {
           currentCount,
           limit: rule.limit,
           window: rule.window,
-          resetTime: nextResetTime
+          resetTime: nextResetTime,
         };
       }
     } catch (error) {
@@ -197,7 +200,7 @@ class UpstashRateLimiter implements RateLimiter {
       this.isConnected = false;
       this.testConnection(); // Attempt to reconnect
     }
-    
+
     // Fallback to memory rate limiter
     return this.fallbackLimiter.getStats(identifier);
   }
@@ -227,7 +230,7 @@ class UpstashRateLimiter implements RateLimiter {
     try {
       if (this.isConnected) {
         const pingResult = await this.redis.ping();
-        
+
         return {
           status: 'healthy',
           type: 'upstash-redis-rate-limiter',
@@ -235,8 +238,8 @@ class UpstashRateLimiter implements RateLimiter {
             connection: 'active',
             ping: pingResult,
             fallbackAvailable: true,
-            connectionAttempts: this.connectionAttempts
-          }
+            connectionAttempts: this.connectionAttempts,
+          },
         };
       } else {
         return {
@@ -246,22 +249,22 @@ class UpstashRateLimiter implements RateLimiter {
             redisStatus: 'disconnected',
             connectionAttempts: this.connectionAttempts,
             fallbackReason: 'Redis connection failed',
-            fallbackActive: true
-          }
+            fallbackActive: true,
+          },
         };
       }
     } catch (error) {
       this.isConnected = false;
       this.testConnection(); // Attempt to reconnect
-      
+
       return {
         status: 'unhealthy',
         type: 'upstash-redis-rate-limiter',
         details: {
           error: error instanceof Error ? error.message : 'Unknown error',
           connectionAttempts: this.connectionAttempts,
-          fallbackAvailable: true
-        }
+          fallbackAvailable: true,
+        },
       };
     }
   }
@@ -272,58 +275,54 @@ class UpstashRateLimiter implements RateLimiter {
   ): Promise<RateLimitResult[]> {
     if (!this.isConnected || requests.length === 0) {
       // Fallback to individual checks
-      return Promise.all(
-        requests.map(({ identifier, rule }) => this.checkLimit(identifier, rule))
-      );
+      return Promise.all(requests.map(({ identifier, rule }) => this.checkLimit(identifier, rule)));
     }
 
     try {
       const pipeline = this.redis.pipeline();
       const now = Date.now();
-      
+
       // Build pipeline for all requests
       for (const { identifier, rule } of requests) {
         const key = this.getRedisKey(identifier, rule);
         const windowStart = Math.floor(now / rule.window) * rule.window;
-        
+
         pipeline.zremrangebyscore(key, 0, windowStart - 1);
         pipeline.zcard(key);
         pipeline.expire(key, Math.ceil(rule.window / 1000));
       }
-      
+
       const results = await pipeline.exec();
-      
+
       // Process results
       const rateLimitResults: RateLimitResult[] = [];
-      
+
       for (let i = 0; i < requests.length; i++) {
         const { rule } = requests[i];
         const resultIndex = i * 3 + 1; // Each request has 3 operations, we want the zcard result
         const currentCount = (results?.[resultIndex] as any)?.[1] || 0;
-        
+
         const windowStart = Math.floor(now / rule.window) * rule.window;
         const nextResetTime = windowStart + rule.window;
         const remaining = Math.max(0, rule.limit - currentCount);
         const allowed = currentCount < rule.limit;
-        
+
         rateLimitResults.push({
           allowed,
           remaining,
           resetTime: nextResetTime,
-          totalLimit: rule.limit
+          totalLimit: rule.limit,
         });
       }
-      
+
       return rateLimitResults;
     } catch (error) {
       console.warn('Redis batch rate limit check error, falling back to individual checks:', error);
       this.isConnected = false;
       this.testConnection();
-      
+
       // Fallback to individual checks
-      return Promise.all(
-        requests.map(({ identifier, rule }) => this.checkLimit(identifier, rule))
-      );
+      return Promise.all(requests.map(({ identifier, rule }) => this.checkLimit(identifier, rule)));
     }
   }
 
@@ -334,24 +333,25 @@ class UpstashRateLimiter implements RateLimiter {
         // Find and clean up expired rate limit keys
         const pattern = 'rate_limit:*';
         const keys = await this.scanKeys(pattern);
-        
+
         if (keys.length > 0) {
           const now = Date.now();
           const pipeline = this.redis.pipeline();
-          
+
           for (const key of keys) {
             // Extract window start from key and check if expired
             const parts = key.split(':');
             if (parts.length >= 4) {
               const windowStart = parseInt(parts[3]!);
               const windowSize = 60000; // Default 1 minute, should be configurable
-              
-              if (now > windowStart + windowSize * 2) { // Clean up keys older than 2 windows
+
+              if (now > windowStart + windowSize * 2) {
+                // Clean up keys older than 2 windows
                 pipeline.del(key);
               }
             }
           }
-          
+
           await pipeline.exec();
         }
       }
@@ -363,13 +363,13 @@ class UpstashRateLimiter implements RateLimiter {
   private async scanKeys(pattern: string): Promise<string[]> {
     const keys: string[] = [];
     let cursor = 0;
-    
+
     do {
       const result = await this.redis.scan(cursor, { match: pattern, count: 100 });
       cursor = parseInt(result[0] as string, 10);
       keys.push(...result[1]);
     } while (cursor !== 0);
-    
+
     return keys;
   }
 }
@@ -386,7 +386,7 @@ class MemoryRateLimiter implements RateLimiter {
     const nextResetTime = rateLimitWindowStart + rule.window;
 
     const entry = this.storage.get(key);
-    
+
     let currentCount = 0;
     if (entry && entry.resetTime === rateLimitWindowStart) {
       currentCount = entry.count;
@@ -399,7 +399,7 @@ class MemoryRateLimiter implements RateLimiter {
       allowed,
       remaining,
       resetTime: nextResetTime,
-      totalLimit: rule.limit
+      totalLimit: rule.limit,
     };
   }
 
@@ -410,7 +410,7 @@ class MemoryRateLimiter implements RateLimiter {
     const nextResetTime = rateLimitWindowStart + rule.window;
 
     let entry = this.storage.get(key);
-    
+
     if (!entry || entry.resetTime !== rateLimitWindowStart) {
       entry = { count: 0, resetTime: rateLimitWindowStart };
       this.storage.set(key, entry);
@@ -427,14 +427,14 @@ class MemoryRateLimiter implements RateLimiter {
       currentCount: entry.count,
       limit: rule.limit,
       window: rule.window,
-      resetTime: nextResetTime
+      resetTime: nextResetTime,
     });
 
     return {
       allowed,
       remaining,
       resetTime: nextResetTime,
-      totalLimit: rule.limit
+      totalLimit: rule.limit,
     };
   }
 
@@ -453,7 +453,7 @@ class MemoryRateLimiter implements RateLimiter {
       currentCount: 0,
       limit: 0,
       window: 0,
-      resetTime: Date.now()
+      resetTime: Date.now(),
     };
   }
 
@@ -467,7 +467,7 @@ class MemoryRateLimiter implements RateLimiter {
     const keysToDelete: string[] = [];
 
     const entries = Array.from(this.storage.entries());
-    
+
     for (const [key, entry] of entries) {
       if (now > entry.resetTime + entry.resetTime) {
         keysToDelete.push(key);

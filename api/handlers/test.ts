@@ -47,11 +47,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     if (req.method === 'GET') {
       // Default test suite for GET requests
-      const testParam = req.query.test as string || 'all';
+      const testParam = (req.query.test as string) || 'all';
       const validTests = ['health', 'conversion', 'cache', 'ratelimit', 'all'];
       testRequest = {
-        test: validTests.includes(testParam) ? testParam as 'health' | 'conversion' | 'cache' | 'ratelimit' | 'all' : 'all',
-        parameters: req.query
+        test: validTests.includes(testParam)
+          ? (testParam as 'health' | 'conversion' | 'cache' | 'ratelimit' | 'all')
+          : 'all',
+        parameters: req.query,
       };
     } else {
       // Parse POST body
@@ -59,17 +61,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     const testSuite = await runTestSuite(testRequest);
-    
+
     APIErrorHandler.sendSuccess(res, testSuite, {
       processingTime: Date.now() - startTime,
       itemCount: testSuite.totalTests,
-      cacheHit: false
+      cacheHit: false,
     });
-
   } catch (error) {
     console.error('Test handler error:', error);
     APIErrorHandler.handleServerError(res, error as Error, {
-      endpoint: 'test'
+      endpoint: 'test',
     });
   }
 }
@@ -78,9 +79,8 @@ async function runTestSuite(request: TestRequest): Promise<TestSuite> {
   const startTime = Date.now();
   const results: TestResult[] = [];
 
-  const testsToRun = request.test === 'all' 
-    ? ['health', 'conversion', 'cache', 'ratelimit']
-    : [request.test];
+  const testsToRun =
+    request.test === 'all' ? ['health', 'conversion', 'cache', 'ratelimit'] : [request.test];
 
   for (const testName of testsToRun) {
     const result = await runSingleTest(testName, request.parameters);
@@ -96,11 +96,14 @@ async function runTestSuite(request: TestRequest): Promise<TestSuite> {
     passedTests,
     failedTests,
     totalTime: Date.now() - startTime,
-    results
+    results,
   };
 }
 
-async function runSingleTest(testName: string, parameters?: Record<string, any>): Promise<TestResult> {
+async function runSingleTest(
+  testName: string,
+  parameters?: Record<string, any>
+): Promise<TestResult> {
   const startTime = Date.now();
 
   try {
@@ -115,9 +118,9 @@ async function runSingleTest(testName: string, parameters?: Record<string, any>)
 
       case 'conversion':
         result = await testConversionEndpoint(parameters);
-        details = { 
+        details = {
           endpoint: '/api/convert',
-          testTimestamp: parameters?.timestamp || Date.now()
+          testTimestamp: parameters?.timestamp || Date.now(),
         };
         break;
 
@@ -140,16 +143,15 @@ async function runSingleTest(testName: string, parameters?: Record<string, any>)
       success: true,
       responseTime: Date.now() - startTime,
       result,
-      details
+      details,
     };
-
   } catch (error) {
     return {
       test: testName,
       success: false,
       responseTime: Date.now() - startTime,
       error: (error as Error).message,
-      details: { error: (error as Error).stack }
+      details: { error: (error as Error).stack },
     };
   }
 }
@@ -160,7 +162,7 @@ async function testHealthEndpoint(): Promise<any> {
     api: true,
     cache: await testCacheConnection(),
     ratelimit: await testRateLimitConnection(),
-    conversion: true
+    conversion: true,
   };
 
   const allHealthy = Object.values(services).every(status => status === true);
@@ -168,16 +170,16 @@ async function testHealthEndpoint(): Promise<any> {
   return {
     status: allHealthy ? 'healthy' : 'degraded',
     services,
-    timestamp: Date.now()
+    timestamp: Date.now(),
   };
 }
 
 async function testConversionEndpoint(parameters?: Record<string, any>): Promise<any> {
   const testTimestamp = parameters?.timestamp || Date.now();
-  
+
   // Import conversion utilities
   const { convertTimestamp } = await import('../utils/conversion-utils');
-  
+
   const result = await convertTimestamp(
     testTimestamp,
     ['iso', 'unix', 'human'],
@@ -200,8 +202,8 @@ async function testConversionEndpoint(parameters?: Record<string, any>): Promise
       hasIsoFormat: !!result.formats.iso,
       hasUnixFormat: !!result.formats.unix,
       hasHumanFormat: !!result.formats.human,
-      timestampMatches: result.timestamp === testTimestamp
-    }
+      timestampMatches: result.timestamp === testTimestamp,
+    },
   };
 }
 
@@ -209,37 +211,37 @@ async function testCacheService(): Promise<any> {
   try {
     const { createRedisClient } = await import('../services/redis-client');
     const redis = createRedisClient('cache');
-    
+
     // Upstash Redis doesn't require explicit connection
-    
+
     // Test cache operations
     const testKey = `test:cache:${Date.now()}`;
     const testValue = 'test-cache-value';
-    
+
     // Test SET
     await redis.set(testKey, testValue, { ex: 10 }); // 10 second TTL
-    
+
     // Test GET
     const retrievedValue = await redis.get(testKey);
-    
+
     // Test EXISTS
     const exists = await redis.exists(testKey);
-    
+
     // Test DELETE
     const deleted = await redis.del(testKey);
-    
+
     // No need to disconnect with Upstash
-    
+
     return {
       operations: {
         set: true,
         get: retrievedValue === testValue,
         exists: exists === 1,
-        delete: deleted === 1
+        delete: deleted === 1,
       },
       testKey,
       testValue,
-      retrievedValue
+      retrievedValue,
     };
   } catch (error) {
     throw new Error(`Cache test failed: ${(error as Error).message}`);
@@ -250,27 +252,27 @@ async function testRateLimitService(): Promise<any> {
   try {
     const { createRedisClient } = await import('../services/redis-client');
     const redis = createRedisClient('rate-limit');
-    
+
     // Upstash Redis doesn't require explicit connection
-    
+
     // Test rate limit operations
     const testKey = `test:ratelimit:${Date.now()}`;
     const testLimit = 10;
     const testWindow = 60;
-    
+
     // Simulate rate limit check
-    const currentCount = await redis.get(testKey) || '0';
+    const currentCount = (await redis.get(testKey)) || '0';
     const count = parseInt(String(currentCount)) + 1;
-    
+
     await redis.setex(testKey, testWindow, count.toString());
-    
+
     const allowed = count <= testLimit;
     const remaining = Math.max(0, testLimit - count);
-    
+
     // Clean up
     await redis.del(testKey);
     // No need to disconnect with Upstash
-    
+
     return {
       testKey,
       limit: testLimit,
@@ -281,8 +283,8 @@ async function testRateLimitService(): Promise<any> {
       operations: {
         get: true,
         set: true,
-        delete: true
-      }
+        delete: true,
+      },
     };
   } catch (error) {
     throw new Error(`Rate limit test failed: ${(error as Error).message}`);

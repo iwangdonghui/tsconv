@@ -1,7 +1,11 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
 import { APIErrorHandler, createCorsHeaders, validateRequest } from '../utils/response';
 import { convertTimestamp } from '../utils/conversion-utils';
-import { EnhancedConversionRequest, EnhancedConversionResponse, ConversionData } from '../types/api';
+import {
+  EnhancedConversionRequest,
+  EnhancedConversionResponse,
+  ConversionData,
+} from '../types/api';
 
 const MAX_BATCH_SIZE = 250;
 const DEFAULT_OUTPUT_FORMATS = ['iso', 'unix', 'human', 'relative'];
@@ -37,7 +41,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   // Only allow POST requests for enhanced batch conversion
   if (req.method !== 'POST') {
-    return APIErrorHandler.handleMethodNotAllowed(res, 'Only POST method is allowed for enhanced batch conversion');
+    return APIErrorHandler.handleMethodNotAllowed(
+      res,
+      'Only POST method is allowed for enhanced batch conversion'
+    );
   }
 
   try {
@@ -54,12 +61,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // Validate enhanced batch request
     const validationResult = validateEnhancedBatchRequest(batchRequest);
     if (!validationResult.valid) {
-      return APIErrorHandler.handleBadRequest(res, validationResult.message || 'Invalid request', validationResult.details);
+      return APIErrorHandler.handleBadRequest(
+        res,
+        validationResult.message || 'Invalid request',
+        validationResult.details
+      );
     }
 
     // Process enhanced batch conversion
     const { results, analytics } = await processEnhancedBatchConversion(batchRequest);
-    
+
     const response: EnhancedConversionResponse & { analytics?: BatchAnalytics } = {
       success: true,
       data: results,
@@ -71,9 +82,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           limit: 0,
           remaining: 0,
           resetTime: 0,
-          window: 0
-        }
-      }
+          window: 0,
+        },
+      },
     };
 
     if (batchRequest.includeAnalytics) {
@@ -83,26 +94,29 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     APIErrorHandler.sendSuccess(res, response, {
       processingTime: Date.now() - startTime,
       itemCount: Array.isArray(results) ? results.length : 1,
-      cacheHit: false
+      cacheHit: false,
     });
-
   } catch (error) {
     console.error('Enhanced batch conversion error:', error);
     APIErrorHandler.handleServerError(res, error as Error, {
-      endpoint: 'enhanced-batch'
+      endpoint: 'enhanced-batch',
     });
   }
 }
 
-function validateEnhancedBatchRequest(request: EnhancedBatchRequest): { valid: boolean; message?: string; details?: any } {
+function validateEnhancedBatchRequest(request: EnhancedBatchRequest): {
+  valid: boolean;
+  message?: string;
+  details?: any;
+} {
   if (!request.items || !Array.isArray(request.items)) {
     return {
       valid: false,
       message: 'Items array is required',
       details: {
         expected: 'Array of timestamps (numbers or strings)',
-        received: typeof request.items
-      }
+        received: typeof request.items,
+      },
     };
   }
 
@@ -112,8 +126,8 @@ function validateEnhancedBatchRequest(request: EnhancedBatchRequest): { valid: b
       message: 'Items array cannot be empty',
       details: {
         minItems: 1,
-        maxItems: MAX_BATCH_SIZE
-      }
+        maxItems: MAX_BATCH_SIZE,
+      },
     };
   }
 
@@ -124,8 +138,8 @@ function validateEnhancedBatchRequest(request: EnhancedBatchRequest): { valid: b
       details: {
         maxItems: MAX_BATCH_SIZE,
         receivedItems: request.items.length,
-        suggestion: `Split your request into smaller batches of ${MAX_BATCH_SIZE} items or less`
-      }
+        suggestion: `Split your request into smaller batches of ${MAX_BATCH_SIZE} items or less`,
+      },
     };
   }
 
@@ -136,8 +150,8 @@ function validateEnhancedBatchRequest(request: EnhancedBatchRequest): { valid: b
       details: {
         minChunkSize: 1,
         maxChunkSize: 50,
-        receivedChunkSize: request.chunkSize
-      }
+        receivedChunkSize: request.chunkSize,
+      },
     };
   }
 
@@ -147,8 +161,8 @@ function validateEnhancedBatchRequest(request: EnhancedBatchRequest): { valid: b
       message: 'Request exceeds specified maxItems limit',
       details: {
         maxItems: request.maxItems,
-        receivedItems: request.items.length
-      }
+        receivedItems: request.items.length,
+      },
     };
   }
 
@@ -174,12 +188,12 @@ async function processEnhancedBatchConversion(request: EnhancedBatchRequest): Pr
   // Process items in chunks if parallel processing is enabled
   if (parallel && request.items && request.items.length > chunkSize) {
     const chunks = chunkArray(request.items, chunkSize);
-    
+
     for (const chunk of chunks) {
       const chunkResults = await Promise.all(
         chunk.map(item => processEnhancedSingleItem(item, request, outputFormats, validateInputs))
       );
-      
+
       chunkResults.forEach(result => {
         if (result.success && result.data) {
           results.push(result.data);
@@ -209,11 +223,11 @@ async function processEnhancedBatchConversion(request: EnhancedBatchRequest): Pr
       if (result.success && result.data) {
         results.push(result.data);
         itemTimes.push(result.processingTime);
-        
+
         // Track input types
         const inputType = typeof result.data.input;
         inputTypes[inputType] = (inputTypes[inputType] || 0) + 1;
-        
+
         // Track timezone distribution
         if (result.data.timezone?.identifier) {
           const tz = result.data.timezone.identifier;
@@ -223,7 +237,7 @@ async function processEnhancedBatchConversion(request: EnhancedBatchRequest): Pr
         // Track error types
         const errorType = result.error?.code || 'UNKNOWN_ERROR';
         errorTypes[errorType] = (errorTypes[errorType] || 0) + 1;
-        
+
         // Continue on error if specified
         if (!request.continueOnError) {
           break;
@@ -236,12 +250,13 @@ async function processEnhancedBatchConversion(request: EnhancedBatchRequest): Pr
   const totalProcessingTime = Date.now() - startTime;
   const analytics: BatchAnalytics = {
     totalProcessingTime,
-    averageItemTime: itemTimes.length > 0 ? itemTimes.reduce((a, b) => a + b, 0) / itemTimes.length : 0,
+    averageItemTime:
+      itemTimes.length > 0 ? itemTimes.reduce((a, b) => a + b, 0) / itemTimes.length : 0,
     fastestItem: itemTimes.length > 0 ? Math.min(...itemTimes) : 0,
     slowestItem: itemTimes.length > 0 ? Math.max(...itemTimes) : 0,
     inputTypes,
     errorTypes,
-    timezoneDistribution
+    timezoneDistribution,
   };
 
   return { results, analytics };
@@ -267,9 +282,9 @@ async function processEnhancedSingleItem(
         success: false,
         error: {
           code: 'INVALID_TIMESTAMP',
-          message: `Invalid timestamp format: ${item}`
+          message: `Invalid timestamp format: ${item}`,
         },
-        processingTime: Date.now() - itemStartTime
+        processingTime: Date.now() - itemStartTime,
       };
     }
 
@@ -285,17 +300,16 @@ async function processEnhancedSingleItem(
     return {
       success: true,
       data: conversionResult,
-      processingTime: Date.now() - itemStartTime
+      processingTime: Date.now() - itemStartTime,
     };
-
   } catch (error) {
     return {
       success: false,
       error: {
         code: 'CONVERSION_ERROR',
-        message: (error as Error).message
+        message: (error as Error).message,
       },
-      processingTime: Date.now() - itemStartTime
+      processingTime: Date.now() - itemStartTime,
     };
   }
 }
@@ -312,18 +326,18 @@ function isValidTimestamp(input: any): boolean {
   if (typeof input === 'number') {
     return !isNaN(input) && isFinite(input);
   }
-  
+
   if (typeof input === 'string') {
     // Check if it's a valid date string or numeric string
     const asNumber = parseFloat(input);
     if (!isNaN(asNumber) && isFinite(asNumber)) {
       return true;
     }
-    
+
     // Check if it's a valid date string
     const date = new Date(input);
     return !isNaN(date.getTime());
   }
-  
+
   return false;
 }

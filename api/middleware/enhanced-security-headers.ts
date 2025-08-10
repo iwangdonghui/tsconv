@@ -1,6 +1,6 @@
 /**
  * Enhanced Security Headers Middleware
- * 
+ *
  * This middleware provides comprehensive HTTP security headers including
  * advanced security policies, privacy controls, and threat mitigation.
  */
@@ -20,11 +20,11 @@ export interface EnhancedSecurityConfig {
     includeSubDomains?: boolean;
     preload?: boolean;
   };
-  
+
   // Frame and embedding protection
   frameOptions?: 'DENY' | 'SAMEORIGIN' | 'ALLOW-FROM';
   frameAncestors?: string[];
-  
+
   // Content type and XSS protection
   contentTypeOptions?: boolean;
   xssProtection?: {
@@ -32,10 +32,18 @@ export interface EnhancedSecurityConfig {
     mode?: 'block' | 'report';
     reportUri?: string;
   };
-  
+
   // Referrer and privacy controls
-  referrerPolicy?: 'no-referrer' | 'no-referrer-when-downgrade' | 'origin' | 'origin-when-cross-origin' | 'same-origin' | 'strict-origin' | 'strict-origin-when-cross-origin' | 'unsafe-url';
-  
+  referrerPolicy?:
+    | 'no-referrer'
+    | 'no-referrer-when-downgrade'
+    | 'origin'
+    | 'origin-when-cross-origin'
+    | 'same-origin'
+    | 'strict-origin'
+    | 'strict-origin-when-cross-origin'
+    | 'unsafe-url';
+
   // Feature/Permissions policy
   permissionsPolicy?: {
     camera?: string[];
@@ -61,26 +69,26 @@ export interface EnhancedSecurityConfig {
     webShare?: string[];
     xrSpatialTracking?: string[];
   };
-  
+
   // Cross-origin policies
   crossOriginEmbedderPolicy?: 'unsafe-none' | 'require-corp' | 'credentialless';
   crossOriginOpenerPolicy?: 'unsafe-none' | 'same-origin-allow-popups' | 'same-origin';
   crossOriginResourcePolicy?: 'same-site' | 'same-origin' | 'cross-origin';
-  
+
   // DNS and network controls
   dnsPrefetchControl?: boolean;
-  
+
   // IE specific headers
   downloadOptions?: boolean;
   crossDomainPolicies?: 'none' | 'master-only' | 'by-content-type' | 'by-ftp-filename' | 'all';
-  
+
   // Server information
   serverHeader?: string | false;
   poweredByHeader?: boolean;
-  
+
   // Timing and performance
   timingAllowOrigin?: string[];
-  
+
   // Expect-CT (Certificate Transparency)
   expectCT?: {
     enabled?: boolean;
@@ -88,13 +96,13 @@ export interface EnhancedSecurityConfig {
     enforce?: boolean;
     reportUri?: string;
   };
-  
+
   // Clear-Site-Data
   clearSiteData?: {
     enabled?: boolean;
     types?: ('cache' | 'cookies' | 'storage' | 'executionContexts' | '*')[];
   };
-  
+
   // Custom headers
   customHeaders?: Record<string, string>;
 }
@@ -108,13 +116,13 @@ const DEFAULT_ENHANCED_CONFIG: EnhancedSecurityConfig = {
     enabled: true,
     maxAge: 31536000, // 1 year
     includeSubDomains: true,
-    preload: true
+    preload: true,
   },
   frameOptions: 'DENY',
   contentTypeOptions: true,
   xssProtection: {
     enabled: true,
-    mode: 'block'
+    mode: 'block',
   },
   referrerPolicy: 'strict-origin-when-cross-origin',
   permissionsPolicy: {
@@ -139,7 +147,7 @@ const DEFAULT_ENHANCED_CONFIG: EnhancedSecurityConfig = {
     publicKeyCredentialsGet: ['self'],
     screenWakeLock: [],
     webShare: ['self'],
-    xrSpatialTracking: []
+    xrSpatialTracking: [],
   },
   crossOriginEmbedderPolicy: 'require-corp',
   crossOriginOpenerPolicy: 'same-origin',
@@ -153,12 +161,12 @@ const DEFAULT_ENHANCED_CONFIG: EnhancedSecurityConfig = {
   expectCT: {
     enabled: false,
     maxAge: 86400,
-    enforce: false
+    enforce: false,
   },
   clearSiteData: {
     enabled: false,
-    types: []
-  }
+    types: [],
+  },
 };
 
 // ============================================================================
@@ -170,17 +178,17 @@ const DEFAULT_ENHANCED_CONFIG: EnhancedSecurityConfig = {
  */
 function buildHSTSHeader(config: EnhancedSecurityConfig['hsts']): string {
   if (!config?.enabled) return '';
-  
+
   let value = `max-age=${config.maxAge || 31536000}`;
-  
+
   if (config.includeSubDomains) {
     value += '; includeSubDomains';
   }
-  
+
   if (config.preload) {
     value += '; preload';
   }
-  
+
   return value;
 }
 
@@ -189,15 +197,15 @@ function buildHSTSHeader(config: EnhancedSecurityConfig['hsts']): string {
  */
 function buildXSSProtectionHeader(config: EnhancedSecurityConfig['xssProtection']): string {
   if (!config?.enabled) return '0';
-  
+
   let value = '1';
-  
+
   if (config.mode === 'block') {
     value += '; mode=block';
   } else if (config.mode === 'report' && config.reportUri) {
     value += `; report=${config.reportUri}`;
   }
-  
+
   return value;
 }
 
@@ -206,22 +214,22 @@ function buildXSSProtectionHeader(config: EnhancedSecurityConfig['xssProtection'
  */
 function buildPermissionsPolicyHeader(config: EnhancedSecurityConfig['permissionsPolicy']): string {
   if (!config) return '';
-  
+
   const policies: string[] = [];
-  
+
   Object.entries(config).forEach(([feature, allowlist]) => {
     if (Array.isArray(allowlist)) {
       if (allowlist.length === 0) {
         policies.push(`${feature}=()`);
       } else {
-        const formattedList = allowlist.map(origin => 
-          origin === 'self' ? "'self'" : `"${origin}"`
-        ).join(' ');
+        const formattedList = allowlist
+          .map(origin => (origin === 'self' ? "'self'" : `"${origin}"`))
+          .join(' ');
         policies.push(`${feature}=(${formattedList})`);
       }
     }
   });
-  
+
   return policies.join(', ');
 }
 
@@ -230,17 +238,17 @@ function buildPermissionsPolicyHeader(config: EnhancedSecurityConfig['permission
  */
 function buildExpectCTHeader(config: EnhancedSecurityConfig['expectCT']): string {
   if (!config?.enabled) return '';
-  
+
   let value = `max-age=${config.maxAge || 86400}`;
-  
+
   if (config.enforce) {
     value += ', enforce';
   }
-  
+
   if (config.reportUri) {
     value += `, report-uri="${config.reportUri}"`;
   }
-  
+
   return value;
 }
 
@@ -249,7 +257,7 @@ function buildExpectCTHeader(config: EnhancedSecurityConfig['expectCT']): string
  */
 function buildClearSiteDataHeader(config: EnhancedSecurityConfig['clearSiteData']): string {
   if (!config?.enabled || !config.types?.length) return '';
-  
+
   return config.types.map(type => `"${type}"`).join(', ');
 }
 
@@ -271,12 +279,13 @@ function buildTimingAllowOriginHeader(origins: string[]): string {
 export function createEnhancedSecurityHeadersMiddleware(customConfig: EnhancedSecurityConfig = {}) {
   const environment = process.env.NODE_ENV || 'production';
   const finalConfig = { ...DEFAULT_ENHANCED_CONFIG, ...customConfig };
-  
+
   return (req: VercelRequest, res: VercelResponse, next?: () => void) => {
-    const isSecure = req.headers['x-forwarded-proto'] === 'https' ||
-                     req.headers['x-forwarded-ssl'] === 'on' ||
-                     (req.connection as any)?.encrypted;
-    
+    const isSecure =
+      req.headers['x-forwarded-proto'] === 'https' ||
+      req.headers['x-forwarded-ssl'] === 'on' ||
+      (req.connection as any)?.encrypted;
+
     // HSTS (only for HTTPS)
     if (isSecure && finalConfig.hsts?.enabled) {
       const hstsValue = buildHSTSHeader(finalConfig.hsts);
@@ -284,28 +293,28 @@ export function createEnhancedSecurityHeadersMiddleware(customConfig: EnhancedSe
         res.setHeader('Strict-Transport-Security', hstsValue);
       }
     }
-    
+
     // Frame Options
     if (finalConfig.frameOptions) {
       res.setHeader('X-Frame-Options', finalConfig.frameOptions);
     }
-    
+
     // Content Type Options
     if (finalConfig.contentTypeOptions) {
       res.setHeader('X-Content-Type-Options', 'nosniff');
     }
-    
+
     // XSS Protection
     if (finalConfig.xssProtection) {
       const xssValue = buildXSSProtectionHeader(finalConfig.xssProtection);
       res.setHeader('X-XSS-Protection', xssValue);
     }
-    
+
     // Referrer Policy
     if (finalConfig.referrerPolicy) {
       res.setHeader('Referrer-Policy', finalConfig.referrerPolicy);
     }
-    
+
     // Permissions Policy
     if (finalConfig.permissionsPolicy) {
       const permissionsValue = buildPermissionsPolicyHeader(finalConfig.permissionsPolicy);
@@ -313,53 +322,53 @@ export function createEnhancedSecurityHeadersMiddleware(customConfig: EnhancedSe
         res.setHeader('Permissions-Policy', permissionsValue);
       }
     }
-    
+
     // Cross-Origin Policies
     if (finalConfig.crossOriginEmbedderPolicy) {
       res.setHeader('Cross-Origin-Embedder-Policy', finalConfig.crossOriginEmbedderPolicy);
     }
-    
+
     if (finalConfig.crossOriginOpenerPolicy) {
       res.setHeader('Cross-Origin-Opener-Policy', finalConfig.crossOriginOpenerPolicy);
     }
-    
+
     if (finalConfig.crossOriginResourcePolicy) {
       res.setHeader('Cross-Origin-Resource-Policy', finalConfig.crossOriginResourcePolicy);
     }
-    
+
     // DNS Prefetch Control
     if (finalConfig.dnsPrefetchControl !== undefined) {
       res.setHeader('X-DNS-Prefetch-Control', finalConfig.dnsPrefetchControl ? 'on' : 'off');
     }
-    
+
     // IE Download Options
     if (finalConfig.downloadOptions) {
       res.setHeader('X-Download-Options', 'noopen');
     }
-    
+
     // Cross Domain Policies
     if (finalConfig.crossDomainPolicies) {
       res.setHeader('X-Permitted-Cross-Domain-Policies', finalConfig.crossDomainPolicies);
     }
-    
+
     // Server Header
     if (finalConfig.serverHeader === false) {
       res.removeHeader('Server');
     } else if (typeof finalConfig.serverHeader === 'string') {
       res.setHeader('Server', finalConfig.serverHeader);
     }
-    
+
     // Powered By Header
     if (!finalConfig.poweredByHeader) {
       res.removeHeader('X-Powered-By');
     }
-    
+
     // Timing Allow Origin
     if (finalConfig.timingAllowOrigin?.length) {
       const timingValue = buildTimingAllowOriginHeader(finalConfig.timingAllowOrigin);
       res.setHeader('Timing-Allow-Origin', timingValue);
     }
-    
+
     // Expect-CT (only for HTTPS)
     if (isSecure && finalConfig.expectCT?.enabled) {
       const expectCTValue = buildExpectCTHeader(finalConfig.expectCT);
@@ -367,7 +376,7 @@ export function createEnhancedSecurityHeadersMiddleware(customConfig: EnhancedSe
         res.setHeader('Expect-CT', expectCTValue);
       }
     }
-    
+
     // Clear-Site-Data
     if (finalConfig.clearSiteData?.enabled) {
       const clearSiteDataValue = buildClearSiteDataHeader(finalConfig.clearSiteData);
@@ -375,33 +384,34 @@ export function createEnhancedSecurityHeadersMiddleware(customConfig: EnhancedSe
         res.setHeader('Clear-Site-Data', clearSiteDataValue);
       }
     }
-    
+
     // Custom Headers
     if (finalConfig.customHeaders) {
       Object.entries(finalConfig.customHeaders).forEach(([name, value]) => {
         res.setHeader(name, value);
       });
     }
-    
+
     // Add debug information in development
     if (environment === 'development') {
-      const appliedHeaders = Object.keys(res.getHeaders()).filter(name => 
-        name.toLowerCase().includes('x-') || 
-        name.toLowerCase().includes('strict-transport') ||
-        name.toLowerCase().includes('referrer') ||
-        name.toLowerCase().includes('permissions') ||
-        name.toLowerCase().includes('cross-origin') ||
-        name.toLowerCase().includes('expect-ct') ||
-        name.toLowerCase().includes('clear-site-data')
+      const appliedHeaders = Object.keys(res.getHeaders()).filter(
+        name =>
+          name.toLowerCase().includes('x-') ||
+          name.toLowerCase().includes('strict-transport') ||
+          name.toLowerCase().includes('referrer') ||
+          name.toLowerCase().includes('permissions') ||
+          name.toLowerCase().includes('cross-origin') ||
+          name.toLowerCase().includes('expect-ct') ||
+          name.toLowerCase().includes('clear-site-data')
       );
       res.setHeader('X-Enhanced-Security-Headers-Count', appliedHeaders.length.toString());
       res.setHeader('X-Enhanced-Security-Environment', environment);
     }
-    
+
     if (next) {
       return next();
     }
-    
+
     return undefined;
   };
 }
@@ -418,13 +428,13 @@ export const maximumSecurityHeadersMiddleware = createEnhancedSecurityHeadersMid
     enabled: true,
     maxAge: 63072000, // 2 years
     includeSubDomains: true,
-    preload: true
+    preload: true,
   },
   frameOptions: 'DENY',
   contentTypeOptions: true,
   xssProtection: {
     enabled: true,
-    mode: 'block'
+    mode: 'block',
   },
   referrerPolicy: 'no-referrer',
   crossOriginEmbedderPolicy: 'require-corp',
@@ -434,8 +444,8 @@ export const maximumSecurityHeadersMiddleware = createEnhancedSecurityHeadersMid
   expectCT: {
     enabled: true,
     maxAge: 86400,
-    enforce: true
-  }
+    enforce: true,
+  },
 });
 
 /**
@@ -446,12 +456,12 @@ export const balancedSecurityHeadersMiddleware = createEnhancedSecurityHeadersMi
     enabled: true,
     maxAge: 31536000, // 1 year
     includeSubDomains: true,
-    preload: false
+    preload: false,
   },
   frameOptions: 'SAMEORIGIN',
   referrerPolicy: 'strict-origin-when-cross-origin',
   crossOriginEmbedderPolicy: 'unsafe-none',
-  crossOriginResourcePolicy: 'same-site'
+  crossOriginResourcePolicy: 'same-site',
 });
 
 /**
@@ -459,7 +469,7 @@ export const balancedSecurityHeadersMiddleware = createEnhancedSecurityHeadersMi
  */
 export const developmentSecurityHeadersMiddleware = createEnhancedSecurityHeadersMiddleware({
   hsts: {
-    enabled: false
+    enabled: false,
   },
   frameOptions: 'SAMEORIGIN',
   crossOriginEmbedderPolicy: 'unsafe-none',
@@ -467,8 +477,8 @@ export const developmentSecurityHeadersMiddleware = createEnhancedSecurityHeader
   crossOriginResourcePolicy: 'cross-origin',
   dnsPrefetchControl: true,
   expectCT: {
-    enabled: false
-  }
+    enabled: false,
+  },
 });
 
 // ============================================================================
@@ -482,5 +492,5 @@ export {
   buildPermissionsPolicyHeader,
   buildExpectCTHeader,
   buildClearSiteDataHeader,
-  buildTimingAllowOriginHeader
+  buildTimingAllowOriginHeader,
 };

@@ -72,19 +72,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       cache: await getCacheMetrics(),
       rateLimits: await getRateLimitMetrics(),
       api: await getApiMetrics(),
-      redis: await getRedisMetrics()
+      redis: await getRedisMetrics(),
     };
 
     APIErrorHandler.sendSuccess(res, metrics, {
       processingTime: Date.now() - startTime,
       itemCount: 1,
-      cacheHit: false
+      cacheHit: false,
     });
-
   } catch (error) {
     console.error('Metrics error:', error);
     APIErrorHandler.handleServerError(res, error as Error, {
-      endpoint: 'metrics'
+      endpoint: 'metrics',
     });
   }
 }
@@ -99,7 +98,7 @@ function getMemoryMetrics() {
     total: totalMemory,
     percentage: (usedMemory / totalMemory) * 100,
     heapUsed: memUsage.heapUsed,
-    heapTotal: memUsage.heapTotal
+    heapTotal: memUsage.heapTotal,
   };
 }
 
@@ -107,7 +106,7 @@ async function getCacheMetrics() {
   try {
     const redis = createRedisClient('cache');
     // Upstash Redis doesn't require explicit connection
-    
+
     // Get cache keys and basic stats
     const keys = await redis.keys('tsconv:cache:*');
     const ___dbSize = await redis.dbsize(); // Available for future use
@@ -134,7 +133,7 @@ async function getCacheMetrics() {
       misses: keyspaceMisses,
       hitRatio: Math.round(hitRatio * 100) / 100,
       totalKeys: keys.length,
-      memoryUsage
+      memoryUsage,
     };
   } catch (error) {
     console.warn('Failed to get cache metrics:', error);
@@ -143,7 +142,7 @@ async function getCacheMetrics() {
       misses: 0,
       hitRatio: 0,
       totalKeys: 0,
-      memoryUsage: '0B'
+      memoryUsage: '0B',
     };
   }
 }
@@ -159,7 +158,8 @@ async function getRateLimitMetrics() {
     let rateLimitedRequests = 0;
 
     // Sample some rate limit data
-    for (const key of rateLimitKeys.slice(0, 100)) { // Limit to avoid performance issues
+    for (const key of rateLimitKeys.slice(0, 100)) {
+      // Limit to avoid performance issues
       try {
         const value = await redis.get(key);
         if (value) {
@@ -181,14 +181,14 @@ async function getRateLimitMetrics() {
     return {
       totalRequests,
       rateLimitedRequests,
-      blockedPercentage: Math.round(blockedPercentage * 100) / 100
+      blockedPercentage: Math.round(blockedPercentage * 100) / 100,
     };
   } catch (error) {
     console.warn('Failed to get rate limit metrics:', error);
     return {
       totalRequests: 0,
       rateLimitedRequests: 0,
-      blockedPercentage: 0
+      blockedPercentage: 0,
     };
   }
 }
@@ -220,7 +220,7 @@ async function getApiMetrics() {
             requests: data.requests || 0,
             averageResponseTime: data.responseTime || 0,
             errorCount: data.errors || 0,
-            lastAccessed: data.lastAccessed || 0
+            lastAccessed: data.lastAccessed || 0,
           };
         }
       } catch (error) {
@@ -237,7 +237,7 @@ async function getApiMetrics() {
       totalRequests,
       averageResponseTime: Math.round(averageResponseTime * 100) / 100,
       errorRate: Math.round(errorRate * 100) / 100,
-      endpointStats
+      endpointStats,
     };
   } catch (error) {
     console.warn('Failed to get API metrics:', error);
@@ -245,14 +245,14 @@ async function getApiMetrics() {
       totalRequests: 0,
       averageResponseTime: 0,
       errorRate: 0,
-      endpointStats: {}
+      endpointStats: {},
     };
   }
 }
 
 async function getRedisMetrics() {
   const startTime = Date.now();
-  
+
   try {
     const redis = createRedisClient('general');
     // Upstash Redis doesn't require explicit connection
@@ -260,7 +260,7 @@ async function getRedisMetrics() {
     // Test connection with ping and get basic stats
     await redis.ping();
     const ___dbSize = await redis.dbsize(); // Available for future use
-    
+
     const responseTime = Date.now() - startTime;
     // Upstash doesn't provide detailed info, use basic metrics
     const commandsProcessed = 0; // Would need to track separately
@@ -274,7 +274,7 @@ async function getRedisMetrics() {
       responseTime,
       commandsProcessed,
       keyspaceHits,
-      keyspaceMisses
+      keyspaceMisses,
     };
   } catch (error) {
     return {
@@ -282,7 +282,7 @@ async function getRedisMetrics() {
       responseTime: Date.now() - startTime,
       commandsProcessed: 0,
       keyspaceHits: 0,
-      keyspaceMisses: 0
+      keyspaceMisses: 0,
     };
   }
 }

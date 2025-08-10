@@ -10,9 +10,9 @@ interface BatchConvertRequest {
 
 /**
  * Batch Convert API Endpoint
- * 
+ *
  * Convert multiple timestamps or dates in a single request
- * 
+ *
  * POST /api/batch-convert
  * Body: {
  *   "timestamps": [1640995200, 1641081600],
@@ -37,7 +37,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(405).json({
       success: false,
       error: 'Method not allowed',
-      message: 'Only POST method is allowed'
+      message: 'Only POST method is allowed',
     });
   }
 
@@ -51,7 +51,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         success: false,
         error: 'Bad Request',
         message: 'Either timestamps or dates array is required',
-        required: ['timestamps OR dates']
+        required: ['timestamps OR dates'],
       });
     }
 
@@ -59,7 +59,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(400).json({
         success: false,
         error: 'Bad Request',
-        message: 'Provide either timestamps or dates, not both'
+        message: 'Provide either timestamps or dates, not both',
       });
     }
 
@@ -71,7 +71,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         error: 'Bad Request',
         message: 'Maximum 100 items allowed per batch request',
         limit: 100,
-        received: items.length
+        received: items.length,
       });
     }
 
@@ -79,7 +79,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(400).json({
         success: false,
         error: 'Bad Request',
-        message: 'At least one item is required'
+        message: 'At least one item is required',
       });
     }
 
@@ -99,11 +99,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             errors.push({
               index: i,
               item,
-              error: 'Invalid timestamp'
+              error: 'Invalid timestamp',
             });
             continue;
           }
-          result = convertTimestamp(timestamp, request.timezone, request.targetTimezone, request.format);
+          result = convertTimestamp(
+            timestamp,
+            request.timezone,
+            request.targetTimezone,
+            request.format
+          );
         } else {
           // Convert date string
           const dateStr = item as string;
@@ -112,23 +117,28 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             errors.push({
               index: i,
               item,
-              error: 'Invalid date string'
+              error: 'Invalid date string',
             });
             continue;
           }
-          result = convertTimestamp(timestamp, request.timezone, request.targetTimezone, request.format);
+          result = convertTimestamp(
+            timestamp,
+            request.timezone,
+            request.targetTimezone,
+            request.format
+          );
         }
 
         results.push({
           index: i,
           input: item,
-          ...result
+          ...result,
         });
       } catch (error) {
         errors.push({
           index: i,
           item: items[i],
-          error: error instanceof Error ? error.message : 'Unknown error'
+          error: error instanceof Error ? error.message : 'Unknown error',
         });
       }
     }
@@ -142,37 +152,41 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           total: items.length,
           successful: results.length,
           failed: errors.length,
-          processingTime: Date.now() - startTime
-        }
+          processingTime: Date.now() - startTime,
+        },
       },
       metadata: {
         processingTime: Date.now() - startTime,
         timestamp: Math.floor(Date.now() / 1000),
-        batchSize: items.length
-      }
+        batchSize: items.length,
+      },
     });
-
   } catch (error) {
     console.error('Batch convert error:', error);
     return res.status(500).json({
       success: false,
       error: 'Internal Server Error',
-      message: error instanceof Error ? error.message : 'Unknown error occurred'
+      message: error instanceof Error ? error.message : 'Unknown error occurred',
     });
   }
 }
 
-function convertTimestamp(timestamp: number, timezone?: string, targetTimezone?: string, format?: string) {
+function convertTimestamp(
+  timestamp: number,
+  timezone?: string,
+  targetTimezone?: string,
+  format?: string
+) {
   const date = new Date(timestamp * 1000);
-  
+
   // Default format
   const fmt = format || 'iso';
-  
-  let result: any = {
+
+  const result: any = {
     timestamp,
     utc: date.toUTCString(),
     iso8601: date.toISOString(),
-    local: date.toLocaleString()
+    local: date.toLocaleString(),
   };
 
   // Add timezone conversions if specified
@@ -180,16 +194,16 @@ function convertTimestamp(timestamp: number, timezone?: string, targetTimezone?:
     try {
       const sourceTime = date.toLocaleString('en-US', { timeZone: timezone });
       const targetTime = date.toLocaleString('en-US', { timeZone: targetTimezone });
-      
+
       result.timezone = {
         source: {
           timezone,
-          time: sourceTime
+          time: sourceTime,
         },
         target: {
           timezone: targetTimezone,
-          time: targetTime
-        }
+          time: targetTime,
+        },
       };
     } catch (error) {
       result.timezoneError = 'Invalid timezone specified';

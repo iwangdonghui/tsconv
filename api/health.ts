@@ -57,7 +57,7 @@ function getMemoryInfo(): MemoryInfo {
   return {
     used: memUsage.heapUsed,
     total: totalMemory,
-    percentage: Math.round(percentage * 100) / 100
+    percentage: Math.round(percentage * 100) / 100,
   };
 }
 
@@ -69,10 +69,10 @@ async function checkServices(): Promise<HealthStatus['services']> {
       status: 'healthy',
       responseTime: 1,
       lastCheck: now,
-      details: { message: 'API is operational' }
+      details: { message: 'API is operational' },
     },
     timezone: await checkTimezoneService(),
-    format: await checkFormatService()
+    format: await checkFormatService(),
   };
 }
 
@@ -88,14 +88,14 @@ async function checkTimezoneService(): Promise<ServiceStatus> {
       status: 'healthy',
       responseTime: Date.now() - start,
       lastCheck: new Date().toISOString(),
-      details: { utc: utcTime, ny: nyTime }
+      details: { utc: utcTime, ny: nyTime },
     };
   } catch (error) {
     return {
       status: 'unhealthy',
       responseTime: Date.now() - start,
       lastCheck: new Date().toISOString(),
-      details: { error: error instanceof Error ? error.message : 'Unknown error' }
+      details: { error: error instanceof Error ? error.message : 'Unknown error' },
     };
   }
 }
@@ -112,14 +112,14 @@ async function checkFormatService(): Promise<ServiceStatus> {
       status: 'healthy',
       responseTime: Date.now() - start,
       lastCheck: new Date().toISOString(),
-      details: { iso, utc }
+      details: { iso, utc },
     };
   } catch (error) {
     return {
       status: 'unhealthy',
       responseTime: Date.now() - start,
       lastCheck: new Date().toISOString(),
-      details: { error: error instanceof Error ? error.message : 'Unknown error' }
+      details: { error: error instanceof Error ? error.message : 'Unknown error' },
     };
   }
 }
@@ -148,74 +148,71 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   defaultAPISecurityMiddleware(req, res, () => {
     // Apply optional authentication (allows both authenticated and anonymous access)
     optionalAuthMiddleware(req, res, async () => {
+      // Set CORS headers
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+      res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
-  // Set CORS headers
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-
-  // Handle preflight requests
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
-
-  // Only allow GET requests
-  if (req.method !== 'GET') {
-    return res.status(405).json({
-      success: false,
-      error: 'Method not allowed',
-      message: 'Only GET method is allowed'
-    });
-  }
-
-  try {
-    const startTime = Date.now();
-    const detailed = req.query.detailed === 'true';
-
-    // Basic health status
-    const healthStatus: HealthStatus = {
-      status: 'healthy',
-      timestamp: new Date().toISOString(),
-      uptime: getUptime(),
-      version: process.env.npm_package_version || '1.0.0',
-      environment: process.env.NODE_ENV || 'development'
-    };
-
-    // Add detailed information if requested
-    if (detailed) {
-      const services = await checkServices();
-      const overallStatus = calculateOverallStatus(services);
-
-      healthStatus.status = overallStatus;
-      healthStatus.services = services;
-      healthStatus.system = {
-        memory: getMemoryInfo(),
-        nodeVersion: process.version,
-        platform: process.platform
-      };
-    }
-
-    // Set status code based on health
-    const statusCode = healthStatus.status === 'unhealthy' ? 503 : 200;
-
-    return res.status(statusCode).json({
-      success: true,
-      data: healthStatus,
-      metadata: {
-        processingTime: Date.now() - startTime,
-        timestamp: Math.floor(Date.now() / 1000)
+      // Handle preflight requests
+      if (req.method === 'OPTIONS') {
+        return res.status(200).end();
       }
-    });
 
-  } catch (error) {
-    console.error('Health check error:', error);
-    return res.status(500).json({
-      success: false,
-      error: 'Internal Server Error',
-      message: error instanceof Error ? error.message : 'Unknown error occurred'
-    });
-  }
+      // Only allow GET requests
+      if (req.method !== 'GET') {
+        return res.status(405).json({
+          success: false,
+          error: 'Method not allowed',
+          message: 'Only GET method is allowed',
+        });
+      }
+
+      try {
+        const startTime = Date.now();
+        const detailed = req.query.detailed === 'true';
+
+        // Basic health status
+        const healthStatus: HealthStatus = {
+          status: 'healthy',
+          timestamp: new Date().toISOString(),
+          uptime: getUptime(),
+          version: process.env.npm_package_version || '1.0.0',
+          environment: process.env.NODE_ENV || 'development',
+        };
+
+        // Add detailed information if requested
+        if (detailed) {
+          const services = await checkServices();
+          const overallStatus = calculateOverallStatus(services);
+
+          healthStatus.status = overallStatus;
+          healthStatus.services = services;
+          healthStatus.system = {
+            memory: getMemoryInfo(),
+            nodeVersion: process.version,
+            platform: process.platform,
+          };
+        }
+
+        // Set status code based on health
+        const statusCode = healthStatus.status === 'unhealthy' ? 503 : 200;
+
+        return res.status(statusCode).json({
+          success: true,
+          data: healthStatus,
+          metadata: {
+            processingTime: Date.now() - startTime,
+            timestamp: Math.floor(Date.now() / 1000),
+          },
+        });
+      } catch (error) {
+        console.error('Health check error:', error);
+        return res.status(500).json({
+          success: false,
+          error: 'Internal Server Error',
+          message: error instanceof Error ? error.message : 'Unknown error occurred',
+        });
+      }
     });
   });
 }
-

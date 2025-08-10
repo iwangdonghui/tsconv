@@ -1,6 +1,7 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
-import { APIResponse, APIError, ErrorContext } from '../types/api';
 import config from '../config/config';
+import { ServerErrorReporting } from '../lib/sentry-server';
+import { APIError, APIResponse, ErrorContext } from '../types/api';
 
 // Error types for classification
 export enum ErrorType {
@@ -13,7 +14,7 @@ export enum ErrorType {
   NOT_FOUND_ERROR = 'NOT_FOUND_ERROR',
   UNAUTHORIZED_ERROR = 'UNAUTHORIZED_ERROR',
   FORBIDDEN_ERROR = 'FORBIDDEN_ERROR',
-  BAD_REQUEST_ERROR = 'BAD_REQUEST_ERROR'
+  BAD_REQUEST_ERROR = 'BAD_REQUEST_ERROR',
 }
 
 // Error severity levels
@@ -21,7 +22,7 @@ export enum ErrorSeverity {
   LOW = 'low',
   MEDIUM = 'medium',
   HIGH = 'high',
-  CRITICAL = 'critical'
+  CRITICAL = 'critical',
 }
 
 // Custom error class for API errors
@@ -93,7 +94,7 @@ const defaultErrorFormatter = (error: Error, context: ErrorContext): APIError =>
       requestId,
       suggestions: error.suggestions,
       statusCode: error.statusCode,
-      stack: config.monitoring.logLevel === 'debug' ? error.stack : undefined
+      stack: config.monitoring.logLevel === 'debug' ? error.stack : undefined,
     };
   }
 
@@ -108,8 +109,8 @@ const defaultErrorFormatter = (error: Error, context: ErrorContext): APIError =>
       suggestions: [
         'Check the request parameters',
         'Ensure all required fields are provided',
-        'Verify data types and formats'
-      ]
+        'Verify data types and formats',
+      ],
     };
   }
 
@@ -124,8 +125,8 @@ const defaultErrorFormatter = (error: Error, context: ErrorContext): APIError =>
       suggestions: [
         'Try again with a smaller request',
         'Check network connectivity',
-        'Consider breaking the request into smaller parts'
-      ]
+        'Consider breaking the request into smaller parts',
+      ],
     };
   }
 
@@ -137,11 +138,7 @@ const defaultErrorFormatter = (error: Error, context: ErrorContext): APIError =>
       timestamp,
       requestId,
       statusCode: 400,
-      suggestions: [
-        'Check JSON syntax',
-        'Verify request content-type',
-        'Ensure proper encoding'
-      ]
+      suggestions: ['Check JSON syntax', 'Verify request content-type', 'Ensure proper encoding'],
     };
   }
 
@@ -158,8 +155,8 @@ const defaultErrorFormatter = (error: Error, context: ErrorContext): APIError =>
     suggestions: [
       'Try again later',
       'Contact support if the problem persists',
-      'Check the API documentation for correct usage'
-    ]
+      'Check the API documentation for correct usage',
+    ],
   };
 };
 
@@ -170,11 +167,29 @@ const logError = (error: Error, context: ErrorContext, level: string = 'error') 
       name: error.name,
       message: error.message,
       stack: error.stack,
-      code: error instanceof APIErrorClass ? error.code : 'UNKNOWN'
+      code: error instanceof APIErrorClass ? error.code : 'UNKNOWN',
     },
     context,
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
   };
+
+  // Report to Sentry based on error type
+  if (level === 'error') {
+    ServerErrorReporting.reportApiError(error, {
+      endpoint: context.endpoint,
+      method: context.method,
+      userId: context.userId,
+      requestId: context.requestId,
+      processingTime: context.processingTime,
+    });
+  } else if (level === 'warn' && context.processingTime && context.processingTime > 5000) {
+    ServerErrorReporting.reportPerformanceIssue('Slow API Response', {
+      endpoint: context.endpoint,
+      method: context.method,
+      duration: context.processingTime,
+      threshold: 5000,
+    });
+  }
 
   switch (level) {
     case 'debug':
@@ -201,16 +216,16 @@ export const errorHandlerMiddleware = (options: ErrorHandlerOptions = {}) => {
     logLevel = config.monitoring.logLevel,
     customErrorFormatter = defaultErrorFormatter,
     onError,
-    sanitizeErrors = process.env.NODE_ENV === 'production'
+    sanitizeErrors = process.env.NODE_ENV === 'production',
   } = options;
 
   return (error: Error, req: VercelRequest, res: VercelResponse) => {
     const context: ErrorContext = {
-      requestId: req.headers['x-request-id'] as string || `req-${Date.now()}`,
+      requestId: (req.headers['x-request-id'] as string) || `req-${Date.now()}`,
       processingTime: Date.now() - (req as any).startTime,
       endpoint: req.url,
       method: req.method,
-      userId: req.headers['x-user-id'] as string
+      userId: req.headers['x-user-id'] as string,
     };
 
     // Log the error if enabled
@@ -258,10 +273,10 @@ export const errorHandlerMiddleware = (options: ErrorHandlerOptions = {}) => {
           limit: 0,
           remaining: 0,
           resetTime: 0,
-          window: 0
+          window: 0,
         },
-        requestId: context.requestId
-      }
+        requestId: context.requestId,
+      },
     };
 
     // Set appropriate status code
@@ -271,7 +286,7 @@ export const errorHandlerMiddleware = (options: ErrorHandlerOptions = {}) => {
     // Set error headers
     res.setHeader('X-Error-Code', apiError.code);
     res.setHeader('X-Request-ID', context.requestId || '');
-    
+
     if (statusCode === 429) {
       res.setHeader('Retry-After', '60');
     }
@@ -309,15 +324,12 @@ export const createValidationError = (
     suggestions: [
       'Check the request parameters',
       'Ensure all required fields are provided',
-      'Verify data types and formats'
-    ]
+      'Verify data types and formats',
+    ],
   });
 };
 
-export const createNotFoundError = (
-  resource: string,
-  identifier?: string
-): APIErrorClass => {
+export const createNotFoundError = (resource: string, identifier?: string): APIErrorClass => {
   return new APIErrorClass(
     `${resource} not found${identifier ? `: ${identifier}` : ''}`,
     'NOT_FOUND_ERROR',
@@ -329,37 +341,26 @@ export const createNotFoundError = (
       suggestions: [
         'Check the resource identifier',
         'Verify the resource exists',
-        'Check the API documentation for correct endpoints'
-      ]
+        'Check the API documentation for correct endpoints',
+      ],
     }
   );
 };
 
-export const createRateLimitError = (
-  limit: number,
-  resetTime: number
-): APIErrorClass => {
-  return new APIErrorClass(
-    'Rate limit exceeded',
-    'RATE_LIMIT_EXCEEDED',
-    429,
-    {
-      details: { limit, resetTime, retryAfter: Math.ceil((resetTime - Date.now()) / 1000) },
-      type: ErrorType.RATE_LIMIT_ERROR,
-      severity: ErrorSeverity.MEDIUM,
-      suggestions: [
-        'Wait for the rate limit to reset',
-        'Consider upgrading to a higher rate limit tier',
-        'Implement request batching to reduce API calls'
-      ]
-    }
-  );
+export const createRateLimitError = (limit: number, resetTime: number): APIErrorClass => {
+  return new APIErrorClass('Rate limit exceeded', 'RATE_LIMIT_EXCEEDED', 429, {
+    details: { limit, resetTime, retryAfter: Math.ceil((resetTime - Date.now()) / 1000) },
+    type: ErrorType.RATE_LIMIT_ERROR,
+    severity: ErrorSeverity.MEDIUM,
+    suggestions: [
+      'Wait for the rate limit to reset',
+      'Consider upgrading to a higher rate limit tier',
+      'Implement request batching to reduce API calls',
+    ],
+  });
 };
 
-export const createTimeoutError = (
-  timeout: number,
-  operation?: string
-): APIErrorClass => {
+export const createTimeoutError = (timeout: number, operation?: string): APIErrorClass => {
   return new APIErrorClass(
     `Operation timed out${operation ? ` during ${operation}` : ''}`,
     'TIMEOUT_ERROR',
@@ -371,31 +372,23 @@ export const createTimeoutError = (
       suggestions: [
         'Try again with a smaller request',
         'Check network connectivity',
-        'Consider breaking the request into smaller parts'
-      ]
+        'Consider breaking the request into smaller parts',
+      ],
     }
   );
 };
 
-export const createInternalError = (
-  message: string,
-  cause?: Error
-): APIErrorClass => {
-  return new APIErrorClass(
-    message,
-    'INTERNAL_ERROR',
-    500,
-    {
-      type: ErrorType.INTERNAL_ERROR,
-      severity: ErrorSeverity.HIGH,
-      cause,
-      suggestions: [
-        'Try again later',
-        'Contact support if the problem persists',
-        'Check the API documentation for correct usage'
-      ]
-    }
-  );
+export const createInternalError = (message: string, cause?: Error): APIErrorClass => {
+  return new APIErrorClass(message, 'INTERNAL_ERROR', 500, {
+    type: ErrorType.INTERNAL_ERROR,
+    severity: ErrorSeverity.HIGH,
+    cause,
+    suggestions: [
+      'Try again later',
+      'Contact support if the problem persists',
+      'Check the API documentation for correct usage',
+    ],
+  });
 };
 
 // Error recovery utilities
@@ -411,7 +404,7 @@ export const withRetry = async <T>(
       return await operation();
     } catch (error) {
       lastError = error as Error;
-      
+
       if (attempt === maxRetries) {
         throw lastError;
       }
@@ -462,7 +455,7 @@ export class CircuitBreaker {
   private onFailure() {
     this.failures++;
     this.lastFailureTime = Date.now();
-    
+
     if (this.failures >= this.threshold) {
       this.state = 'OPEN';
     }

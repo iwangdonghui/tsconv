@@ -8,7 +8,7 @@ import {
   validateDateRange,
   getCommonTimezones,
   detectTimestampFormat,
-  convertTimestamp
+  convertTimestamp,
 } from '../conversion-utils';
 
 describe('Conversion Utils', () => {
@@ -83,7 +83,7 @@ describe('Conversion Utils', () => {
     it('should convert between timezones', () => {
       const date = new Date('2022-01-01T12:00:00Z');
       const converted = convertTimezone(date, 'UTC', 'America/New_York');
-      
+
       // The converted date should be different from the original
       expect(converted.getTime()).not.toBe(date.getTime());
     });
@@ -91,7 +91,7 @@ describe('Conversion Utils', () => {
     it('should return original date for invalid timezones', () => {
       const date = new Date('2022-01-01T12:00:00Z');
       const converted = convertTimezone(date, 'Invalid/From', 'Invalid/To');
-      
+
       expect(converted.getTime()).toBe(date.getTime());
     });
   });
@@ -100,7 +100,7 @@ describe('Conversion Utils', () => {
     it('should format time in the past', () => {
       const baseDate = new Date('2022-01-01T12:00:00Z');
       const pastDate = new Date('2022-01-01T11:00:00Z'); // 1 hour ago
-      
+
       const result = formatRelativeTime(pastDate, baseDate);
       expect(result).toBe('1 hour ago');
     });
@@ -108,7 +108,7 @@ describe('Conversion Utils', () => {
     it('should format time in the future', () => {
       const baseDate = new Date('2022-01-01T12:00:00Z');
       const futureDate = new Date('2022-01-01T13:00:00Z'); // 1 hour in future
-      
+
       const result = formatRelativeTime(futureDate, baseDate);
       expect(result).toBe('in 1 hour');
     });
@@ -116,7 +116,7 @@ describe('Conversion Utils', () => {
     it('should handle plural forms', () => {
       const baseDate = new Date('2022-01-01T12:00:00Z');
       const pastDate = new Date('2022-01-01T10:00:00Z'); // 2 hours ago
-      
+
       const result = formatRelativeTime(pastDate, baseDate);
       expect(result).toBe('2 hours ago');
     });
@@ -124,14 +124,14 @@ describe('Conversion Utils', () => {
     it('should handle very recent times', () => {
       const baseDate = new Date('2022-01-01T12:00:00Z');
       const recentDate = new Date('2022-01-01T11:59:59Z'); // 1 second ago
-      
+
       const result = formatRelativeTime(recentDate, baseDate);
       expect(result).toBe('1 second ago');
     });
 
     it('should handle current time', () => {
       const date = new Date('2022-01-01T12:00:00Z');
-      
+
       const result = formatRelativeTime(date, date);
       expect(result).toBe('just now');
     });
@@ -142,27 +142,27 @@ describe('Conversion Utils', () => {
       const date = new Date('2022-06-01');
       const minDate = new Date('2022-01-01');
       const maxDate = new Date('2022-12-31');
-      
+
       expect(validateDateRange(date, minDate, maxDate)).toBe(true);
     });
 
     it('should reject date before minimum', () => {
       const date = new Date('2021-12-31');
       const minDate = new Date('2022-01-01');
-      
+
       expect(validateDateRange(date, minDate)).toBe(false);
     });
 
     it('should reject date after maximum', () => {
       const date = new Date('2023-01-01');
       const maxDate = new Date('2022-12-31');
-      
+
       expect(validateDateRange(date, undefined, maxDate)).toBe(false);
     });
 
     it('should validate without constraints', () => {
       const date = new Date('2022-06-01');
-      
+
       expect(validateDateRange(date)).toBe(true);
     });
   });
@@ -170,10 +170,10 @@ describe('Conversion Utils', () => {
   describe('getCommonTimezones', () => {
     it('should return array of common timezones', () => {
       const timezones = getCommonTimezones();
-      
+
       expect(Array.isArray(timezones)).toBe(true);
       expect(timezones.length).toBeGreaterThan(0);
-      
+
       // Check structure of first timezone
       const firstTz = timezones[0];
       expect(firstTz).toHaveProperty('identifier');
@@ -185,7 +185,7 @@ describe('Conversion Utils', () => {
     it('should include UTC timezone', () => {
       const timezones = getCommonTimezones();
       const utcTimezone = timezones.find(tz => tz.identifier === 'UTC');
-      
+
       expect(utcTimezone).toBeDefined();
       expect(utcTimezone?.offset).toBe(0);
     });
@@ -215,7 +215,7 @@ describe('Conversion Utils', () => {
     it('should handle edge cases for timestamp detection', () => {
       // Too short for unix timestamp
       expect(detectTimestampFormat('123')).toBe('unknown');
-      
+
       // Too long for milliseconds timestamp
       expect(detectTimestampFormat('12345678901234')).toBe('unknown');
     });
@@ -225,7 +225,7 @@ describe('Conversion Utils', () => {
     it('should convert timestamp to basic formats', async () => {
       const timestamp = 1640995200; // 2022-01-01 00:00:00 UTC
       const result = await convertTimestamp(timestamp);
-      
+
       expect(result.timestamp).toBe(timestamp);
       expect(result.iso).toBe('2022-01-01T00:00:00.000Z');
       expect(result.utc).toContain('Sat, 01 Jan 2022');
@@ -236,7 +236,7 @@ describe('Conversion Utils', () => {
       const timestamp = 1640995200;
       const formats = ['iso', 'utc', 'unix', 'milliseconds'];
       const result = await convertTimestamp(timestamp, formats);
-      
+
       expect(result.formats).toBeDefined();
       expect(result.formats.iso).toBe('2022-01-01T00:00:00.000Z');
       expect(result.formats.unix).toBe(timestamp);
@@ -246,7 +246,7 @@ describe('Conversion Utils', () => {
     it('should handle timezone conversion', async () => {
       const timestamp = 1640995200;
       const result = await convertTimestamp(timestamp, [], 'UTC', 'America/New_York');
-      
+
       expect(result.converted).toBeDefined();
       expect(result.converted.timestamp).toBeDefined();
       expect(result.converted.iso).toBeDefined();
@@ -255,14 +255,14 @@ describe('Conversion Utils', () => {
     it('should handle invalid timezone conversion gracefully', async () => {
       const timestamp = 1640995200;
       const result = await convertTimestamp(timestamp, [], 'Invalid/From', 'Invalid/To');
-      
+
       expect(result.conversionError).toBe('Invalid timezone conversion');
     });
 
     it('should handle invalid custom formats gracefully', async () => {
       const timestamp = 1640995200;
       const result = await convertTimestamp(timestamp, ['invalid-format']);
-      
+
       expect(result.formats['invalid-format']).toBe('Invalid format');
     });
   });

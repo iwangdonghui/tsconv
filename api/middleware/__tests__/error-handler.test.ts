@@ -12,27 +12,28 @@ import {
   createTimeoutError,
   createInternalError,
   withRetry,
-  CircuitBreaker
+  CircuitBreaker,
 } from '../error-handler';
 
 // Mock config
 vi.mock('../../config/config', () => ({
   default: {
     monitoring: {
-      logLevel: 'info'
-    }
-  }
+      logLevel: 'info',
+    },
+  },
 }));
 
 // Helper to create mock request/response
-const createMockReq = (overrides: Partial<VercelRequest> = {}): VercelRequest => ({
-  method: 'GET',
-  url: '/api/convert',
-  query: {},
-  headers: {},
-  body: {},
-  ...overrides
-} as VercelRequest);
+const createMockReq = (overrides: Partial<VercelRequest> = {}): VercelRequest =>
+  ({
+    method: 'GET',
+    url: '/api/convert',
+    query: {},
+    headers: {},
+    body: {},
+    ...overrides,
+  }) as VercelRequest;
 
 const createMockRes = (): VercelResponse => {
   const res = {
@@ -40,9 +41,9 @@ const createMockRes = (): VercelResponse => {
     json: vi.fn().mockReturnThis(),
     send: vi.fn().mockReturnThis(),
     status: vi.fn().mockReturnThis(),
-    setHeader: vi.fn().mockReturnThis()
+    setHeader: vi.fn().mockReturnThis(),
   } as unknown as VercelResponse;
-  
+
   return res;
 };
 
@@ -62,17 +63,12 @@ describe('Error Handler Middleware', () => {
 
   describe('APIErrorClass', () => {
     it('should create API error with all properties', () => {
-      const error = new APIErrorClass(
-        'Test error',
-        'TEST_ERROR',
-        400,
-        {
-          details: { field: 'value' },
-          suggestions: ['Try again'],
-          severity: ErrorSeverity.HIGH,
-          type: ErrorType.VALIDATION_ERROR
-        }
-      );
+      const error = new APIErrorClass('Test error', 'TEST_ERROR', 400, {
+        details: { field: 'value' },
+        suggestions: ['Try again'],
+        severity: ErrorSeverity.HIGH,
+        type: ErrorType.VALIDATION_ERROR,
+      });
 
       expect(error.message).toBe('Test error');
       expect(error.code).toBe('TEST_ERROR');
@@ -108,8 +104,8 @@ describe('Error Handler Middleware', () => {
           error: expect.objectContaining({
             code: 'TEST_ERROR',
             message: 'Test error',
-            statusCode: 400
-          })
+            statusCode: 400,
+          }),
         })
       );
     });
@@ -117,7 +113,7 @@ describe('Error Handler Middleware', () => {
     it('should handle validation errors', () => {
       const error = new Error('Invalid input');
       error.name = 'ValidationError';
-      
+
       const req = createMockReq();
       const res = createMockRes();
 
@@ -130,8 +126,8 @@ describe('Error Handler Middleware', () => {
           success: false,
           error: expect.objectContaining({
             code: 'VALIDATION_ERROR',
-            statusCode: 400
-          })
+            statusCode: 400,
+          }),
         })
       );
     });
@@ -139,7 +135,7 @@ describe('Error Handler Middleware', () => {
     it('should handle timeout errors', () => {
       const error = new Error('Request timeout');
       error.name = 'TimeoutError';
-      
+
       const req = createMockReq();
       const res = createMockRes();
 
@@ -152,15 +148,15 @@ describe('Error Handler Middleware', () => {
           success: false,
           error: expect.objectContaining({
             code: 'TIMEOUT_ERROR',
-            statusCode: 408
-          })
+            statusCode: 408,
+          }),
         })
       );
     });
 
     it('should handle syntax errors', () => {
       const error = new SyntaxError('Invalid JSON');
-      
+
       const req = createMockReq();
       const res = createMockRes();
 
@@ -173,15 +169,15 @@ describe('Error Handler Middleware', () => {
           success: false,
           error: expect.objectContaining({
             code: 'BAD_REQUEST_ERROR',
-            statusCode: 400
-          })
+            statusCode: 400,
+          }),
         })
       );
     });
 
     it('should handle generic errors', () => {
       const error = new Error('Generic error');
-      
+
       const req = createMockReq();
       const res = createMockRes();
 
@@ -194,8 +190,8 @@ describe('Error Handler Middleware', () => {
           success: false,
           error: expect.objectContaining({
             code: 'INTERNAL_ERROR',
-            statusCode: 500
-          })
+            statusCode: 500,
+          }),
         })
       );
     });
@@ -240,7 +236,7 @@ describe('Error Handler Middleware', () => {
         message: 'Custom error message',
         timestamp: Date.now(),
         requestId: 'test-id',
-        statusCode: 418
+        statusCode: 418,
       });
 
       const error = new Error('Test error');
@@ -255,8 +251,8 @@ describe('Error Handler Middleware', () => {
       expect(res.json).toHaveBeenCalledWith(
         expect.objectContaining({
           error: expect.objectContaining({
-            code: 'CUSTOM_ERROR'
-          })
+            code: 'CUSTOM_ERROR',
+          }),
         })
       );
     });
@@ -289,7 +285,7 @@ describe('Error Handler Middleware', () => {
     it('should handle successful async operations', async () => {
       const handler = vi.fn().mockResolvedValue(undefined);
       const wrappedHandler = asyncErrorHandler(handler);
-      
+
       const req = createMockReq();
       const res = createMockRes();
 
@@ -302,7 +298,7 @@ describe('Error Handler Middleware', () => {
       const error = new Error('Async error');
       const handler = vi.fn().mockRejectedValue(error);
       const wrappedHandler = asyncErrorHandler(handler);
-      
+
       const req = createMockReq();
       const res = createMockRes();
 
@@ -350,7 +346,7 @@ describe('Error Handler Middleware', () => {
         expect(error.details).toEqual({
           limit: 100,
           resetTime,
-          retryAfter: expect.any(Number)
+          retryAfter: expect.any(Number),
         });
       });
     });
@@ -391,7 +387,8 @@ describe('Error Handler Middleware', () => {
     });
 
     it('should retry on failure and eventually succeed', async () => {
-      const operation = vi.fn()
+      const operation = vi
+        .fn()
         .mockRejectedValueOnce(new Error('Failure 1'))
         .mockRejectedValueOnce(new Error('Failure 2'))
         .mockResolvedValue('success');
@@ -432,13 +429,14 @@ describe('Error Handler Middleware', () => {
 
       // Third attempt should be blocked by circuit breaker
       await expect(circuitBreaker.execute(operation)).rejects.toThrow('Circuit breaker is open');
-      
+
       expect(operation).toHaveBeenCalledTimes(2);
     });
 
     it('should transition to half-open after timeout', async () => {
       const circuitBreaker = new CircuitBreaker(1, 10); // Very short timeout for testing
-      const operation = vi.fn()
+      const operation = vi
+        .fn()
         .mockRejectedValueOnce(new Error('Failure'))
         .mockResolvedValue('success');
 

@@ -7,10 +7,10 @@ export function convertTimezone(date: Date, fromTimezone: string, toTimezone: st
     // Use Intl.DateTimeFormat for timezone conversion
     const fromOffset = getTimezoneOffset(date, fromTimezone);
     const toOffset = getTimezoneOffset(date, toTimezone);
-    
+
     // Calculate the difference in milliseconds
     const offsetDiff = (fromOffset - toOffset) * 60 * 1000;
-    
+
     // Apply the offset difference
     return new Date(date.getTime() + offsetDiff);
   } catch (error) {
@@ -24,7 +24,7 @@ export function getTimezoneOffset(date: Date, timezone: string): number {
     // Create a date in the target timezone
     const utcDate = new Date(date.toLocaleString('en-US', { timeZone: 'UTC' }));
     const tzDate = new Date(date.toLocaleString('en-US', { timeZone: timezone }));
-    
+
     // Calculate offset in minutes
     return (utcDate.getTime() - tzDate.getTime()) / (1000 * 60);
   } catch (error) {
@@ -44,32 +44,32 @@ export function isValidTimezone(timezone: string): boolean {
 
 export function parseTimestamp(input: string | number): { timestamp: number; isValid: boolean } {
   let timestamp: number;
-  
+
   if (typeof input === 'string') {
     // Try parsing as ISO date first
     const date = new Date(input);
     if (!isNaN(date.getTime())) {
       return { timestamp: Math.floor(date.getTime() / 1000), isValid: true };
     }
-    
+
     // Try parsing as timestamp string
     timestamp = parseInt(input, 10);
   } else {
     timestamp = input;
   }
-  
+
   // Validate timestamp range
   if (isNaN(timestamp) || timestamp < 0 || timestamp > 2147483647) {
     return { timestamp: 0, isValid: false };
   }
-  
+
   return { timestamp, isValid: true };
 }
 
 export function formatRelativeTime(date: Date, baseDate: Date = new Date()): string {
   const diffInSeconds = Math.floor((baseDate.getTime() - date.getTime()) / 1000);
   const absDiff = Math.abs(diffInSeconds);
-  
+
   const units = [
     { name: 'year', seconds: 31536000 },
     { name: 'month', seconds: 2592000 },
@@ -77,9 +77,9 @@ export function formatRelativeTime(date: Date, baseDate: Date = new Date()): str
     { name: 'day', seconds: 86400 },
     { name: 'hour', seconds: 3600 },
     { name: 'minute', seconds: 60 },
-    { name: 'second', seconds: 1 }
+    { name: 'second', seconds: 1 },
   ];
-  
+
   for (const unit of units) {
     const count = Math.floor(absDiff / unit.seconds);
     if (count >= 1) {
@@ -91,7 +91,7 @@ export function formatRelativeTime(date: Date, baseDate: Date = new Date()): str
       }
     }
   }
-  
+
   return 'just now';
 }
 
@@ -101,7 +101,11 @@ export function validateDateRange(date: Date, minDate?: Date, maxDate?: Date): b
   return true;
 }
 
-export function getCommonTimezones(): Array<{ identifier: string; displayName: string; offset: number }> {
+export function getCommonTimezones(): Array<{
+  identifier: string;
+  displayName: string;
+  offset: number;
+}> {
   const commonTimezones = [
     'UTC',
     'America/New_York',
@@ -114,26 +118,26 @@ export function getCommonTimezones(): Array<{ identifier: string; displayName: s
     'Asia/Tokyo',
     'Asia/Shanghai',
     'Asia/Kolkata',
-    'Australia/Sydney'
+    'Australia/Sydney',
   ];
-  
+
   const now = new Date();
-  
+
   return commonTimezones.map(tz => {
     try {
       const offset = getTimezoneOffset(now, tz);
       const displayName = tz.replace('_', ' ').replace('/', ' / ');
-      
+
       return {
         identifier: tz,
         displayName,
-        offset
+        offset,
       };
     } catch (error) {
       return {
         identifier: tz,
         displayName: tz,
-        offset: 0
+        offset: 0,
       };
     }
   });
@@ -162,7 +166,7 @@ export function formatDate(date: Date, format?: string, timezone?: string): stri
           return date.toLocaleString('en-US');
       }
     }
-    
+
     // Default format
     if (timezone) {
       return date.toLocaleString('en-US', { timeZone: timezone });
@@ -184,12 +188,12 @@ export function detectTimestampFormat(input: string): 'unix' | 'milliseconds' | 
       return 'milliseconds'; // Milliseconds timestamp (13 digits)
     }
   }
-  
+
   // Check if it's ISO format
   if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/.test(input)) {
     return 'iso';
   }
-  
+
   return 'unknown';
 }
 
@@ -206,7 +210,7 @@ export async function convertTimestamp(
     timestamp,
     iso: date.toISOString(),
     utc: date.toUTCString(),
-    local: date.toLocaleString()
+    local: date.toLocaleString(),
   };
 
   // Add timezone conversion if specified
@@ -220,7 +224,7 @@ export async function convertTimestamp(
         data.converted = {
           timestamp: Math.floor(convertedDate.getTime() / 1000),
           iso: convertedDate.toISOString(),
-          local: convertedDate.toLocaleString()
+          local: convertedDate.toLocaleString(),
         };
       }
     } catch (error) {

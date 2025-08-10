@@ -2,50 +2,70 @@ import { VercelRequest, VercelResponse } from '@vercel/node';
 
 // Predefined format templates
 const FORMAT_TEMPLATES = {
-  'iso': 'YYYY-MM-DDTHH:mm:ss.sssZ',
+  iso: 'YYYY-MM-DDTHH:mm:ss.sssZ',
   'iso-date': 'YYYY-MM-DD',
   'iso-time': 'HH:mm:ss',
   'us-date': 'MM/DD/YYYY',
   'us-datetime': 'MM/DD/YYYY HH:mm:ss',
   'eu-date': 'DD/MM/YYYY',
   'eu-datetime': 'DD/MM/YYYY HH:mm:ss',
-  'readable': 'MMMM Do, YYYY',
+  readable: 'MMMM Do, YYYY',
   'readable-full': 'dddd, MMMM Do, YYYY [at] h:mm A',
-  'compact': 'YYYYMMDD',
+  compact: 'YYYYMMDD',
   'compact-time': 'YYYYMMDDHHmmss',
-  'unix': 'X',
+  unix: 'X',
   'unix-ms': 'x',
-  'rfc2822': 'ddd, DD MMM YYYY HH:mm:ss ZZ',
-  'sql': 'YYYY-MM-DD HH:mm:ss',
-  'filename': 'YYYY-MM-DD_HH-mm-ss',
-  'log': 'YYYY-MM-DD HH:mm:ss.SSS'
+  rfc2822: 'ddd, DD MMM YYYY HH:mm:ss ZZ',
+  sql: 'YYYY-MM-DD HH:mm:ss',
+  filename: 'YYYY-MM-DD_HH-mm-ss',
+  log: 'YYYY-MM-DD HH:mm:ss.SSS',
 };
 
 const monthNames = [
-  'January', 'February', 'March', 'April', 'May', 'June',
-  'July', 'August', 'September', 'October', 'November', 'December'
+  'January',
+  'February',
+  'March',
+  'April',
+  'May',
+  'June',
+  'July',
+  'August',
+  'September',
+  'October',
+  'November',
+  'December',
 ];
 
 const monthNamesShort = [
-  'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-  'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+  'Jan',
+  'Feb',
+  'Mar',
+  'Apr',
+  'May',
+  'Jun',
+  'Jul',
+  'Aug',
+  'Sep',
+  'Oct',
+  'Nov',
+  'Dec',
 ];
 
-const dayNames = [
-  'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'
-];
+const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
-const dayNamesShort = [
-  'Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'
-];
+const dayNamesShort = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 function getOrdinalSuffix(day: number): string {
   if (day >= 11 && day <= 13) return 'th';
   switch (day % 10) {
-    case 1: return 'st';
-    case 2: return 'nd';
-    case 3: return 'rd';
-    default: return 'th';
+    case 1:
+      return 'st';
+    case 2:
+      return 'nd';
+    case 3:
+      return 'rd';
+    default:
+      return 'th';
   }
 }
 
@@ -67,7 +87,7 @@ function formatDate(date: Date, format: string): string {
     // Year
     .replace(/YYYY/g, year.toString())
     .replace(/YY/g, year.toString().slice(-2))
-    
+
     // Month - longer patterns first to avoid conflicts
     .replace(/MMMM/g, monthNames[month - 1] || '')
     .replace(/MMM/g, monthNamesShort[month - 1] || '')
@@ -97,7 +117,12 @@ function formatDate(date: Date, format: string): string {
 
     // Milliseconds
     .replace(/SSS/g, milliseconds.toString().padStart(3, '0'))
-    .replace(/SS/g, Math.floor(milliseconds / 10).toString().padStart(2, '0'))
+    .replace(
+      /SS/g,
+      Math.floor(milliseconds / 10)
+        .toString()
+        .padStart(2, '0')
+    )
     .replace(/S/g, Math.floor(milliseconds / 100).toString())
 
     // AM/PM
@@ -119,7 +144,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-  
+
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
   }
@@ -129,45 +154,40 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(200).json({
       success: true,
       data: {
-        templates: FORMAT_TEMPLATES
+        templates: FORMAT_TEMPLATES,
       },
       metadata: {
         timestamp: new Date().toISOString(),
-        cached: false
-      }
+        cached: false,
+      },
     });
   }
-  
+
   if (req.method !== 'GET') {
     return res.status(405).json({
       success: false,
-      error: 'Method not allowed'
+      error: 'Method not allowed',
     });
   }
-  
+
   try {
-    const {
-      timestamp,
-      date,
-      format,
-      timezone = 'UTC'
-    } = req.query as any;
-    
+    const { timestamp, date, format, timezone = 'UTC' } = req.query as any;
+
     if (!format) {
       return res.status(400).json({
         success: false,
-        error: 'Format parameter is required'
+        error: 'Format parameter is required',
       });
     }
-    
+
     let targetDate: Date;
-    
+
     if (timestamp) {
       const ts = parseInt(timestamp);
       if (isNaN(ts)) {
         return res.status(400).json({
           success: false,
-          error: 'Invalid timestamp format'
+          error: 'Invalid timestamp format',
         });
       }
       targetDate = new Date(ts * 1000);
@@ -176,46 +196,45 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       if (isNaN(targetDate.getTime())) {
         return res.status(400).json({
           success: false,
-          error: 'Invalid date format'
+          error: 'Invalid date format',
         });
       }
     } else {
       targetDate = new Date();
     }
-    
+
     // Get format pattern
     const formatPattern = FORMAT_TEMPLATES[format as keyof typeof FORMAT_TEMPLATES] || format;
-    
+
     // Format the date
     const formatted = formatDate(targetDate, formatPattern);
-    
+
     const result = {
       input: {
         timestamp: timestamp ? parseInt(timestamp) : Math.floor(targetDate.getTime() / 1000),
         date: targetDate.toISOString(),
         format: formatPattern,
-        timezone
+        timezone,
       },
       output: {
         formatted,
-        pattern: formatPattern
-      }
+        pattern: formatPattern,
+      },
     };
-    
+
     return res.status(200).json({
       success: true,
       data: result,
       metadata: {
         timestamp: new Date().toISOString(),
-        cached: false
-      }
+        cached: false,
+      },
     });
-    
   } catch (error) {
     console.error('Format error:', error);
     return res.status(500).json({
       success: false,
-      error: 'Internal server error'
+      error: 'Internal server error',
     });
   }
 }

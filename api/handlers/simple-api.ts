@@ -10,9 +10,9 @@ import formatService from '../services/format-service';
 async function handleConvert(req: VercelRequest, res: VercelResponse) {
   try {
     const { timestamp, date, format, timezone = 'UTC' } = req.query;
-    
+
     let targetDate: Date;
-    
+
     if (timestamp) {
       const ts = parseInt(timestamp as string, 10);
       if (isNaN(ts)) {
@@ -25,7 +25,10 @@ async function handleConvert(req: VercelRequest, res: VercelResponse) {
         return APIErrorHandler.handleBadRequest(res, 'Invalid date format');
       }
     } else {
-      return APIErrorHandler.handleBadRequest(res, 'Either timestamp or date parameter is required');
+      return APIErrorHandler.handleBadRequest(
+        res,
+        'Either timestamp or date parameter is required'
+      );
     }
 
     let formatsToUse = ['iso8601', 'us-datetime', 'eu-datetime'];
@@ -41,21 +44,24 @@ async function handleConvert(req: VercelRequest, res: VercelResponse) {
     const results = formatsToUse.map(fmt => ({
       format: fmt,
       result: formatService.formatDate(targetDate, fmt, timezone as string),
-      timezone
+      timezone,
     }));
 
     const response = new ResponseBuilder()
       .setData({
         original: {
           timestamp: Math.floor(targetDate.getTime() / 1000),
-          date: targetDate.toISOString()
+          date: targetDate.toISOString(),
         },
-        formats: results.reduce((acc, item) => {
-          acc[item.format] = item.result;
-          return acc;
-        }, {} as Record<string, string>),
+        formats: results.reduce(
+          (acc, item) => {
+            acc[item.format] = item.result;
+            return acc;
+          },
+          {} as Record<string, string>
+        ),
         utc: targetDate.toUTCString(),
-        local: targetDate.toLocaleString()
+        local: targetDate.toLocaleString(),
       })
       .addMetadata('timezone', timezone)
       .addMetadata('formats', formatsToUse)
@@ -72,7 +78,7 @@ async function handleConvert(req: VercelRequest, res: VercelResponse) {
 async function handleFormats(req: VercelRequest, res: VercelResponse) {
   try {
     const { category } = req.query;
-    
+
     let formats;
     if (category && typeof category === 'string') {
       formats = formatService.listFormatsByCategory(category);
@@ -80,12 +86,11 @@ async function handleFormats(req: VercelRequest, res: VercelResponse) {
       formats = formatService.listFormats();
     }
 
-    const response = new ResponseBuilder()
-      .setData({
-        formats,
-        total: formats.length,
-        categories: ['standard', 'human', 'regional', 'technical']
-      });
+    const response = new ResponseBuilder().setData({
+      formats,
+      total: formats.length,
+      categories: ['standard', 'human', 'regional', 'technical'],
+    });
 
     response.send(res);
   } catch (error) {
@@ -98,17 +103,17 @@ async function handleFormats(req: VercelRequest, res: VercelResponse) {
 async function handleHealth(req: VercelRequest, res: VercelResponse) {
   try {
     const cacheHealth = await cacheService.healthCheck();
-    
+
     const healthData = {
       status: 'healthy',
       timestamp: new Date().toISOString(),
       uptime: process.uptime(),
       services: {
         cache: cacheHealth,
-        api: { status: 'healthy', responseTime: 1 }
+        api: { status: 'healthy', responseTime: 1 },
       },
       version: '1.0.0',
-      environment: process.env.NODE_ENV || 'development'
+      environment: process.env.NODE_ENV || 'development',
     };
 
     const response = new ResponseBuilder().setData(healthData);
@@ -124,7 +129,7 @@ const createAPIHandler = (handler: Function) => {
   return createRateLimitMiddleware()(
     createCacheMiddleware({
       ttl: 300 * 1000, // 5 minutes
-      cacheControlHeader: 'public, max-age=300'
+      cacheControlHeader: 'public, max-age=300',
     })(async (req: VercelRequest, res: VercelResponse) => {
       withCors(res);
 

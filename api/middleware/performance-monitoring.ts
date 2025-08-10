@@ -43,7 +43,7 @@ class MetricsStore {
 
   add(metric: PerformanceMetrics): void {
     this.metrics.push(metric);
-    
+
     // Keep only the most recent metrics
     if (this.metrics.length > this.maxSize) {
       this.metrics = this.metrics.slice(-this.maxSize);
@@ -56,52 +56,52 @@ class MetricsStore {
 
   getAverageResponseTime(endpoint?: string, timeWindow?: number): number {
     let filteredMetrics = this.metrics;
-    
+
     if (endpoint) {
       filteredMetrics = filteredMetrics.filter(m => m.endpoint === endpoint);
     }
-    
+
     if (timeWindow) {
       const cutoff = Date.now() - timeWindow;
       filteredMetrics = filteredMetrics.filter(m => m.timestamp > cutoff);
     }
-    
+
     if (filteredMetrics.length === 0) return 0;
-    
+
     const total = filteredMetrics.reduce((sum, m) => sum + m.responseTime, 0);
     return total / filteredMetrics.length;
   }
 
   getErrorRate(endpoint?: string, timeWindow?: number): number {
     let filteredMetrics = this.metrics;
-    
+
     if (endpoint) {
       filteredMetrics = filteredMetrics.filter(m => m.endpoint === endpoint);
     }
-    
+
     if (timeWindow) {
       const cutoff = Date.now() - timeWindow;
       filteredMetrics = filteredMetrics.filter(m => m.timestamp > cutoff);
     }
-    
+
     if (filteredMetrics.length === 0) return 0;
-    
+
     const errorCount = filteredMetrics.filter(m => m.statusCode >= 400).length;
     return (errorCount / filteredMetrics.length) * 100;
   }
 
   getRequestCount(endpoint?: string, timeWindow?: number): number {
     let filteredMetrics = this.metrics;
-    
+
     if (endpoint) {
       filteredMetrics = filteredMetrics.filter(m => m.endpoint === endpoint);
     }
-    
+
     if (timeWindow) {
       const cutoff = Date.now() - timeWindow;
       filteredMetrics = filteredMetrics.filter(m => m.timestamp > cutoff);
     }
-    
+
     return filteredMetrics.length;
   }
 
@@ -109,47 +109,53 @@ class MetricsStore {
     this.metrics = [];
   }
 
-  getTopEndpoints(limit: number = 10, timeWindow?: number): Array<{
+  getTopEndpoints(
+    limit: number = 10,
+    timeWindow?: number
+  ): Array<{
     endpoint: string;
     count: number;
     averageResponseTime: number;
     errorRate: number;
   }> {
     let filteredMetrics = this.metrics;
-    
+
     if (timeWindow) {
       const cutoff = Date.now() - timeWindow;
       filteredMetrics = filteredMetrics.filter(m => m.timestamp > cutoff);
     }
-    
-    const endpointStats = new Map<string, {
-      count: number;
-      totalResponseTime: number;
-      errorCount: number;
-    }>();
-    
+
+    const endpointStats = new Map<
+      string,
+      {
+        count: number;
+        totalResponseTime: number;
+        errorCount: number;
+      }
+    >();
+
     filteredMetrics.forEach(metric => {
       const stats = endpointStats.get(metric.endpoint) || {
         count: 0,
         totalResponseTime: 0,
-        errorCount: 0
+        errorCount: 0,
       };
-      
+
       stats.count++;
       stats.totalResponseTime += metric.responseTime;
       if (metric.statusCode >= 400) {
         stats.errorCount++;
       }
-      
+
       endpointStats.set(metric.endpoint, stats);
     });
-    
+
     return Array.from(endpointStats.entries())
       .map(([endpoint, stats]) => ({
         endpoint,
         count: stats.count,
         averageResponseTime: stats.totalResponseTime / stats.count,
-        errorRate: (stats.errorCount / stats.count) * 100
+        errorRate: (stats.errorCount / stats.count) * 100,
       }))
       .sort((a, b) => b.count - a.count)
       .slice(0, limit);
@@ -166,7 +172,9 @@ const defaultMetricsCollector = (metrics: PerformanceMetrics): void => {
 
 // Default slow request handler
 const defaultSlowRequestHandler = (metrics: PerformanceMetrics): void => {
-  console.warn(`Slow request detected: ${metrics.method} ${metrics.endpoint} took ${metrics.responseTime}ms`);
+  console.warn(
+    `Slow request detected: ${metrics.method} ${metrics.endpoint} took ${metrics.responseTime}ms`
+  );
 };
 
 // Performance monitoring middleware
@@ -181,7 +189,7 @@ export const performanceMonitoringMiddleware = (options: PerformanceMonitoringOp
     onSlowRequest = defaultSlowRequestHandler,
     includeHeaders = false,
     includeQuery = false,
-    excludeEndpoints = []
+    excludeEndpoints = [],
   } = options;
 
   return async (
@@ -191,10 +199,12 @@ export const performanceMonitoringMiddleware = (options: PerformanceMonitoringOp
   ): Promise<void> => {
     const startTime = Date.now();
     const startMemory = collectMemoryMetrics ? process.memoryUsage() : null;
-    
+
     // Generate request ID if not present
-    const requestId = req.headers['x-request-id'] as string || `req-${startTime}-${Math.random().toString(36).substr(2, 9)}`;
-    
+    const requestId =
+      (req.headers['x-request-id'] as string) ||
+      `req-${startTime}-${Math.random().toString(36).substr(2, 9)}`;
+
     // Skip monitoring for excluded endpoints
     if (excludeEndpoints.some(pattern => req.url?.includes(pattern))) {
       await next();
@@ -209,45 +219,45 @@ export const performanceMonitoringMiddleware = (options: PerformanceMonitoringOp
     const originalJson = res.json;
     const originalSend = res.send;
     const originalEnd = res.end;
-    
+
     let responseSize = 0;
     let cacheHit = false;
     let rateLimited = false;
     let errorCode: string | undefined;
 
     // Capture response data
-    res.json = function(data: any) {
+    res.json = function (data: any) {
       responseSize = JSON.stringify(data).length;
-      
+
       // Check for cache hit
       if (data.cache?.hit) {
         cacheHit = true;
       }
-      
+
       // Check for rate limiting
       if (data.error?.code === 'RATE_LIMIT_EXCEEDED') {
         rateLimited = true;
         errorCode = data.error.code;
       }
-      
+
       return originalJson.call(this, data);
     };
 
-    res.send = function(data: any) {
+    res.send = function (data: any) {
       if (typeof data === 'string') {
         responseSize = data.length;
       } else {
         responseSize = JSON.stringify(data).length;
       }
-      
+
       return originalSend.call(this, data);
     };
 
-    res.end = function(chunk?: any) {
+    res.end = function (chunk?: any) {
       if (chunk) {
         responseSize = typeof chunk === 'string' ? chunk.length : JSON.stringify(chunk).length;
       }
-      
+
       return originalEnd.call(this, chunk, 'utf8');
     };
 
@@ -281,31 +291,38 @@ export const performanceMonitoringMiddleware = (options: PerformanceMonitoringOp
           heapUsed: 0,
           heapTotal: 0,
           external: 0,
-          rss: 0
+          rss: 0,
         },
         timestamp: endTime,
         userAgent: includeHeaders ? userAgent : undefined,
-        ip: collectDetailedMetrics ? (Array.isArray(ip) ? ip[0] : ip.toString().split(',')[0].trim()) : undefined,
+        ip: collectDetailedMetrics
+          ? Array.isArray(ip)
+            ? ip[0]
+            : ip.toString().split(',')[0].trim()
+          : undefined,
         cacheHit,
         rateLimited,
-        errorCode
+        errorCode,
       };
 
       // Add detailed metrics if enabled
       if (collectDetailedMetrics) {
         (metrics as any).requestSize = JSON.stringify(req.body || {}).length;
         (metrics as any).responseSize = responseSize;
-        (metrics as any).memoryDelta = startMemory && endMemory ? {
-          heapUsed: endMemory.heapUsed - startMemory.heapUsed,
-          heapTotal: endMemory.heapTotal - startMemory.heapTotal,
-          external: endMemory.external - startMemory.external,
-          rss: endMemory.rss - startMemory.rss
-        } : undefined;
-        
+        (metrics as any).memoryDelta =
+          startMemory && endMemory
+            ? {
+                heapUsed: endMemory.heapUsed - startMemory.heapUsed,
+                heapTotal: endMemory.heapTotal - startMemory.heapTotal,
+                external: endMemory.external - startMemory.external,
+                rss: endMemory.rss - startMemory.rss,
+              }
+            : undefined;
+
         if (includeQuery) {
           (metrics as any).queryParams = req.query;
         }
-        
+
         if (includeHeaders) {
           (metrics as any).headers = req.headers;
         }
@@ -322,7 +339,7 @@ export const performanceMonitoringMiddleware = (options: PerformanceMonitoringOp
           memoryUsage: metrics.memoryUsage.heapUsed,
           cacheHit,
           rateLimited,
-          errorCode
+          errorCode,
         };
 
         switch (logLevel) {
@@ -362,7 +379,7 @@ export const performanceMonitoringMiddleware = (options: PerformanceMonitoringOp
       // Set performance headers
       res.setHeader('X-Response-Time', `${responseTime}ms`);
       res.setHeader('X-Request-ID', requestId);
-      
+
       if (collectMemoryMetrics && endMemory) {
         res.setHeader('X-Memory-Usage', `${Math.round(endMemory.heapUsed / 1024 / 1024)}MB`);
       }
@@ -379,17 +396,17 @@ export const createPerformanceMonitoring = (options?: PerformanceMonitoringOptio
 export const getMetricsReport = (timeWindow?: number) => {
   const now = Date.now();
   const windowStart = timeWindow ? now - timeWindow : 0;
-  
+
   return {
     timestamp: now,
     timeWindow: timeWindow || 'all-time',
     summary: {
       totalRequests: metricsStore.getRequestCount(undefined, timeWindow),
       averageResponseTime: metricsStore.getAverageResponseTime(undefined, timeWindow),
-      errorRate: metricsStore.getErrorRate(undefined, timeWindow)
+      errorRate: metricsStore.getErrorRate(undefined, timeWindow),
     },
     topEndpoints: metricsStore.getTopEndpoints(10, timeWindow),
-    recentMetrics: metricsStore.getMetrics(50).filter(m => m.timestamp > windowStart)
+    recentMetrics: metricsStore.getMetrics(50).filter(m => m.timestamp > windowStart),
   };
 };
 
@@ -398,20 +415,22 @@ export const performanceHealthCheck = () => {
   const recentMetrics = metricsStore.getMetrics(100);
   const last5Minutes = 5 * 60 * 1000;
   const recentRequests = recentMetrics.filter(m => Date.now() - m.timestamp < last5Minutes);
-  
-  const avgResponseTime = recentRequests.length > 0 
-    ? recentRequests.reduce((sum, m) => sum + m.responseTime, 0) / recentRequests.length
-    : 0;
-  
-  const errorRate = recentRequests.length > 0
-    ? (recentRequests.filter(m => m.statusCode >= 400).length / recentRequests.length) * 100
-    : 0;
+
+  const avgResponseTime =
+    recentRequests.length > 0
+      ? recentRequests.reduce((sum, m) => sum + m.responseTime, 0) / recentRequests.length
+      : 0;
+
+  const errorRate =
+    recentRequests.length > 0
+      ? (recentRequests.filter(m => m.statusCode >= 400).length / recentRequests.length) * 100
+      : 0;
 
   const memoryUsage = process.memoryUsage();
   const memoryUsagePercent = (memoryUsage.heapUsed / memoryUsage.heapTotal) * 100;
 
   let status: 'healthy' | 'degraded' | 'unhealthy' = 'healthy';
-  
+
   if (avgResponseTime > 2000 || errorRate > 10 || memoryUsagePercent > 90) {
     status = 'unhealthy';
   } else if (avgResponseTime > 1000 || errorRate > 5 || memoryUsagePercent > 75) {
@@ -427,14 +446,14 @@ export const performanceHealthCheck = () => {
       memoryUsage: {
         used: Math.round(memoryUsage.heapUsed / 1024 / 1024),
         total: Math.round(memoryUsage.heapTotal / 1024 / 1024),
-        percentage: Math.round(memoryUsagePercent * 100) / 100
-      }
+        percentage: Math.round(memoryUsagePercent * 100) / 100,
+      },
     },
     thresholds: {
       responseTime: { warning: 1000, critical: 2000 },
       errorRate: { warning: 5, critical: 10 },
-      memoryUsage: { warning: 75, critical: 90 }
-    }
+      memoryUsage: { warning: 75, critical: 90 },
+    },
   };
 };
 
@@ -457,37 +476,40 @@ export async function getPerformanceMetrics(options?: {
   averageResponseTime: number;
   errorRate: number;
   slowRequests: number;
-  endpoints: Record<string, {
-    requests: number;
-    averageTime: number;
-    errors: number;
-  }>;
+  endpoints: Record<
+    string,
+    {
+      requests: number;
+      averageTime: number;
+      errors: number;
+    }
+  >;
 }> {
   const now = Date.now();
   const timeRanges = {
     minute: 60 * 1000,
     hour: 60 * 60 * 1000,
-    day: 24 * 60 * 60 * 1000
+    day: 24 * 60 * 60 * 1000,
   };
-  
+
   const timeRange = timeRanges[options?.timeRange || 'hour'];
   const cutoffTime = now - timeRange;
-  
+
   // Filter metrics by time range
-  const recentMetrics = metricsStore.getMetrics(1000).filter(
-    (metric: PerformanceMetrics) => metric.timestamp >= cutoffTime
-  );
-  
+  const recentMetrics = metricsStore
+    .getMetrics(1000)
+    .filter((metric: PerformanceMetrics) => metric.timestamp >= cutoffTime);
+
   if (recentMetrics.length === 0) {
     return {
       totalRequests: 0,
       averageResponseTime: 0,
       errorRate: 0,
       slowRequests: 0,
-      endpoints: {}
+      endpoints: {},
     };
   }
-  
+
   // Calculate aggregate metrics
   const totalRequests = recentMetrics.length;
   const totalResponseTime = recentMetrics.reduce((sum, m) => sum + m.responseTime, 0);
@@ -495,34 +517,35 @@ export async function getPerformanceMetrics(options?: {
   const errorCount = recentMetrics.filter(m => m.statusCode >= 400).length;
   const errorRate = (errorCount / totalRequests) * 100;
   const slowRequests = recentMetrics.filter(m => m.responseTime > 1000).length;
-  
+
   // Group by endpoint
   const endpoints: Record<string, { requests: number; averageTime: number; errors: number }> = {};
-  
+
   for (const metric of recentMetrics) {
     const endpoint = metric.endpoint || 'unknown';
     if (!endpoints[endpoint]) {
       endpoints[endpoint] = { requests: 0, averageTime: 0, errors: 0 };
     }
-    
+
     endpoints[endpoint].requests++;
     endpoints[endpoint].averageTime += metric.responseTime;
     if (metric.statusCode >= 400) {
       endpoints[endpoint].errors++;
     }
   }
-  
+
   // Calculate average times for each endpoint
   for (const endpoint in endpoints) {
-    endpoints[endpoint].averageTime = endpoints[endpoint].averageTime / endpoints[endpoint].requests;
+    endpoints[endpoint].averageTime =
+      endpoints[endpoint].averageTime / endpoints[endpoint].requests;
   }
-  
+
   return {
     totalRequests,
     averageResponseTime,
     errorRate,
     slowRequests,
-    endpoints
+    endpoints,
   };
 }
 

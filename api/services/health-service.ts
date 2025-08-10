@@ -62,7 +62,7 @@ class HealthService {
         this.checkCacheHealth(),
         this.checkRateLimiterHealth(),
         this.getPerformanceHealth(),
-        this.getSystemInfo()
+        this.getSystemInfo(),
       ]);
 
       // Determine overall status
@@ -77,15 +77,14 @@ class HealthService {
         environment: process.env.NODE_ENV || 'development',
         services: {
           cache: cacheHealth,
-          rateLimiter: rateLimiterHealth
+          rateLimiter: rateLimiterHealth,
         },
         performance: performanceMetrics,
-        system: systemInfo
+        system: systemInfo,
       };
-
     } catch (error) {
       console.error('Health check failed:', error);
-      
+
       return {
         status: 'unhealthy',
         timestamp,
@@ -94,16 +93,16 @@ class HealthService {
         environment: process.env.NODE_ENV || 'development',
         services: {
           cache: { status: 'unknown', type: 'unknown', details: {} },
-          rateLimiter: { status: 'unknown', type: 'unknown', details: {} }
+          rateLimiter: { status: 'unknown', type: 'unknown', details: {} },
         },
         performance: {
           responseTime: 0,
           errorRate: 1,
           cacheHitRate: 0,
           rateLimitRate: 0,
-          recentMetrics: []
+          recentMetrics: [],
         },
-        system: await this.getSystemInfo()
+        system: await this.getSystemInfo(),
       };
     }
   }
@@ -125,16 +124,16 @@ class HealthService {
           provider: cacheHealth.provider,
           latency: cacheHealth.latency,
           error: cacheHealth.error,
-          stats: cacheHealth.stats
-        }
+          stats: cacheHealth.stats,
+        },
       };
     } catch (error) {
       return {
         status: 'unhealthy',
         type: 'unknown',
         details: {
-          error: error instanceof Error ? error.message : 'Unknown error'
-        }
+          error: error instanceof Error ? error.message : 'Unknown error',
+        },
       };
     }
   }
@@ -156,16 +155,16 @@ class HealthService {
           provider: rateLimiterHealth.provider,
           responseTime: rateLimiterHealth.responseTime,
           error: rateLimiterHealth.error,
-          details: rateLimiterHealth.details
-        }
+          details: rateLimiterHealth.details,
+        },
       };
     } catch (error) {
       return {
         status: 'unhealthy',
         type: 'unknown',
         details: {
-          error: error instanceof Error ? error.message : 'Unknown error'
-        }
+          error: error instanceof Error ? error.message : 'Unknown error',
+        },
       };
     }
   }
@@ -182,13 +181,13 @@ class HealthService {
   }> {
     try {
       const metrics = await getPerformanceMetrics({ timeRange: 'hour' });
-      
+
       return {
         responseTime: metrics.averageResponseTime || 0,
         errorRate: metrics.errorRate || 0,
         cacheHitRate: 0, // Not available in current metrics
         rateLimitRate: 0, // Not available in current metrics
-        recentMetrics: [] // Not available in current metrics
+        recentMetrics: [], // Not available in current metrics
       };
     } catch (error) {
       console.warn('Failed to get performance metrics for health check:', error);
@@ -197,7 +196,7 @@ class HealthService {
         errorRate: 0,
         cacheHitRate: 0,
         rateLimitRate: 0,
-        recentMetrics: []
+        recentMetrics: [],
       };
     }
   }
@@ -217,15 +216,15 @@ class HealthService {
     const memoryUsage = process.memoryUsage();
     const totalMemory = memoryUsage.heapTotal;
     const usedMemory = memoryUsage.heapUsed;
-    
+
     return {
       memory: {
         used: usedMemory,
         total: totalMemory,
-        percentage: (usedMemory / totalMemory) * 100
+        percentage: (usedMemory / totalMemory) * 100,
       },
       nodeVersion: process.version,
-      platform: process.platform
+      platform: process.platform,
     };
   }
 
@@ -233,7 +232,7 @@ class HealthService {
    * Determine overall system status based on service statuses and performance
    */
   private determineOverallStatus(
-    serviceStatuses: string[], 
+    serviceStatuses: string[],
     performance: any
   ): 'healthy' | 'degraded' | 'unhealthy' {
     // Check for unhealthy services
@@ -247,11 +246,13 @@ class HealthService {
     }
 
     // Check performance thresholds
-    if (performance.errorRate > 0.1) { // More than 10% error rate
+    if (performance.errorRate > 0.1) {
+      // More than 10% error rate
       return 'degraded';
     }
 
-    if (performance.responseTime > 5000) { // More than 5 seconds average response time
+    if (performance.responseTime > 5000) {
+      // More than 5 seconds average response time
       return 'degraded';
     }
 
@@ -281,7 +282,7 @@ class HealthService {
   }> {
     const results = {
       upstashRedis: false,
-      externalAPIs: true // Assume true since we don't have external APIs yet
+      externalAPIs: true, // Assume true since we don't have external APIs yet
     };
 
     try {
@@ -289,15 +290,14 @@ class HealthService {
       const cacheService = getCacheService();
       const testKey = `health_check_${Date.now()}`;
       const testValue = { test: true, timestamp: Date.now() };
-      
+
       await cacheService.set(testKey, testValue, 5000); // 5 second TTL
       const retrieved = await cacheService.get(testKey);
-      
+
       results.upstashRedis = retrieved !== null;
-      
+
       // Clean up test key
       await cacheService.del(testKey);
-      
     } catch (error) {
       console.warn('Upstash Redis connectivity test failed:', error);
       results.upstashRedis = false;
@@ -344,12 +344,12 @@ class HealthService {
     if (usagePercentage > 90) {
       alerts.push({
         level: 'critical' as const,
-        message: `Memory usage is critically high: ${usagePercentage.toFixed(1)}%`
+        message: `Memory usage is critically high: ${usagePercentage.toFixed(1)}%`,
       });
     } else if (usagePercentage > 75) {
       alerts.push({
         level: 'warning' as const,
-        message: `Memory usage is high: ${usagePercentage.toFixed(1)}%`
+        message: `Memory usage is high: ${usagePercentage.toFixed(1)}%`,
       });
     }
 

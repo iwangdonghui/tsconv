@@ -1,6 +1,6 @@
 /**
  * API Security Enhancement Middleware
- * 
+ *
  * This middleware provides comprehensive API security including
  * input sanitization, request validation, security logging, and threat detection.
  */
@@ -69,7 +69,7 @@ const SQL_INJECTION_PATTERNS = [
   /(\b(OR|AND)\s+\d+\s*=\s*\d+)/i,
   /('|\"|`|;|--|\|\|)/,
   /(\bUNION\b.*\bSELECT\b)/i,
-  /(\b(INFORMATION_SCHEMA|SYSOBJECTS|SYSCOLUMNS)\b)/i
+  /(\b(INFORMATION_SCHEMA|SYSOBJECTS|SYSCOLUMNS)\b)/i,
 ];
 
 const XSS_PATTERNS = [
@@ -79,7 +79,7 @@ const XSS_PATTERNS = [
   /<iframe[^>]*>.*?<\/iframe>/gi,
   /<object[^>]*>.*?<\/object>/gi,
   /<embed[^>]*>/gi,
-  /expression\s*\(/gi
+  /expression\s*\(/gi,
 ];
 
 const PATH_TRAVERSAL_PATTERNS = [
@@ -88,13 +88,13 @@ const PATH_TRAVERSAL_PATTERNS = [
   /%2e%2e%2f/gi,
   /%2e%2e%5c/gi,
   /\.\.%2f/gi,
-  /\.\.%5c/gi
+  /\.\.%5c/gi,
 ];
 
 const COMMAND_INJECTION_PATTERNS = [
   /[;&|`$(){}[\]]/,
   /\b(cat|ls|pwd|whoami|id|uname|ps|netstat|ifconfig|ping|wget|curl|nc|telnet|ssh)\b/i,
-  /(\||&&|;|`|\$\(|\${)/
+  /(\||&&|;|`|\$\(|\${)/,
 ];
 
 // ============================================================================
@@ -114,7 +114,7 @@ export class InputSanitizer {
       .replace(/\//g, '&#x2F;')
       .replace(/&/g, '&amp;');
   }
-  
+
   /**
    * Sanitizes SQL input to prevent injection
    */
@@ -126,7 +126,7 @@ export class InputSanitizer {
       .replace(/\/\*/g, '')
       .replace(/\*\//g, '');
   }
-  
+
   /**
    * Removes path traversal attempts
    */
@@ -137,7 +137,7 @@ export class InputSanitizer {
       .replace(/%2e%2e%2f/gi, '')
       .replace(/%2e%2e%5c/gi, '');
   }
-  
+
   /**
    * Sanitizes command injection attempts
    */
@@ -147,7 +147,7 @@ export class InputSanitizer {
       .replace(/\|\|/g, '')
       .replace(/&&/g, '');
   }
-  
+
   /**
    * Comprehensive input sanitization
    */
@@ -160,11 +160,11 @@ export class InputSanitizer {
       sanitized = this.sanitizeCommandInjection(sanitized);
       return sanitized;
     }
-    
+
     if (Array.isArray(input)) {
       return input.map(item => this.sanitizeInput(item));
     }
-    
+
     if (input && typeof input === 'object') {
       const sanitized: Record<string, unknown> = {};
       for (const [key, value] of Object.entries(input)) {
@@ -172,7 +172,7 @@ export class InputSanitizer {
       }
       return sanitized;
     }
-    
+
     return input;
   }
 }
@@ -194,13 +194,13 @@ export class ThreatDetector {
           severity: 'high',
           description: 'Potential SQL injection attempt detected',
           payload: input,
-          pattern: pattern.toString()
+          pattern: pattern.toString(),
         };
       }
     }
     return null;
   }
-  
+
   /**
    * Detects XSS attempts
    */
@@ -213,13 +213,13 @@ export class ThreatDetector {
           severity: 'high',
           description: 'Potential XSS attempt detected',
           payload: input,
-          pattern: pattern.toString()
+          pattern: pattern.toString(),
         };
       }
     }
     return null;
   }
-  
+
   /**
    * Detects path traversal attempts
    */
@@ -232,13 +232,13 @@ export class ThreatDetector {
           severity: 'medium',
           description: 'Potential path traversal attempt detected',
           payload: input,
-          pattern: pattern.toString()
+          pattern: pattern.toString(),
         };
       }
     }
     return null;
   }
-  
+
   /**
    * Detects command injection attempts
    */
@@ -251,60 +251,60 @@ export class ThreatDetector {
           severity: 'critical',
           description: 'Potential command injection attempt detected',
           payload: input,
-          pattern: pattern.toString()
+          pattern: pattern.toString(),
         };
       }
     }
     return null;
   }
-  
+
   /**
    * Comprehensive threat detection
    */
   static detectThreats(input: string): SecurityThreat[] {
     const threats: SecurityThreat[] = [];
-    
+
     const sqlThreat = this.detectSQLInjection(input);
     if (sqlThreat) threats.push(sqlThreat);
-    
+
     const xssThreat = this.detectXSS(input);
     if (xssThreat) threats.push(xssThreat);
-    
+
     const pathThreat = this.detectPathTraversal(input);
     if (pathThreat) threats.push(pathThreat);
-    
+
     const cmdThreat = this.detectCommandInjection(input);
     if (cmdThreat) threats.push(cmdThreat);
-    
+
     return threats;
   }
-  
+
   /**
    * Analyzes request for threats
    */
   static analyzeRequest(req: VercelRequest): SecurityThreat[] {
     const threats: SecurityThreat[] = [];
-    
+
     // Check URL parameters
     const url = new URL(req.url || '', 'http://localhost');
     const searchParams = Array.from(url.searchParams.entries());
     for (const [key, value] of searchParams) {
       threats.push(...this.detectThreats(value));
     }
-    
+
     // Check request body
     if (req.body) {
       const bodyStr = typeof req.body === 'string' ? req.body : JSON.stringify(req.body);
       threats.push(...this.detectThreats(bodyStr));
     }
-    
+
     // Check headers for suspicious patterns
     for (const [key, value] of Object.entries(req.headers)) {
       if (typeof value === 'string') {
         threats.push(...this.detectThreats(value));
       }
     }
-    
+
     return threats;
   }
 }
@@ -322,11 +322,11 @@ export class RequestFingerprinter {
     const userAgent = req.headers['user-agent'] || '';
     const endpoint = req.url || '';
     const method = req.method || 'GET';
-    
+
     // Create a hash of key identifying features
     const fingerprintData = `${ip}:${userAgent}:${method}:${endpoint}`;
     const id = crypto.createHash('sha256').update(fingerprintData).digest('hex').substring(0, 16);
-    
+
     return {
       id,
       ip,
@@ -336,20 +336,24 @@ export class RequestFingerprinter {
       endpoint,
       method,
       contentType: req.headers['content-type'],
-      contentLength: req.headers['content-length'] ? parseInt(req.headers['content-length'] as string) : undefined
+      contentLength: req.headers['content-length']
+        ? parseInt(req.headers['content-length'] as string)
+        : undefined,
     };
   }
-  
+
   /**
    * Gets client IP address
    */
   private static getClientIP(req: VercelRequest): string {
-    return (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() ||
-           (req.headers['x-real-ip'] as string) ||
-           (req.headers['cf-connecting-ip'] as string) ||
-           'unknown';
+    return (
+      (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() ||
+      (req.headers['x-real-ip'] as string) ||
+      (req.headers['cf-connecting-ip'] as string) ||
+      'unknown'
+    );
   }
-  
+
   /**
    * Gets relevant headers for fingerprinting
    */
@@ -360,9 +364,9 @@ export class RequestFingerprinter {
       'accept-encoding',
       'user-agent',
       'referer',
-      'origin'
+      'origin',
     ];
-    
+
     const headers: Record<string, string> = {};
     for (const header of relevantHeaders) {
       const value = req.headers[header];
@@ -370,7 +374,7 @@ export class RequestFingerprinter {
         headers[header] = value;
       }
     }
-    
+
     return headers;
   }
 }
@@ -381,38 +385,38 @@ export class RequestFingerprinter {
 
 export class SecurityLogger {
   private static logs: SecurityLogEntry[] = [];
-  
+
   /**
    * Logs a security event
    */
   static log(entry: Omit<SecurityLogEntry, 'timestamp'>): void {
     const logEntry: SecurityLogEntry = {
       ...entry,
-      timestamp: Date.now()
+      timestamp: Date.now(),
     };
-    
+
     this.logs.push(logEntry);
-    
+
     // In production, send to external logging service
     if (process.env.NODE_ENV === 'production') {
       this.sendToExternalLogger(logEntry);
     } else {
       console.log('Security Event:', logEntry);
     }
-    
+
     // Keep only last 1000 logs in memory
     if (this.logs.length > 1000) {
       this.logs = this.logs.slice(-1000);
     }
   }
-  
+
   /**
    * Gets recent security logs
    */
   static getRecentLogs(limit: number = 100): SecurityLogEntry[] {
     return this.logs.slice(-limit);
   }
-  
+
   /**
    * Sends log to external logging service
    */
@@ -422,7 +426,7 @@ export class SecurityLogger {
     // - DataDog
     // - CloudWatch
     // - Custom logging endpoint
-    
+
     // For now, just console.log in production
     console.log('Security Event:', JSON.stringify(entry));
   }
@@ -447,16 +451,22 @@ export function createAPISecurityMiddleware(config: APISecurityConfig = {}) {
     blockedUserAgents = [],
     blockedIPs = [],
     requireHTTPS = true,
-    enableRequestFingerprinting = true
+    enableRequestFingerprinting = true,
   } = config;
-  
+
   return async (req: VercelRequest, res: VercelResponse, next?: () => void) => {
     const startTime = Date.now();
-    const fingerprint = enableRequestFingerprinting ? RequestFingerprinter.generateFingerprint(req) : undefined;
-    
+    const fingerprint = enableRequestFingerprinting
+      ? RequestFingerprinter.generateFingerprint(req)
+      : undefined;
+
     try {
       // Check HTTPS requirement
-      if (requireHTTPS && req.headers['x-forwarded-proto'] !== 'https' && process.env.NODE_ENV === 'production') {
+      if (
+        requireHTTPS &&
+        req.headers['x-forwarded-proto'] !== 'https' &&
+        process.env.NODE_ENV === 'production'
+      ) {
         SecurityLogger.log({
           level: 'warn',
           event: 'insecure_request',
@@ -464,16 +474,16 @@ export function createAPISecurityMiddleware(config: APISecurityConfig = {}) {
           userAgent: fingerprint?.userAgent || 'unknown',
           endpoint: req.url || '',
           method: req.method || 'GET',
-          fingerprint
+          fingerprint,
         });
-        
+
         return res.status(400).json({
           success: false,
           error: 'HTTPS Required',
-          message: 'This API requires HTTPS connections'
+          message: 'This API requires HTTPS connections',
         });
       }
-      
+
       // Check blocked IPs
       if (blockedIPs.length > 0 && fingerprint && blockedIPs.includes(fingerprint.ip)) {
         SecurityLogger.log({
@@ -483,16 +493,16 @@ export function createAPISecurityMiddleware(config: APISecurityConfig = {}) {
           userAgent: fingerprint.userAgent,
           endpoint: req.url || '',
           method: req.method || 'GET',
-          fingerprint
+          fingerprint,
         });
-        
+
         return res.status(403).json({
           success: false,
           error: 'Access Denied',
-          message: 'Your IP address has been blocked'
+          message: 'Your IP address has been blocked',
         });
       }
-      
+
       // Check blocked user agents
       const userAgent = req.headers['user-agent'] || '';
       if (blockedUserAgents.some(pattern => pattern.test(userAgent))) {
@@ -503,16 +513,16 @@ export function createAPISecurityMiddleware(config: APISecurityConfig = {}) {
           userAgent,
           endpoint: req.url || '',
           method: req.method || 'GET',
-          fingerprint
+          fingerprint,
         });
-        
+
         return res.status(403).json({
           success: false,
           error: 'Access Denied',
-          message: 'Your user agent is not allowed'
+          message: 'Your user agent is not allowed',
         });
       }
-      
+
       // Check request size
       const contentLength = req.headers['content-length'];
       if (contentLength && parseInt(contentLength as string) > maxRequestSize) {
@@ -524,16 +534,16 @@ export function createAPISecurityMiddleware(config: APISecurityConfig = {}) {
           endpoint: req.url || '',
           method: req.method || 'GET',
           metadata: { contentLength: parseInt(contentLength as string), maxSize: maxRequestSize },
-          fingerprint
+          fingerprint,
         });
-        
+
         return res.status(413).json({
           success: false,
           error: 'Request Too Large',
-          message: `Request size exceeds maximum allowed size of ${maxRequestSize} bytes`
+          message: `Request size exceeds maximum allowed size of ${maxRequestSize} bytes`,
         });
       }
-      
+
       // Check content type
       const contentType = req.headers['content-type'];
       if (contentType && !allowedContentTypes.some(allowed => contentType.includes(allowed))) {
@@ -545,23 +555,23 @@ export function createAPISecurityMiddleware(config: APISecurityConfig = {}) {
           endpoint: req.url || '',
           method: req.method || 'GET',
           metadata: { contentType, allowedTypes: allowedContentTypes },
-          fingerprint
+          fingerprint,
         });
-        
+
         return res.status(415).json({
           success: false,
           error: 'Unsupported Media Type',
-          message: `Content type ${contentType} is not allowed`
+          message: `Content type ${contentType} is not allowed`,
         });
       }
-      
+
       // Threat detection
       if (enableThreatDetection) {
         const threats = ThreatDetector.analyzeRequest(req);
         if (threats.length > 0) {
           const criticalThreats = threats.filter(t => t.severity === 'critical');
           const highThreats = threats.filter(t => t.severity === 'high');
-          
+
           SecurityLogger.log({
             level: criticalThreats.length > 0 ? 'critical' : 'error',
             event: 'security_threat_detected',
@@ -571,31 +581,31 @@ export function createAPISecurityMiddleware(config: APISecurityConfig = {}) {
             method: req.method || 'GET',
             threat: threats[0], // Log the first threat
             metadata: { totalThreats: threats.length, threatTypes: threats.map(t => t.type) },
-            fingerprint
+            fingerprint,
           });
-          
+
           // Block critical and high severity threats
           if (criticalThreats.length > 0 || highThreats.length > 0) {
             return res.status(400).json({
               success: false,
               error: 'Security Threat Detected',
-              message: 'Request contains potentially malicious content'
+              message: 'Request contains potentially malicious content',
             });
           }
         }
       }
-      
+
       // Input sanitization
       if (enableInputSanitization) {
         if (req.body) {
           req.body = InputSanitizer.sanitizeInput(req.body);
         }
-        
+
         if (req.query) {
           req.query = InputSanitizer.sanitizeInput(req.query) as any;
         }
       }
-      
+
       // Log successful security check
       if (enableSecurityLogging) {
         SecurityLogger.log({
@@ -606,24 +616,23 @@ export function createAPISecurityMiddleware(config: APISecurityConfig = {}) {
           endpoint: req.url || '',
           method: req.method || 'GET',
           metadata: { processingTime: Date.now() - startTime },
-          fingerprint
+          fingerprint,
         });
       }
-      
+
       // Attach security context to request
       (req as any).security = {
         fingerprint,
         threats: enableThreatDetection ? ThreatDetector.analyzeRequest(req) : [],
         sanitized: enableInputSanitization,
-        processingTime: Date.now() - startTime
+        processingTime: Date.now() - startTime,
       };
-      
+
       if (next) {
         return next();
       }
-      
+
       return undefined;
-      
     } catch (error) {
       SecurityLogger.log({
         level: 'error',
@@ -633,13 +642,13 @@ export function createAPISecurityMiddleware(config: APISecurityConfig = {}) {
         endpoint: req.url || '',
         method: req.method || 'GET',
         metadata: { error: error instanceof Error ? error.message : 'Unknown error' },
-        fingerprint
+        fingerprint,
       });
-      
+
       return res.status(500).json({
         success: false,
         error: 'Internal Security Error',
-        message: 'Security processing failed'
+        message: 'Security processing failed',
       });
     }
   };
@@ -652,7 +661,7 @@ export const defaultAPISecurityMiddleware = createAPISecurityMiddleware({
   enableInputSanitization: true,
   enableThreatDetection: true,
   enableSecurityLogging: true,
-  requireHTTPS: process.env.NODE_ENV === 'production'
+  requireHTTPS: process.env.NODE_ENV === 'production',
 });
 
 /**
@@ -664,7 +673,7 @@ export const strictAPISecurityMiddleware = createAPISecurityMiddleware({
   enableSecurityLogging: true,
   requireHTTPS: true,
   maxRequestSize: 512 * 1024, // 512KB
-  allowedContentTypes: ['application/json']
+  allowedContentTypes: ['application/json'],
 });
 
 // All classes are already exported above with their definitions

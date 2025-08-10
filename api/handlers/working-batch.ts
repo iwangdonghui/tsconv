@@ -58,7 +58,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   // Only allow POST requests for working batch conversion
   if (req.method !== 'POST') {
-    return APIErrorHandler.handleMethodNotAllowed(res, 'Only POST method is allowed for working batch conversion');
+    return APIErrorHandler.handleMethodNotAllowed(
+      res,
+      'Only POST method is allowed for working batch conversion'
+    );
   }
 
   try {
@@ -75,7 +78,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // Validate working batch request
     const validationResult = validateWorkingBatchRequest(batchRequest);
     if (!validationResult.valid) {
-      return APIErrorHandler.handleBadRequest(res, validationResult.message || 'Invalid request', validationResult.details);
+      return APIErrorHandler.handleBadRequest(
+        res,
+        validationResult.message || 'Invalid request',
+        validationResult.details
+      );
     }
 
     // Set timeout for the entire operation
@@ -86,14 +93,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // Process working batch conversion with timeout
     const processingPromise = processWorkingBatchConversion(batchRequest);
-    
-    const results = await Promise.race([processingPromise, timeoutPromise]) as WorkingBatchResult[];
-    
+
+    const results = (await Promise.race([
+      processingPromise,
+      timeoutPromise,
+    ])) as WorkingBatchResult[];
+
     const successCount = results.filter(r => r.success).length;
     const errorCount = results.filter(r => !r.success).length;
     const totalProcessingTime = Date.now() - startTime;
-    const averageItemTime = results.length > 0 ? 
-      results.reduce((sum, r) => sum + r.processingTime, 0) / results.length : 0;
+    const averageItemTime =
+      results.length > 0
+        ? results.reduce((sum, r) => sum + r.processingTime, 0) / results.length
+        : 0;
 
     const response: WorkingBatchResponse = {
       success: true,
@@ -103,8 +115,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         successCount,
         errorCount,
         processingTime: totalProcessingTime,
-        averageItemTime
-      }
+        averageItemTime,
+      },
     };
 
     // Add progress information if requested
@@ -112,43 +124,50 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       response.metadata.progress = {
         completed: results.length,
         remaining: Math.max(0, batchRequest.items.length - results.length),
-        percentage: (results.length / batchRequest.items.length) * 100
+        percentage: (results.length / batchRequest.items.length) * 100,
       };
     }
 
     APIErrorHandler.sendSuccess(res, response, {
       processingTime: totalProcessingTime,
       itemCount: results.length,
-      cacheHit: false
+      cacheHit: false,
     });
-
   } catch (error) {
     console.error('Working batch conversion error:', error);
-    
+
     if ((error as Error).message === 'Batch processing timeout') {
-      return APIErrorHandler.sendError(res, APIErrorHandler.createError(
-        'TIMEOUT_ERROR',
-        'Batch processing exceeded timeout limit',
-        408,
-        { timeout: req.body?.options?.timeout || DEFAULT_TIMEOUT }
-      ), 408);
+      return APIErrorHandler.sendError(
+        res,
+        APIErrorHandler.createError(
+          'TIMEOUT_ERROR',
+          'Batch processing exceeded timeout limit',
+          408,
+          { timeout: req.body?.options?.timeout || DEFAULT_TIMEOUT }
+        ),
+        408
+      );
     }
 
     APIErrorHandler.handleServerError(res, error as Error, {
-      endpoint: 'working-batch'
+      endpoint: 'working-batch',
     });
   }
 }
 
-function validateWorkingBatchRequest(request: WorkingBatchRequest): { valid: boolean; message?: string; details?: any } {
+function validateWorkingBatchRequest(request: WorkingBatchRequest): {
+  valid: boolean;
+  message?: string;
+  details?: any;
+} {
   if (!request.items || !Array.isArray(request.items)) {
     return {
       valid: false,
       message: 'Items array is required',
       details: {
         expected: 'Array of timestamps (numbers or strings)',
-        received: typeof request.items
-      }
+        received: typeof request.items,
+      },
     };
   }
 
@@ -158,8 +177,8 @@ function validateWorkingBatchRequest(request: WorkingBatchRequest): { valid: boo
       message: 'Items array cannot be empty',
       details: {
         minItems: 1,
-        maxItems: MAX_BATCH_SIZE
-      }
+        maxItems: MAX_BATCH_SIZE,
+      },
     };
   }
 
@@ -170,20 +189,23 @@ function validateWorkingBatchRequest(request: WorkingBatchRequest): { valid: boo
       details: {
         maxItems: MAX_BATCH_SIZE,
         receivedItems: request.items.length,
-        suggestion: `This endpoint is optimized for smaller batches. Use enhanced-batch for larger requests.`
-      }
+        suggestion: `This endpoint is optimized for smaller batches. Use enhanced-batch for larger requests.`,
+      },
     };
   }
 
-  if (request.options?.timeout && (request.options.timeout < 1000 || request.options.timeout > 60000)) {
+  if (
+    request.options?.timeout &&
+    (request.options.timeout < 1000 || request.options.timeout > 60000)
+  ) {
     return {
       valid: false,
       message: 'Timeout must be between 1000ms and 60000ms',
       details: {
         minTimeout: 1000,
         maxTimeout: 60000,
-        receivedTimeout: request.options.timeout
-      }
+        receivedTimeout: request.options.timeout,
+      },
     };
   }
 
@@ -193,15 +215,17 @@ function validateWorkingBatchRequest(request: WorkingBatchRequest): { valid: boo
       message: 'Priority must be one of: low, normal, high',
       details: {
         validPriorities: ['low', 'normal', 'high'],
-        receivedPriority: request.options.priority
-      }
+        receivedPriority: request.options.priority,
+      },
     };
   }
 
   return { valid: true };
 }
 
-async function processWorkingBatchConversion(request: WorkingBatchRequest): Promise<WorkingBatchResult[]> {
+async function processWorkingBatchConversion(
+  request: WorkingBatchRequest
+): Promise<WorkingBatchResult[]> {
   const results: WorkingBatchResult[] = [];
   const outputFormats = request.outputFormats || ['iso', 'unix', 'human'];
   const continueOnError = request.options?.continueOnError ?? true;
@@ -227,7 +251,7 @@ async function processWorkingBatchConversion(request: WorkingBatchRequest): Prom
           success: false,
           error: 'Timestamp cannot be null or undefined',
           processingTime: Date.now() - itemStartTime,
-          index
+          index,
         });
         continue;
       }
@@ -238,7 +262,7 @@ async function processWorkingBatchConversion(request: WorkingBatchRequest): Prom
           success: false,
           error: `Invalid timestamp format: ${item}`,
           processingTime: Date.now() - itemStartTime,
-          index
+          index,
         });
         continue;
       }
@@ -257,16 +281,15 @@ async function processWorkingBatchConversion(request: WorkingBatchRequest): Prom
         success: true,
         data: conversionResult,
         processingTime: Date.now() - itemStartTime,
-        index
+        index,
       });
-
     } catch (error) {
       results.push({
         input: item,
         success: false,
         error: `Conversion failed: ${(error as Error).message}`,
         processingTime: Date.now() - itemStartTime,
-        index
+        index,
       });
 
       // If continueOnError is false, stop processing
@@ -283,18 +306,18 @@ function isValidTimestamp(input: any): boolean {
   if (typeof input === 'number') {
     return !isNaN(input) && isFinite(input);
   }
-  
+
   if (typeof input === 'string') {
     // Check if it's a valid date string or numeric string
     const asNumber = parseFloat(input);
     if (!isNaN(asNumber) && isFinite(asNumber)) {
       return true;
     }
-    
+
     // Check if it's a valid date string
     const date = new Date(input);
     return !isNaN(date.getTime());
   }
-  
+
   return false;
 }

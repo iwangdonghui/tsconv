@@ -1,17 +1,17 @@
 /**
  * Security Headers Audit API Endpoint
- * 
+ *
  * This endpoint provides comprehensive security headers analysis and scoring
  * for the current application or external URLs.
  */
 
 import { VercelRequest, VercelResponse } from '@vercel/node';
 import { createCorsHeaders } from './utils/response';
-import { 
-  auditSecurityHeaders, 
+import {
+  auditSecurityHeaders,
   generateSecurityReportHTML,
   SecurityAuditReport,
-  isSecureConnection
+  isSecureConnection,
 } from './utils/security-audit';
 import { maximumSecurityHeadersMiddleware } from './middleware/enhanced-security-headers';
 
@@ -45,32 +45,33 @@ async function auditExternalURL(url: string): Promise<ExternalAuditResult> {
     const response = await fetch(url, {
       method: 'HEAD',
       headers: {
-        'User-Agent': 'Security-Headers-Audit/1.0'
-      }
+        'User-Agent': 'Security-Headers-Audit/1.0',
+      },
     });
-    
+
     const headers: Record<string, string> = {};
     response.headers.forEach((value, key) => {
       headers[key] = value;
     });
-    
+
     // Create a mock response object for audit
     const mockRes = {
       getHeader: (name: string) => headers[name.toLowerCase()],
-      getHeaders: () => headers
+      getHeaders: () => headers,
     } as any;
-    
+
     const audit = auditSecurityHeaders(mockRes);
-    
+
     return {
       url,
       headers,
       audit,
-      timestamp: Date.now()
+      timestamp: Date.now(),
     };
-    
   } catch (error) {
-    throw new Error(`Failed to audit external URL: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    throw new Error(
+      `Failed to audit external URL: ${error instanceof Error ? error.message : 'Unknown error'}`
+    );
   }
 }
 
@@ -97,23 +98,23 @@ function performSelfAudit(req: VercelRequest): SecurityAuditReport {
   // Create a mock response to apply headers to
   const mockRes = {
     headers: {} as Record<string, string>,
-    setHeader: function(name: string, value: string) {
+    setHeader(name: string, value: string) {
       this.headers[name.toLowerCase()] = value;
     },
-    getHeader: function(name: string) {
+    getHeader(name: string) {
       return this.headers[name.toLowerCase()];
     },
-    getHeaders: function() {
+    getHeaders() {
       return this.headers;
     },
-    removeHeader: function(name: string) {
+    removeHeader(name: string) {
       delete this.headers[name.toLowerCase()];
-    }
+    },
   } as any;
-  
+
   // Apply our security headers
   maximumSecurityHeadersMiddleware(req, mockRes);
-  
+
   // Audit the applied headers
   return auditSecurityHeaders(mockRes);
 }
@@ -128,64 +129,59 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   Object.entries(corsHeaders).forEach(([key, value]) => {
     res.setHeader(key, value);
   });
-  
+
   // Handle preflight requests
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
   }
-  
+
   // Only accept GET and POST requests
   if (!['GET', 'POST'].includes(req.method || '')) {
     return res.status(405).json({
       success: false,
       error: 'Method Not Allowed',
-      message: 'Only GET and POST methods are allowed'
+      message: 'Only GET and POST methods are allowed',
     });
   }
-  
+
   try {
     const startTime = Date.now();
-    
+
     // Parse request parameters
     const params: AuditRequest = {
       ...req.query,
-      ...req.body
+      ...req.body,
     };
-    
-    const {
-      url,
-      format = 'json',
-      includeRecommendations = true,
-      checkExternal = false
-    } = params;
-    
+
+    const { url, format = 'json', includeRecommendations = true, checkExternal = false } = params;
+
     let auditResult: SecurityAuditReport | ExternalAuditResult;
-    
+
     if (checkExternal && url) {
       // Audit external URL
       if (!isValidURL(url)) {
         return res.status(400).json({
           success: false,
           error: 'Invalid URL',
-          message: 'Please provide a valid HTTP or HTTPS URL'
+          message: 'Please provide a valid HTTP or HTTPS URL',
         });
       }
-      
+
       auditResult = await auditExternalURL(url);
     } else {
       // Perform self-audit
       auditResult = performSelfAudit(req);
     }
-    
+
     // Return HTML format if requested
     if (format === 'html') {
       const report = 'audit' in auditResult ? auditResult.audit : auditResult;
       const htmlReport = generateSecurityReportHTML(report);
-      
+
       res.setHeader('Content-Type', 'text/html');
       return res.status(200).send(htmlReport);
     }
-    
+
     // Return JSON format
     const responseData = {
       success: true,
@@ -195,16 +191,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           isSecure: isSecureConnection(req),
           userAgent: req.headers['user-agent'],
           timestamp: new Date().toISOString(),
-          auditType: checkExternal && url ? 'external' : 'self'
-        }
+          auditType: checkExternal && url ? 'external' : 'self',
+        },
       },
       metadata: {
         processingTime: Date.now() - startTime,
         timestamp: Math.floor(Date.now() / 1000),
-        version: '1.0.0'
-      }
+        version: '1.0.0',
+      },
     };
-    
+
     // Filter out recommendations if not requested
     if (!includeRecommendations && 'recommendations' in responseData.data.audit) {
       delete responseData.data.audit.recommendations;
@@ -212,16 +208,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         delete result.recommendations;
       });
     }
-    
+
     return res.status(200).json(responseData);
-    
   } catch (error) {
     console.error('Security audit error:', error);
-    
+
     return res.status(500).json({
       success: false,
       error: 'Internal Server Error',
-      message: error instanceof Error ? error.message : 'Failed to perform security audit'
+      message: error instanceof Error ? error.message : 'Failed to perform security audit',
     });
   }
 }
@@ -240,12 +235,12 @@ export function quickSecurityCheck(req: VercelRequest): {
   recommendations: string[];
 } {
   const audit = performSelfAudit(req);
-  
+
   return {
     score: audit.overallScore,
     grade: audit.grade,
     criticalIssues: audit.criticalIssues,
-    recommendations: audit.recommendations.slice(0, 3) // Top 3 recommendations
+    recommendations: audit.recommendations.slice(0, 3), // Top 3 recommendations
   };
 }
 
@@ -253,12 +248,8 @@ export function quickSecurityCheck(req: VercelRequest): {
  * Checks if basic security headers are present
  */
 export function hasBasicSecurityHeaders(res: VercelResponse): boolean {
-  const requiredHeaders = [
-    'X-Frame-Options',
-    'X-Content-Type-Options',
-    'X-XSS-Protection'
-  ];
-  
+  const requiredHeaders = ['X-Frame-Options', 'X-Content-Type-Options', 'X-XSS-Protection'];
+
   return requiredHeaders.every(header => res.getHeader(header));
 }
 
@@ -274,8 +265,4 @@ export function getSecurityScore(req: VercelRequest): number {
 // Export for testing
 // ============================================================================
 
-export {
-  auditExternalURL,
-  performSelfAudit,
-  isValidURL
-};
+export { auditExternalURL, performSelfAudit, isValidURL };

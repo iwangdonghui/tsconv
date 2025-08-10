@@ -16,13 +16,13 @@ describe('API Integration Tests', () => {
       body: {},
       method: 'GET',
       url: '/api/test',
-      headers: {}
+      headers: {},
     };
     mockRes = {
       status: vi.fn().mockReturnThis(),
       json: vi.fn().mockReturnThis(),
       setHeader: vi.fn().mockReturnThis(),
-      end: vi.fn().mockReturnThis()
+      end: vi.fn().mockReturnThis(),
     };
   });
 
@@ -34,26 +34,26 @@ describe('API Integration Tests', () => {
     it('should cache and retrieve values correctly', async () => {
       const key = 'test-key';
       const value = { test: 'data' };
-      
+
       await cacheService.set(key, value, 1000);
       const retrieved = await cacheService.get(key);
-      
+
       expect(retrieved).toEqual(value);
     });
 
     it('should handle cache expiration', async () => {
       const key = 'expired-key';
       const value = { test: 'data' };
-      
+
       await cacheService.set(key, value, -1); // Expired
       const retrieved = await cacheService.get(key);
-      
+
       expect(retrieved).toBeNull();
     });
 
     it('should provide health check', async () => {
       const health = await cacheService.healthCheck();
-      
+
       expect(health).toHaveProperty('status');
       expect(health).toHaveProperty('entries');
       expect(health).toHaveProperty('memoryUsage');
@@ -74,7 +74,7 @@ describe('API Integration Tests', () => {
 
     it('should get timezone info', () => {
       const info = timezoneService.getTimezoneInfo('UTC');
-      
+
       expect(info).toHaveProperty('identifier');
       expect(info).toHaveProperty('currentOffset');
       expect(info).toHaveProperty('isDST');
@@ -84,7 +84,7 @@ describe('API Integration Tests', () => {
     it('should convert timestamps between timezones', () => {
       const timestamp = 1640995200; // 2022-01-01 00:00:00 UTC
       const result = timezoneService.convertTimestamp(timestamp, 'UTC', 'America/New_York');
-      
+
       expect(result).toHaveProperty('originalTimestamp');
       expect(result).toHaveProperty('convertedTimestamp');
       expect(result).toHaveProperty('offsetDifference');
@@ -143,7 +143,7 @@ describe('API Integration Tests', () => {
   describe('Monitoring Service', () => {
     it('should provide system status', async () => {
       const status = await monitoringService.getSystemStatus();
-      
+
       expect(status).toHaveProperty('status');
       expect(status).toHaveProperty('services');
       expect(status).toHaveProperty('metrics');
@@ -153,7 +153,7 @@ describe('API Integration Tests', () => {
 
     it('should check all services', async () => {
       const services = await monitoringService.getSystemStatus();
-      
+
       expect(services.services).toHaveProperty('cache');
       expect(services.services).toHaveProperty('timezone');
       expect(services.services).toHaveProperty('format');
@@ -166,7 +166,7 @@ describe('API Integration Tests', () => {
         items: [1640995200, '2022-01-01', 1641081600],
         outputFormat: ['iso8601', 'timestamp'],
         timezone: 'UTC',
-        targetTimezone: 'America/New_York'
+        targetTimezone: 'America/New_York',
       };
 
       mockReq.method = 'POST';
@@ -181,7 +181,7 @@ describe('API Integration Tests', () => {
         expect.objectContaining({
           success: true,
           data: expect.any(Array),
-          metadata: expect.any(Object)
+          metadata: expect.any(Object),
         })
       );
     });
@@ -189,7 +189,7 @@ describe('API Integration Tests', () => {
     it('should handle timezone conversion correctly', async () => {
       mockReq.query = {
         from: 'UTC',
-        to: 'America/New_York'
+        to: 'America/New_York',
       };
 
       const tzHandler = (await import('../timezone-difference')).default;
@@ -199,7 +199,7 @@ describe('API Integration Tests', () => {
       expect(mockRes.json).toHaveBeenCalledWith(
         expect.objectContaining({
           success: true,
-          data: expect.any(Object)
+          data: expect.any(Object),
         })
       );
     });
@@ -214,7 +214,7 @@ describe('API Integration Tests', () => {
       expect(mockRes.json).toHaveBeenCalledWith(
         expect.objectContaining({
           success: true,
-          data: expect.any(Object)
+          data: expect.any(Object),
         })
       );
     });
@@ -232,8 +232,8 @@ describe('API Integration Tests', () => {
         expect.objectContaining({
           success: false,
           error: expect.objectContaining({
-            code: expect.any(String)
-          })
+            code: expect.any(String),
+          }),
         })
       );
     });
@@ -261,7 +261,7 @@ describe('API Integration Tests', () => {
     it('should handle batch conversion efficiently', async () => {
       const largeBatch = {
         items: Array.from({ length: 100 }, (_, i) => 1640995200 + i * 86400),
-        outputFormat: ['iso8601', 'timestamp']
+        outputFormat: ['iso8601', 'timestamp'],
       };
 
       mockReq.method = 'POST';
@@ -281,7 +281,7 @@ describe('API Integration Tests', () => {
       mockReq.query = { timestamp: String(timestamp) };
 
       const convertHandler = (await import('../convert')).default;
-      
+
       // First call
       await convertHandler(mockReq as VercelRequest, mockRes as VercelResponse);
       expect(mockRes.status).toHaveBeenCalledWith(200);
@@ -290,7 +290,7 @@ describe('API Integration Tests', () => {
       const start = Date.now();
       await convertHandler(mockReq as VercelRequest, mockRes as VercelResponse);
       const duration = Date.now() - start;
-      
+
       expect(duration).toBeLessThan(100); // Should be very fast from cache
     });
   });
@@ -301,14 +301,14 @@ describe('API Integration Tests', () => {
       mockReq.headers = { 'x-forwarded-for': '192.168.1.1' };
 
       const convertHandler = (await import('../convert')).default;
-      
+
       // Make many requests
-      const promises = Array.from({ length: 110 }, () => 
+      const promises = Array.from({ length: 110 }, () =>
         convertHandler(mockReq as VercelRequest, mockRes as VercelResponse)
       );
-      
+
       await Promise.all(promises);
-      
+
       // At least one should hit rate limit
       const statusCalls = mockRes.status.mock.calls;
       expect(statusCalls.some(call => call[0] === 429)).toBe(true);
@@ -351,8 +351,8 @@ describe('API Contract Tests', () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           items: [1640995200, '2022-01-01'],
-          outputFormat: ['iso8601']
-        })
+          outputFormat: ['iso8601'],
+        }),
       });
 
       const data = await response.json();

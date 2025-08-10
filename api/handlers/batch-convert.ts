@@ -1,7 +1,11 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
 import { APIErrorHandler, createCorsHeaders, validateRequest } from '../utils/response';
 import { convertTimestamp } from '../utils/conversion-utils';
-import { BatchConversionRequest, BatchConversionResponse, BatchConversionResult } from '../types/api';
+import {
+  BatchConversionRequest,
+  BatchConversionResponse,
+  BatchConversionResult,
+} from '../types/api';
 
 const MAX_BATCH_SIZE = 100;
 const DEFAULT_OUTPUT_FORMATS = ['iso', 'unix', 'human'];
@@ -20,7 +24,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   // Only allow POST requests for batch conversion
   if (req.method !== 'POST') {
-    return APIErrorHandler.handleMethodNotAllowed(res, 'Only POST method is allowed for batch conversion');
+    return APIErrorHandler.handleMethodNotAllowed(
+      res,
+      'Only POST method is allowed for batch conversion'
+    );
   }
 
   try {
@@ -38,14 +45,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (!batchRequest.items || !Array.isArray(batchRequest.items)) {
       return APIErrorHandler.handleBadRequest(res, 'Items array is required', {
         expected: 'Array of timestamps (numbers or strings)',
-        received: typeof batchRequest.items
+        received: typeof batchRequest.items,
       });
     }
 
     if (batchRequest.items.length === 0) {
       return APIErrorHandler.handleBadRequest(res, 'Items array cannot be empty', {
         minItems: 1,
-        maxItems: MAX_BATCH_SIZE
+        maxItems: MAX_BATCH_SIZE,
       });
     }
 
@@ -53,13 +60,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return APIErrorHandler.handleBadRequest(res, `Batch size exceeds maximum limit`, {
         maxItems: MAX_BATCH_SIZE,
         receivedItems: batchRequest.items.length,
-        suggestion: `Split your request into smaller batches of ${MAX_BATCH_SIZE} items or less`
+        suggestion: `Split your request into smaller batches of ${MAX_BATCH_SIZE} items or less`,
       });
     }
 
     // Process batch conversion
     const results = await processBatchConversion(batchRequest);
-    
+
     const response: BatchConversionResponse = {
       success: true,
       data: results,
@@ -67,25 +74,26 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         totalItems: batchRequest.items.length,
         successCount: results.filter(r => r.success).length,
         errorCount: results.filter(r => !r.success).length,
-        processingTime: Date.now() - startTime
-      }
+        processingTime: Date.now() - startTime,
+      },
     };
 
     APIErrorHandler.sendSuccess(res, response, {
       processingTime: Date.now() - startTime,
       itemCount: results.length,
-      cacheHit: false
+      cacheHit: false,
     });
-
   } catch (error) {
     console.error('Batch conversion error:', error);
     APIErrorHandler.handleServerError(res, error as Error, {
-      endpoint: 'batch-convert'
+      endpoint: 'batch-convert',
     });
   }
 }
 
-async function processBatchConversion(request: BatchConversionRequest): Promise<BatchConversionResult[]> {
+async function processBatchConversion(
+  request: BatchConversionRequest
+): Promise<BatchConversionResult[]> {
   const results: BatchConversionResult[] = [];
   const outputFormats = request.outputFormat || DEFAULT_OUTPUT_FORMATS;
   const continueOnError = request.options?.continueOnError ?? true;
@@ -101,7 +109,7 @@ async function processBatchConversion(request: BatchConversionRequest): Promise<
             'INVALID_INPUT',
             'Timestamp cannot be null or undefined',
             400
-          )
+          ),
         });
         continue;
       }
@@ -118,9 +126,8 @@ async function processBatchConversion(request: BatchConversionRequest): Promise<
       results.push({
         input: item,
         success: true,
-        data: conversionResult
+        data: conversionResult,
       });
-
     } catch (error) {
       const conversionError = APIErrorHandler.createError(
         'CONVERSION_ERROR',
@@ -132,7 +139,7 @@ async function processBatchConversion(request: BatchConversionRequest): Promise<
       results.push({
         input: item,
         success: false,
-        error: conversionError
+        error: conversionError,
       });
 
       // If continueOnError is false, stop processing

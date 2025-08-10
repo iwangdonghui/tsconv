@@ -20,15 +20,11 @@ export class APIErrorHandler {
       details,
       suggestions,
       timestamp: Date.now(),
-      requestId: generateRequestId()
+      requestId: generateRequestId(),
     };
   }
 
-  static sendError(
-    res: VercelResponse,
-    error: APIError,
-    statusCode: number = 400
-  ): void {
+  static sendError(res: VercelResponse, error: APIError, statusCode: number = 400): void {
     // Ensure consistent error response format
     const response: APIResponse = {
       success: false,
@@ -41,14 +37,14 @@ export class APIErrorHandler {
           limit: 0,
           remaining: 0,
           resetTime: 0,
-          window: 0
-        }
-      }
+          window: 0,
+        },
+      },
     };
 
     // Add correlation ID header for traceability
     res.setHeader('X-Request-ID', error.requestId);
-    
+
     res.status(statusCode).json(response);
   }
 
@@ -71,42 +67,36 @@ export class APIErrorHandler {
   ): void {
     // Generate a request ID for successful responses too
     const requestId = generateRequestId();
-    
+
     // Ensure consistent metadata structure
     const response: APIResponse<T> = {
       success: true,
       data,
       metadata: {
         processingTime: metadata?.processingTime || 0,
-        itemCount: Array.isArray(data) ? data.length : (data ? 1 : 0),
+        itemCount: Array.isArray(data) ? data.length : data ? 1 : 0,
         cacheHit: metadata?.cacheHit || false,
         rateLimit: metadata?.rateLimit || {
           limit: 0,
           remaining: 0,
           resetTime: 0,
-          window: 0
+          window: 0,
         },
         requestId, // Add request ID to metadata for traceability
-        ...metadata
-      }
+        ...metadata,
+      },
     };
 
     // Add correlation ID header for traceability
     res.setHeader('X-Request-ID', requestId);
-    
+
     res.json(response);
   }
 
-  static handleValidationError(
-    res: VercelResponse,
-    validation: ValidationResult
-  ): void {
-    const error = this.createError(
-      'VALIDATION_ERROR',
-      'Invalid request parameters',
-      400,
-      { errors: validation.errors }
-    );
+  static handleValidationError(res: VercelResponse, validation: ValidationResult): void {
+    const error = this.createError('VALIDATION_ERROR', 'Invalid request parameters', 400, {
+      errors: validation.errors,
+    });
     this.sendError(res, error, 400);
   }
 
@@ -136,7 +126,7 @@ export class APIErrorHandler {
     console.error('Server error:', originalError, context);
 
     const requestId = generateRequestId();
-    
+
     const error = this.createError(
       'INTERNAL_SERVER_ERROR',
       'An unexpected error occurred. Please try again later.',
@@ -145,21 +135,18 @@ export class APIErrorHandler {
         originalMessage: process.env.NODE_ENV === 'development' ? originalError.message : undefined,
         stack: process.env.NODE_ENV === 'development' ? originalError.stack : undefined,
         context,
-        requestId // Include request ID in error details for logging
+        requestId, // Include request ID in error details for logging
       },
       ['Try your request again in a few moments', 'Contact support if the issue persists']
     );
 
     // Log the error with the request ID for traceability
     console.error(`[${requestId}] Server error:`, originalError);
-    
+
     this.sendError(res, error, 500);
   }
 
-  static handleNotFound(
-    res: VercelResponse,
-    resource?: string
-  ): void {
+  static handleNotFound(res: VercelResponse, resource?: string): void {
     const error = this.createError(
       'NOT_FOUND',
       resource ? `${resource} not found` : 'Resource not found',
@@ -176,12 +163,7 @@ export class APIErrorHandler {
     message: string,
     details?: Record<string, any>
   ): void {
-    const error = this.createError(
-      'BAD_REQUEST',
-      message,
-      400,
-      details
-    );
+    const error = this.createError('BAD_REQUEST', message, 400, details);
 
     this.sendError(res, error, 400);
   }
@@ -191,12 +173,7 @@ export class APIErrorHandler {
     message: string = 'Unauthorized access',
     details?: Record<string, any>
   ): void {
-    const error = this.createError(
-      'UNAUTHORIZED',
-      message,
-      401,
-      details
-    );
+    const error = this.createError('UNAUTHORIZED', message, 401, details);
     this.sendError(res, error);
   }
 
@@ -205,8 +182,8 @@ export class APIErrorHandler {
       success: false,
       error: {
         code: 'METHOD_NOT_ALLOWED',
-        message
-      }
+        message,
+      },
     });
   }
 }
@@ -254,7 +231,7 @@ export class ResponseBuilder<T> {
     this.processingTime = processingTime;
     return this;
   }
-  
+
   // Add additional metadata fields
   addMetadata(key: string, value: any): this {
     this.additionalMetadata[key] = value;
@@ -262,8 +239,8 @@ export class ResponseBuilder<T> {
   }
 
   build(): APIResponse<T> {
-    const processingTime = this.processingTime || (Date.now() - this.startTime);
-    const itemCount = Array.isArray(this.data) ? this.data.length : (this.data ? 1 : 0);
+    const processingTime = this.processingTime || Date.now() - this.startTime;
+    const itemCount = Array.isArray(this.data) ? this.data.length : this.data ? 1 : 0;
 
     return {
       success: true,
@@ -277,27 +254,31 @@ export class ResponseBuilder<T> {
           limit: 0,
           remaining: 0,
           resetTime: 0,
-          window: 0
+          window: 0,
         },
-        ...this.additionalMetadata
-      }
+        ...this.additionalMetadata,
+      },
     };
   }
 
   send(res: VercelResponse): void {
     const response = this.build();
-    
+
     // Add correlation ID header for traceability
     res.setHeader('X-Request-ID', this.requestId);
-    
+
     res.json(response);
   }
 }
 
 export function createCorsHeaders(origin?: string): Record<string, string> {
   const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',') || ['*'];
-  const corsOrigin = origin && allowedOrigins.includes(origin) ? origin : 
-                    allowedOrigins.includes('*') ? '*' : allowedOrigins[0];
+  const corsOrigin =
+    origin && allowedOrigins.includes(origin)
+      ? origin
+      : allowedOrigins.includes('*')
+        ? '*'
+        : allowedOrigins[0];
 
   return {
     'Access-Control-Allow-Origin': corsOrigin || '*',
@@ -307,7 +288,7 @@ export function createCorsHeaders(origin?: string): Record<string, string> {
     'Cache-Control': 'public, max-age=300', // 5 minutes default
     'X-Content-Type-Options': 'nosniff',
     'X-Frame-Options': 'DENY',
-    'X-XSS-Protection': '1; mode=block'
+    'X-XSS-Protection': '1; mode=block',
   };
 }
 
@@ -332,7 +313,7 @@ export function validateRequest(
     errors.push({
       field: 'method',
       message: 'HTTP method is required',
-      code: 'MISSING_METHOD'
+      code: 'MISSING_METHOD',
     });
   }
 
@@ -340,7 +321,7 @@ export function validateRequest(
     errors.push({
       field: 'method',
       message: `Method ${req.method} not allowed`,
-      code: 'INVALID_METHOD'
+      code: 'INVALID_METHOD',
     });
   }
 
@@ -351,7 +332,7 @@ export function validateRequest(
       warnings.push({
         field: 'content-type',
         message: 'Content-Type should be application/json',
-        code: 'INVALID_CONTENT_TYPE'
+        code: 'INVALID_CONTENT_TYPE',
       });
     }
   }
@@ -359,12 +340,15 @@ export function validateRequest(
   return {
     valid: errors.length === 0,
     errors: errors.length > 0 ? errors : undefined,
-    warnings: warnings.length > 0 ? warnings : undefined
+    warnings: warnings.length > 0 ? warnings : undefined,
   };
 }
 
 export function sanitizeInput(input: string): string {
-  return input.trim().replace(/[\x00-\x1F\x7F]/g, '').substring(0, 1000);
+  return input
+    .trim()
+    .replace(/[\x00-\x1F\x7F]/g, '')
+    .substring(0, 1000);
 }
 
 export function generateCacheKey(endpoint: string, params: Record<string, any>): string {
@@ -372,7 +356,7 @@ export function generateCacheKey(endpoint: string, params: Record<string, any>):
     .sort()
     .map(key => `${key}:${JSON.stringify(params[key])}`)
     .join('|');
-  
+
   return `api:${endpoint}:${Buffer.from(sortedParams).toString('base64')}`;
 }
 
@@ -412,7 +396,7 @@ export function createResponse<T>(data: T): ApiResponse<T> {
   return {
     success: true,
     data,
-    timestamp: Date.now()
+    timestamp: Date.now(),
   };
 }
 
@@ -420,6 +404,6 @@ export function createErrorResponse(error: string): ApiResponse {
   return {
     success: false,
     error,
-    timestamp: Date.now()
+    timestamp: Date.now(),
   };
 }

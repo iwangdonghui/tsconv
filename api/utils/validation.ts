@@ -1,4 +1,9 @@
-import { BatchConversionRequest, BatchConversionResult, ValidationResult, ValidationError } from '../types/api';
+import {
+  BatchConversionRequest,
+  BatchConversionResult,
+  ValidationResult,
+  ValidationError,
+} from '../types/api';
 
 export function validateBatchRequest(body: any): ValidationResult {
   const errors: ValidationError[] = [];
@@ -8,7 +13,7 @@ export function validateBatchRequest(body: any): ValidationResult {
     errors.push({
       field: 'body',
       message: 'Request body is required',
-      code: 'MISSING_BODY'
+      code: 'MISSING_BODY',
     });
     return { valid: false, errors };
   }
@@ -18,14 +23,14 @@ export function validateBatchRequest(body: any): ValidationResult {
     errors.push({
       field: 'items',
       message: 'Items must be an array',
-      code: 'INVALID_ITEMS_TYPE'
+      code: 'INVALID_ITEMS_TYPE',
     });
   } else {
     if (body.items.length === 0) {
       errors.push({
         field: 'items',
         message: 'Items array cannot be empty',
-        code: 'EMPTY_ITEMS_ARRAY'
+        code: 'EMPTY_ITEMS_ARRAY',
       });
     }
 
@@ -33,7 +38,7 @@ export function validateBatchRequest(body: any): ValidationResult {
       errors.push({
         field: 'items',
         message: 'Maximum 100 items allowed per batch request',
-        code: 'TOO_MANY_ITEMS'
+        code: 'TOO_MANY_ITEMS',
       });
     }
 
@@ -43,13 +48,13 @@ export function validateBatchRequest(body: any): ValidationResult {
         errors.push({
           field: `items[${index}]`,
           message: 'Item cannot be null or undefined',
-          code: 'INVALID_ITEM_VALUE'
+          code: 'INVALID_ITEM_VALUE',
         });
       } else if (typeof item !== 'string' && typeof item !== 'number') {
         errors.push({
           field: `items[${index}]`,
           message: 'Item must be a string or number',
-          code: 'INVALID_ITEM_TYPE'
+          code: 'INVALID_ITEM_TYPE',
         });
       } else {
         const strItem = String(item).trim();
@@ -57,7 +62,7 @@ export function validateBatchRequest(body: any): ValidationResult {
           errors.push({
             field: `items[${index}]`,
             message: 'Item must be between 1 and 50 characters',
-            code: 'INVALID_ITEM_LENGTH'
+            code: 'INVALID_ITEM_LENGTH',
           });
         }
       }
@@ -70,7 +75,7 @@ export function validateBatchRequest(body: any): ValidationResult {
       errors.push({
         field: 'outputFormat',
         message: 'outputFormat must be an array of strings',
-        code: 'INVALID_OUTPUT_FORMAT_TYPE'
+        code: 'INVALID_OUTPUT_FORMAT_TYPE',
       });
     } else {
       body.outputFormat.forEach((format: string, index: number) => {
@@ -78,13 +83,13 @@ export function validateBatchRequest(body: any): ValidationResult {
           errors.push({
             field: `outputFormat[${index}]`,
             message: 'Format must be a string',
-            code: 'INVALID_FORMAT_TYPE'
+            code: 'INVALID_FORMAT_TYPE',
           });
         } else if (!isValidOutputFormat(format)) {
           errors.push({
             field: `outputFormat[${index}]`,
             message: `Invalid output format: ${format}`,
-            code: 'INVALID_FORMAT_VALUE'
+            code: 'INVALID_FORMAT_VALUE',
           });
         }
       });
@@ -97,13 +102,13 @@ export function validateBatchRequest(body: any): ValidationResult {
       errors.push({
         field: 'timezone',
         message: 'timezone must be a string',
-        code: 'INVALID_TIMEZONE_TYPE'
+        code: 'INVALID_TIMEZONE_TYPE',
       });
     } else if (!isValidTimezone(body.timezone)) {
       errors.push({
         field: 'timezone',
         message: `Invalid timezone: ${body.timezone}`,
-        code: 'INVALID_TIMEZONE_VALUE'
+        code: 'INVALID_TIMEZONE_VALUE',
       });
     }
   }
@@ -113,13 +118,13 @@ export function validateBatchRequest(body: any): ValidationResult {
       errors.push({
         field: 'targetTimezone',
         message: 'targetTimezone must be a string',
-        code: 'INVALID_TARGET_TIMEZONE_TYPE'
+        code: 'INVALID_TARGET_TIMEZONE_TYPE',
       });
     } else if (!isValidTimezone(body.targetTimezone)) {
       errors.push({
         field: 'targetTimezone',
         message: `Invalid target timezone: ${body.targetTimezone}`,
-        code: 'INVALID_TARGET_TIMEZONE_VALUE'
+        code: 'INVALID_TARGET_TIMEZONE_VALUE',
       });
     }
   }
@@ -130,7 +135,7 @@ export function validateBatchRequest(body: any): ValidationResult {
       errors.push({
         field: 'options',
         message: 'options must be an object',
-        code: 'INVALID_OPTIONS_TYPE'
+        code: 'INVALID_OPTIONS_TYPE',
       });
     } else {
       const options = body.options;
@@ -138,7 +143,7 @@ export function validateBatchRequest(body: any): ValidationResult {
         errors.push({
           field: 'options.continueOnError',
           message: 'continueOnError must be a boolean',
-          code: 'INVALID_CONTINUE_ON_ERROR_TYPE'
+          code: 'INVALID_CONTINUE_ON_ERROR_TYPE',
         });
       }
       if (options.maxItems !== undefined) {
@@ -146,13 +151,13 @@ export function validateBatchRequest(body: any): ValidationResult {
           errors.push({
             field: 'options.maxItems',
             message: 'maxItems must be a positive integer',
-            code: 'INVALID_MAX_ITEMS_TYPE'
+            code: 'INVALID_MAX_ITEMS_TYPE',
           });
         } else if (options.maxItems < 1 || options.maxItems > 1000) {
           errors.push({
             field: 'options.maxItems',
             message: 'maxItems must be between 1 and 1000',
-            code: 'INVALID_MAX_ITEMS_RANGE'
+            code: 'INVALID_MAX_ITEMS_RANGE',
           });
         }
       }
@@ -166,7 +171,7 @@ export function validateBatchRequest(body: any): ValidationResult {
       errors.push({
         field: 'cacheControl',
         message: 'cacheControl must be one of: no-cache, force-refresh',
-        code: 'INVALID_CACHE_CONTROL_VALUE'
+        code: 'INVALID_CACHE_CONTROL_VALUE',
       });
     }
   }
@@ -174,14 +179,12 @@ export function validateBatchRequest(body: any): ValidationResult {
   return {
     valid: errors.length === 0,
     errors: errors.length > 0 ? errors : undefined,
-    warnings: warnings.length > 0 ? warnings : undefined
+    warnings: warnings.length > 0 ? warnings : undefined,
   };
 }
 
 function isValidOutputFormat(format: string): boolean {
-  const validFormats = [
-    'iso8601', 'utc', 'timestamp', 'local', 'rfc2822', 'unix', 'relative'
-  ];
+  const validFormats = ['iso8601', 'utc', 'timestamp', 'local', 'rfc2822', 'unix', 'relative'];
   return validFormats.includes(format.toLowerCase());
 }
 
@@ -220,12 +223,11 @@ export function getBatchErrorSummary(results: BatchConversionResult[]): {
     }
   });
 
-  const mostCommonError = Object.entries(errorTypes)
-    .sort(([, a], [, b]) => b - a)[0]?.[0];
+  const mostCommonError = Object.entries(errorTypes).sort(([, a], [, b]) => b - a)[0]?.[0];
 
   return {
     totalErrors,
     errorTypes,
-    mostCommonError
+    mostCommonError,
   };
 }

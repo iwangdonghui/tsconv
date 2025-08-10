@@ -14,49 +14,49 @@ import visualizationHandler from '../handlers/visualization';
 // Import simple handlers
 async function simpleConvertHandler(req: VercelRequest, res: VercelResponse) {
   // Import the simple convert logic
-  const { default: handler } = await import('../handlers/simple-convert') as { default: any };
+  const { default: handler } = (await import('../handlers/simple-convert')) as { default: any };
   return handler(req, res);
 }
 
 async function simpleHealthHandler(req: VercelRequest, res: VercelResponse) {
   // Import the simple health logic
-  const { default: handler } = await import('../handlers/simple-health') as { default: any };
+  const { default: handler } = (await import('../handlers/simple-health')) as { default: any };
   return handler(req, res);
 }
 
 async function standaloneConvertHandler(req: VercelRequest, res: VercelResponse) {
   // Import the standalone convert logic
-  const { default: handler } = await import('../handlers/standalone-convert') as { default: any };
+  const { default: handler } = (await import('../handlers/standalone-convert')) as { default: any };
   return handler(req, res);
 }
 
 async function standaloneHealthHandler(req: VercelRequest, res: VercelResponse) {
   // Import the standalone health logic
-  const { default: handler } = await import('../handlers/standalone-health') as { default: any };
+  const { default: handler } = (await import('../handlers/standalone-health')) as { default: any };
   return handler(req, res);
 }
 
 async function workingBatchHandler(req: VercelRequest, res: VercelResponse) {
   // Import the working batch logic
-  const { default: handler } = await import('../handlers/working-batch') as { default: any };
+  const { default: handler } = (await import('../handlers/working-batch')) as { default: any };
   return handler(req, res);
 }
 
 async function workingConvertHandler(req: VercelRequest, res: VercelResponse) {
   // Import the working convert logic
-  const { default: handler } = await import('../handlers/working-convert') as { default: any };
+  const { default: handler } = (await import('../handlers/working-convert')) as { default: any };
   return handler(req, res);
 }
 
 async function workingHealthHandler(req: VercelRequest, res: VercelResponse) {
   // Import the working health logic
-  const { default: handler } = await import('../handlers/working-health') as { default: any };
+  const { default: handler } = (await import('../handlers/working-health')) as { default: any };
   return handler(req, res);
 }
 
 async function batchHandler(req: VercelRequest, res: VercelResponse) {
   // Import the batch logic
-  const { default: handler } = await import('../handlers/batch') as { default: any };
+  const { default: handler } = (await import('../handlers/batch')) as { default: any };
   return handler(req, res);
 }
 
@@ -64,12 +64,12 @@ async function batchHandler(req: VercelRequest, res: VercelResponse) {
 const routes: Record<string, (req: VercelRequest, res: VercelResponse) => Promise<any>> = {
   'batch-convert': batchConvertHandler,
   'enhanced-batch': enhancedBatchHandler,
-  'formats': formatsHandler,
+  formats: formatsHandler,
   'timezone-convert': timezoneConvertHandler,
   'timezone-difference': timezoneDifferenceHandler,
   'timezone-info': timezoneInfoHandler,
-  'timezone': timezoneHandler,
-  'visualization': visualizationHandler,
+  timezone: timezoneHandler,
+  visualization: visualizationHandler,
   'simple-convert': simpleConvertHandler,
   'simple-health': simpleHealthHandler,
   'standalone-convert': standaloneConvertHandler,
@@ -77,12 +77,12 @@ const routes: Record<string, (req: VercelRequest, res: VercelResponse) => Promis
   'working-batch': workingBatchHandler,
   'working-convert': workingConvertHandler,
   'working-health': workingHealthHandler,
-  'batch': batchHandler,
+  batch: batchHandler,
 };
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   withCors(res);
-  
+
   if (req.method === 'OPTIONS') {
     res.status(200).end();
     return;
@@ -98,7 +98,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const routeHandler = routes[route];
     return await routeHandler(req, res);
-    
   } catch (error) {
     console.error('Dynamic route error:', error);
     return APIErrorHandler.handleServerError(res, error as Error);

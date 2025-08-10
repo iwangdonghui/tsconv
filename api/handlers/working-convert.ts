@@ -9,7 +9,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   } else if (req.body && typeof req.body === 'object') {
     req.body.options = {
       mode: 'working',
-      ...req.body.options
+      ...req.body.options,
     };
   }
 

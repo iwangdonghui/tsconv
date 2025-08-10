@@ -2,17 +2,17 @@ import { VercelRequest, VercelResponse } from '@vercel/node';
 
 /**
  * Timezone Convert API Endpoint
- * 
+ *
  * Convert timestamps between different timezones
- * 
+ *
  * GET /api/timezone-convert?timestamp=1640995200&from=UTC&to=America/New_York
- * 
+ *
  * Query Parameters:
  * - timestamp: Unix timestamp to convert (required)
  * - from: Source timezone (required)
  * - to: Target timezone (required)
  * - format: Output format (optional)
- * 
+ *
  * POST /api/timezone-convert
  * Body: {
  *   "timestamp": 1640995200,
@@ -37,7 +37,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(405).json({
       success: false,
       error: 'Method not allowed',
-      message: 'Only GET and POST methods are allowed'
+      message: 'Only GET and POST methods are allowed',
     });
   }
 
@@ -49,14 +49,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     if (req.method === 'GET') {
       const { timestamp: ts, from: fromTz, to: toTz, format: fmt } = req.query;
-      
+
       if (!ts || !fromTz || !toTz) {
         return res.status(400).json({
           success: false,
           error: 'Bad Request',
           message: 'timestamp, from, and to parameters are required',
           required: ['timestamp', 'from', 'to'],
-          received: { timestamp: !!ts, from: !!fromTz, to: !!toTz }
+          received: { timestamp: !!ts, from: !!fromTz, to: !!toTz },
         });
       }
 
@@ -77,7 +77,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(400).json({
         success: false,
         error: 'Bad Request',
-        message: 'timestamp, from, and to are required'
+        message: 'timestamp, from, and to are required',
       });
     }
 
@@ -85,7 +85,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(400).json({
         success: false,
         error: 'Bad Request',
-        message: 'timestamp must be a valid number'
+        message: 'timestamp must be a valid number',
       });
     }
 
@@ -97,16 +97,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       data: result,
       metadata: {
         processingTime: Date.now() - startTime,
-        timestamp: Math.floor(Date.now() / 1000)
-      }
+        timestamp: Math.floor(Date.now() / 1000),
+      },
     });
-
   } catch (error) {
     console.error('Timezone convert error:', error);
     return res.status(500).json({
       success: false,
       error: 'Internal Server Error',
-      message: error instanceof Error ? error.message : 'Unknown error occurred'
+      message: error instanceof Error ? error.message : 'Unknown error occurred',
     });
   }
 }
@@ -117,7 +116,7 @@ function convertTimezone(timestamp: number, from: string, to: string, format: st
     const date = new Date(timestamp * 1000);
 
     // Get time in source timezone
-    const sourceTime = date.toLocaleString('en-US', { 
+    const sourceTime = date.toLocaleString('en-US', {
       timeZone: from,
       year: 'numeric',
       month: '2-digit',
@@ -125,11 +124,11 @@ function convertTimezone(timestamp: number, from: string, to: string, format: st
       hour: '2-digit',
       minute: '2-digit',
       second: '2-digit',
-      hour12: false
+      hour12: false,
     });
 
     // Get time in target timezone
-    const targetTime = date.toLocaleString('en-US', { 
+    const targetTime = date.toLocaleString('en-US', {
       timeZone: to,
       year: 'numeric',
       month: '2-digit',
@@ -137,7 +136,7 @@ function convertTimezone(timestamp: number, from: string, to: string, format: st
       hour: '2-digit',
       minute: '2-digit',
       second: '2-digit',
-      hour12: false
+      hour12: false,
     });
 
     // Format according to requested format
@@ -166,26 +165,28 @@ function convertTimezone(timestamp: number, from: string, to: string, format: st
         timestamp,
         from,
         to,
-        format
+        format,
       },
       source: {
         timezone: from,
         time: sourceTime,
-        utc: date.toISOString()
+        utc: date.toISOString(),
       },
       target: {
         timezone: to,
         time: targetTime,
         formatted: formattedTime,
-        timestamp: Math.floor(targetDate.getTime() / 1000)
+        timestamp: Math.floor(targetDate.getTime() / 1000),
       },
       conversion: {
         description: `Converted from ${from} to ${to}`,
         originalTimestamp: timestamp,
-        convertedTimestamp: Math.floor(targetDate.getTime() / 1000)
-      }
+        convertedTimestamp: Math.floor(targetDate.getTime() / 1000),
+      },
     };
   } catch (error) {
-    throw new Error(`Failed to convert timezone: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    throw new Error(
+      `Failed to convert timezone: ${error instanceof Error ? error.message : 'Unknown error'}`
+    );
   }
 }

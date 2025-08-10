@@ -32,10 +32,12 @@ const defaultIdentifierExtractor = (req: VercelRequest): string => {
 
   // Fallback to IP address
   const forwarded = req.headers['x-forwarded-for'];
-  const ip = forwarded 
-    ? (Array.isArray(forwarded) ? forwarded[0] : forwarded.split(',')[0].trim())
+  const ip = forwarded
+    ? Array.isArray(forwarded)
+      ? forwarded[0]
+      : forwarded.split(',')[0].trim()
     : req.headers['x-real-ip'] || 'unknown';
-  
+
   return `ip:${ip}`;
 };
 
@@ -43,11 +45,11 @@ const defaultIdentifierExtractor = (req: VercelRequest): string => {
 const defaultRuleSelector = (req: VercelRequest): RateLimitRule => {
   const authHeader = req.headers.authorization;
   const apiKey = req.headers['x-api-key'];
-  
+
   if (authHeader || apiKey) {
     return config.rateLimiting.defaultLimits.authenticated;
   }
-  
+
   return config.rateLimiting.defaultLimits.anonymous;
 };
 
@@ -61,17 +63,17 @@ const defaultErrorResponse = (result: RateLimitResult): APIResponse => ({
       limit: result.totalLimit,
       remaining: result.remaining,
       resetTime: result.resetTime,
-      retryAfter: Math.ceil((result.resetTime - Date.now()) / 1000)
+      retryAfter: Math.ceil((result.resetTime - Date.now()) / 1000),
     },
     timestamp: Date.now(),
     requestId: `rate-limit-${Date.now()}`,
     suggestions: [
       'Wait for the rate limit to reset',
       'Consider upgrading to a higher rate limit tier',
-      'Implement request batching to reduce API calls'
+      'Implement request batching to reduce API calls',
     ],
-    statusCode: 429
-  }
+    statusCode: 429,
+  },
 });
 
 // Rate limit middleware function
@@ -83,7 +85,7 @@ export const rateLimitMiddleware = (options: RateLimitMiddlewareOptions) => {
     skipSuccessfulRequests = false,
     skipFailedRequests = false,
     onLimitReached,
-    customErrorResponse = defaultErrorResponse
+    customErrorResponse = defaultErrorResponse,
   } = options;
 
   return async (
@@ -138,13 +140,13 @@ export const rateLimitMiddleware = (options: RateLimitMiddlewareOptions) => {
         let shouldIncrement = true;
 
         // Override response methods to check status
-        res.json = function(data: any) {
+        res.json = function (data: any) {
           const statusCode = res.statusCode || 200;
-          
+
           if (skipSuccessfulRequests && statusCode >= 200 && statusCode < 400) {
             shouldIncrement = false;
           }
-          
+
           if (skipFailedRequests && statusCode >= 400) {
             shouldIncrement = false;
           }
@@ -158,13 +160,13 @@ export const rateLimitMiddleware = (options: RateLimitMiddlewareOptions) => {
           return originalJson.call(this, data);
         };
 
-        res.send = function(data: any) {
+        res.send = function (data: any) {
           const statusCode = res.statusCode || 200;
-          
+
           if (skipSuccessfulRequests && statusCode >= 200 && statusCode < 400) {
             shouldIncrement = false;
           }
-          
+
           if (skipFailedRequests && statusCode >= 400) {
             shouldIncrement = false;
           }
@@ -185,7 +187,6 @@ export const rateLimitMiddleware = (options: RateLimitMiddlewareOptions) => {
 
       // Proceed to next middleware/handler
       await next();
-
     } catch (error) {
       // Log rate limiting error but don't fail the request
       console.error('Rate limiting middleware error:', error);
@@ -206,7 +207,7 @@ export const createRateLimitMiddleware = (options?: Partial<RateLimitMiddlewareO
       const { MemoryRateLimiter } = await import('../services/rate-limiter');
       return new MemoryRateLimiter({
         windowMs: 60000, // 1 minute
-        maxRequests: 100
+        maxRequests: 100,
       });
     }
   };
@@ -216,9 +217,9 @@ export const createRateLimitMiddleware = (options?: Partial<RateLimitMiddlewareO
       const rateLimiter = await getRateLimiter();
       const middleware = rateLimitMiddleware({
         rateLimiter,
-        ...options
+        ...options,
       });
-      
+
       return middleware(req, res, async () => {
         await handler(req, res);
       });
@@ -266,10 +267,7 @@ export const resetRateLimit = async (
 };
 
 // Rate limit statistics utilities
-export const getRateLimitStats = async (
-  rateLimiter: RateLimiter,
-  identifier: string
-) => {
+export const getRateLimitStats = async (rateLimiter: RateLimiter, identifier: string) => {
   try {
     return await rateLimiter.getStats(identifier);
   } catch (error) {
@@ -279,25 +277,22 @@ export const getRateLimitStats = async (
       currentCount: 0,
       limit: 0,
       window: 0,
-      resetTime: Date.now()
+      resetTime: Date.now(),
     };
   }
 };
 
 // Middleware for specific endpoints with custom rules
-export const createEndpointRateLimit = (
-  endpoint: string,
-  customRule: Partial<RateLimitRule>
-) => {
+export const createEndpointRateLimit = (endpoint: string, customRule: Partial<RateLimitRule>) => {
   const endpointRule: RateLimitRule = {
     identifier: endpoint,
     limit: customRule.limit || 50,
     window: customRule.window || 60000, // 1 minute
-    type: customRule.type || 'ip'
+    type: customRule.type || 'ip',
   };
 
   return createRateLimitMiddleware({
-    ruleSelector: () => endpointRule
+    ruleSelector: () => endpointRule,
   });
 };
 

@@ -2,16 +2,16 @@ import { VercelRequest, VercelResponse } from '@vercel/node';
 
 // Common timezone mappings
 const TIMEZONE_ALIASES: Record<string, string> = {
-  'EST': 'America/New_York',
-  'PST': 'America/Los_Angeles',
-  'CST': 'America/Chicago',
-  'MST': 'America/Denver',
-  'GMT': 'UTC',
-  'BST': 'Europe/London',
-  'CET': 'Europe/Paris',
-  'JST': 'Asia/Tokyo',
-  'IST': 'Asia/Kolkata',
-  'AEST': 'Australia/Sydney'
+  EST: 'America/New_York',
+  PST: 'America/Los_Angeles',
+  CST: 'America/Chicago',
+  MST: 'America/Denver',
+  GMT: 'UTC',
+  BST: 'Europe/London',
+  CET: 'Europe/Paris',
+  JST: 'Asia/Tokyo',
+  IST: 'Asia/Kolkata',
+  AEST: 'Australia/Sydney',
 };
 
 /**
@@ -38,7 +38,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(405).json({
       success: false,
       error: 'Method not allowed',
-      message: 'Only GET and POST methods are allowed'
+      message: 'Only GET and POST methods are allowed',
     });
   }
 
@@ -61,7 +61,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           error: 'Bad Request',
           message: 'Both timezone1/from and timezone2/to are required',
           required: ['timezone1/from', 'timezone2/to'],
-          received: { timezone1: !!timezone1, timezone2: !!timezone2 }
+          received: { timezone1: !!timezone1, timezone2: !!timezone2 },
         });
       }
 
@@ -80,33 +80,42 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(400).json({
         success: false,
         error: 'Bad Request',
-        message: 'Both timezone1 and timezone2 are required'
+        message: 'Both timezone1 and timezone2 are required',
       });
     }
 
     // Calculate timezone difference
-    const result = await calculateTimezoneDifference(timezone1, timezone2, timestamp, includeDetails);
+    const result = await calculateTimezoneDifference(
+      timezone1,
+      timezone2,
+      timestamp,
+      includeDetails
+    );
 
     return res.status(200).json({
       success: true,
       data: result,
       metadata: {
         processingTime: Date.now() - startTime,
-        timestamp: Math.floor(Date.now() / 1000)
-      }
+        timestamp: Math.floor(Date.now() / 1000),
+      },
     });
-
   } catch (error) {
     console.error('Timezone difference error:', error);
     return res.status(500).json({
       success: false,
       error: 'Internal Server Error',
-      message: error instanceof Error ? error.message : 'Unknown error occurred'
+      message: error instanceof Error ? error.message : 'Unknown error occurred',
     });
   }
 }
 
-async function calculateTimezoneDifference(timezone1: string, timezone2: string, timestamp: number, includeDetails: boolean) {
+async function calculateTimezoneDifference(
+  timezone1: string,
+  timezone2: string,
+  timestamp: number,
+  includeDetails: boolean
+) {
   // Normalize timezone identifiers
   const tz1 = normalizeTimezone(timezone1);
   const tz2 = normalizeTimezone(timezone2);
@@ -140,9 +149,9 @@ async function calculateTimezoneDifference(timezone1: string, timezone2: string,
       hours,
       minutes,
       totalMinutes,
-      description
+      description,
     },
-    timestamp
+    timestamp,
   };
 
   // Add detailed information if requested
@@ -157,7 +166,7 @@ async function calculateTimezoneDifference(timezone1: string, timezone2: string,
         hour: '2-digit',
         minute: '2-digit',
         second: '2-digit',
-        timeZoneName: 'short'
+        timeZoneName: 'short',
       });
 
       const tz2Time = date.toLocaleString('en-US', {
@@ -169,7 +178,7 @@ async function calculateTimezoneDifference(timezone1: string, timezone2: string,
         hour: '2-digit',
         minute: '2-digit',
         second: '2-digit',
-        timeZoneName: 'short'
+        timeZoneName: 'short',
       });
 
       const utcTime = date.toISOString();
@@ -178,8 +187,10 @@ async function calculateTimezoneDifference(timezone1: string, timezone2: string,
         timezone1Time: tz1Time,
         timezone2Time: tz2Time,
         utcTime,
-        comparison: totalMinutes === 0 ? 'Both timezones show the same time' :
-          `${tz1} shows ${tz1Time.split(' at ')[1]}, ${tz2} shows ${tz2Time.split(' at ')[1]}`
+        comparison:
+          totalMinutes === 0
+            ? 'Both timezones show the same time'
+            : `${tz1} shows ${tz1Time.split(' at ')[1]}, ${tz2} shows ${tz2Time.split(' at ')[1]}`,
       };
     } catch (error) {
       console.warn('Error generating detailed time info:', error);
@@ -225,7 +236,7 @@ function getTimezoneInfo(timezone: string, date: Date) {
       identifier: timezone,
       displayName,
       offset,
-      isDST
+      isDST,
     };
   } catch (error) {
     // Fallback for invalid timezones
@@ -233,7 +244,7 @@ function getTimezoneInfo(timezone: string, date: Date) {
       identifier: timezone,
       displayName: timezone,
       offset: 0,
-      isDST: false
+      isDST: false,
     };
   }
 }
@@ -274,7 +285,7 @@ function getTimezoneDisplayName(timezone: string): string {
   try {
     const formatter = new Intl.DateTimeFormat('en', {
       timeZone: timezone,
-      timeZoneName: 'long'
+      timeZoneName: 'long',
     });
 
     const parts = formatter.formatToParts(new Date());

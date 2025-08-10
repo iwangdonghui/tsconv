@@ -2,12 +2,12 @@ import { VercelRequest, VercelResponse } from '@vercel/node';
 
 /**
  * Visualization API Endpoint
- * 
+ *
  * Generate data for charts and visualizations
- * 
+ *
  * GET /api/visualization?type=timezone-chart
  * GET /api/visualization?type=time-series&start=1640995200&end=1641081600&interval=3600
- * 
+ *
  * Query Parameters:
  * - type: Visualization type (required)
  * - start: Start timestamp (for time-series)
@@ -32,7 +32,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(405).json({
       success: false,
       error: 'Method not allowed',
-      message: 'Only GET method is allowed'
+      message: 'Only GET method is allowed',
     });
   }
 
@@ -46,7 +46,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         success: false,
         error: 'Bad Request',
         message: 'type parameter is required',
-        availableTypes: ['timezone-chart', 'time-series', 'offset-map', 'dst-calendar']
+        availableTypes: ['timezone-chart', 'time-series', 'offset-map', 'dst-calendar'],
       });
     }
 
@@ -75,7 +75,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           success: false,
           error: 'Bad Request',
           message: `Unknown visualization type: ${type}`,
-          availableTypes: ['timezone-chart', 'time-series', 'offset-map', 'dst-calendar']
+          availableTypes: ['timezone-chart', 'time-series', 'offset-map', 'dst-calendar'],
         });
     }
 
@@ -85,16 +85,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       metadata: {
         processingTime: Date.now() - startTime,
         timestamp: Math.floor(Date.now() / 1000),
-        type
-      }
+        type,
+      },
     });
-
   } catch (error) {
     console.error('Visualization error:', error);
     return res.status(500).json({
       success: false,
       error: 'Internal Server Error',
-      message: error instanceof Error ? error.message : 'Unknown error occurred'
+      message: error instanceof Error ? error.message : 'Unknown error occurred',
     });
   }
 }
@@ -109,27 +108,27 @@ function generateTimezoneChart(timezone?: string) {
     'Europe/Paris',
     'Asia/Tokyo',
     'Asia/Shanghai',
-    'Australia/Sydney'
+    'Australia/Sydney',
   ];
 
   const data = timezones.map(tz => {
-    const time = now.toLocaleString('en-US', { 
+    const time = now.toLocaleString('en-US', {
       timeZone: tz,
       hour: '2-digit',
       minute: '2-digit',
-      hour12: false
+      hour12: false,
     });
-    
+
     const offset = getTimezoneOffset(tz, now);
     const offsetHours = offset / 60;
-    
+
     return {
       timezone: tz,
       name: tz.split('/').pop()?.replace(/_/g, ' ') || tz,
       time,
       offset: offsetHours,
       offsetString: formatOffset(offset),
-      isDST: isDaylightSavingTime(tz, now)
+      isDST: isDaylightSavingTime(tz, now),
     };
   });
 
@@ -141,8 +140,8 @@ function generateTimezoneChart(timezone?: string) {
       type: 'bar',
       xAxis: 'timezone',
       yAxis: 'offset',
-      colorBy: 'isDST'
-    }
+      colorBy: 'isDST',
+    },
   };
 }
 
@@ -156,14 +155,14 @@ function generateTimeSeries(start?: number, end?: number, interval?: number, tim
   for (let ts = startTime; ts <= endTime; ts += step) {
     const date = new Date(ts * 1000);
     const localTime = date.toLocaleString('en-US', { timeZone: tz });
-    
+
     data.push({
       timestamp: ts,
       utc: date.toISOString(),
       local: localTime,
       hour: date.getUTCHours(),
       dayOfWeek: date.getUTCDay(),
-      isWeekend: date.getUTCDay() === 0 || date.getUTCDay() === 6
+      isWeekend: date.getUTCDay() === 0 || date.getUTCDay() === 6,
     });
   }
 
@@ -175,31 +174,31 @@ function generateTimeSeries(start?: number, end?: number, interval?: number, tim
       start: startTime,
       end: endTime,
       interval: step,
-      timezone: tz
+      timezone: tz,
     },
     chartConfig: {
       type: 'line',
       xAxis: 'timestamp',
-      yAxis: 'hour'
-    }
+      yAxis: 'hour',
+    },
   };
 }
 
 function generateOffsetMap() {
   const offsets: any[] = [];
-  
+
   // Generate data for UTC-12 to UTC+14
   for (let offset = -12; offset <= 14; offset++) {
     const now = new Date();
-    const utcTime = now.getTime() + (now.getTimezoneOffset() * 60000);
-    const offsetTime = new Date(utcTime + (offset * 3600000));
-    
+    const utcTime = now.getTime() + now.getTimezoneOffset() * 60000;
+    const offsetTime = new Date(utcTime + offset * 3600000);
+
     offsets.push({
       offset,
       offsetString: formatOffset(offset * 60),
       time: offsetTime.toISOString().substr(11, 8),
       date: offsetTime.toISOString().substr(0, 10),
-      isDifferentDay: offsetTime.getUTCDate() !== now.getUTCDate()
+      isDifferentDay: offsetTime.getUTCDate() !== now.getUTCDate(),
     });
   }
 
@@ -210,8 +209,8 @@ function generateOffsetMap() {
     chartConfig: {
       type: 'map',
       colorBy: 'offset',
-      tooltip: ['offsetString', 'time']
-    }
+      tooltip: ['offsetString', 'time'],
+    },
   };
 }
 
@@ -234,14 +233,14 @@ function generateDSTCalendar(timezone?: string) {
         date: date.toISOString().substr(0, 10),
         isDST,
         offset: offset / 60,
-        offsetString: formatOffset(offset)
+        offsetString: formatOffset(offset),
       });
     }
 
     months.push({
       month: month + 1,
       name: new Date(year, month, 1).toLocaleString('en-US', { month: 'long' }),
-      days
+      days,
     });
   }
 
@@ -253,8 +252,8 @@ function generateDSTCalendar(timezone?: string) {
     data: months,
     chartConfig: {
       type: 'calendar',
-      colorBy: 'isDST'
-    }
+      colorBy: 'isDST',
+    },
   };
 }
 
@@ -273,7 +272,7 @@ function isDaylightSavingTime(timezone: string, date: Date): boolean {
     const januaryOffset = getTimezoneOffset(timezone, new Date(date.getFullYear(), 0, 1));
     const julyOffset = getTimezoneOffset(timezone, new Date(date.getFullYear(), 6, 1));
     const currentOffset = getTimezoneOffset(timezone, date);
-    
+
     const standardOffset = Math.min(januaryOffset, julyOffset);
     return currentOffset !== standardOffset;
   } catch (error) {

@@ -5,11 +5,9 @@ import { createRateLimitMiddleware } from './middleware/rate-limit';
 import formatService from './services/format-service';
 import { convertTimezone } from './utils/conversion-utils';
 
-
-
 async function convertHandler(req: VercelRequest, res: VercelResponse) {
   withCors(res);
-  
+
   if (req.method === 'OPTIONS') {
     res.status(200).end();
     return;
@@ -21,21 +19,20 @@ async function convertHandler(req: VercelRequest, res: VercelResponse) {
 
   try {
     const params = req.method === 'GET' ? req.query : req.body;
-    const {
-      timestamp,
-      date,
-      format,
-      timezone,
-      targetTimezone,
-      includeFormats = false
-    } = params;
+    const { timestamp, date, format, timezone, targetTimezone, includeFormats = false } = params;
 
     if (!timestamp && !date) {
-      return APIErrorHandler.handleBadRequest(res, 'Please provide either timestamp or date parameter');
+      return APIErrorHandler.handleBadRequest(
+        res,
+        'Please provide either timestamp or date parameter'
+      );
     }
 
     if (timestamp && date) {
-      return APIErrorHandler.handleBadRequest(res, 'Please provide either timestamp or date, not both');
+      return APIErrorHandler.handleBadRequest(
+        res,
+        'Please provide either timestamp or date, not both'
+      );
     }
 
     // Process conversion logic here...
@@ -57,7 +54,6 @@ async function convertHandler(req: VercelRequest, res: VercelResponse) {
 
     const builder = new ResponseBuilder().setData(result);
     builder.send(res);
-
   } catch (error) {
     console.error('API Error:', error);
     if (error instanceof Error) {
@@ -78,12 +74,7 @@ async function processConversion(
     includeFormats?: boolean;
   }
 ): Promise<any> {
-  const {
-    format,
-    timezone,
-    targetTimezone,
-    includeFormats = false
-  } = options;
+  const { format, timezone, targetTimezone, includeFormats = false } = options;
 
   let date: Date;
   let originalTimestamp: number;
@@ -134,15 +125,15 @@ async function processConversion(
   }
 
   const result: any = {
-    input: input,
+    input,
     timestamp: Math.floor(date.getTime() / 1000),
-    formats: formats
+    formats,
   };
 
   if (timezone || targetTimezone) {
     result.timezone = {
       original: timezone || 'UTC',
-      target: targetTimezone || timezone || 'UTC'
+      target: targetTimezone || timezone || 'UTC',
     };
   }
 
@@ -152,7 +143,7 @@ async function processConversion(
 function getRelativeTime(date: Date): string {
   const now = new Date();
   const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
-  
+
   const absDiff = Math.abs(diffInSeconds);
   const prefix = diffInSeconds < 0 ? 'in' : '';
   const suffix = diffInSeconds > 0 ? 'ago' : '';
@@ -168,7 +159,7 @@ function getRelativeTime(date: Date): string {
 const enhancedConvertHandler = createRateLimitMiddleware()(
   createCacheMiddleware({
     ttl: 5 * 60 * 1000, // 5 minutes
-    cacheControlHeader: 'public, max-age=300, stale-while-revalidate=600'
+    cacheControlHeader: 'public, max-age=300, stale-while-revalidate=600',
   })(convertHandler)
 );
 

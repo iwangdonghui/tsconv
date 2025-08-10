@@ -48,19 +48,19 @@ export interface EnhancedConversionRequest {
   // Single conversion
   timestamp?: number;
   date?: string;
-  
+
   // Batch conversion
   items?: Array<string | number>;
-  
+
   // Common parameters
   outputFormats?: string[];
   timezone?: string;
   targetTimezone?: string;
-  
+
   // Options
   includeMetadata?: boolean;
   cacheControl?: 'no-cache' | 'force-refresh';
-  
+
   // Validation options
   continueOnError?: boolean;
   maxItems?: number;

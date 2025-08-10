@@ -51,7 +51,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   // Only allow POST requests for visualization
   if (req.method !== 'POST') {
-    return APIErrorHandler.handleMethodNotAllowed(res, 'Only POST method is allowed for visualization');
+    return APIErrorHandler.handleMethodNotAllowed(
+      res,
+      'Only POST method is allowed for visualization'
+    );
   }
 
   try {
@@ -68,7 +71,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // Validate visualization request
     const validationResult = validateVisualizationRequest(vizRequest);
     if (!validationResult.valid) {
-      return APIErrorHandler.handleBadRequest(res, validationResult.message || 'Invalid request', validationResult.details);
+      return APIErrorHandler.handleBadRequest(
+        res,
+        validationResult.message || 'Invalid request',
+        validationResult.details
+      );
     }
 
     // Generate visualization
@@ -76,34 +83,37 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const response: VisualizationResponse = {
       success: true,
-      data: visualization
+      data: visualization,
     };
 
     APIErrorHandler.sendSuccess(res, response, {
       processingTime: Date.now() - startTime,
       itemCount: vizRequest.data.length,
-      cacheHit: false
+      cacheHit: false,
     });
-
   } catch (error) {
     console.error('Visualization error:', error);
     APIErrorHandler.handleServerError(res, error as Error, {
-      endpoint: 'visualization'
+      endpoint: 'visualization',
     });
   }
 }
 
-function validateVisualizationRequest(request: VisualizationRequest): { valid: boolean; message?: string; details?: any } {
+function validateVisualizationRequest(request: VisualizationRequest): {
+  valid: boolean;
+  message?: string;
+  details?: any;
+} {
   const validTypes = ['timeline', 'chart', 'calendar', 'comparison'];
-  
+
   if (!request.type || !validTypes.includes(request.type)) {
     return {
       valid: false,
       message: 'Invalid or missing visualization type',
       details: {
         validTypes,
-        received: request.type
-      }
+        received: request.type,
+      },
     };
   }
 
@@ -113,8 +123,8 @@ function validateVisualizationRequest(request: VisualizationRequest): { valid: b
       message: 'Data array is required',
       details: {
         expected: 'Array of data points with timestamp property',
-        received: typeof request.data
-      }
+        received: typeof request.data,
+      },
     };
   }
 
@@ -122,7 +132,7 @@ function validateVisualizationRequest(request: VisualizationRequest): { valid: b
     return {
       valid: false,
       message: 'Data array cannot be empty',
-      details: { minDataPoints: 1 }
+      details: { minDataPoints: 1 },
     };
   }
 
@@ -132,8 +142,8 @@ function validateVisualizationRequest(request: VisualizationRequest): { valid: b
       message: 'Too many data points for visualization',
       details: {
         maxDataPoints: 1000,
-        received: request.data.length
-      }
+        received: request.data.length,
+      },
     };
   }
 
@@ -147,8 +157,8 @@ function validateVisualizationRequest(request: VisualizationRequest): { valid: b
         details: {
           index: i,
           expected: 'number',
-          received: typeof point.timestamp
-        }
+          received: typeof point.timestamp,
+        },
       };
     }
   }
@@ -156,15 +166,15 @@ function validateVisualizationRequest(request: VisualizationRequest): { valid: b
   // Validate options
   if (request.options) {
     const { groupBy, theme, width, height } = request.options;
-    
+
     if (groupBy && !['hour', 'day', 'week', 'month'].includes(groupBy)) {
       return {
         valid: false,
         message: 'Invalid groupBy option',
         details: {
           validOptions: ['hour', 'day', 'week', 'month'],
-          received: groupBy
-        }
+          received: groupBy,
+        },
       };
     }
 
@@ -174,8 +184,8 @@ function validateVisualizationRequest(request: VisualizationRequest): { valid: b
         message: 'Invalid theme option',
         details: {
           validOptions: ['light', 'dark'],
-          received: theme
-        }
+          received: theme,
+        },
       };
     }
 
@@ -183,7 +193,7 @@ function validateVisualizationRequest(request: VisualizationRequest): { valid: b
       return {
         valid: false,
         message: 'Width must be between 100 and 2000 pixels',
-        details: { min: 100, max: 2000, received: width }
+        details: { min: 100, max: 2000, received: width },
       };
     }
 
@@ -191,7 +201,7 @@ function validateVisualizationRequest(request: VisualizationRequest): { valid: b
       return {
         valid: false,
         message: 'Height must be between 100 and 1000 pixels',
-        details: { min: 100, max: 1000, received: height }
+        details: { min: 100, max: 1000, received: height },
       };
     }
   }
@@ -240,26 +250,26 @@ async function generateVisualization(request: VisualizationRequest): Promise<any
         theme,
         width,
         height,
-        timezone
-      }
+        timezone,
+      },
     },
     metadata: {
       dataPoints: data.length,
       timeRange: {
         start: startTime,
         end: endTime,
-        duration
+        duration,
       },
       timezone,
-      generatedAt: Date.now()
-    }
+      generatedAt: Date.now(),
+    },
   };
 }
 
 function generateTimeline(data: any[], options: any, timezone: string): any {
   // Sort data by timestamp
   const sortedData = [...data].sort((a, b) => a.timestamp - b.timestamp);
-  
+
   // Group data if requested
   const groupBy = options.groupBy;
   let processedData = sortedData;
@@ -274,7 +284,7 @@ function generateTimeline(data: any[], options: any, timezone: string): any {
     y: point.value || 1,
     label: point.label || formatTimestamp(point.timestamp, timezone),
     category: point.category || 'default',
-    timestamp: point.timestamp
+    timestamp: point.timestamp,
   }));
 
   return {
@@ -284,14 +294,14 @@ function generateTimeline(data: any[], options: any, timezone: string): any {
       x: {
         type: 'time',
         label: 'Time',
-        timezone
+        timezone,
       },
       y: {
         type: 'linear',
-        label: 'Value'
-      }
+        label: 'Value',
+      },
     },
-    groupBy: groupBy || null
+    groupBy: groupBy || null,
   };
 }
 
@@ -304,7 +314,7 @@ function generateChart(data: any[], options: any, timezone: string): any {
     x: formatTimestamp(group.timestamp, timezone, groupBy),
     y: group.value || group.count || 1,
     timestamp: group.timestamp,
-    label: group.label || formatTimestamp(group.timestamp, timezone, groupBy)
+    label: group.label || formatTimestamp(group.timestamp, timezone, groupBy),
   }));
 
   return {
@@ -315,25 +325,25 @@ function generateChart(data: any[], options: any, timezone: string): any {
       x: {
         type: 'category',
         label: `Time (${groupBy})`,
-        timezone
+        timezone,
       },
       y: {
         type: 'linear',
-        label: 'Count/Value'
-      }
+        label: 'Count/Value',
+      },
     },
-    groupBy
+    groupBy,
   };
 }
 
 function generateCalendar(data: any[], options: any, timezone: string): any {
   // Group data by date
   const dateGroups: Record<string, any[]> = {};
-  
+
   data.forEach(point => {
     const date = new Date(point.timestamp * 1000);
     const dateKey = date.toLocaleDateString('en-CA', { timeZone: timezone }); // YYYY-MM-DD format
-    
+
     if (!dateGroups[dateKey]) {
       dateGroups[dateKey] = [];
     }
@@ -348,8 +358,8 @@ function generateCalendar(data: any[], options: any, timezone: string): any {
     points: points.map(p => ({
       timestamp: p.timestamp,
       label: p.label,
-      value: p.value
-    }))
+      value: p.value,
+    })),
   }));
 
   // Sort by date
@@ -360,25 +370,25 @@ function generateCalendar(data: any[], options: any, timezone: string): any {
     data: calendarData,
     dateRange: {
       start: calendarData[0]?.date,
-      end: calendarData[calendarData.length - 1]?.date
+      end: calendarData[calendarData.length - 1]?.date,
     },
     timezone,
     summary: {
       totalDays: calendarData.length,
       totalEvents: data.length,
-      averagePerDay: data.length / calendarData.length
-    }
+      averagePerDay: data.length / calendarData.length,
+    },
   };
 }
 
 function generateComparison(data: any[], options: any, timezone: string): any {
   // Group data by category if available
   const categories = [...new Set(data.map(d => d.category || 'default'))];
-  
+
   const comparisonData = categories.map(category => {
     const categoryData = data.filter(d => (d.category || 'default') === category);
     const values = categoryData.map(d => d.value || 1);
-    
+
     return {
       category,
       count: categoryData.length,
@@ -386,7 +396,7 @@ function generateComparison(data: any[], options: any, timezone: string): any {
       average: values.length > 0 ? values.reduce((sum, v) => sum + v, 0) / values.length : 0,
       min: values.length > 0 ? Math.min(...values) : 0,
       max: values.length > 0 ? Math.max(...values) : 0,
-      timestamps: categoryData.map(d => d.timestamp)
+      timestamps: categoryData.map(d => d.timestamp),
     };
   });
 
@@ -398,20 +408,20 @@ function generateComparison(data: any[], options: any, timezone: string): any {
       totalDataPoints: data.length,
       timeRange: {
         start: Math.min(...data.map(d => d.timestamp)),
-        end: Math.max(...data.map(d => d.timestamp))
-      }
+        end: Math.max(...data.map(d => d.timestamp)),
+      },
     },
-    timezone
+    timezone,
   };
 }
 
 function groupDataByTime(data: any[], groupBy: string, timezone: string): any[] {
   const groups: Record<string, any[]> = {};
-  
+
   data.forEach(point => {
     const date = new Date(point.timestamp * 1000);
     let groupKey: string;
-    
+
     switch (groupBy) {
       case 'hour':
         groupKey = date.toISOString().substring(0, 13); // YYYY-MM-DDTHH
@@ -430,7 +440,7 @@ function groupDataByTime(data: any[], groupBy: string, timezone: string): any[] 
       default:
         groupKey = point.timestamp.toString();
     }
-    
+
     if (!groups[groupKey]) {
       groups[groupKey] = [];
     }
@@ -438,49 +448,51 @@ function groupDataByTime(data: any[], groupBy: string, timezone: string): any[] 
   });
 
   // Convert groups to array and aggregate
-  return Object.entries(groups).map(([key, points]) => {
-    const firstPoint = points[0];
-    const values = points.map(p => p.value || 1);
-    
-    return {
-      timestamp: firstPoint.timestamp,
-      groupKey: key,
-      count: points.length,
-      value: values.reduce((sum, v) => sum + v, 0),
-      average: values.reduce((sum, v) => sum + v, 0) / values.length,
-      points
-    };
-  }).sort((a, b) => a.timestamp - b.timestamp);
+  return Object.entries(groups)
+    .map(([key, points]) => {
+      const firstPoint = points[0];
+      const values = points.map(p => p.value || 1);
+
+      return {
+        timestamp: firstPoint.timestamp,
+        groupKey: key,
+        count: points.length,
+        value: values.reduce((sum, v) => sum + v, 0),
+        average: values.reduce((sum, v) => sum + v, 0) / values.length,
+        points,
+      };
+    })
+    .sort((a, b) => a.timestamp - b.timestamp);
 }
 
 function formatTimestamp(timestamp: number, timezone: string, groupBy?: string): string {
   const date = new Date(timestamp * 1000);
-  
+
   switch (groupBy) {
     case 'hour':
-      return date.toLocaleString('en-US', { 
+      return date.toLocaleString('en-US', {
         timeZone: timezone,
         month: 'short',
         day: 'numeric',
-        hour: 'numeric'
+        hour: 'numeric',
       });
     case 'day':
-      return date.toLocaleDateString('en-US', { 
+      return date.toLocaleDateString('en-US', {
         timeZone: timezone,
         month: 'short',
-        day: 'numeric'
+        day: 'numeric',
       });
     case 'week':
-      return `Week of ${date.toLocaleDateString('en-US', { 
+      return `Week of ${date.toLocaleDateString('en-US', {
         timeZone: timezone,
         month: 'short',
-        day: 'numeric'
+        day: 'numeric',
       })}`;
     case 'month':
-      return date.toLocaleDateString('en-US', { 
+      return date.toLocaleDateString('en-US', {
         timeZone: timezone,
         year: 'numeric',
-        month: 'long'
+        month: 'long',
       });
     default:
       return date.toLocaleString('en-US', { timeZone: timezone });

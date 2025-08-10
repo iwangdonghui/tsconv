@@ -3,30 +3,30 @@ import { APIErrorHandler, withCors } from '../utils/response';
 
 // Import documentation handlers
 async function docsHandler(req: VercelRequest, res: VercelResponse) {
-  const { default: handler } = await import('../handlers/docs') as { default: any };
+  const { default: handler } = (await import('../handlers/docs')) as { default: any };
   return handler(req, res);
 }
 
 async function swaggerHandler(req: VercelRequest, res: VercelResponse) {
-  const { default: handler } = await import('../handlers/swagger') as { default: any };
+  const { default: handler } = (await import('../handlers/swagger')) as { default: any };
   return handler(req, res);
 }
 
 async function openApiHandler(req: VercelRequest, res: VercelResponse) {
-  const { default: handler } = await import('../handlers/openapi') as { default: any };
+  const { default: handler } = (await import('../handlers/openapi')) as { default: any };
   return handler(req, res);
 }
 
 async function simpleApiHandler(req: VercelRequest, res: VercelResponse) {
-  const { default: handler } = await import('../handlers/simple-api') as { default: any };
+  const { default: handler } = (await import('../handlers/simple-api')) as { default: any };
   return handler(req, res);
 }
 
 // Route mapping
 const routes: Record<string, (req: VercelRequest, res: VercelResponse) => Promise<any>> = {
-  'docs': docsHandler,
-  'swagger': swaggerHandler,
-  'openapi': openApiHandler,
+  docs: docsHandler,
+  swagger: swaggerHandler,
+  openapi: openApiHandler,
   'simple-api': simpleApiHandler,
   // Add aliases for common documentation paths
   'api-docs': docsHandler,
@@ -36,7 +36,7 @@ const routes: Record<string, (req: VercelRequest, res: VercelResponse) => Promis
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   withCors(res);
-  
+
   if (req.method === 'OPTIONS') {
     res.status(200).end();
     return;
@@ -47,12 +47,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const route = Array.isArray(slug) ? slug.join('/') : slug;
 
     if (!route || !routes[route]) {
-      return APIErrorHandler.handleNotFound(res, `Documentation route /api/docs/${route} not found`);
+      return APIErrorHandler.handleNotFound(
+        res,
+        `Documentation route /api/docs/${route} not found`
+      );
     }
 
     const routeHandler = routes[route];
     return await routeHandler(req, res);
-    
   } catch (error) {
     console.error('Documentation route error:', error);
     return APIErrorHandler.handleServerError(res, error as Error);

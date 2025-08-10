@@ -23,7 +23,7 @@ const TIMEZONE_DATA: Timezone[] = [
     offsetMinutes: -300,
     currentTime: '',
     isDST: false,
-    abbreviation: 'EST'
+    abbreviation: 'EST',
   },
   {
     id: 'America/Los_Angeles',
@@ -34,7 +34,7 @@ const TIMEZONE_DATA: Timezone[] = [
     offsetMinutes: -480,
     currentTime: '',
     isDST: false,
-    abbreviation: 'PST'
+    abbreviation: 'PST',
   },
   {
     id: 'Europe/London',
@@ -45,7 +45,7 @@ const TIMEZONE_DATA: Timezone[] = [
     offsetMinutes: 0,
     currentTime: '',
     isDST: false,
-    abbreviation: 'GMT'
+    abbreviation: 'GMT',
   },
   {
     id: 'Europe/Paris',
@@ -56,7 +56,7 @@ const TIMEZONE_DATA: Timezone[] = [
     offsetMinutes: 60,
     currentTime: '',
     isDST: false,
-    abbreviation: 'CET'
+    abbreviation: 'CET',
   },
   {
     id: 'Asia/Tokyo',
@@ -67,7 +67,7 @@ const TIMEZONE_DATA: Timezone[] = [
     offsetMinutes: 540,
     currentTime: '',
     isDST: false,
-    abbreviation: 'JST'
+    abbreviation: 'JST',
   },
   {
     id: 'Asia/Shanghai',
@@ -78,7 +78,7 @@ const TIMEZONE_DATA: Timezone[] = [
     offsetMinutes: 480,
     currentTime: '',
     isDST: false,
-    abbreviation: 'CST'
+    abbreviation: 'CST',
   },
   {
     id: 'Australia/Sydney',
@@ -89,7 +89,7 @@ const TIMEZONE_DATA: Timezone[] = [
     offsetMinutes: 600,
     currentTime: '',
     isDST: false,
-    abbreviation: 'AEST'
+    abbreviation: 'AEST',
   },
   {
     id: 'America/Chicago',
@@ -100,7 +100,7 @@ const TIMEZONE_DATA: Timezone[] = [
     offsetMinutes: -360,
     currentTime: '',
     isDST: false,
-    abbreviation: 'CST'
+    abbreviation: 'CST',
   },
   {
     id: 'Europe/Berlin',
@@ -111,7 +111,7 @@ const TIMEZONE_DATA: Timezone[] = [
     offsetMinutes: 60,
     currentTime: '',
     isDST: false,
-    abbreviation: 'CET'
+    abbreviation: 'CET',
   },
   {
     id: 'Asia/Dubai',
@@ -122,42 +122,43 @@ const TIMEZONE_DATA: Timezone[] = [
     offsetMinutes: 240,
     currentTime: '',
     isDST: false,
-    abbreviation: 'GST'
-  }
+    abbreviation: 'GST',
+  },
 ];
 
 function calculateCurrentTime(offsetMinutes: number): string {
   const now = new Date();
-  const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
-  const targetTime = new Date(utc + (offsetMinutes * 60000));
+  const utc = now.getTime() + now.getTimezoneOffset() * 60000;
+  const targetTime = new Date(utc + offsetMinutes * 60000);
   return targetTime.toISOString();
 }
 
 function filterTimezones(timezones: Timezone[], filters: any): Timezone[] {
   let filtered = [...timezones];
-  
+
   if (filters.q) {
     const query = filters.q.toLowerCase();
-    filtered = filtered.filter(tz => 
-      tz.name.toLowerCase().includes(query) ||
-      tz.country.toLowerCase().includes(query) ||
-      tz.region.toLowerCase().includes(query) ||
-      tz.id.toLowerCase().includes(query)
+    filtered = filtered.filter(
+      tz =>
+        tz.name.toLowerCase().includes(query) ||
+        tz.country.toLowerCase().includes(query) ||
+        tz.region.toLowerCase().includes(query) ||
+        tz.id.toLowerCase().includes(query)
     );
   }
-  
+
   if (filters.region) {
     filtered = filtered.filter(tz => tz.region === filters.region);
   }
-  
+
   if (filters.country) {
     filtered = filtered.filter(tz => tz.country === filters.country);
   }
-  
+
   if (filters.offset) {
     filtered = filtered.filter(tz => tz.offset === filters.offset);
   }
-  
+
   return filtered;
 }
 
@@ -166,41 +167,34 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-  
+
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
   }
-  
+
   if (req.method !== 'GET') {
     return res.status(405).json({
       success: false,
-      error: 'Method not allowed'
+      error: 'Method not allowed',
     });
   }
-  
+
   try {
-    const {
-      q,
-      region,
-      country,
-      offset,
-      limit = '50',
-      format = 'detailed'
-    } = req.query as any;
-    
+    const { q, region, country, offset, limit = '50', format = 'detailed' } = req.query as any;
+
     // Update current times for all timezones
     const timezonesWithCurrentTime = TIMEZONE_DATA.map(tz => ({
       ...tz,
-      currentTime: calculateCurrentTime(tz.offsetMinutes)
+      currentTime: calculateCurrentTime(tz.offsetMinutes),
     }));
-    
+
     // Apply filters
     const filtered = filterTimezones(timezonesWithCurrentTime, { q, region, country, offset });
-    
+
     // Apply limit
     const limitNum = parseInt(limit);
     const limited = filtered.slice(0, limitNum);
-    
+
     // Get unique values for filters with cascading logic
     const regions = [...new Set(TIMEZONE_DATA.map(tz => tz.region))].sort();
 
@@ -220,7 +214,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       availableOffsets = availableOffsets.filter(tz => tz.country === country);
     }
     const offsets = [...new Set(availableOffsets.map(tz => tz.offset))].sort();
-    
+
     const result = {
       timezones: limited,
       total: filtered.length,
@@ -228,7 +222,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       filters: {
         regions,
         countries,
-        offsets
+        offsets,
       },
       appliedFilters: {
         q: q || null,
@@ -236,24 +230,23 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         country: country || null,
         offset: offset || null,
         limit: limitNum,
-        format
-      }
+        format,
+      },
     };
-    
+
     return res.status(200).json({
       success: true,
       data: result,
       metadata: {
         timestamp: new Date().toISOString(),
-        cached: false
-      }
+        cached: false,
+      },
     });
-    
   } catch (error) {
     console.error('Timezone query error:', error);
     return res.status(500).json({
       success: false,
-      error: 'Internal server error'
+      error: 'Internal server error',
     });
   }
 }

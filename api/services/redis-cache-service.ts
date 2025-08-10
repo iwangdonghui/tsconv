@@ -34,7 +34,7 @@ class RedisCacheService implements CacheService {
 
     try {
       const value = await this.redis.get(this.prefixKey(key));
-      
+
       if (value) {
         this.cacheStats.hits++;
         return JSON.parse(value) as T;
@@ -120,12 +120,12 @@ class RedisCacheService implements CacheService {
     try {
       // Get cache size (number of keys with our prefix)
       const keys = await this.redis.keys(`${this.keyPrefix}*`);
-      
+
       return {
         hits: this.cacheStats.hits,
         misses: this.cacheStats.misses,
         size: keys.length,
-        keys: keys.slice(0, 100).map((key: string) => key.substring(this.keyPrefix.length)) // Remove prefix
+        keys: keys.slice(0, 100).map((key: string) => key.substring(this.keyPrefix.length)), // Remove prefix
       };
     } catch (error) {
       console.warn('Redis cache stats error:', error);
@@ -147,7 +147,7 @@ class RedisCacheService implements CacheService {
         return `${key}:${JSON.stringify(value)}`;
       })
       .join('|');
-    
+
     return `${request.endpoint}:${request.userId || 'anonymous'}:${Buffer.from(sortedParams).toString('base64')}`;
   }
 
@@ -165,14 +165,17 @@ export class CacheServiceFactory {
         try {
           return new RedisCacheService();
         } catch (error) {
-          console.warn('Failed to initialize Redis cache service, falling back to memory cache:', error);
+          console.warn(
+            'Failed to initialize Redis cache service, falling back to memory cache:',
+            error
+          );
           // Fall back to memory cache service
           const MemoryCacheService = require('./cache-service').default;
           return MemoryCacheService;
         }
       }
     }
-    
+
     // Default to memory cache service
     const MemoryCacheService = require('./cache-service').default;
     return MemoryCacheService;

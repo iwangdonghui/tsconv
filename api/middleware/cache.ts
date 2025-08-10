@@ -29,14 +29,14 @@ const defaultKeyGenerator = (req: VercelRequest): string => {
   const method = req.method || 'GET';
   const query = req.query || {};
   const body = req.method === 'POST' ? req.body : {};
-  
+
   // Create cacheable request object
   const cacheableRequest: CacheableRequest = {
     endpoint: `${method}:${endpoint}`,
     parameters: { ...query, ...body },
-    userId: req.headers['x-user-id'] as string || undefined
+    userId: (req.headers['x-user-id'] as string) || undefined,
   };
-  
+
   // Use the cache service's key generation logic
   return `middleware:${cacheableRequest.endpoint}:${JSON.stringify(cacheableRequest.parameters)}`;
 };
@@ -45,19 +45,19 @@ const defaultKeyGenerator = (req: VercelRequest): string => {
 const defaultShouldCache = (req: VercelRequest, res: VercelResponse): boolean => {
   // Only cache GET requests by default
   if (req.method !== 'GET') return false;
-  
+
   // Don't cache if caching is disabled
   if (!config.caching.enabled) return false;
-  
+
   // Don't cache if cache-control header says no-cache
   const cacheControl = req.headers['cache-control'];
   if (cacheControl && (cacheControl.includes('no-cache') || cacheControl.includes('no-store'))) {
     return false;
   }
-  
+
   // Don't cache error responses
   if (res.statusCode && res.statusCode >= 400) return false;
-  
+
   return true;
 };
 
@@ -69,7 +69,7 @@ export const cacheMiddleware = (options: CacheMiddlewareOptions) => {
     keyGenerator = defaultKeyGenerator,
     shouldCache = defaultShouldCache,
     onCacheHit,
-    onCacheMiss
+    onCacheMiss,
   } = options;
 
   return async (
@@ -89,13 +89,13 @@ export const cacheMiddleware = (options: CacheMiddlewareOptions) => {
     try {
       // Try to get from cache first
       const cachedData = await cacheService.get<CacheableResponse>(cacheKey);
-      
+
       if (cachedData && shouldCache(req, res)) {
         // Cache hit - return cached data
         if (onCacheHit) {
           onCacheHit(cacheKey, cachedData);
         }
-        
+
         // Add cache info to response
         const responseWithCache: CacheableResponse = {
           ...cachedData,
@@ -103,37 +103,37 @@ export const cacheMiddleware = (options: CacheMiddlewareOptions) => {
             key: cacheKey,
             ttl: cacheTTL,
             hit: true,
-            size: JSON.stringify(cachedData).length
-          }
+            size: JSON.stringify(cachedData).length,
+          },
         };
-        
+
         // Set cache headers
         res.setHeader('X-Cache', 'HIT');
         res.setHeader('X-Cache-Key', cacheKey);
         res.setHeader('Cache-Control', `public, max-age=${Math.floor(cacheTTL / 1000)}`);
-        
+
         res.status(200).json(responseWithCache);
         return;
       }
-      
+
       // Cache miss - call next middleware/handler
       if (onCacheMiss) {
         onCacheMiss(cacheKey);
       }
-      
+
       // Intercept the response to cache it
       const originalJson = res.json;
       const originalSend = res.send;
       let responseData: any = null;
-      
+
       // Override res.json to capture response data
-      res.json = function(data: any) {
+      res.json = function (data: any) {
         responseData = data;
         return originalJson.call(this, data);
       };
-      
+
       // Override res.send to capture response data
-      res.send = function(data: any) {
+      res.send = function (data: any) {
         if (typeof data === 'string') {
           try {
             responseData = JSON.parse(data);
@@ -145,10 +145,10 @@ export const cacheMiddleware = (options: CacheMiddlewareOptions) => {
         }
         return originalSend.call(this, data);
       };
-      
+
       // Call the next middleware/handler
       await next();
-      
+
       // Cache the response if conditions are met
       if (responseData && shouldCache(req, res)) {
         try {
@@ -159,23 +159,21 @@ export const cacheMiddleware = (options: CacheMiddlewareOptions) => {
               key: cacheKey,
               ttl: cacheTTL,
               hit: false,
-              size: JSON.stringify(responseData).length
-            }
+              size: JSON.stringify(responseData).length,
+            },
           };
-          
+
           await cacheService.set(cacheKey, responseToCache, cacheTTL);
-          
+
           // Set cache headers
           res.setHeader('X-Cache', 'MISS');
           res.setHeader('X-Cache-Key', cacheKey);
           res.setHeader('Cache-Control', `public, max-age=${Math.floor(cacheTTL / 1000)}`);
-          
         } catch (cacheError) {
           // Log cache error but don't fail the request
           console.error('Cache storage error:', cacheError);
         }
       }
-      
     } catch (error) {
       // Log cache error but continue with request
       console.error('Cache middleware error:', error);
@@ -203,9 +201,9 @@ export const createCacheMiddleware = (options?: Partial<CacheMiddlewareOptions>)
       const cacheService = await getCacheService();
       const middleware = cacheMiddleware({
         cacheService,
-        ...options
+        ...options,
       });
-      
+
       return middleware(req, res, async () => {
         await handler(req, res);
       });
@@ -253,7 +251,7 @@ export const getCacheStats = async (cacheService: CacheService) => {
       hits: 0,
       misses: 0,
       size: 0,
-      keys: []
+      keys: [],
     };
   }
 };

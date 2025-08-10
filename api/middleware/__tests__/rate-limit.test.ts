@@ -1,12 +1,12 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { VercelRequest, VercelResponse } from '@vercel/node';
-import { 
-  rateLimitMiddleware, 
-  createRateLimitMiddleware, 
+import {
+  rateLimitMiddleware,
+  createRateLimitMiddleware,
   bypassRateLimit,
   resetRateLimit,
   getRateLimitStats,
-  createEndpointRateLimit
+  createEndpointRateLimit,
 } from '../rate-limit';
 import { RateLimiter, RateLimitRule, RateLimitResult, RateLimitStats } from '../../types/api';
 
@@ -15,7 +15,7 @@ const mockRateLimiter: RateLimiter = {
   checkLimit: vi.fn(),
   increment: vi.fn(),
   reset: vi.fn(),
-  getStats: vi.fn()
+  getStats: vi.fn(),
 };
 
 // Mock config
@@ -28,29 +28,30 @@ vi.mock('../../config/config', () => ({
           identifier: 'anonymous',
           limit: 100,
           window: 60000,
-          type: 'ip'
+          type: 'ip',
         },
         authenticated: {
           identifier: 'authenticated',
           limit: 1000,
           window: 60000,
-          type: 'user'
-        }
-      }
-    }
+          type: 'user',
+        },
+      },
+    },
   },
-  getRateLimitRule: vi.fn()
+  getRateLimitRule: vi.fn(),
 }));
 
 // Helper to create mock request/response
-const createMockReq = (overrides: Partial<VercelRequest> = {}): VercelRequest => ({
-  method: 'GET',
-  url: '/api/convert',
-  query: {},
-  headers: {},
-  body: {},
-  ...overrides
-} as VercelRequest);
+const createMockReq = (overrides: Partial<VercelRequest> = {}): VercelRequest =>
+  ({
+    method: 'GET',
+    url: '/api/convert',
+    query: {},
+    headers: {},
+    body: {},
+    ...overrides,
+  }) as VercelRequest;
 
 const createMockRes = (): VercelResponse => {
   const res = {
@@ -58,9 +59,9 @@ const createMockRes = (): VercelResponse => {
     json: vi.fn().mockReturnThis(),
     send: vi.fn().mockReturnThis(),
     status: vi.fn().mockReturnThis(),
-    setHeader: vi.fn().mockReturnThis()
+    setHeader: vi.fn().mockReturnThis(),
   } as unknown as VercelResponse;
-  
+
   return res;
 };
 
@@ -79,7 +80,7 @@ describe('Rate Limit Middleware', () => {
         allowed: true,
         remaining: 99,
         resetTime: Date.now() + 60000,
-        totalLimit: 100
+        totalLimit: 100,
       };
 
       (mockRateLimiter.checkLimit as any).mockResolvedValue(rateLimitResult);
@@ -90,7 +91,7 @@ describe('Rate Limit Middleware', () => {
       const next = vi.fn();
 
       const middleware = rateLimitMiddleware({
-        rateLimiter: mockRateLimiter
+        rateLimiter: mockRateLimiter,
       });
 
       await middleware(req, res, next);
@@ -107,7 +108,7 @@ describe('Rate Limit Middleware', () => {
         allowed: false,
         remaining: 0,
         resetTime: Date.now() + 60000,
-        totalLimit: 100
+        totalLimit: 100,
       };
 
       (mockRateLimiter.checkLimit as any).mockResolvedValue(rateLimitResult);
@@ -117,7 +118,7 @@ describe('Rate Limit Middleware', () => {
       const next = vi.fn();
 
       const middleware = rateLimitMiddleware({
-        rateLimiter: mockRateLimiter
+        rateLimiter: mockRateLimiter,
       });
 
       await middleware(req, res, next);
@@ -135,7 +136,7 @@ describe('Rate Limit Middleware', () => {
         allowed: true,
         remaining: 99,
         resetTime: Date.now() + 60000,
-        totalLimit: 100
+        totalLimit: 100,
       };
 
       (mockRateLimiter.checkLimit as any).mockResolvedValue(rateLimitResult);
@@ -148,16 +149,13 @@ describe('Rate Limit Middleware', () => {
 
       const middleware = rateLimitMiddleware({
         rateLimiter: mockRateLimiter,
-        identifierExtractor: customIdentifierExtractor
+        identifierExtractor: customIdentifierExtractor,
       });
 
       await middleware(req, res, next);
 
       expect(customIdentifierExtractor).toHaveBeenCalledWith(req);
-      expect(mockRateLimiter.checkLimit).toHaveBeenCalledWith(
-        'custom-id',
-        expect.any(Object)
-      );
+      expect(mockRateLimiter.checkLimit).toHaveBeenCalledWith('custom-id', expect.any(Object));
     });
 
     it('should use custom rule selector', async () => {
@@ -165,14 +163,14 @@ describe('Rate Limit Middleware', () => {
         allowed: true,
         remaining: 99,
         resetTime: Date.now() + 60000,
-        totalLimit: 100
+        totalLimit: 100,
       };
 
       const customRule: RateLimitRule = {
         identifier: 'custom',
         limit: 50,
         window: 30000,
-        type: 'ip'
+        type: 'ip',
       };
 
       (mockRateLimiter.checkLimit as any).mockResolvedValue(rateLimitResult);
@@ -185,16 +183,13 @@ describe('Rate Limit Middleware', () => {
 
       const middleware = rateLimitMiddleware({
         rateLimiter: mockRateLimiter,
-        ruleSelector: customRuleSelector
+        ruleSelector: customRuleSelector,
       });
 
       await middleware(req, res, next);
 
       expect(customRuleSelector).toHaveBeenCalledWith(req);
-      expect(mockRateLimiter.checkLimit).toHaveBeenCalledWith(
-        expect.any(String),
-        customRule
-      );
+      expect(mockRateLimiter.checkLimit).toHaveBeenCalledWith(expect.any(String), customRule);
     });
 
     it('should call onLimitReached callback when rate limit is exceeded', async () => {
@@ -202,7 +197,7 @@ describe('Rate Limit Middleware', () => {
         allowed: false,
         remaining: 0,
         resetTime: Date.now() + 60000,
-        totalLimit: 100
+        totalLimit: 100,
       };
 
       (mockRateLimiter.checkLimit as any).mockResolvedValue(rateLimitResult);
@@ -214,7 +209,7 @@ describe('Rate Limit Middleware', () => {
 
       const middleware = rateLimitMiddleware({
         rateLimiter: mockRateLimiter,
-        onLimitReached
+        onLimitReached,
       });
 
       await middleware(req, res, next);
@@ -231,12 +226,12 @@ describe('Rate Limit Middleware', () => {
         allowed: false,
         remaining: 0,
         resetTime: Date.now() + 60000,
-        totalLimit: 100
+        totalLimit: 100,
       };
 
       const customErrorResponse = vi.fn().mockReturnValue({
         success: false,
-        error: { code: 'CUSTOM_RATE_LIMIT', message: 'Custom rate limit message' }
+        error: { code: 'CUSTOM_RATE_LIMIT', message: 'Custom rate limit message' },
       });
 
       (mockRateLimiter.checkLimit as any).mockResolvedValue(rateLimitResult);
@@ -247,7 +242,7 @@ describe('Rate Limit Middleware', () => {
 
       const middleware = rateLimitMiddleware({
         rateLimiter: mockRateLimiter,
-        customErrorResponse
+        customErrorResponse,
       });
 
       await middleware(req, res, next);
@@ -256,8 +251,8 @@ describe('Rate Limit Middleware', () => {
       expect(res.json).toHaveBeenCalledWith(
         expect.objectContaining({
           error: expect.objectContaining({
-            code: 'CUSTOM_RATE_LIMIT'
-          })
+            code: 'CUSTOM_RATE_LIMIT',
+          }),
         })
       );
     });
@@ -267,28 +262,25 @@ describe('Rate Limit Middleware', () => {
         allowed: true,
         remaining: 99,
         resetTime: Date.now() + 60000,
-        totalLimit: 100
+        totalLimit: 100,
       };
 
       (mockRateLimiter.checkLimit as any).mockResolvedValue(rateLimitResult);
       (mockRateLimiter.increment as any).mockResolvedValue(rateLimitResult);
 
       const req = createMockReq({
-        headers: { authorization: 'Bearer token123' }
+        headers: { authorization: 'Bearer token123' },
       });
       const res = createMockRes();
       const next = vi.fn();
 
       const middleware = rateLimitMiddleware({
-        rateLimiter: mockRateLimiter
+        rateLimiter: mockRateLimiter,
       });
 
       await middleware(req, res, next);
 
-      expect(mockRateLimiter.checkLimit).toHaveBeenCalledWith(
-        'user:token123',
-        expect.any(Object)
-      );
+      expect(mockRateLimiter.checkLimit).toHaveBeenCalledWith('user:token123', expect.any(Object));
     });
 
     it('should extract identifier from API key header', async () => {
@@ -296,20 +288,20 @@ describe('Rate Limit Middleware', () => {
         allowed: true,
         remaining: 99,
         resetTime: Date.now() + 60000,
-        totalLimit: 100
+        totalLimit: 100,
       };
 
       (mockRateLimiter.checkLimit as any).mockResolvedValue(rateLimitResult);
       (mockRateLimiter.increment as any).mockResolvedValue(rateLimitResult);
 
       const req = createMockReq({
-        headers: { 'x-api-key': 'api-key-123' }
+        headers: { 'x-api-key': 'api-key-123' },
       });
       const res = createMockRes();
       const next = vi.fn();
 
       const middleware = rateLimitMiddleware({
-        rateLimiter: mockRateLimiter
+        rateLimiter: mockRateLimiter,
       });
 
       await middleware(req, res, next);
@@ -328,7 +320,7 @@ describe('Rate Limit Middleware', () => {
       const next = vi.fn();
 
       const middleware = rateLimitMiddleware({
-        rateLimiter: mockRateLimiter
+        rateLimiter: mockRateLimiter,
       });
 
       await middleware(req, res, next);
@@ -341,25 +333,25 @@ describe('Rate Limit Middleware', () => {
     describe('bypassRateLimit', () => {
       it('should bypass rate limit with valid bypass token', () => {
         process.env.RATE_LIMIT_BYPASS_TOKEN = 'bypass-token';
-        
+
         const req = createMockReq({
-          headers: { 'x-rate-limit-bypass': 'bypass-token' }
+          headers: { 'x-rate-limit-bypass': 'bypass-token' },
         });
 
         expect(bypassRateLimit(req)).toBe(true);
-        
+
         delete process.env.RATE_LIMIT_BYPASS_TOKEN;
       });
 
       it('should bypass rate limit with admin API key', () => {
         process.env.ADMIN_API_KEY = 'admin-key';
-        
+
         const req = createMockReq({
-          headers: { 'x-api-key': 'admin-key' }
+          headers: { 'x-api-key': 'admin-key' },
         });
 
         expect(bypassRateLimit(req)).toBe(true);
-        
+
         delete process.env.ADMIN_API_KEY;
       });
 
@@ -377,7 +369,7 @@ describe('Rate Limit Middleware', () => {
           identifier: 'test',
           limit: 100,
           window: 60000,
-          type: 'ip'
+          type: 'ip',
         };
 
         await resetRateLimit(mockRateLimiter, 'test-id', rule);
@@ -393,11 +385,12 @@ describe('Rate Limit Middleware', () => {
           identifier: 'test',
           limit: 100,
           window: 60000,
-          type: 'ip'
+          type: 'ip',
         };
 
-        await expect(resetRateLimit(mockRateLimiter, 'test-id', rule))
-          .rejects.toThrow('Reset failed');
+        await expect(resetRateLimit(mockRateLimiter, 'test-id', rule)).rejects.toThrow(
+          'Reset failed'
+        );
       });
     });
 
@@ -408,7 +401,7 @@ describe('Rate Limit Middleware', () => {
           currentCount: 10,
           limit: 100,
           window: 60000,
-          resetTime: Date.now() + 60000
+          resetTime: Date.now() + 60000,
         };
 
         (mockRateLimiter.getStats as any).mockResolvedValue(stats);
@@ -429,7 +422,7 @@ describe('Rate Limit Middleware', () => {
           currentCount: 0,
           limit: 0,
           window: 0,
-          resetTime: expect.any(Number)
+          resetTime: expect.any(Number),
         });
       });
     });
@@ -438,7 +431,7 @@ describe('Rate Limit Middleware', () => {
       it('should create middleware with custom endpoint rule', async () => {
         const middleware = await createEndpointRateLimit('test-endpoint', {
           limit: 50,
-          window: 30000
+          window: 30000,
         });
 
         expect(typeof middleware).toBe('function');

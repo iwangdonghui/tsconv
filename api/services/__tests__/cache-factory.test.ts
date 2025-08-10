@@ -18,20 +18,20 @@ vi.mock('../../config/config', () => {
         password: undefined,
         maxRetries: 3,
         useUpstash: false,
-        fallbackToMemory: true
-      }
+        fallbackToMemory: true,
+      },
     },
     rateLimiting: {
-      enabled: false
+      enabled: false,
     },
     monitoring: {
       metricsEnabled: false,
-      logLevel: 'error'
-    }
+      logLevel: 'error',
+    },
   };
 
   return {
-    default: mockConfig
+    default: mockConfig,
   };
 });
 
@@ -44,8 +44,8 @@ vi.mock('../upstash-cache-service', () => ({
     clear: vi.fn(),
     has: vi.fn(),
     getStats: vi.fn(),
-    healthCheck: vi.fn()
-  }))
+    healthCheck: vi.fn(),
+  })),
 }));
 
 vi.mock('../redis-cache-service', () => ({
@@ -56,8 +56,8 @@ vi.mock('../redis-cache-service', () => ({
     clear: vi.fn(),
     has: vi.fn(),
     getStats: vi.fn(),
-    healthCheck: vi.fn()
-  }))
+    healthCheck: vi.fn(),
+  })),
 }));
 
 // Mock the cache service modules
@@ -70,8 +70,8 @@ vi.mock('../cache-service', () => ({
     clear: vi.fn(),
     stats: vi.fn(),
     generateKey: vi.fn(),
-    healthCheck: vi.fn()
-  }))
+    healthCheck: vi.fn(),
+  })),
 }));
 
 vi.mock('../upstash-cache-service', () => ({
@@ -83,8 +83,8 @@ vi.mock('../upstash-cache-service', () => ({
     clear: vi.fn(),
     stats: vi.fn(),
     generateKey: vi.fn(),
-    healthCheck: vi.fn()
-  }))
+    healthCheck: vi.fn(),
+  })),
 }));
 
 vi.mock('../redis-cache-service', () => ({
@@ -96,8 +96,8 @@ vi.mock('../redis-cache-service', () => ({
     clear: vi.fn(),
     stats: vi.fn(),
     generateKey: vi.fn(),
-    healthCheck: vi.fn()
-  }))
+    healthCheck: vi.fn(),
+  })),
 }));
 
 describe('CacheFactory', () => {
@@ -124,7 +124,7 @@ describe('CacheFactory', () => {
   describe('create()', () => {
     it('should create memory cache service by default', () => {
       const cacheService = CacheFactory.create();
-      
+
       expect(cacheService).toBeDefined();
       expect(MemoryCacheService).toHaveBeenCalled();
     });
@@ -132,7 +132,7 @@ describe('CacheFactory', () => {
     it('should return the same instance on subsequent calls (singleton)', () => {
       const firstInstance = CacheFactory.create();
       const secondInstance = CacheFactory.create();
-      
+
       expect(firstInstance).toBe(secondInstance);
       expect(MemoryCacheService).toHaveBeenCalledTimes(1);
     });
@@ -140,7 +140,7 @@ describe('CacheFactory', () => {
     it('should create Upstash cache when configured', () => {
       process.env.UPSTASH_REDIS_REST_URL = 'https://test.upstash.io';
       process.env.UPSTASH_REDIS_REST_TOKEN = 'test-token';
-      
+
       // Mock config to use Upstash
       vi.doMock('../config/config', () => ({
         default: {
@@ -151,10 +151,10 @@ describe('CacheFactory', () => {
             redis: {
               url: 'https://test.upstash.io',
               useUpstash: true,
-              fallbackToMemory: true
-            }
-          }
-        }
+              fallbackToMemory: true,
+            },
+          },
+        },
       }));
 
       const cacheService = CacheFactory.create();
@@ -163,19 +163,19 @@ describe('CacheFactory', () => {
 
     it('should create Redis cache when USE_REDIS is true', () => {
       process.env.USE_REDIS = 'true';
-      
+
       const cacheService = CacheFactory.create();
       expect(cacheService).toBeDefined();
     });
 
     it('should fallback to memory cache when Redis fails', () => {
       process.env.USE_REDIS = 'true';
-      
+
       // Mock Redis service to throw error
       vi.doMock('../redis-cache-service', () => ({
         RedisCacheService: vi.fn().mockImplementation(() => {
           throw new Error('Redis connection failed');
-        })
+        }),
       }));
 
       const cacheService = CacheFactory.create();
@@ -201,7 +201,7 @@ describe('CacheFactory', () => {
   describe('determineCacheProvider()', () => {
     it('should return upstash when Upstash is configured', () => {
       process.env.UPSTASH_REDIS_REST_URL = 'https://test.upstash.io';
-      
+
       // Access private method through any
       const provider = (CacheFactory as any).determineCacheProvider();
       expect(provider).toBe('memory'); // Will be memory since config mock doesn't have useUpstash: true
@@ -209,7 +209,7 @@ describe('CacheFactory', () => {
 
     it('should return redis when USE_REDIS is true', () => {
       process.env.USE_REDIS = 'true';
-      
+
       const provider = (CacheFactory as any).determineCacheProvider();
       expect(provider).toBe('redis');
     });
@@ -269,7 +269,9 @@ describe('CacheFactory', () => {
       const validation = CacheFactory.validateConfiguration();
 
       expect(validation.issues).toContain('UPSTASH_REDIS_REST_URL environment variable is missing');
-      expect(validation.issues).toContain('UPSTASH_REDIS_REST_TOKEN environment variable is missing');
+      expect(validation.issues).toContain(
+        'UPSTASH_REDIS_REST_TOKEN environment variable is missing'
+      );
 
       // Restore original state
       if (originalUpstashUrl) process.env.UPSTASH_REDIS_REST_URL = originalUpstashUrl;
@@ -321,8 +323,8 @@ describe('CacheFactory', () => {
         redisConfig: {
           url: '[CONFIGURED]',
           useUpstash: false,
-          fallbackToMemory: true
-        }
+          fallbackToMemory: true,
+        },
       });
     });
 
@@ -340,7 +342,7 @@ describe('CacheFactory', () => {
     it('should create specific cache service bypassing singleton', () => {
       const memoryCache1 = CacheFactory.createSpecific('memory');
       const memoryCache2 = CacheFactory.createSpecific('memory');
-      
+
       expect(memoryCache1).toBeDefined();
       expect(memoryCache2).toBeDefined();
       expect(MemoryCacheService).toHaveBeenCalledTimes(2);
@@ -366,7 +368,7 @@ describe('CacheFactory', () => {
     it('should return existing instance', () => {
       const createdInstance = CacheFactory.create();
       const retrievedInstance = CacheFactory.getInstance();
-      
+
       expect(retrievedInstance).toBe(createdInstance);
     });
   });
@@ -376,7 +378,7 @@ describe('CacheFactory', () => {
       const firstInstance = CacheFactory.create();
       CacheFactory.reset();
       const secondInstance = CacheFactory.create();
-      
+
       expect(firstInstance).not.toBe(secondInstance);
       expect(MemoryCacheService).toHaveBeenCalledTimes(2);
     });

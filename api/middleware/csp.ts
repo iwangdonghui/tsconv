@@ -1,6 +1,6 @@
 /**
  * Content Security Policy (CSP) Middleware
- * 
+ *
  * This middleware provides comprehensive CSP header configuration
  * with environment-specific policies and nonce generation.
  */
@@ -70,13 +70,13 @@ const PRODUCTION_CSP: CSPDirectives = {
     'https://www.google-analytics.com',
     'https://www.googletagmanager.com',
     // Error reporting
-    'https://browser.sentry.io'
+    'https://browser.sentry.io',
   ],
   'style-src': [
     "'self'",
     "'unsafe-inline'", // Required for CSS-in-JS libraries
     'https://fonts.googleapis.com',
-    'https://cdn.jsdelivr.net'
+    'https://cdn.jsdelivr.net',
   ],
   'img-src': [
     "'self'",
@@ -85,14 +85,9 @@ const PRODUCTION_CSP: CSPDirectives = {
     'https:',
     // Allow images from trusted sources
     'https://images.unsplash.com',
-    'https://via.placeholder.com'
+    'https://via.placeholder.com',
   ],
-  'font-src': [
-    "'self'",
-    'data:',
-    'https://fonts.gstatic.com',
-    'https://cdn.jsdelivr.net'
-  ],
+  'font-src': ["'self'", 'data:', 'https://fonts.gstatic.com', 'https://cdn.jsdelivr.net'],
   'connect-src': [
     "'self'",
     // API endpoints
@@ -103,7 +98,7 @@ const PRODUCTION_CSP: CSPDirectives = {
     'https://analytics.google.com',
     // Error reporting
     'https://sentry.io',
-    'https://*.sentry.io'
+    'https://*.sentry.io',
   ],
   'media-src': ["'self'", 'data:', 'blob:'],
   'object-src': ["'none'"],
@@ -115,7 +110,7 @@ const PRODUCTION_CSP: CSPDirectives = {
   'base-uri': ["'self'"],
   'manifest-src': ["'self'"],
   'upgrade-insecure-requests': true,
-  'block-all-mixed-content': true
+  'block-all-mixed-content': true,
 };
 
 const DEVELOPMENT_CSP: CSPDirectives = {
@@ -126,31 +121,17 @@ const DEVELOPMENT_CSP: CSPDirectives = {
     "'unsafe-eval'", // Required for development tools
     'localhost:*',
     '127.0.0.1:*',
-    'https://cdn.jsdelivr.net'
+    'https://cdn.jsdelivr.net',
   ],
   'style-src': [
     "'self'",
     "'unsafe-inline'",
     'localhost:*',
     '127.0.0.1:*',
-    'https://fonts.googleapis.com'
+    'https://fonts.googleapis.com',
   ],
-  'img-src': [
-    "'self'",
-    'data:',
-    'blob:',
-    'https:',
-    'http:',
-    'localhost:*',
-    '127.0.0.1:*'
-  ],
-  'font-src': [
-    "'self'",
-    'data:',
-    'localhost:*',
-    '127.0.0.1:*',
-    'https://fonts.gstatic.com'
-  ],
+  'img-src': ["'self'", 'data:', 'blob:', 'https:', 'http:', 'localhost:*', '127.0.0.1:*'],
+  'font-src': ["'self'", 'data:', 'localhost:*', '127.0.0.1:*', 'https://fonts.gstatic.com'],
   'connect-src': [
     "'self'",
     'localhost:*',
@@ -158,7 +139,7 @@ const DEVELOPMENT_CSP: CSPDirectives = {
     'ws://localhost:*',
     'ws://127.0.0.1:*',
     'wss://localhost:*',
-    'https:'
+    'https:',
   ],
   'media-src': ["'self'", 'data:', 'blob:', 'localhost:*'],
   'object-src': ["'none'"],
@@ -168,7 +149,7 @@ const DEVELOPMENT_CSP: CSPDirectives = {
   'frame-ancestors': ["'none'"],
   'form-action': ["'self'", 'localhost:*'],
   'base-uri': ["'self'"],
-  'manifest-src': ["'self'", 'localhost:*']
+  'manifest-src': ["'self'", 'localhost:*'],
 };
 
 const TEST_CSP: CSPDirectives = {
@@ -182,7 +163,7 @@ const TEST_CSP: CSPDirectives = {
   'object-src': ["'none'"],
   'frame-ancestors': ["'none'"],
   'form-action': ["'self'"],
-  'base-uri': ["'self'"]
+  'base-uri': ["'self'"],
 };
 
 // ============================================================================
@@ -208,24 +189,24 @@ function buildDirective(sources: string[]): string {
  */
 export function buildCSPPolicy(directives: CSPDirectives, nonce?: string): string {
   const policies: string[] = [];
-  
+
   for (const [directive, sources] of Object.entries(directives)) {
     if (sources === true) {
       // Boolean directives (upgrade-insecure-requests, block-all-mixed-content)
       policies.push(directive.replace(/([A-Z])/g, '-$1').toLowerCase());
     } else if (Array.isArray(sources) && sources.length > 0) {
-      let directiveSources = [...sources];
-      
+      const directiveSources = [...sources];
+
       // Add nonce to script-src and style-src if provided
       if (nonce && (directive === 'script-src' || directive === 'style-src')) {
         directiveSources.push(`'nonce-${nonce}'`);
       }
-      
+
       const directiveName = directive.replace(/([A-Z])/g, '-$1').toLowerCase();
       policies.push(`${directiveName} ${buildDirective(directiveSources)}`);
     }
   }
-  
+
   return policies.join('; ');
 }
 
@@ -248,18 +229,21 @@ export function getEnvironmentCSP(environment: string): CSPDirectives {
 /**
  * Merges custom CSP directives with environment defaults
  */
-export function mergeCSPDirectives(base: CSPDirectives, custom: Partial<CSPDirectives>): CSPDirectives {
+export function mergeCSPDirectives(
+  base: CSPDirectives,
+  custom: Partial<CSPDirectives>
+): CSPDirectives {
   const merged = { ...base };
-  
+
   for (const [directive, sources] of Object.entries(custom)) {
     if (sources === true || sources === false) {
       merged[directive as keyof CSPDirectives] = sources as any;
     } else if (Array.isArray(sources)) {
-      const existingSources = merged[directive as keyof CSPDirectives] as string[] || [];
+      const existingSources = (merged[directive as keyof CSPDirectives] as string[]) || [];
       merged[directive as keyof CSPDirectives] = [...existingSources, ...sources] as any;
     }
   }
-  
+
   return merged;
 }
 
@@ -276,53 +260,55 @@ export function createCSPMiddleware(options: Partial<CSPOptions> = {}) {
     useNonces = true,
     nonceLength = 16,
     enableViolationReporting = true,
-    reportEndpoint = '/api/csp-report'
+    reportEndpoint = '/api/csp-report',
   } = options;
-  
+
   return (req: VercelRequest, res: VercelResponse, next?: () => void) => {
     const environment = process.env.NODE_ENV || 'production';
     const userAgent = req.headers['user-agent'];
     const origin = req.headers.origin;
-    
+
     // Generate nonce if enabled
     const nonce = useNonces ? generateNonce(nonceLength) : undefined;
-    
+
     // Get base CSP configuration for environment
     let cspDirectives = getEnvironmentCSP(environment);
-    
+
     // Merge with custom directives if provided
     if (options.directives) {
       cspDirectives = mergeCSPDirectives(cspDirectives, options.directives);
     }
-    
+
     // Add violation reporting if enabled
     if (enableViolationReporting && reportEndpoint) {
       cspDirectives['report-uri'] = [reportEndpoint];
     }
-    
+
     // Build CSP policy string
     const cspPolicy = buildCSPPolicy(cspDirectives, nonce);
-    
+
     // Set CSP header
-    const headerName = reportOnly ? 'Content-Security-Policy-Report-Only' : 'Content-Security-Policy';
+    const headerName = reportOnly
+      ? 'Content-Security-Policy-Report-Only'
+      : 'Content-Security-Policy';
     res.setHeader(headerName, cspPolicy);
-    
+
     // Add nonce to request context for use in templates
     if (nonce) {
       (req as any).cspNonce = nonce;
       res.setHeader('X-CSP-Nonce', nonce);
     }
-    
+
     // Add CSP context to response locals for debugging
     if (environment === 'development') {
       res.setHeader('X-CSP-Environment', environment);
       res.setHeader('X-CSP-Policy-Length', cspPolicy.length.toString());
     }
-    
+
     if (next) {
       return next();
     }
-    
+
     return undefined;
   };
 }
@@ -333,7 +319,7 @@ export function createCSPMiddleware(options: Partial<CSPOptions> = {}) {
 export const defaultCSPMiddleware = createCSPMiddleware({
   useNonces: true,
   enableViolationReporting: true,
-  reportEndpoint: '/api/csp-report'
+  reportEndpoint: '/api/csp-report',
 });
 
 /**
@@ -342,7 +328,7 @@ export const defaultCSPMiddleware = createCSPMiddleware({
 export const developmentCSPMiddleware = createCSPMiddleware({
   useNonces: false,
   enableViolationReporting: false,
-  directives: DEVELOPMENT_CSP
+  directives: DEVELOPMENT_CSP,
 });
 
 /**
@@ -352,7 +338,7 @@ export const reportOnlyCSPMiddleware = createCSPMiddleware({
   reportOnly: true,
   useNonces: true,
   enableViolationReporting: true,
-  reportEndpoint: '/api/csp-report'
+  reportEndpoint: '/api/csp-report',
 });
 
 // ============================================================================
@@ -384,9 +370,9 @@ export function handleCSPViolation(report: CSPViolationReport): void {
     blockedUri: report['blocked-uri'],
     documentUri: report['document-uri'],
     sourceFile: report['source-file'],
-    lineNumber: report['line-number']
+    lineNumber: report['line-number'],
   });
-  
+
   // In production, you might want to send this to a monitoring service
   // like Sentry, DataDog, or a custom analytics endpoint
 }

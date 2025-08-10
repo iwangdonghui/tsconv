@@ -9,35 +9,35 @@ const SUPPORTED_FORMATS: SupportedFormat[] = [
     pattern: 'YYYY-MM-DDTHH:mm:ss.sssZ',
     example: '2024-01-15T10:30:45.123Z',
     description: 'ISO 8601 standard format with milliseconds and UTC timezone',
-    category: 'standard'
+    category: 'standard',
   },
   {
     name: 'unix',
     pattern: 'X',
     example: '1705315845',
     description: 'Unix timestamp in seconds since epoch',
-    category: 'standard'
+    category: 'standard',
   },
   {
     name: 'unix-ms',
     pattern: 'x',
     example: '1705315845123',
     description: 'Unix timestamp in milliseconds since epoch',
-    category: 'standard'
+    category: 'standard',
   },
   {
     name: 'human',
     pattern: 'MMMM Do, YYYY [at] h:mm:ss A',
     example: 'January 15th, 2024 at 10:30:45 AM',
     description: 'Human-readable format with ordinal date',
-    category: 'standard'
+    category: 'standard',
   },
   {
     name: 'relative',
     pattern: 'relative',
     example: '2 hours ago',
     description: 'Relative time from now (e.g., "2 hours ago", "in 3 days")',
-    category: 'standard'
+    category: 'standard',
   },
 
   // Locale-specific formats
@@ -46,21 +46,21 @@ const SUPPORTED_FORMATS: SupportedFormat[] = [
     pattern: 'MM/DD/YYYY h:mm:ss A',
     example: '01/15/2024 10:30:45 AM',
     description: 'US date format (MM/DD/YYYY)',
-    category: 'locale'
+    category: 'locale',
   },
   {
     name: 'eu',
     pattern: 'DD/MM/YYYY HH:mm:ss',
     example: '15/01/2024 10:30:45',
     description: 'European date format (DD/MM/YYYY)',
-    category: 'locale'
+    category: 'locale',
   },
   {
     name: 'uk',
     pattern: 'DD/MM/YYYY HH:mm:ss',
     example: '15/01/2024 10:30:45',
     description: 'UK date format (DD/MM/YYYY)',
-    category: 'locale'
+    category: 'locale',
   },
 
   // ISO variants
@@ -69,28 +69,28 @@ const SUPPORTED_FORMATS: SupportedFormat[] = [
     pattern: 'YYYY-MM-DD',
     example: '2024-01-15',
     description: 'ISO date only (no time)',
-    category: 'iso'
+    category: 'iso',
   },
   {
     name: 'iso-time',
     pattern: 'HH:mm:ss',
     example: '10:30:45',
     description: 'ISO time only (no date)',
-    category: 'iso'
+    category: 'iso',
   },
   {
     name: 'iso-datetime',
     pattern: 'YYYY-MM-DD HH:mm:ss',
     example: '2024-01-15 10:30:45',
     description: 'ISO datetime without timezone',
-    category: 'iso'
+    category: 'iso',
   },
   {
     name: 'iso-week',
     pattern: 'YYYY-[W]WW',
     example: '2024-W03',
     description: 'ISO week date format',
-    category: 'iso'
+    category: 'iso',
   },
 
   // Custom formats
@@ -99,29 +99,29 @@ const SUPPORTED_FORMATS: SupportedFormat[] = [
     pattern: 'YYYYMMDD_HHmmss',
     example: '20240115_103045',
     description: 'Compact format suitable for filenames',
-    category: 'custom'
+    category: 'custom',
   },
   {
     name: 'log',
     pattern: 'YYYY-MM-DD HH:mm:ss.SSS',
     example: '2024-01-15 10:30:45.123',
     description: 'Log format with milliseconds',
-    category: 'custom'
+    category: 'custom',
   },
   {
     name: 'rfc2822',
     pattern: 'ddd, DD MMM YYYY HH:mm:ss ZZ',
     example: 'Mon, 15 Jan 2024 10:30:45 +0000',
     description: 'RFC 2822 format used in email headers',
-    category: 'custom'
+    category: 'custom',
   },
   {
     name: 'cookie',
     pattern: 'ddd, DD-MMM-YYYY HH:mm:ss [GMT]',
     example: 'Mon, 15-Jan-2024 10:30:45 GMT',
     description: 'HTTP cookie expiration format',
-    category: 'custom'
-  }
+    category: 'custom',
+  },
 ];
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -143,7 +143,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   try {
     const startTime = Date.now();
-    
+
     // Parse query parameters
     const category = req.query.category as string;
     const search = req.query.search as string;
@@ -158,7 +158,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       if (!validCategories.includes(category)) {
         return APIErrorHandler.handleBadRequest(res, `Invalid category: ${category}`, {
           validCategories,
-          receivedCategory: category
+          receivedCategory: category,
         });
       }
       formats = formats.filter(f => f.category === category);
@@ -167,10 +167,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // Filter by search term if specified
     if (search) {
       const searchLower = search.toLowerCase();
-      formats = formats.filter(f => 
-        f.name.toLowerCase().includes(searchLower) ||
-        f.description.toLowerCase().includes(searchLower) ||
-        f.example.toLowerCase().includes(searchLower)
+      formats = formats.filter(
+        f =>
+          f.name.toLowerCase().includes(searchLower) ||
+          f.description.toLowerCase().includes(searchLower) ||
+          f.example.toLowerCase().includes(searchLower)
       );
     }
 
@@ -179,21 +180,24 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       formats = formats.map(f => ({
         ...f,
         ...(includeExamples ? {} : { example: undefined }),
-        ...(includePatterns ? {} : { pattern: undefined })
+        ...(includePatterns ? {} : { pattern: undefined }),
       }));
     }
 
     // Group formats by category
-    const groupedFormats = formats.reduce((acc, format) => {
-      if (!acc[format.category]) {
-        acc[format.category] = [];
-      }
-      acc[format.category]!.push(format);
-      return acc;
-    }, {} as Record<string, SupportedFormat[]>);
+    const groupedFormats = formats.reduce(
+      (acc, format) => {
+        if (!acc[format.category]) {
+          acc[format.category] = [];
+        }
+        acc[format.category]!.push(format);
+        return acc;
+      },
+      {} as Record<string, SupportedFormat[]>
+    );
 
     const response = {
-      formats: formats,
+      formats,
       groupedFormats,
       metadata: {
         totalFormats: formats.length,
@@ -203,21 +207,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           category: category || null,
           search: search || null,
           includeExamples,
-          includePatterns
-        }
-      }
+          includePatterns,
+        },
+      },
     };
 
     APIErrorHandler.sendSuccess(res, response, {
       processingTime: Date.now() - startTime,
       itemCount: formats.length,
-      cacheHit: false
+      cacheHit: false,
     });
-
   } catch (error) {
     console.error('Formats handler error:', error);
     APIErrorHandler.handleServerError(res, error as Error, {
-      endpoint: 'formats'
+      endpoint: 'formats',
     });
   }
 }

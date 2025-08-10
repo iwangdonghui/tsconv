@@ -8,7 +8,8 @@ class MemoryCacheService implements CacheService {
   private frequentKeys = new Set<string>();
   private warmupEnabled: boolean = true;
 
-  constructor(maxSize: number = 1000) { // Default to 1000 items instead of bytes
+  constructor(maxSize: number = 1000) {
+    // Default to 1000 items instead of bytes
     this.maxSize = maxSize;
     this.startCleanupInterval();
     this.startWarmupInterval();
@@ -29,12 +30,12 @@ class MemoryCacheService implements CacheService {
 
     // Update last access time for LRU algorithm
     item.lastAccess = Date.now();
-    
+
     // Track frequently accessed keys for cache warming
     if (this.warmupEnabled) {
       this.frequentKeys.add(key);
     }
-    
+
     this.cacheStats.hits++;
     return item.value as T;
   }
@@ -52,7 +53,7 @@ class MemoryCacheService implements CacheService {
     this.cache.set(key, {
       value,
       expires: Date.now() + ttl,
-      lastAccess: Date.now()
+      lastAccess: Date.now(),
     });
     this.cacheStats.sets++;
   }
@@ -100,7 +101,7 @@ class MemoryCacheService implements CacheService {
       hits: this.cacheStats.hits,
       misses: this.cacheStats.misses,
       size: this.cache.size,
-      keys: Array.from(this.cache.keys())
+      keys: Array.from(this.cache.keys()),
     };
   }
 
@@ -119,14 +120,14 @@ class MemoryCacheService implements CacheService {
           misses: this.cacheStats.misses,
           hitRatio: this.cacheStats.hits / (this.cacheStats.hits + this.cacheStats.misses || 1),
           warmupEnabled: this.warmupEnabled,
-          frequentKeysCount: this.frequentKeys.size
-        }
+          frequentKeysCount: this.frequentKeys.size,
+        },
       };
     } catch (error) {
       return {
         status: 'unhealthy',
         type: 'memory',
-        details: { error: error instanceof Error ? error.message : 'Unknown error' }
+        details: { error: error instanceof Error ? error.message : 'Unknown error' },
       };
     }
   }
@@ -136,19 +137,19 @@ class MemoryCacheService implements CacheService {
     // 1. Only include non-null and non-undefined parameters
     // 2. Use a more compact representation for arrays and objects
     // 3. Use a faster hashing algorithm for large parameter sets
-    
+
     const filteredParams: Record<string, any> = {};
-    
+
     // Filter out null/undefined values to reduce key size
     for (const [key, value] of Object.entries(request.parameters)) {
       if (value !== null && value !== undefined) {
         filteredParams[key] = value;
       }
     }
-    
+
     // For large parameter sets, use a more efficient serialization
     let paramString: string;
-    
+
     if (Object.keys(filteredParams).length > 10) {
       // For complex objects, use a more efficient approach
       paramString = this.fastHash(this.serializeObject(filteredParams));
@@ -166,40 +167,40 @@ class MemoryCacheService implements CacheService {
         })
         .join('|');
     }
-    
+
     return `cache:${request.endpoint}:${request.userId || 'anonymous'}:${paramString}`;
   }
-  
+
   private serializeObject(obj: any): string {
     // Consistent object serialization that handles nested objects
     if (obj === null || obj === undefined) {
       return String(obj);
     }
-    
+
     if (typeof obj !== 'object') {
       return String(obj);
     }
-    
+
     if (Array.isArray(obj)) {
       return `[${obj.map(item => this.serializeObject(item)).join(',')}]`;
     }
-    
+
     // Sort keys to ensure consistent serialization
     const sortedKeys = Object.keys(obj).sort();
     const pairs = sortedKeys.map(key => `"${key}":${this.serializeObject(obj[key])}`);
     return `{${pairs.join(',')}}`;
   }
-  
+
   private serializeValue(value: any): string {
     // Consistent value serialization
     return this.serializeObject(value);
   }
-  
+
   private fastHash(str: string): string {
     // Simple but fast hashing algorithm (djb2)
     let hash = 5381;
     for (let i = 0; i < str.length; i++) {
-      hash = ((hash << 5) + hash) + str.charCodeAt(i);
+      hash = (hash << 5) + hash + str.charCodeAt(i);
     }
     return (hash >>> 0).toString(36); // Convert to positive number and base36
   }
@@ -208,18 +209,18 @@ class MemoryCacheService implements CacheService {
     // Find the least recently used items
     let oldestTime = Infinity;
     let oldestKey: string | null = null;
-    
+
     // Skip frequent keys when evicting to maintain performance
     // Convert iterator to array to avoid downlevelIteration issues
     const entries = Array.from(this.cache.entries());
-    
+
     for (const [key, item] of entries) {
       if (!this.frequentKeys.has(key) && item.lastAccess < oldestTime) {
         oldestTime = item.lastAccess;
         oldestKey = key;
       }
     }
-    
+
     // If all keys are frequent, fall back to the oldest one
     if (oldestKey === null) {
       for (const [key, item] of entries) {
@@ -229,7 +230,7 @@ class MemoryCacheService implements CacheService {
         }
       }
     }
-    
+
     if (oldestKey) {
       this.cache.delete(oldestKey);
       this.frequentKeys.delete(oldestKey);
@@ -240,7 +241,7 @@ class MemoryCacheService implements CacheService {
     const now = Date.now();
     // Convert iterator to array to avoid downlevelIteration issues
     const entries = Array.from(this.cache.entries());
-    
+
     for (const [key, item] of entries) {
       if (now > item.expires) {
         this.cache.delete(key);
@@ -252,7 +253,7 @@ class MemoryCacheService implements CacheService {
   private startCleanupInterval(): void {
     setInterval(() => this.cleanupExpired(), 60000); // Cleanup every minute
   }
-  
+
   private startWarmupInterval(): void {
     // Periodically analyze and warm up frequently accessed timezone data
     setInterval(() => {
@@ -261,12 +262,12 @@ class MemoryCacheService implements CacheService {
       }
     }, 300000); // Every 5 minutes
   }
-  
+
   private warmupFrequentKeys(): void {
     // Extend TTL for frequently accessed keys
     // Convert iterator to array to avoid downlevelIteration issues
     const frequentKeysArray = Array.from(this.frequentKeys);
-    
+
     for (const key of frequentKeysArray) {
       const item = this.cache.get(key);
       if (item) {
@@ -277,13 +278,13 @@ class MemoryCacheService implements CacheService {
       }
     }
   }
-  
+
   private estimateCacheSize(): number {
     // Estimate the memory usage of the cache
     let size = 0;
     // Convert iterator to array to avoid downlevelIteration issues
     const entries = Array.from(this.cache.entries());
-    
+
     for (const [key, item] of entries) {
       // Rough estimate: key length + JSON stringified value length
       const valueSize = JSON.stringify(item.value).length;
@@ -291,24 +292,27 @@ class MemoryCacheService implements CacheService {
     }
     return size;
   }
-  
+
   // Method to optimize memory usage for batch operations
-  async optimizeBatchOperation<T>(keys: string[], operation: (key: string) => Promise<T>): Promise<T[]> {
+  async optimizeBatchOperation<T>(
+    keys: string[],
+    operation: (key: string) => Promise<T>
+  ): Promise<T[]> {
     // Process in smaller chunks to avoid memory spikes
     const chunkSize = 50;
     const results: T[] = [];
-    
+
     for (let i = 0; i < keys.length; i += chunkSize) {
       const chunk = keys.slice(i, i + chunkSize);
       const chunkResults = await Promise.all(chunk.map(operation));
       results.push(...chunkResults);
-      
+
       // Allow garbage collection between chunks
       if (i + chunkSize < keys.length) {
         await new Promise(resolve => setTimeout(resolve, 0));
       }
     }
-    
+
     return results;
   }
 }

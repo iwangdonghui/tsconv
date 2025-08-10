@@ -96,8 +96,8 @@ async function swaggerHandler(req: VercelRequest, res: VercelResponse) {
       success: false,
       error: {
         code: 'INTERNAL_ERROR',
-        message: 'Failed to serve Swagger UI'
-      }
+        message: 'Failed to serve Swagger UI',
+      },
     });
   }
 }
@@ -114,7 +114,7 @@ async function openApiHandler(req: VercelRequest, res: VercelResponse) {
   try {
     // In production, read from the file system
     const openApiPath = path.join(process.cwd(), 'api', 'openapi.json');
-    
+
     if (fs.existsSync(openApiPath)) {
       const openApiSpec = fs.readFileSync(openApiPath, 'utf8');
       res.setHeader('Content-Type', 'application/json');
@@ -125,8 +125,8 @@ async function openApiHandler(req: VercelRequest, res: VercelResponse) {
         success: false,
         error: {
           code: 'NOT_FOUND',
-          message: 'OpenAPI specification not found'
-        }
+          message: 'OpenAPI specification not found',
+        },
       });
     }
   } catch (error) {
@@ -135,8 +135,8 @@ async function openApiHandler(req: VercelRequest, res: VercelResponse) {
       success: false,
       error: {
         code: 'INTERNAL_ERROR',
-        message: 'Failed to serve OpenAPI specification'
-      }
+        message: 'Failed to serve OpenAPI specification',
+      },
     });
   }
 }

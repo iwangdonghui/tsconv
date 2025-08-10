@@ -73,7 +73,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   // Only allow POST requests for batch operations
   if (req.method !== 'POST') {
-    return APIErrorHandler.handleMethodNotAllowed(res, 'Only POST method is allowed for batch operations');
+    return APIErrorHandler.handleMethodNotAllowed(
+      res,
+      'Only POST method is allowed for batch operations'
+    );
   }
 
   try {
@@ -90,7 +93,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // Validate batch request
     const validationResult = validateBatchRequest(batchRequest);
     if (!validationResult.valid) {
-      return APIErrorHandler.handleBadRequest(res, validationResult.message || 'Invalid request', validationResult.details);
+      return APIErrorHandler.handleBadRequest(
+        res,
+        validationResult.message || 'Invalid request',
+        validationResult.details
+      );
     }
 
     // Set timeout for the entire batch operation
@@ -101,47 +108,54 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // Process batch with timeout
     const processingPromise = processBatch(batchRequest, startTime);
-    
-    const result = await Promise.race([processingPromise, timeoutPromise]) as any;
-    
+
+    const result = (await Promise.race([processingPromise, timeoutPromise])) as any;
+
     const response: BatchResponse = {
       success: true,
-      data: result
+      data: result,
     };
 
     APIErrorHandler.sendSuccess(res, response, {
       processingTime: Date.now() - startTime,
       itemCount: result.results.length,
-      cacheHit: false
+      cacheHit: false,
     });
-
   } catch (error) {
     console.error('Batch processing error:', error);
-    
+
     if ((error as Error).message === 'Batch processing timeout') {
-      return APIErrorHandler.sendError(res, APIErrorHandler.createError(
-        'TIMEOUT_ERROR',
-        'Batch processing exceeded timeout limit',
-        408,
-        { timeout: req.body?.globalOptions?.timeout || DEFAULT_TIMEOUT }
-      ), 408);
+      return APIErrorHandler.sendError(
+        res,
+        APIErrorHandler.createError(
+          'TIMEOUT_ERROR',
+          'Batch processing exceeded timeout limit',
+          408,
+          { timeout: req.body?.globalOptions?.timeout || DEFAULT_TIMEOUT }
+        ),
+        408
+      );
     }
 
     APIErrorHandler.handleServerError(res, error as Error, {
-      endpoint: 'batch'
+      endpoint: 'batch',
     });
   }
 }
 
-function validateBatchRequest(request: BatchRequest): { valid: boolean; message?: string; details?: any } {
+function validateBatchRequest(request: BatchRequest): {
+  valid: boolean;
+  message?: string;
+  details?: any;
+} {
   if (!request.items || !Array.isArray(request.items)) {
     return {
       valid: false,
       message: 'Items array is required',
       details: {
         expected: 'Array of batch items',
-        received: typeof request.items
-      }
+        received: typeof request.items,
+      },
     };
   }
 
@@ -151,8 +165,8 @@ function validateBatchRequest(request: BatchRequest): { valid: boolean; message?
       message: 'Items array cannot be empty',
       details: {
         minItems: 1,
-        maxItems: MAX_BATCH_SIZE
-      }
+        maxItems: MAX_BATCH_SIZE,
+      },
     };
   }
 
@@ -163,8 +177,8 @@ function validateBatchRequest(request: BatchRequest): { valid: boolean; message?
       details: {
         maxItems: MAX_BATCH_SIZE,
         receivedItems: request.items.length,
-        suggestion: `Split your request into smaller batches of ${MAX_BATCH_SIZE} items or less`
-      }
+        suggestion: `Split your request into smaller batches of ${MAX_BATCH_SIZE} items or less`,
+      },
     };
   }
 
@@ -178,20 +192,23 @@ function validateBatchRequest(request: BatchRequest): { valid: boolean; message?
         message: `Item at index ${i} is missing timestamp`,
         details: {
           index: i,
-          required: ['timestamp']
-        }
+          required: ['timestamp'],
+        },
       };
     }
 
-    if (item.outputFormats && (!Array.isArray(item.outputFormats) || item.outputFormats.length > 20)) {
+    if (
+      item.outputFormats &&
+      (!Array.isArray(item.outputFormats) || item.outputFormats.length > 20)
+    ) {
       return {
         valid: false,
         message: `Item at index ${i} has invalid outputFormats`,
         details: {
           index: i,
           maxFormats: 20,
-          received: Array.isArray(item.outputFormats) ? item.outputFormats.length : 'not an array'
-        }
+          received: Array.isArray(item.outputFormats) ? item.outputFormats.length : 'not an array',
+        },
       };
     }
   }
@@ -199,7 +216,7 @@ function validateBatchRequest(request: BatchRequest): { valid: boolean; message?
   // Validate global options
   if (request.globalOptions) {
     const { maxConcurrency, timeout, outputFormats } = request.globalOptions;
-    
+
     if (maxConcurrency && (maxConcurrency < 1 || maxConcurrency > 50)) {
       return {
         valid: false,
@@ -207,8 +224,8 @@ function validateBatchRequest(request: BatchRequest): { valid: boolean; message?
         details: {
           minConcurrency: 1,
           maxConcurrency: 50,
-          received: maxConcurrency
-        }
+          received: maxConcurrency,
+        },
       };
     }
 
@@ -219,8 +236,8 @@ function validateBatchRequest(request: BatchRequest): { valid: boolean; message?
         details: {
           minTimeout: 5000,
           maxTimeout: 300000,
-          received: timeout
-        }
+          received: timeout,
+        },
       };
     }
 
@@ -230,8 +247,8 @@ function validateBatchRequest(request: BatchRequest): { valid: boolean; message?
         message: 'Global outputFormats must be an array with max 20 items',
         details: {
           maxFormats: 20,
-          received: Array.isArray(outputFormats) ? outputFormats.length : 'not an array'
-        }
+          received: Array.isArray(outputFormats) ? outputFormats.length : 'not an array',
+        },
       };
     }
   }
@@ -251,7 +268,7 @@ async function processBatch(request: BatchRequest, startTime: number): Promise<a
 
   // Process items in chunks based on concurrency limit
   const chunks = chunkArray(request.items, maxConcurrency);
-  
+
   for (const chunk of chunks) {
     const chunkPromises = chunk.map((item, chunkIndex) => {
       const globalIndex = results.length + chunkIndex;
@@ -260,7 +277,7 @@ async function processBatch(request: BatchRequest, startTime: number): Promise<a
 
     try {
       const chunkResults = await Promise.allSettled(chunkPromises);
-      
+
       for (const result of chunkResults) {
         if (result.status === 'fulfilled') {
           results.push(result.value);
@@ -274,13 +291,13 @@ async function processBatch(request: BatchRequest, startTime: number): Promise<a
             error: {
               code: 'PROCESSING_ERROR',
               message: result.reason?.message || 'Unknown error',
-              details: { originalError: result.reason }
+              details: { originalError: result.reason },
             },
             processingTime: 0,
-            index: results.length
+            index: results.length,
           };
           results.push(errorResult);
-          
+
           if (result.reason?.message?.includes('timeout')) {
             timeouts++;
           }
@@ -289,7 +306,7 @@ async function processBatch(request: BatchRequest, startTime: number): Promise<a
     } catch (error) {
       // Handle chunk-level errors
       console.error('Chunk processing error:', error);
-      
+
       if (!continueOnError) {
         throw error;
       }
@@ -305,8 +322,8 @@ async function processBatch(request: BatchRequest, startTime: number): Promise<a
   const successCount = results.filter(r => r.success).length;
   const errorCount = results.filter(r => !r.success).length;
   const totalProcessingTime = Date.now() - startTime;
-  const averageItemTime = results.length > 0 ? 
-    results.reduce((sum, r) => sum + r.processingTime, 0) / results.length : 0;
+  const averageItemTime =
+    results.length > 0 ? results.reduce((sum, r) => sum + r.processingTime, 0) / results.length : 0;
 
   const summary = {
     totalItems: request.items.length,
@@ -314,31 +331,36 @@ async function processBatch(request: BatchRequest, startTime: number): Promise<a
     errorCount,
     processingTime: totalProcessingTime,
     averageItemTime: Math.round(averageItemTime * 100) / 100,
-    concurrency: maxConcurrency
+    concurrency: maxConcurrency,
   };
 
   const responseData: any = {
     results,
-    summary
+    summary,
   };
 
   if (includeMetadata) {
     responseData.metadata = {
       globalOptions,
       cacheHits,
-      timeouts
+      timeouts,
     };
   }
 
   return responseData;
 }
 
-async function processBatchItem(item: any, index: number, globalOptions: any): Promise<BatchResult> {
+async function processBatchItem(
+  item: any,
+  index: number,
+  globalOptions: any
+): Promise<BatchResult> {
   const itemStartTime = Date.now();
 
   try {
     // Merge item options with global options
-    const outputFormats = item.outputFormats || globalOptions.outputFormats || DEFAULT_OUTPUT_FORMATS;
+    const outputFormats =
+      item.outputFormats || globalOptions.outputFormats || DEFAULT_OUTPUT_FORMATS;
     const timezone = item.timezone || globalOptions.timezone || 'UTC';
     const targetTimezone = item.targetTimezone || globalOptions.targetTimezone;
 
@@ -363,13 +385,12 @@ async function processBatchItem(item: any, index: number, globalOptions: any): P
         ...conversionResult,
         metadata: {
           ...conversionResult.metadata,
-          cacheHit: Math.random() > 0.8 // Simulate 20% cache hit rate
-        }
+          cacheHit: Math.random() > 0.8, // Simulate 20% cache hit rate
+        },
       },
       processingTime: Date.now() - itemStartTime,
-      index
+      index,
     };
-
   } catch (error) {
     return {
       id: item.id,
@@ -379,11 +400,11 @@ async function processBatchItem(item: any, index: number, globalOptions: any): P
         message: (error as Error).message,
         details: {
           originalInput: item.timestamp,
-          itemIndex: index
-        }
+          itemIndex: index,
+        },
       },
       processingTime: Date.now() - itemStartTime,
-      index
+      index,
     };
   }
 }
@@ -401,7 +422,7 @@ export async function testBatchIntegration(): Promise<any> {
   const testItems = [
     { id: 'test1', timestamp: Math.floor(Date.now() / 1000) },
     { id: 'test2', timestamp: '2024-01-15T10:30:45Z' },
-    { id: 'test3', timestamp: 1705315845 }
+    { id: 'test3', timestamp: 1705315845 },
   ];
 
   const testRequest: BatchRequest = {
@@ -411,27 +432,27 @@ export async function testBatchIntegration(): Promise<any> {
       timezone: 'UTC',
       continueOnError: true,
       maxConcurrency: 3,
-      includeMetadata: true
-    }
+      includeMetadata: true,
+    },
   };
 
   try {
     const result = await processBatch(testRequest, Date.now());
-    
+
     return {
       success: true,
       testResults: result,
       validation: {
         allItemsProcessed: result.results.length === testItems.length,
         hasSuccessfulConversions: result.summary.successCount > 0,
-        processingTimeReasonable: result.summary.processingTime < 5000
-      }
+        processingTimeReasonable: result.summary.processingTime < 5000,
+      },
     };
   } catch (error) {
     return {
       success: false,
       error: (error as Error).message,
-      testItems: testItems.length
+      testItems: testItems.length,
     };
   }
 }

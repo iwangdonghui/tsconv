@@ -11,7 +11,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     req.body.options = {
       mode: 'simple',
       includeMetadata: false,
-      ...req.body.options
+      ...req.body.options,
     };
   }
 

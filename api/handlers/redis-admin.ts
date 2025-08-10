@@ -34,14 +34,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   // Only allow POST requests for admin operations
   if (req.method !== 'POST') {
-    return APIErrorHandler.handleMethodNotAllowed(res, 'Only POST method is allowed for Redis admin operations');
+    return APIErrorHandler.handleMethodNotAllowed(
+      res,
+      'Only POST method is allowed for Redis admin operations'
+    );
   }
 
   try {
     // Basic authentication check
     const authHeader = req.headers.authorization;
     const adminKey = process.env.REDIS_ADMIN_KEY;
-    
+
     if (!adminKey || !authHeader || authHeader !== `Bearer ${adminKey}`) {
       return APIErrorHandler.handleUnauthorized(res, 'Invalid or missing admin credentials');
     }
@@ -50,7 +53,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     if (!action) {
       return APIErrorHandler.handleBadRequest(res, 'Action is required', {
-        supportedActions: ['info', 'flushall', 'keys', 'get', 'set', 'del', 'stats']
+        supportedActions: ['info', 'flushall', 'keys', 'get', 'set', 'del', 'stats'],
       });
     }
 
@@ -71,7 +74,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         await redis.ping();
         const keys = await redis.keys('*');
         const ___dbSize = await redis.dbsize(); // Available for future use
-        
+
         // Since Upstash doesn't provide detailed info, use basic stats
         const stats: RedisStats = {
           totalKeys: keys.length,
@@ -80,9 +83,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           connectedClients: 1, // Always 1 for REST API
           commandsProcessed: 0, // Would need to track separately
           keyspaceHits: 0, // Would need to track separately
-          keyspaceMisses: 0 // Would need to track separately
+          keyspaceMisses: 0, // Would need to track separately
         };
-        
+
         result = stats;
         break;
 
@@ -100,7 +103,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       case 'set':
         if (!key || value === undefined) {
-          return APIErrorHandler.handleBadRequest(res, 'Key and value are required for set operation');
+          return APIErrorHandler.handleBadRequest(
+            res,
+            'Key and value are required for set operation'
+          );
         }
         if (ttl) {
           await redis.setex(key, ttl, value);
@@ -125,7 +131,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       default:
         return APIErrorHandler.handleBadRequest(res, `Unsupported action: ${action}`, {
-          supportedActions: ['info', 'flushall', 'keys', 'get', 'set', 'del', 'stats']
+          supportedActions: ['info', 'flushall', 'keys', 'get', 'set', 'del', 'stats'],
         });
     }
 
@@ -134,14 +140,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     APIErrorHandler.sendSuccess(res, result, {
       processingTime: Date.now(),
       itemCount: Array.isArray(result) ? result.length : 1,
-      cacheHit: false
+      cacheHit: false,
     });
-
   } catch (error) {
     console.error('Redis admin error:', error);
     APIErrorHandler.handleServerError(res, error as Error, {
       endpoint: 'redis-admin',
-      action: req.body?.action
+      action: req.body?.action,
     });
   }
 }

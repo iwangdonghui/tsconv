@@ -50,9 +50,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           hasPassword: !!config.caching.redis.password,
           maxRetries: config.caching.redis.maxRetries,
           useUpstash: config.caching.redis.useUpstash || false,
-          fallbackToMemory: config.caching.redis.fallbackToMemory || false
+          fallbackToMemory: config.caching.redis.fallbackToMemory || false,
         },
-        status: 'disconnected'
+        status: 'disconnected',
       };
 
       // Test connection status
@@ -60,16 +60,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const { createRedisClient } = await import('../services/redis-client');
         const redis = createRedisClient('general');
         const startTime = Date.now();
-        
+
         // Upstash Redis doesn't require explicit connection
         await redis.ping(); // Test connection
         // No need to disconnect with Upstash
-        
+
         configResponse.status = 'connected';
         configResponse.lastTest = {
           timestamp: Date.now(),
           success: true,
-          responseTime: Date.now() - startTime
+          responseTime: Date.now() - startTime,
         };
       } catch (error) {
         configResponse.status = 'error';
@@ -77,7 +77,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           timestamp: Date.now(),
           success: false,
           responseTime: 0,
-          error: (error as Error).message
+          error: (error as Error).message,
         };
       }
 
@@ -88,7 +88,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       // Basic authentication check
       const authHeader = req.headers.authorization;
       const adminKey = process.env.REDIS_ADMIN_KEY;
-      
+
       if (!adminKey || !authHeader || authHeader !== `Bearer ${adminKey}`) {
         return APIErrorHandler.handleUnauthorized(res, 'Invalid or missing admin credentials');
       }
@@ -97,7 +97,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       if (!action) {
         return APIErrorHandler.handleBadRequest(res, 'Action is required', {
-          supportedActions: ['get', 'test', 'validate']
+          supportedActions: ['get', 'test', 'validate'],
         });
       }
 
@@ -109,9 +109,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
               hasPassword: !!config.caching.redis.password,
               maxRetries: config.caching.redis.maxRetries,
               useUpstash: config.caching.redis.useUpstash || false,
-              fallbackToMemory: config.caching.redis.fallbackToMemory || false
+              fallbackToMemory: config.caching.redis.fallbackToMemory || false,
             },
-            status: 'disconnected'
+            status: 'disconnected',
           };
           return APIErrorHandler.sendSuccess(res, configResponse);
 
@@ -125,18 +125,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
         default:
           return APIErrorHandler.handleBadRequest(res, `Unsupported action: ${action}`, {
-            supportedActions: ['get', 'test', 'validate']
+            supportedActions: ['get', 'test', 'validate'],
           });
       }
     }
 
     return APIErrorHandler.handleMethodNotAllowed(res, 'Only GET and POST methods are allowed');
-
   } catch (error) {
     console.error('Redis config error:', error);
     APIErrorHandler.handleServerError(res, error as Error, {
       endpoint: 'redis-config',
-      action: req.body?.action
+      action: req.body?.action,
     });
   }
 }
@@ -155,21 +154,21 @@ function maskRedisUrl(url: string): string {
 
 async function testRedisConnection(settings?: any): Promise<any> {
   const startTime = Date.now();
-  
+
   try {
     const { createRedisClient } = await import('../services/redis-client');
     const redis = createRedisClient('general');
-    
+
     // Upstash Redis doesn't require explicit connection
-    
+
     // Test basic operations
     const testKey = `test:${Date.now()}`;
     await redis.set(testKey, 'test-value', { ex: 10 }); // 10 second TTL
     const value = await redis.get(testKey);
     await redis.del(testKey);
-    
+
     // No need to disconnect with Upstash
-    
+
     return {
       success: true,
       responseTime: Date.now() - startTime,
@@ -179,8 +178,8 @@ async function testRedisConnection(settings?: any): Promise<any> {
         set: true,
         get: value === 'test-value',
         delete: true,
-        disconnect: true
-      }
+        disconnect: true,
+      },
     };
   } catch (error) {
     return {
@@ -193,8 +192,8 @@ async function testRedisConnection(settings?: any): Promise<any> {
         set: false,
         get: false,
         delete: false,
-        disconnect: false
-      }
+        disconnect: false,
+      },
     };
   }
 }
@@ -208,7 +207,7 @@ function validateRedisConfig(settings?: any): any {
       valid: true,
       current: true,
       errors: [],
-      warnings: ['Using current configuration']
+      warnings: ['Using current configuration'],
     };
   }
 
@@ -232,7 +231,11 @@ function validateRedisConfig(settings?: any): any {
 
   // Validate maxRetries
   if (settings.maxRetries !== undefined) {
-    if (typeof settings.maxRetries !== 'number' || settings.maxRetries < 0 || settings.maxRetries > 10) {
+    if (
+      typeof settings.maxRetries !== 'number' ||
+      settings.maxRetries < 0 ||
+      settings.maxRetries > 10
+    ) {
       errors.push('maxRetries must be a number between 0 and 10');
     }
   }
@@ -264,7 +267,7 @@ function validateRedisConfig(settings?: any): any {
       url: settings.url ? maskRedisUrl(settings.url) : undefined,
       hasPassword: !!settings.password,
       maxRetries: settings.maxRetries,
-      useUpstash: settings.useUpstash
-    }
+      useUpstash: settings.useUpstash,
+    },
   };
 }

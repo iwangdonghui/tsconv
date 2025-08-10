@@ -27,13 +27,16 @@ export class CacheFactory {
 
     // Determine cache provider based on environment
     const cacheProvider = this.determineCacheProvider();
-    
+
     try {
       this.instance = this.createCacheService(cacheProvider);
       console.log(`✅ Cache service initialized: ${cacheProvider}`);
       return this.instance;
     } catch (error) {
-      console.warn(`⚠️ Failed to initialize ${cacheProvider} cache, falling back to memory cache:`, error);
+      console.warn(
+        `⚠️ Failed to initialize ${cacheProvider} cache, falling back to memory cache:`,
+        error
+      );
       this.instance = new MemoryCacheService();
       return this.instance;
     }
@@ -64,10 +67,10 @@ export class CacheFactory {
     switch (provider) {
       case 'upstash':
         return this.createUpstashCache();
-      
+
       case 'redis':
         return this.createRedisCache();
-      
+
       case 'memory':
       default:
         return this.createMemoryCache();
@@ -81,7 +84,8 @@ export class CacheFactory {
     try {
       // Dynamic import to avoid loading Upstash dependencies if not needed
       const UpstashCacheServiceModule = require('./upstash-cache-service.ts');
-      const UpstashCacheService = UpstashCacheServiceModule.UpstashCacheService || UpstashCacheServiceModule.default;
+      const UpstashCacheService =
+        UpstashCacheServiceModule.UpstashCacheService || UpstashCacheServiceModule.default;
       return new UpstashCacheService();
     } catch (error) {
       console.warn('Failed to load Upstash cache service:', error);
@@ -181,7 +185,7 @@ export class CacheFactory {
     return {
       valid: issues.length === 0,
       provider,
-      issues
+      issues,
     };
   }
 
@@ -207,8 +211,8 @@ export class CacheFactory {
       redisConfig: {
         url: config.caching.redis.url ? '[CONFIGURED]' : undefined,
         useUpstash: config.caching.redis.useUpstash ?? false,
-        fallbackToMemory: config.caching.redis.fallbackToMemory ?? false
-      }
+        fallbackToMemory: config.caching.redis.fallbackToMemory ?? false,
+      },
     };
   }
 }
@@ -233,17 +237,17 @@ export async function getCacheServiceHealth(): Promise<{
   try {
     const startTime = Date.now();
     const cacheService = getCacheService();
-    
+
     // Test basic cache operations
     const testKey = `health_check_${Date.now()}`;
     const testValue = { test: true, timestamp: Date.now() };
-    
+
     await cacheService.set(testKey, testValue, 10); // 10 second TTL
     const retrieved = await cacheService.get(testKey);
     await cacheService.del(testKey);
-    
+
     const latency = Date.now() - startTime;
-    
+
     // Get cache stats if available
     let stats;
     try {
@@ -251,18 +255,18 @@ export async function getCacheServiceHealth(): Promise<{
     } catch (error) {
       // Stats not available for all cache providers
     }
-    
+
     return {
       status: retrieved ? 'healthy' : 'degraded',
       provider: CacheFactory.getConfigurationSummary().provider,
       latency,
-      stats
+      stats,
     };
   } catch (error) {
     return {
       status: 'unhealthy',
       provider: CacheFactory.getConfigurationSummary().provider,
-      error: error instanceof Error ? error.message : 'Unknown error'
+      error: error instanceof Error ? error.message : 'Unknown error',
     };
   }
 }

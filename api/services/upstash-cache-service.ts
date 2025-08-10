@@ -17,10 +17,10 @@ class UpstashCacheService implements CacheService {
       url: process.env.UPSTASH_REDIS_REST_URL || config.caching.redis.url,
       token: process.env.UPSTASH_REDIS_REST_TOKEN || config.caching.redis.password,
     });
-    
+
     // Initialize fallback memory cache
     this.fallbackCache = new MemoryCacheService();
-    
+
     // Test connection on initialization
     this.testConnection();
   }
@@ -34,8 +34,11 @@ class UpstashCacheService implements CacheService {
     } catch (error) {
       this.connectionAttempts++;
       this.isConnected = false;
-      console.warn(`⚠️ Upstash Redis connection failed (attempt ${this.connectionAttempts}):`, error);
-      
+      console.warn(
+        `⚠️ Upstash Redis connection failed (attempt ${this.connectionAttempts}):`,
+        error
+      );
+
       // Retry connection with exponential backoff
       if (this.connectionAttempts < this.maxConnectionAttempts) {
         const delay = Math.pow(2, this.connectionAttempts) * 1000; // 2s, 4s, 8s
@@ -63,7 +66,7 @@ class UpstashCacheService implements CacheService {
       this.isConnected = false;
       this.testConnection(); // Attempt to reconnect
     }
-    
+
     // Fallback to memory cache
     return this.fallbackCache.get<T>(key);
   }
@@ -82,7 +85,7 @@ class UpstashCacheService implements CacheService {
       this.isConnected = false;
       this.testConnection(); // Attempt to reconnect
     }
-    
+
     // Fallback to memory cache
     return this.fallbackCache.set<T>(key, value, ttl);
   }
@@ -99,7 +102,7 @@ class UpstashCacheService implements CacheService {
       this.isConnected = false;
       this.testConnection(); // Attempt to reconnect
     }
-    
+
     // Fallback to memory cache
     return this.fallbackCache.del(key);
   }
@@ -115,7 +118,7 @@ class UpstashCacheService implements CacheService {
       this.isConnected = false;
       this.testConnection(); // Attempt to reconnect
     }
-    
+
     // Fallback to memory cache
     return this.fallbackCache.exists(key);
   }
@@ -140,7 +143,7 @@ class UpstashCacheService implements CacheService {
       this.isConnected = false;
       this.testConnection(); // Attempt to reconnect
     }
-    
+
     // Fallback to memory cache
     return this.fallbackCache.clear(pattern);
   }
@@ -148,13 +151,13 @@ class UpstashCacheService implements CacheService {
   private async scanKeys(pattern: string): Promise<string[]> {
     const keys: string[] = [];
     let cursor = 0;
-    
+
     do {
       const result = await this.redis.scan(cursor, { match: pattern, count: 100 });
       cursor = parseInt(String(result[0]));
       keys.push(...result[1]);
     } while (cursor !== 0);
-    
+
     return keys;
   }
 
@@ -164,18 +167,18 @@ class UpstashCacheService implements CacheService {
         // Get Redis info and key count
         // Upstash doesn't have info(), use dbsize instead
         const dbsize = await this.redis.dbsize();
-        
+
         // Memory info not available in Upstash
         const __memoryUsed = 0; // Not available in Upstash
-        
+
         // Get sample keys for debugging
         const sampleKeys = await this.scanKeys('*');
-        
+
         return {
           hits: this.cacheStats.hits,
           misses: this.cacheStats.misses,
           size: dbsize,
-          keys: sampleKeys.slice(0, 100) // Limit to first 100 keys
+          keys: sampleKeys.slice(0, 100), // Limit to first 100 keys
         };
       }
     } catch (error) {
@@ -183,7 +186,7 @@ class UpstashCacheService implements CacheService {
       this.isConnected = false;
       this.testConnection(); // Attempt to reconnect
     }
-    
+
     // Fallback to memory cache stats
     return this.fallbackCache.stats();
   }
@@ -194,7 +197,7 @@ class UpstashCacheService implements CacheService {
         const pingResult = await this.redis.ping();
         // Upstash doesn't have info(), use ping instead
         await this.redis.ping();
-        
+
         return {
           status: 'healthy',
           type: 'upstash-redis',
@@ -209,9 +212,9 @@ class UpstashCacheService implements CacheService {
               misses: this.cacheStats.misses,
               sets: this.cacheStats.sets,
               deletes: this.cacheStats.deletes,
-              hitRatio: this.cacheStats.hits / (this.cacheStats.hits + this.cacheStats.misses || 1)
-            }
-          }
+              hitRatio: this.cacheStats.hits / (this.cacheStats.hits + this.cacheStats.misses || 1),
+            },
+          },
         };
       } else {
         // Return fallback cache health with Redis status
@@ -223,22 +226,22 @@ class UpstashCacheService implements CacheService {
             ...fallbackHealth.details,
             redisStatus: 'disconnected',
             connectionAttempts: this.connectionAttempts,
-            fallbackReason: 'Redis connection failed'
-          }
+            fallbackReason: 'Redis connection failed',
+          },
         };
       }
     } catch (error) {
       this.isConnected = false;
       this.testConnection(); // Attempt to reconnect
-      
+
       return {
         status: 'unhealthy',
         type: 'upstash-redis',
         details: {
           error: error instanceof Error ? error.message : 'Unknown error',
           connectionAttempts: this.connectionAttempts,
-          fallbackAvailable: true
-        }
+          fallbackAvailable: true,
+        },
       };
     }
   }
@@ -285,7 +288,7 @@ class UpstashCacheService implements CacheService {
       this.isConnected = false;
       this.testConnection();
     }
-    
+
     // Fallback to individual gets
     return Promise.all(keys.map(key => this.get<T>(key)));
   }
@@ -295,12 +298,12 @@ class UpstashCacheService implements CacheService {
       if (this.isConnected && keyValuePairs.length > 0) {
         // Use pipeline for better performance
         const pipeline = this.redis.pipeline();
-        
+
         for (const { key, value, ttl = config.caching.defaultTTL } of keyValuePairs) {
           const ttlSeconds = Math.ceil(ttl / 1000);
           pipeline.setex(key, ttlSeconds, JSON.stringify(value));
         }
-        
+
         await pipeline.exec();
         this.cacheStats.sets += keyValuePairs.length;
         return;
@@ -310,11 +313,9 @@ class UpstashCacheService implements CacheService {
       this.isConnected = false;
       this.testConnection();
     }
-    
+
     // Fallback to individual sets
-    await Promise.all(
-      keyValuePairs.map(({ key, value, ttl }) => this.set(key, value, ttl))
-    );
+    await Promise.all(keyValuePairs.map(({ key, value, ttl }) => this.set(key, value, ttl)));
   }
 }
 

@@ -41,16 +41,16 @@ interface TimezoneDifferenceResponse {
 
 // Common timezone mappings
 const TIMEZONE_ALIASES: Record<string, string> = {
-  'EST': 'America/New_York',
-  'PST': 'America/Los_Angeles',
-  'CST': 'America/Chicago',
-  'MST': 'America/Denver',
-  'GMT': 'UTC',
-  'BST': 'Europe/London',
-  'CET': 'Europe/Paris',
-  'JST': 'Asia/Tokyo',
-  'IST': 'Asia/Kolkata',
-  'AEST': 'Australia/Sydney'
+  EST: 'America/New_York',
+  PST: 'America/Los_Angeles',
+  CST: 'America/Chicago',
+  MST: 'America/Denver',
+  GMT: 'UTC',
+  BST: 'Europe/London',
+  CET: 'Europe/Paris',
+  JST: 'Asia/Tokyo',
+  IST: 'Asia/Kolkata',
+  AEST: 'Australia/Sydney',
 };
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -78,11 +78,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     if (req.method === 'GET') {
       const { timezone1, timezone2, timestamp, details } = req.query;
-      
+
       if (!timezone1 || !timezone2) {
         return APIErrorHandler.handleBadRequest(res, 'Both timezone1 and timezone2 are required', {
           required: ['timezone1', 'timezone2'],
-          received: { timezone1: !!timezone1, timezone2: !!timezone2 }
+          received: { timezone1: !!timezone1, timezone2: !!timezone2 },
         });
       }
 
@@ -90,7 +90,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         timezone1: timezone1 as string,
         timezone2: timezone2 as string,
         timestamp: timestamp ? parseInt(timestamp as string) : Date.now() / 1000,
-        includeDetails: details === 'true'
+        includeDetails: details === 'true',
       };
     } else {
       request = req.body;
@@ -99,7 +99,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // Validate request
     const validationResult = validateTimezoneDifferenceRequest(request);
     if (!validationResult.valid) {
-      return APIErrorHandler.handleBadRequest(res, validationResult.message || 'Invalid request', validationResult.details);
+      return APIErrorHandler.handleBadRequest(
+        res,
+        validationResult.message || 'Invalid request',
+        validationResult.details
+      );
     }
 
     // Calculate timezone difference
@@ -107,29 +111,32 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const response: TimezoneDifferenceResponse = {
       success: true,
-      data: result
+      data: result,
     };
 
     APIErrorHandler.sendSuccess(res, response, {
       processingTime: Date.now() - startTime,
       itemCount: 1,
-      cacheHit: false
+      cacheHit: false,
     });
-
   } catch (error) {
     console.error('Timezone difference error:', error);
     APIErrorHandler.handleServerError(res, error as Error, {
-      endpoint: 'timezone-difference'
+      endpoint: 'timezone-difference',
     });
   }
 }
 
-function validateTimezoneDifferenceRequest(request: TimezoneDifferenceRequest): { valid: boolean; message?: string; details?: any } {
+function validateTimezoneDifferenceRequest(request: TimezoneDifferenceRequest): {
+  valid: boolean;
+  message?: string;
+  details?: any;
+} {
   if (!request.timezone1) {
     return {
       valid: false,
       message: 'timezone1 is required',
-      details: { field: 'timezone1', type: 'string' }
+      details: { field: 'timezone1', type: 'string' },
     };
   }
 
@@ -137,19 +144,24 @@ function validateTimezoneDifferenceRequest(request: TimezoneDifferenceRequest): 
     return {
       valid: false,
       message: 'timezone2 is required',
-      details: { field: 'timezone2', type: 'string' }
+      details: { field: 'timezone2', type: 'string' },
     };
   }
 
-  if (request.timestamp && (typeof request.timestamp !== 'number' || isNaN(request.timestamp) || !isFinite(request.timestamp))) {
+  if (
+    request.timestamp &&
+    (typeof request.timestamp !== 'number' ||
+      isNaN(request.timestamp) ||
+      !isFinite(request.timestamp))
+  ) {
     return {
       valid: false,
       message: 'timestamp must be a valid number',
-      details: { 
-        field: 'timestamp', 
+      details: {
+        field: 'timestamp',
         received: typeof request.timestamp,
-        value: request.timestamp
-      }
+        value: request.timestamp,
+      },
     };
   }
 
@@ -160,7 +172,7 @@ async function calculateTimezoneDifference(request: TimezoneDifferenceRequest): 
   // Normalize timezone identifiers
   const timezone1 = normalizeTimezone(request.timezone1);
   const timezone2 = normalizeTimezone(request.timezone2);
-  
+
   // Use current time if no timestamp provided
   const timestamp = request.timestamp || Math.floor(Date.now() / 1000);
   const date = new Date(timestamp * 1000);
@@ -191,14 +203,14 @@ async function calculateTimezoneDifference(request: TimezoneDifferenceRequest): 
       hours: Math.floor(Math.abs(totalMinutes) / 60),
       minutes: Math.abs(totalMinutes) % 60,
       totalMinutes,
-      description
+      description,
     },
-    timestamp
+    timestamp,
   };
 
   // Add detailed information if requested
   if (request.includeDetails) {
-    const tz1Time = date.toLocaleString('en-US', { 
+    const tz1Time = date.toLocaleString('en-US', {
       timeZone: timezone1,
       weekday: 'long',
       year: 'numeric',
@@ -207,10 +219,10 @@ async function calculateTimezoneDifference(request: TimezoneDifferenceRequest): 
       hour: '2-digit',
       minute: '2-digit',
       second: '2-digit',
-      timeZoneName: 'short'
+      timeZoneName: 'short',
     });
 
-    const tz2Time = date.toLocaleString('en-US', { 
+    const tz2Time = date.toLocaleString('en-US', {
       timeZone: timezone2,
       weekday: 'long',
       year: 'numeric',
@@ -219,7 +231,7 @@ async function calculateTimezoneDifference(request: TimezoneDifferenceRequest): 
       hour: '2-digit',
       minute: '2-digit',
       second: '2-digit',
-      timeZoneName: 'short'
+      timeZoneName: 'short',
     });
 
     const utcTime = date.toISOString();
@@ -230,7 +242,7 @@ async function calculateTimezoneDifference(request: TimezoneDifferenceRequest): 
     } else {
       const tz1Date = new Date(date.toLocaleString('en-US', { timeZone: timezone1 }));
       const tz2Date = new Date(date.toLocaleString('en-US', { timeZone: timezone2 }));
-      
+
       if (tz2Date > tz1Date) {
         comparison = `When it's ${tz1Date.toLocaleTimeString()} in ${timezone1}, it's ${tz2Date.toLocaleTimeString()} in ${timezone2}`;
       } else {
@@ -242,7 +254,7 @@ async function calculateTimezoneDifference(request: TimezoneDifferenceRequest): 
       timezone1Time: tz1Time,
       timezone2Time: tz2Time,
       utcTime,
-      comparison
+      comparison,
     };
   }
 
@@ -274,10 +286,10 @@ function getTimezoneInfo(timezone: string, date: Date): any {
   try {
     // Get timezone offset at the specific date
     const offset = getTimezoneOffset(timezone, date);
-    
+
     // Check if DST is in effect
     const isDST = isDaylightSavingTime(timezone, date);
-    
+
     // Get display name
     const displayName = getTimezoneDisplayName(timezone);
 
@@ -285,7 +297,7 @@ function getTimezoneInfo(timezone: string, date: Date): any {
       identifier: timezone,
       displayName,
       offset,
-      isDST
+      isDST,
     };
   } catch (error) {
     // Fallback for invalid timezones
@@ -293,7 +305,7 @@ function getTimezoneInfo(timezone: string, date: Date): any {
       identifier: timezone,
       displayName: timezone,
       offset: 0,
-      isDST: false
+      isDST: false,
     };
   }
 }
@@ -301,9 +313,9 @@ function getTimezoneInfo(timezone: string, date: Date): any {
 function getTimezoneOffset(timezone: string, date: Date): number {
   try {
     // Create a date in the target timezone
-    const utcTime = date.getTime() + (date.getTimezoneOffset() * 60000);
-    const __targetTime = new Date(utcTime + (getTimezoneOffsetMinutes(timezone, date) * 60000));
-    
+    const utcTime = date.getTime() + date.getTimezoneOffset() * 60000;
+    const __targetTime = new Date(utcTime + getTimezoneOffsetMinutes(timezone, date) * 60000);
+
     // Calculate offset in minutes from UTC
     return getTimezoneOffsetMinutes(timezone, date);
   } catch (error) {
@@ -316,22 +328,22 @@ function getTimezoneOffsetMinutes(timezone: string, date: Date): number {
     // Use Intl.DateTimeFormat to get the offset
     const formatter = new Intl.DateTimeFormat('en', {
       timeZone: timezone,
-      timeZoneName: 'longOffset'
+      timeZoneName: 'longOffset',
     });
-    
+
     const parts = formatter.formatToParts(date);
     const offsetPart = parts.find(part => part.type === 'timeZoneName');
-    
+
     if (offsetPart && offsetPart.value.match(/GMT[+-]\d+/)) {
       const offsetString = offsetPart.value.replace('GMT', '');
       const hours = parseInt(offsetString);
       return hours * 60;
     }
-    
+
     // Fallback method
     const utcDate = new Date(date.toLocaleString('en-US', { timeZone: 'UTC' }));
     const tzDate = new Date(date.toLocaleString('en-US', { timeZone: timezone }));
-    
+
     return (tzDate.getTime() - utcDate.getTime()) / (1000 * 60);
   } catch (error) {
     return 0;
@@ -343,11 +355,11 @@ function isDaylightSavingTime(timezone: string, date: Date): boolean {
     // Compare offset with January and July to detect DST
     const januaryDate = new Date(date.getFullYear(), 0, 1);
     const julyDate = new Date(date.getFullYear(), 6, 1);
-    
+
     const januaryOffset = getTimezoneOffsetMinutes(timezone, januaryDate);
     const julyOffset = getTimezoneOffsetMinutes(timezone, julyDate);
     const currentOffset = getTimezoneOffsetMinutes(timezone, date);
-    
+
     // DST is in effect if current offset differs from standard time
     const standardOffset = Math.max(januaryOffset, julyOffset);
     return currentOffset !== standardOffset;
@@ -360,12 +372,12 @@ function getTimezoneDisplayName(timezone: string): string {
   try {
     const formatter = new Intl.DateTimeFormat('en', {
       timeZone: timezone,
-      timeZoneName: 'long'
+      timeZoneName: 'long',
     });
-    
+
     const parts = formatter.formatToParts(new Date());
     const timeZonePart = parts.find(part => part.type === 'timeZoneName');
-    
+
     return timeZonePart?.value || timezone;
   } catch (error) {
     return timezone;

@@ -27,7 +27,7 @@ export abstract class BaseHandler {
       timeout: 10000,
       enableCaching: true,
       enableRateLimit: true,
-      ...options
+      ...options,
     };
   }
 
@@ -48,7 +48,7 @@ export abstract class BaseHandler {
       // Validate HTTP method
       if (!this.options.allowedMethods?.includes(req.method || '')) {
         return APIErrorHandler.handleMethodNotAllowed(
-          res, 
+          res,
           `Only ${this.options.allowedMethods?.join(', ')} methods are allowed`
         );
       }
@@ -59,7 +59,7 @@ export abstract class BaseHandler {
         requestId,
         method: req.method || 'GET',
         query: req.query,
-        body: req.body
+        body: req.body,
       };
 
       // Set timeout if specified
@@ -73,7 +73,7 @@ export abstract class BaseHandler {
       try {
         // Execute the handler logic
         const result = await this.execute(context);
-        
+
         if (timeoutHandle) {
           clearTimeout(timeoutHandle);
         }
@@ -82,16 +82,14 @@ export abstract class BaseHandler {
         APIErrorHandler.sendSuccess(res, result, {
           processingTime: Date.now() - startTime,
           itemCount: this.getItemCount(result),
-          cacheHit: false // TODO: Implement cache detection
+          cacheHit: false, // TODO: Implement cache detection
         });
-
       } catch (error) {
         if (timeoutHandle) {
           clearTimeout(timeoutHandle);
         }
         throw error;
       }
-
     } catch (error) {
       await this.handleError(error as Error, res, startTime);
     }
@@ -122,12 +120,13 @@ export abstract class BaseHandler {
     console.error(`Handler error:`, error);
 
     if (error.message === 'Request timeout') {
-      return APIErrorHandler.sendError(res, APIErrorHandler.createError(
-        'TIMEOUT_ERROR',
-        'Request exceeded timeout limit',
-        408,
-        { timeout: this.options.timeout }
-      ), 408);
+      return APIErrorHandler.sendError(
+        res,
+        APIErrorHandler.createError('TIMEOUT_ERROR', 'Request exceeded timeout limit', 408, {
+          timeout: this.options.timeout,
+        }),
+        408
+      );
     }
 
     if (error.message.includes('Invalid timestamp')) {
@@ -137,14 +136,14 @@ export abstract class BaseHandler {
           'Unix timestamp (milliseconds): 1705315845123',
           'ISO string: 2024-01-15T10:30:45Z',
           'Date string: 2024-01-15',
-          'Special value: now'
-        ]
+          'Special value: now',
+        ],
       });
     }
 
     APIErrorHandler.handleServerError(res, error, {
       endpoint: this.constructor.name,
-      processingTime: Date.now() - startTime
+      processingTime: Date.now() - startTime,
     });
   }
 

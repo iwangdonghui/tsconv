@@ -45,7 +45,7 @@ export class UnifiedConvertHandler extends BaseHandler {
       allowedMethods: ['GET', 'POST'],
       timeout: 10000,
       enableCaching: true,
-      enableRateLimit: true
+      enableRateLimit: true,
     });
   }
 
@@ -64,20 +64,21 @@ export class UnifiedConvertHandler extends BaseHandler {
 
     return {
       success: true,
-      data: _result
+      data: _result,
     };
   }
 
   private parseRequest(_context: HandlerContext): ConvertRequest {
     if (_context.method === 'GET') {
-      const { timestamp, formats, timezone, targetTimezone, metadata, relative, priority, mode } = _context.query;
+      const { timestamp, formats, timezone, targetTimezone, metadata, relative, priority, mode } =
+        _context.query;
 
       if (!timestamp) {
         throw new Error('Timestamp parameter is required');
       }
 
       return {
-        timestamp: timestamp === 'now' ? Math.floor(Date.now() / 1000) : timestamp as string,
+        timestamp: timestamp === 'now' ? Math.floor(Date.now() / 1000) : (timestamp as string),
         outputFormats: formats ? (formats as string).split(',') : undefined,
         timezone: timezone as string,
         targetTimezone: targetTimezone as string,
@@ -85,8 +86,8 @@ export class UnifiedConvertHandler extends BaseHandler {
           includeMetadata: metadata === 'true',
           includeRelative: relative === 'true',
           priority: (priority as 'low' | 'normal' | 'high') || 'normal',
-          mode: (mode as 'simple' | 'working' | 'standalone') || 'working'
-        }
+          mode: (mode as 'simple' | 'working' | 'standalone') || 'working',
+        },
       };
     } else {
       // Validate request body for POST
@@ -97,7 +98,7 @@ export class UnifiedConvertHandler extends BaseHandler {
       const _request = _context.body as ConvertRequest;
       _request.options = {
         mode: 'working',
-        ..._request.options
+        ..._request.options,
       };
 
       return _request;
@@ -108,38 +109,47 @@ export class UnifiedConvertHandler extends BaseHandler {
     if (!_request.timestamp && _request.timestamp !== 0) {
       return {
         valid: false,
-        message: 'Timestamp is required'
+        message: 'Timestamp is required',
       };
     }
 
-    if (_request.options?.priority && !['low', 'normal', 'high'].includes(_request.options.priority)) {
+    if (
+      _request.options?.priority &&
+      !['low', 'normal', 'high'].includes(_request.options.priority)
+    ) {
       return {
         valid: false,
-        message: 'Priority must be one of: low, normal, high'
+        message: 'Priority must be one of: low, normal, high',
       };
     }
 
     if (_request.outputFormats && _request.outputFormats.length > 20) {
       return {
         valid: false,
-        message: 'Too many output formats requested (max: 20)'
+        message: 'Too many output formats requested (max: 20)',
       };
     }
 
-    if (_request.options?.mode && !['simple', 'working', 'standalone'].includes(_request.options.mode)) {
+    if (
+      _request.options?.mode &&
+      !['simple', 'working', 'standalone'].includes(_request.options.mode)
+    ) {
       return {
         valid: false,
-        message: 'Mode must be one of: simple, working, standalone'
+        message: 'Mode must be one of: simple, working, standalone',
       };
     }
 
     return { valid: true };
   }
 
-  private async performConversion(_request: ConvertRequest, _context: HandlerContext): Promise<any> {
+  private async performConversion(
+    _request: ConvertRequest,
+    _context: HandlerContext
+  ): Promise<any> {
     const _mode = _request.options?.mode || 'working';
     const _priority = _request.options?.priority || 'normal';
-    const _includeMetadata = _request.options?.includeMetadata ?? (_mode !== 'simple');
+    const _includeMetadata = _request.options?.includeMetadata ?? _mode !== 'simple';
     const _includeRelative = _request.options?.includeRelative ?? false;
 
     // Add processing delay based on priority (for working mode)
@@ -176,12 +186,14 @@ export class UnifiedConvertHandler extends BaseHandler {
       metadata = {
         originalTimezone: _timezone,
         targetTimezone: _targetTimezone,
-        offsetDifference: _targetTimezone ? this.calculateOffsetDifference(_timezone, _targetTimezone, _timestamp) : undefined,
+        offsetDifference: _targetTimezone
+          ? this.calculateOffsetDifference(_timezone, _targetTimezone, _timestamp)
+          : undefined,
         isDST: this.isDaylightSavingTime(_targetTimezone || _timezone, _timestamp),
         processingPriority: _priority,
         processingTime: Date.now() - _context.startTime,
         cacheUsed: Math.random() > 0.7, // Simulate cache hit
-        mode: _mode
+        mode: _mode,
       };
     }
 
@@ -192,7 +204,7 @@ export class UnifiedConvertHandler extends BaseHandler {
       timezone: _timezone,
       targetTimezone: _targetTimezone,
       relative,
-      metadata
+      metadata,
     };
   }
 
@@ -232,8 +244,7 @@ export class UnifiedConvertHandler extends BaseHandler {
     const _absDiff = Math.abs(_diff);
 
     if (_absDiff < 60) {
-      return _diff === 0 ? 'now' :
-             _diff > 0 ? `${_diff} seconds ago` : `in ${_absDiff} seconds`;
+      return _diff === 0 ? 'now' : _diff > 0 ? `${_diff} seconds ago` : `in ${_absDiff} seconds`;
     } else if (_absDiff < 3600) {
       const _minutes = Math.floor(_absDiff / 60);
       return _diff > 0 ? `${_minutes} minutes ago` : `in ${_minutes} minutes`;
@@ -246,7 +257,11 @@ export class UnifiedConvertHandler extends BaseHandler {
     }
   }
 
-  private calculateOffsetDifference(_fromTimezone: string, _toTimezone: string, _timestamp: number): number {
+  private calculateOffsetDifference(
+    _fromTimezone: string,
+    _toTimezone: string,
+    _timestamp: number
+  ): number {
     try {
       const _date = new Date(_timestamp * 1000);
       const _fromOffset = this.getTimezoneOffset(_fromTimezone, _date);
