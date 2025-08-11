@@ -284,7 +284,7 @@ export class MemoryCacheService extends BaseCacheService {
 
   private getCurrentMemoryUsage(): number {
     let total = 0;
-    for (const entry of this.cache.values()) {
+    for (const entry of Array.from(this.cache.values())) {
       total += entry.size;
     }
     return total;
@@ -328,7 +328,7 @@ export class MemoryCacheService extends BaseCacheService {
     const now = Date.now();
     const expiredKeys: string[] = [];
 
-    for (const [key, entry] of this.cache.entries()) {
+    for (const [key, entry] of Array.from(this.cache.entries())) {
       if (now > entry.expires) {
         expiredKeys.push(key);
       }

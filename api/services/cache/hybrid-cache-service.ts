@@ -239,7 +239,7 @@ export class HybridCacheService extends BaseCacheService {
       // Clear internal tracking
       if (pattern) {
         const regex = new RegExp(pattern);
-        for (const key of this.accessCounts.keys()) {
+        for (const key of Array.from(this.accessCounts.keys())) {
           if (regex.test(key)) {
             this.accessCounts.delete(key);
             this.syncQueue.delete(key);
@@ -269,7 +269,7 @@ export class HybridCacheService extends BaseCacheService {
         this.l2Cache.keys(pattern)
       ]);
 
-      return [...new Set([...l1Keys, ...l2Keys])];
+      return Array.from(new Set([...l1Keys, ...l2Keys]));
 
     } catch (error) {
       return [];
@@ -480,7 +480,7 @@ export class HybridCacheService extends BaseCacheService {
     const operations: CacheBatchOperation[] = [];
     const keysToRemove: string[] = [];
 
-    for (const [key, { value, options, timestamp }] of this.syncQueue.entries()) {
+    for (const [key, { value, options, timestamp }] of Array.from(this.syncQueue.entries())) {
       // Skip if too old (prevent stale writes)
       if (Date.now() - timestamp > 60000) { // 1 minute max age
         keysToRemove.push(key);

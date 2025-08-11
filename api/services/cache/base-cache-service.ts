@@ -3,7 +3,7 @@
  * Provides common functionality for all cache implementations
  */
 
-import crypto from 'crypto';
+import * as crypto from 'crypto';
 import {
   CacheableRequest,
   CacheBatchOperation,
