@@ -413,7 +413,7 @@ Seconds: ${formatNumber(result.data.difference.seconds)}`;
                         const today = getTodayDate();
                         const yesterday = new Date();
                         yesterday.setDate(yesterday.getDate() - 1);
-                        setStartDate(yesterday.toISOString().split('T')[0]);
+                        setStartDate(yesterday.toISOString().split('T')[0] || '');
                         setEndDate(today);
                       }}
                       className={`px-3 py-2 text-xs rounded-md transition-all duration-200 ${
@@ -429,7 +429,7 @@ Seconds: ${formatNumber(result.data.difference.seconds)}`;
                         const today = getTodayDate();
                         const weekAgo = new Date();
                         weekAgo.setDate(weekAgo.getDate() - 7);
-                        setStartDate(weekAgo.toISOString().split('T')[0]);
+                        setStartDate(weekAgo.toISOString().split('T')[0] || '');
                         setEndDate(today);
                       }}
                       className={`px-3 py-2 text-xs rounded-md transition-all duration-200 ${
@@ -445,7 +445,7 @@ Seconds: ${formatNumber(result.data.difference.seconds)}`;
                         const today = getTodayDate();
                         const monthAgo = new Date();
                         monthAgo.setMonth(monthAgo.getMonth() - 1);
-                        setStartDate(monthAgo.toISOString().split('T')[0]);
+                        setStartDate(monthAgo.toISOString().split('T')[0] || '');
                         setEndDate(today);
                       }}
                       className={`px-3 py-2 text-xs rounded-md transition-all duration-200 ${
@@ -461,7 +461,7 @@ Seconds: ${formatNumber(result.data.difference.seconds)}`;
                         const today = getTodayDate();
                         const yearAgo = new Date();
                         yearAgo.setFullYear(yearAgo.getFullYear() - 1);
-                        setStartDate(yearAgo.toISOString().split('T')[0]);
+                        setStartDate(yearAgo.toISOString().split('T')[0] || '');
                         setEndDate(today);
                       }}
                       className={`px-3 py-2 text-xs rounded-md transition-all duration-200 ${
