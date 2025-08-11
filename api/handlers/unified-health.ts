@@ -1,6 +1,6 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
-import { BaseHandler, HandlerContext } from './base-handler';
 import { HealthCheckResponse, ServiceHealth } from '../types/api';
+import { BaseHandler, HandlerContext } from './base-handler';
 
 export interface HealthCheckOptions {
   includeServices?: boolean;
@@ -25,7 +25,7 @@ export class UnifiedHealthHandler extends BaseHandler {
     const _options = this.parseHealthOptions(_context);
 
     // Perform health check based on mode
-    const _healthData = await this.performHealthCheck(_options, _context);
+    const _healthData = await this.performHealthCheck(_options);
 
     // Set appropriate HTTP status based on health
     const _httpStatus =
@@ -60,20 +60,17 @@ export class UnifiedHealthHandler extends BaseHandler {
     return _parsedOptions;
   }
 
-  private async performHealthCheck(
-    _options: HealthCheckOptions,
-    _context: HandlerContext
-  ): Promise<any> {
+  private async performHealthCheck(_options: HealthCheckOptions): Promise<any> {
     const _mode = _options.mode || 'working';
 
     switch (_mode) {
       case 'simple':
         return this.performSimpleHealthCheck(_options);
       case 'standalone':
-        return this.performStandaloneHealthCheck(_options);
+        return this.performStandaloneHealthCheck();
       case 'working':
       default:
-        return this.performWorkingHealthCheck(_options, _context);
+        return this.performWorkingHealthCheck(_options);
     }
   }
 
@@ -143,7 +140,7 @@ export class UnifiedHealthHandler extends BaseHandler {
     return _healthResponse;
   }
 
-  private async performStandaloneHealthCheck(_options: HealthCheckOptions): Promise<any> {
+  private async performStandaloneHealthCheck(): Promise<any> {
     const _timestamp = Date.now();
     const _uptime = process.uptime();
     const version = process.env.npm_package_version || '1.0.0';
@@ -193,8 +190,7 @@ export class UnifiedHealthHandler extends BaseHandler {
   }
 
   private async performWorkingHealthCheck(
-    _options: HealthCheckOptions,
-    _context: HandlerContext
+    options: HealthCheckOptions = {}
   ): Promise<HealthCheckResponse> {
     const _timestamp = Date.now();
     const _uptime = process.uptime();
@@ -209,7 +205,7 @@ export class UnifiedHealthHandler extends BaseHandler {
     };
 
     // Test services if requested
-    if (_options.includeServices) {
+    if (options.includeServices) {
       // Test cache service
       _services.cache = await this.testCacheServiceDetailed();
       if (_services.cache.status !== 'healthy') {
@@ -255,7 +251,7 @@ export class UnifiedHealthHandler extends BaseHandler {
       },
     };
 
-    if (_options.includeMetrics) {
+    if (options.includeMetrics) {
       metrics = await this.getHealthMetrics();
 
       // Check if metrics indicate problems
@@ -517,7 +513,7 @@ export class UnifiedHealthHandler extends BaseHandler {
       const _redis = createRedisClient('general');
 
       await _redis.ping();
-      const ___dbSize = await _redis.dbsize();
+      // Note: Upstash does not expose DB size reliably; avoid unused variable to satisfy TS
 
       // Since Upstash doesn't provide detailed info, use basic metrics
       const _keyspaceHits = 0;

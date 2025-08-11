@@ -10,13 +10,14 @@ export class APIErrorHandler {
   static createError(
     code: string,
     message: string,
-    statusCode: number = 400,
+    statusCode = 400,
     details?: Record<string, any>,
     suggestions?: string[]
   ): APIError {
     return {
       code,
       message,
+      statusCode,
       details,
       suggestions,
       timestamp: Date.now(),
@@ -292,10 +293,7 @@ export function createCorsHeaders(origin?: string): Record<string, string> {
   };
 }
 
-export function validateRequest(
-  req: VercelRequest,
-  schema?: Record<string, any>
-): ValidationResult {
+export function validateRequest(req: VercelRequest): ValidationResult {
   const errors: Array<{
     field: string;
     message: string;
@@ -347,7 +345,7 @@ export function validateRequest(
 export function sanitizeInput(input: string): string {
   return input
     .trim()
-    .replace(/[\x00-\x1F\x7F]/g, '')
+    .replace(/[\x00-\x1F\x7F]/g, '') // eslint-disable-line no-control-regex
     .substring(0, 1000);
 }
 

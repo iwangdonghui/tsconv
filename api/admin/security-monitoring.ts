@@ -110,8 +110,10 @@ export class SecurityAnalytics {
 
     const threatLogs = filteredLogs.filter(log => log.event === 'security_threat_detected');
 
-    const blockedLogs = filteredLogs.filter(log =>
-      ['blocked_ip_access', 'blocked_user_agent', 'request_too_large'].includes(log.event)
+    const blockedLogs = filteredLogs.filter(
+      log =>
+        log.event &&
+        ['blocked_ip_access', 'blocked_user_agent', 'request_too_large'].includes(log.event)
     );
 
     const authFailures = filteredLogs.filter(log => log.event === 'authentication_failure').length;
@@ -136,13 +138,15 @@ export class SecurityAnalytics {
     // Analyze by IP
     const ipCounts: Record<string, { requests: number; threats: number }> = {};
     filteredLogs.forEach(log => {
-      if (!ipCounts[log.ip]) {
-        ipCounts[log.ip] = { requests: 0, threats: 0 };
-      }
-      const ipData = ipCounts[log.ip]!; // Non-null assertion since we just ensured it exists
-      ipData.requests++;
-      if (log.threat) {
-        ipData.threats++;
+      if (log.ip) {
+        if (!ipCounts[log.ip]) {
+          ipCounts[log.ip] = { requests: 0, threats: 0 };
+        }
+        const ipData = ipCounts[log.ip]!; // Non-null assertion since we just ensured it exists
+        ipData.requests++;
+        if (log.threat) {
+          ipData.threats++;
+        }
       }
     });
 
@@ -154,13 +158,15 @@ export class SecurityAnalytics {
     // Analyze by endpoint
     const endpointCounts: Record<string, { requests: number; threats: number }> = {};
     filteredLogs.forEach(log => {
-      if (!endpointCounts[log.endpoint]) {
-        endpointCounts[log.endpoint] = { requests: 0, threats: 0 };
-      }
-      const endpointData = endpointCounts[log.endpoint]!; // Non-null assertion since we just ensured it exists
-      endpointData.requests++;
-      if (log.threat) {
-        endpointData.threats++;
+      if (log.endpoint) {
+        if (!endpointCounts[log.endpoint]) {
+          endpointCounts[log.endpoint] = { requests: 0, threats: 0 };
+        }
+        const endpointData = endpointCounts[log.endpoint]!; // Non-null assertion since we just ensured it exists
+        endpointData.requests++;
+        if (log.threat) {
+          endpointData.threats++;
+        }
       }
     });
 
@@ -239,7 +245,7 @@ export class SecurityAnalytics {
     > = {};
 
     filteredLogs.forEach(log => {
-      if (log.threat) {
+      if (log.threat && log.ip) {
         if (!attackerData[log.ip]) {
           attackerData[log.ip] = {
             events: 0,
@@ -275,7 +281,7 @@ export class SecurityAnalytics {
     > = {};
 
     filteredLogs.forEach(log => {
-      if (log.threat) {
+      if (log.threat && log.endpoint) {
         if (!endpointData[log.endpoint]) {
           endpointData[log.endpoint] = {
             threats: 0,
@@ -338,33 +344,33 @@ export class SecurityAnalytics {
 
     // Count similar threats from same IP
     const similarThreats = allLogs.filter(
-      l =>
+      (l: any) =>
         l.ip === log.ip &&
         l.threat?.type === log.threat?.type &&
         Math.abs(l.timestamp - log.timestamp) < 3600000 // Within 1 hour
     ).length;
 
     // Simple IP reputation check (in real implementation, use external service)
-    const ipReputation = this.checkIPReputation(log.ip, allLogs);
+    const ipReputation = log.ip ? this.checkIPReputation(log.ip, allLogs) : 'unknown';
 
     // Check if this is a known attacker
-    const isKnownAttacker = allLogs.filter(l => l.ip === log.ip && l.threat).length > 5;
+    const isKnownAttacker = allLogs.filter((l: any) => l.ip === log.ip && l.threat).length > 5;
 
     return {
-      threatId: `threat_${log.timestamp}_${log.ip.replace(/\./g, '_')}`,
-      type: log.threat.type,
-      severity: log.threat.severity,
-      description: log.threat.description,
-      payload: log.threat.payload,
-      pattern: log.threat.pattern,
-      ip: log.ip,
-      userAgent: log.userAgent,
-      endpoint: log.endpoint,
+      threatId: `threat_${log.timestamp}_${log.ip?.replace(/\./g, '_') || 'unknown'}`,
+      type: log.threat.type || 'unknown',
+      severity: log.threat.severity || 'unknown',
+      description: log.threat.description || 'unknown',
+      payload: log.threat.payload || 'unknown',
+      pattern: log.threat.pattern || 'unknown',
+      ip: log.ip || 'unknown',
+      userAgent: log.userAgent || 'unknown',
+      endpoint: log.endpoint || 'unknown',
       timestamp: new Date(log.timestamp).toISOString(),
       fingerprint: log.fingerprint,
       context: {
         similarThreats,
-        ipReputation,
+        ipReputation: ipReputation as 'clean' | 'suspicious' | 'malicious',
         isKnownAttacker,
       },
     };
@@ -536,11 +542,11 @@ async function getSecurityLogs(req: VercelRequest, res: VercelResponse) {
 
     // Apply filters
     if (level) {
-      logs = logs.filter(log => log.level === level);
+      logs = logs.filter((log: any) => log.level === level);
     }
 
     if (ip) {
-      logs = logs.filter(log => log.ip === ip);
+      logs = logs.filter((log: any) => log.ip === ip);
     }
 
     // Limit results

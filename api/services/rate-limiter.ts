@@ -2,7 +2,7 @@
  * Memory-based rate limiter implementation
  */
 
-import { RateLimiter, RateLimitRule, RateLimitResult, RateLimitStats } from '../types/api';
+import { RateLimiter, RateLimitResult, RateLimitRule, RateLimitStats } from '../types/api';
 
 export interface RateLimitConfig {
   windowMs: number;
@@ -85,7 +85,7 @@ export class MemoryRateLimiter implements RateLimiter {
     };
   }
 
-  async reset(identifier: string, rule: RateLimitRule): Promise<void> {
+  async reset(identifier: string): Promise<void> {
     const key = this.config.keyGenerator ? this.config.keyGenerator(identifier) : identifier;
     this.requests.delete(key);
   }

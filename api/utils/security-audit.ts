@@ -76,7 +76,9 @@ export const SECURITY_HEADER_RULES: Record<string, SecurityHeaderRule> = {
     required: true,
     validator: (value: string) => {
       const maxAge = value.match(/max-age=(\d+)/);
-      return maxAge && parseInt(maxAge[1]) >= 31536000; // At least 1 year
+      const ageStr = maxAge?.[1] ?? '0';
+      const age = parseInt(ageStr);
+      return age >= 31536000; // At least 1 year
     },
     recommendations: [
       'Set max-age to at least 1 year (31536000 seconds)',
@@ -506,7 +508,7 @@ export function generateSecurityReportHTML(report: SecurityAuditReport): string 
           <p>Headers: ${report.passedHeaders}/${report.totalHeaders} passed</p>
           <p>Issues: ${report.criticalIssues} critical, ${report.highIssues} high, ${report.mediumIssues} medium, ${report.lowIssues} low</p>
         </div>
-        
+
         <h3>Header Details</h3>
         ${report.results
           .map(
@@ -520,7 +522,7 @@ export function generateSecurityReportHTML(report: SecurityAuditReport): string 
         `
           )
           .join('')}
-        
+
         <h3>Recommendations</h3>
         <ul>
           ${report.recommendations.map(rec => `<li>${rec}</li>`).join('')}
@@ -534,4 +536,4 @@ export function generateSecurityReportHTML(report: SecurityAuditReport): string 
 // Exports
 // ============================================================================
 
-export { auditSingleHeader, calculateGrade, generateSummary, generateRecommendations };
+export { auditSingleHeader, calculateGrade, generateRecommendations, generateSummary };

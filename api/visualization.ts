@@ -54,7 +54,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     switch (type) {
       case 'timezone-chart':
-        result = generateTimezoneChart(timezone as string);
+        result = generateTimezoneChart();
         break;
       case 'time-series':
         result = generateTimeSeries(
@@ -98,7 +98,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 }
 
-function generateTimezoneChart(timezone?: string) {
+function generateTimezoneChart(): string {
   const now = new Date();
   const timezones = [
     'UTC',
@@ -132,7 +132,7 @@ function generateTimezoneChart(timezone?: string) {
     };
   });
 
-  return {
+  return JSON.stringify({
     type: 'timezone-chart',
     title: 'World Time Zones',
     data,
@@ -142,7 +142,7 @@ function generateTimezoneChart(timezone?: string) {
       yAxis: 'offset',
       colorBy: 'isDST',
     },
-  };
+  });
 }
 
 function generateTimeSeries(start?: number, end?: number, interval?: number, timezone?: string) {

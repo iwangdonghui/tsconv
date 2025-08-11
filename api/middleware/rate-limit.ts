@@ -1,6 +1,6 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
-import { RateLimiter, RateLimitRule, RateLimitResult, APIResponse } from '../types/api';
-import config, { getRateLimitRule } from '../config/config';
+import config from '../config/config';
+import { APIResponse, RateLimiter, RateLimitResult, RateLimitRule } from '../types/api';
 
 // Rate limit middleware options
 export interface RateLimitMiddlewareOptions {
@@ -34,8 +34,10 @@ const defaultIdentifierExtractor = (req: VercelRequest): string => {
   const forwarded = req.headers['x-forwarded-for'];
   const ip = forwarded
     ? Array.isArray(forwarded)
-      ? forwarded[0]
-      : forwarded.split(',')[0].trim()
+      ? (forwarded?.[0] ?? 'unknown')
+      : typeof forwarded === 'string'
+        ? (forwarded?.split(',')[0]?.trim() ?? 'unknown')
+        : 'unknown'
     : req.headers['x-real-ip'] || 'unknown';
 
   return `ip:${ip}`;
@@ -231,17 +233,21 @@ export const createRateLimitMiddleware = (options?: Partial<RateLimitMiddlewareO
 export const bypassRateLimit = (req: VercelRequest): boolean => {
   // Check for bypass header (for internal services)
   const bypassHeader = req.headers['x-rate-limit-bypass'];
-  if (bypassHeader === process.env.RATE_LIMIT_BYPASS_TOKEN) {
+  if (
+    bypassHeader &&
+    process.env.RATE_LIMIT_BYPASS_TOKEN &&
+    bypassHeader === process.env.RATE_LIMIT_BYPASS_TOKEN
+  ) {
     return true;
   }
 
   // Check for admin API key
   const apiKey = req.headers['x-api-key'];
-  if (apiKey === process.env.ADMIN_API_KEY) {
+  if (apiKey && process.env.ADMIN_API_KEY && apiKey === process.env.ADMIN_API_KEY) {
     return true;
   }
 
-  // Check for localhost in development
+  // Check for localhost in development (disabled in test env)
   if (process.env.NODE_ENV === 'development') {
     const ip = req.headers['x-forwarded-for'] || req.headers['x-real-ip'] || 'unknown';
     if (ip.toString().includes('127.0.0.1') || ip.toString().includes('localhost')) {

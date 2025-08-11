@@ -72,31 +72,10 @@ const createAPIKeySchema = {
   },
 };
 
-const _updateAPIKeySchema = {
-  name: {
-    type: 'string' as const,
-    min: 1,
-    max: 100,
-    pattern: /^[a-zA-Z0-9\s\-_]+$/,
-  },
-  roles: {
-    type: 'array' as const,
-    validator: (value: unknown) => {
-      if (!Array.isArray(value)) return false;
-      return value.every(role => typeof role === 'string' && role.length > 0);
-    },
-  },
-  permissions: {
-    type: 'array' as const,
-    validator: (value: unknown) => {
-      if (!Array.isArray(value)) return false;
-      return value.every(perm => typeof perm === 'string' && perm.length > 0);
-    },
-  },
-  enabled: {
-    type: 'boolean' as const,
-  },
-};
+// Reserved placeholder for future partial update schema (intentionally unused to satisfy lint)
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const _updateAPIKeySchema: Record<string, unknown> | undefined = undefined;
+void _updateAPIKeySchema; // mark as intentionally unused
 
 // ============================================================================
 // Helper Functions
@@ -138,6 +117,7 @@ function parseExpiration(expiresIn: string): number | undefined {
  */
 function formatAPIKeyForResponse(keyInfo: APIKeyInfo, showKey: boolean = false): any {
   const { key, hashedKey, ...safeKeyInfo } = keyInfo;
+  void hashedKey; // mark as intentionally unused
 
   return {
     ...safeKeyInfo,
@@ -328,7 +308,7 @@ async function revokeAPIKey(req: VercelRequest, res: VercelResponse) {
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Apply security middleware
-  defaultAPISecurityMiddleware(req, res, () => {
+  defaultAPISecurityMiddleware()(req, res, () => {
     // Apply admin authentication
     adminAuthMiddleware(req, res, async () => {
       // Set CORS headers
@@ -344,10 +324,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       try {
         switch (req.method) {
-          case 'POST':
+          case 'POST': {
             // Validate request body for creation
             const createValidation = createValidationMiddleware(createAPIKeySchema);
             return createValidation(req, res, () => createAPIKey(req, res));
+          }
 
           case 'GET':
             if (req.query.id) {

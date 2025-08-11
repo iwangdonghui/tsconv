@@ -1,5 +1,5 @@
-import { CacheService, CacheStats, CacheableRequest } from '../types/api';
 import config from '../config/config';
+import { CacheService, CacheStats, CacheableRequest } from '../types/api';
 
 class MemoryCacheService implements CacheService {
   private cache = new Map<string, { value: any; expires: number; lastAccess: number }>();
@@ -121,6 +121,7 @@ class MemoryCacheService implements CacheService {
           hitRatio: this.cacheStats.hits / (this.cacheStats.hits + this.cacheStats.misses || 1),
           warmupEnabled: this.warmupEnabled,
           frequentKeysCount: this.frequentKeys.size,
+          estimatedSizeBytes: this.estimateCacheSize(),
         },
       };
     } catch (error) {
@@ -279,14 +280,12 @@ class MemoryCacheService implements CacheService {
     }
   }
 
+  // NOTE: reserved for future diagnostics; suppress unused warning intentionally
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   private estimateCacheSize(): number {
-    // Estimate the memory usage of the cache
     let size = 0;
-    // Convert iterator to array to avoid downlevelIteration issues
     const entries = Array.from(this.cache.entries());
-
     for (const [key, item] of entries) {
-      // Rough estimate: key length + JSON stringified value length
       const valueSize = JSON.stringify(item.value).length;
       size += key.length + valueSize + 16; // 16 bytes for overhead
     }

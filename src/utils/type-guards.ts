@@ -236,7 +236,7 @@ export function validateFields(
 
   return errors.length === 0
     ? createValidationResult(true, data)
-    : createValidationResult(false, {}, errors);
+    : createValidationResult(false, undefined as never, errors);
 }
 
 // ============================================================================

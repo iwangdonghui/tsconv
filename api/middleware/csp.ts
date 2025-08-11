@@ -267,6 +267,8 @@ export function createCSPMiddleware(options: Partial<CSPOptions> = {}) {
     const environment = process.env.NODE_ENV || 'production';
     const userAgent = req.headers['user-agent'];
     const origin = req.headers.origin;
+    void userAgent; // avoid TS6133 in minimal middleware
+    void origin; // avoid TS6133 in minimal middleware
 
     // Generate nonce if enabled
     const nonce = useNonces ? generateNonce(nonceLength) : undefined;

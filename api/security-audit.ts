@@ -6,14 +6,14 @@
  */
 
 import { VercelRequest, VercelResponse } from '@vercel/node';
+import { maximumSecurityHeadersMiddleware } from './middleware/enhanced-security-headers';
 import { createCorsHeaders } from './utils/response';
 import {
   auditSecurityHeaders,
   generateSecurityReportHTML,
-  SecurityAuditReport,
   isSecureConnection,
+  SecurityAuditReport,
 } from './utils/security-audit';
-import { maximumSecurityHeadersMiddleware } from './middleware/enhanced-security-headers';
 
 // ============================================================================
 // Types
@@ -203,9 +203,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // Filter out recommendations if not requested
     if (!includeRecommendations && 'recommendations' in responseData.data.audit) {
-      delete responseData.data.audit.recommendations;
+      (responseData.data.audit as any).recommendations = undefined;
       responseData.data.audit.results.forEach(result => {
-        delete result.recommendations;
+        (result as any).recommendations = undefined;
       });
     }
 
@@ -265,4 +265,4 @@ export function getSecurityScore(req: VercelRequest): number {
 // Export for testing
 // ============================================================================
 
-export { auditExternalURL, performSelfAudit, isValidURL };
+export { auditExternalURL, isValidURL, performSelfAudit };

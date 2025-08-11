@@ -150,14 +150,14 @@ function validateVisualizationRequest(request: VisualizationRequest): {
   // Validate data points
   for (let i = 0; i < request.data.length; i++) {
     const point = request.data[i];
-    if (!point.timestamp || typeof point.timestamp !== 'number') {
+    if (!point || typeof point.timestamp !== 'number') {
       return {
         valid: false,
         message: `Invalid timestamp at data point ${i}`,
         details: {
           index: i,
           expected: 'number',
-          received: typeof point.timestamp,
+          received: point ? typeof point.timestamp : 'undefined',
         },
       };
     }
@@ -336,7 +336,7 @@ function generateChart(data: any[], options: any, timezone: string): any {
   };
 }
 
-function generateCalendar(data: any[], options: any, timezone: string): any {
+function generateCalendar(data: any[], _options: any, timezone: string): any {
   // Group data by date
   const dateGroups: Record<string, any[]> = {};
 
@@ -381,7 +381,7 @@ function generateCalendar(data: any[], options: any, timezone: string): any {
   };
 }
 
-function generateComparison(data: any[], options: any, timezone: string): any {
+function generateComparison(data: any[], _options: any, timezone: string): any {
   // Group data by category if available
   const categories = [...new Set(data.map(d => d.category || 'default'))];
 
@@ -419,6 +419,9 @@ function groupDataByTime(data: any[], groupBy: string, timezone: string): any[] 
   const groups: Record<string, any[]> = {};
 
   data.forEach(point => {
+    if (!point || typeof point.timestamp !== 'number') {
+      return; // skip invalid points
+    }
     const date = new Date(point.timestamp * 1000);
     let groupKey: string;
 
@@ -429,11 +432,12 @@ function groupDataByTime(data: any[], groupBy: string, timezone: string): any[] 
       case 'day':
         groupKey = date.toLocaleDateString('en-CA', { timeZone: timezone }); // YYYY-MM-DD
         break;
-      case 'week':
+      case 'week': {
         const weekStart = new Date(date);
         weekStart.setDate(date.getDate() - date.getDay());
         groupKey = weekStart.toLocaleDateString('en-CA', { timeZone: timezone });
         break;
+      }
       case 'month':
         groupKey = date.toLocaleDateString('en-CA', { timeZone: timezone }).substring(0, 7); // YYYY-MM
         break;
@@ -441,10 +445,8 @@ function groupDataByTime(data: any[], groupBy: string, timezone: string): any[] 
         groupKey = point.timestamp.toString();
     }
 
-    if (!groups[groupKey]) {
-      groups[groupKey] = [];
-    }
-    groups[groupKey].push(point);
+    // ensure array exists before push
+    (groups[groupKey] ??= []).push(point as any);
   });
 
   // Convert groups to array and aggregate

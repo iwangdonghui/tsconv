@@ -146,7 +146,7 @@ export class APIKeyManager {
    */
   revokeAPIKey(keyId: string): boolean {
     const entries = Array.from(this.keys.entries());
-    for (const [hashedKey, keyInfo] of entries) {
+    for (const [, keyInfo] of entries) {
       if (keyInfo.id === keyId) {
         keyInfo.enabled = false;
         return true;
@@ -162,7 +162,11 @@ export class APIKeyManager {
     const keys = Array.from(this.keys.values());
     const filteredKeys = userId ? keys.filter(k => k.userId === userId) : keys;
 
-    return filteredKeys.map(({ key, hashedKey, ...keyInfo }) => keyInfo);
+    return filteredKeys.map(({ key, hashedKey, ...keyInfo }) => {
+      void key;
+      void hashedKey; // mark as intentionally unused
+      return keyInfo;
+    });
   }
 }
 
@@ -222,6 +226,8 @@ export class JWTManager {
 
     // Remove timing fields for refresh
     const { iat, exp, ...refreshPayload } = payload;
+    void iat;
+    void exp; // mark as intentionally unused
     return this.generateToken(refreshPayload, expiresIn);
   }
 
@@ -234,8 +240,8 @@ export class JWTManager {
       throw new Error('Invalid expiration format');
     }
 
-    const value = parseInt(match[1]);
-    const unit = match[2];
+    const value = parseInt(match[1] || '0');
+    const unit = match[2] as 's' | 'm' | 'h' | 'd';
 
     switch (unit) {
       case 's':
