@@ -3,6 +3,7 @@ import { createCacheMiddleware } from './middleware/cache';
 import { createRateLimitMiddleware } from './middleware/rate-limit';
 import { getStrategicCacheService } from './services/cache/cache-config-init';
 import formatService from './services/format-service';
+import { createSecurityMiddleware } from './services/security/unified-security-middleware';
 import { convertTimezone } from './utils/conversion-utils';
 import { APIErrorHandler, ResponseBuilder, withCors } from './utils/response';
 
@@ -193,20 +194,35 @@ function getRelativeTime(date: Date): string {
   return `${prefix} ${Math.floor(absDiff / 2592000)} months ${suffix}`.trim();
 }
 
-// Enhanced convert API with strategic caching and enhanced rate limiting
-const enhancedConvertHandler = createRateLimitMiddleware({
-  // Enhanced rate limiter will be automatically used
-  ruleSelector: req => ({
-    identifier: '/api/convert',
-    limit: 120, // Will be overridden by strategy-based limits
-    window: 60000, // 1 minute
-    type: 'ip',
-  }),
-})(
-  createCacheMiddleware({
-    ttl: 5 * 60 * 1000, // 5 minutes
-    cacheControlHeader: 'public, max-age=300, stale-while-revalidate=600',
-  })(convertHandler)
-);
+// Enhanced convert API with unified security, strategic caching, and enhanced rate limiting
+const securityMiddleware = createSecurityMiddleware({
+  policyLevel: process.env.NODE_ENV === 'production' ? 'strict' : 'standard',
+  enableThreatDetection: true,
+  enableRealTimeBlocking: process.env.NODE_ENV === 'production',
+  loggerConfig: {
+    logLevel: process.env.NODE_ENV === 'development' ? 'debug' : 'warn',
+  },
+});
+
+const enhancedConvertHandler = (req: VercelRequest, res: VercelResponse) => {
+  // Apply security middleware first
+  securityMiddleware(req, res, () => {
+    // Then apply rate limiting
+    createRateLimitMiddleware({
+      ruleSelector: req => ({
+        identifier: '/api/convert',
+        limit: 120, // Will be overridden by strategy-based limits
+        window: 60000, // 1 minute
+        type: 'ip',
+      }),
+    })(
+      // Finally apply caching
+      createCacheMiddleware({
+        ttl: 5 * 60 * 1000, // 5 minutes
+        cacheControlHeader: 'public, max-age=300, stale-while-revalidate=600',
+      })(convertHandler)
+    )(req, res);
+  });
+};
 
 export default enhancedConvertHandler;
