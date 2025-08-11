@@ -1,9 +1,10 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
-import { APIErrorHandler, ResponseBuilder, withCors } from './utils/response';
 import { createCacheMiddleware } from './middleware/cache';
 import { createRateLimitMiddleware } from './middleware/rate-limit';
+import { getStrategicCacheService } from './services/cache/cache-config-init';
 import formatService from './services/format-service';
 import { convertTimezone } from './utils/conversion-utils';
+import { APIErrorHandler, ResponseBuilder, withCors } from './utils/response';
 
 async function convertHandler(req: VercelRequest, res: VercelResponse) {
   withCors(res);
@@ -35,7 +36,7 @@ async function convertHandler(req: VercelRequest, res: VercelResponse) {
       );
     }
 
-    // Process conversion logic here...
+    // Process conversion logic with strategic caching
     const inputValue = timestamp || date;
     const isTimestamp = !!timestamp;
 
@@ -50,9 +51,42 @@ async function convertHandler(req: VercelRequest, res: VercelResponse) {
     if (timezone) options.timezone = String(timezone);
     if (targetTimezone) options.targetTimezone = String(targetTimezone);
 
+    // Get strategic cache service
+    const strategicCache = await getStrategicCacheService();
+
+    // Generate cache key for strategic caching
+    const cacheKey = strategicCache.generateKey(
+      {
+        endpoint: '/api/convert',
+        parameters: {
+          input: inputValue,
+          isTimestamp,
+          ...options,
+        },
+      },
+      { includeStrategy: true }
+    );
+
+    // Try to get cached result
+    const cachedResult = await strategicCache.get(cacheKey);
+    if (cachedResult) {
+      const builder = new ResponseBuilder()
+        .setData(cachedResult)
+        .setMetadata({ cached: true, cacheKey });
+      builder.send(res);
+      return;
+    }
+
+    // Process conversion
     const result = await processConversion(inputValue, isTimestamp, options);
 
-    const builder = new ResponseBuilder().setData(result);
+    // Cache the result with strategic options
+    await strategicCache.set(cacheKey, result, {
+      tags: ['conversion', 'timestamp', options.format || 'default'],
+      priority: 'high',
+    });
+
+    const builder = new ResponseBuilder().setData(result).setMetadata({ cached: false, cacheKey });
     builder.send(res);
   } catch (error) {
     console.error('API Error:', error);
