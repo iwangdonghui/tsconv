@@ -9,7 +9,6 @@ import {
 } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 
-import { useLanguage } from '../contexts/LanguageContext';
 import { useTheme } from '../contexts/ThemeContext';
 import Footer from './Footer';
 import Header from './Header';
@@ -20,7 +19,7 @@ function debounce<T extends (...args: any[]) => any>(
   func: T,
   wait: number
 ): T & { cancel: () => void } {
-  let timeout: NodeJS.Timeout | null = null;
+  let timeout: ReturnType<typeof setTimeout> | null = null;
 
   const debounced = ((...args: Parameters<T>) => {
     if (timeout) clearTimeout(timeout);
@@ -79,7 +78,6 @@ export default function WorkdaysCalculator() {
   const [copied, setCopied] = useState(false);
 
   const { isDark } = useTheme();
-  const { t: _t } = useLanguage();
 
   // Debounced auto-calculation
   const debouncedCalculate = useCallback(
@@ -177,7 +175,8 @@ Settings: Weekends ${result.data.settings?.excludeWeekends ? 'excluded' : 'inclu
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
-      console.error('Failed to copy results:', err);
+      // Silently handle copy failure
+      setCopied(false);
     }
   };
 
