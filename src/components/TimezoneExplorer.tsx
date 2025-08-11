@@ -164,12 +164,7 @@ export default function TimezoneExplorer() {
     }
   };
 
-  const getOffsetColor = (offset: string): string => {
-    const hour = parseInt(offset.split(':')[0]!);
-    if (hour < 0) return 'text-blue-600';
-    if (hour > 0) return 'text-green-600';
-    return 'text-gray-600';
-  };
+  // Removed getOffsetColor function as it's no longer used with the new color system
 
   const getRegionIcon = (region: string): string => {
     const icons: Record<string, string> = {
@@ -182,6 +177,54 @@ export default function TimezoneExplorer() {
       UTC: '🌐',
     };
     return icons[region] || '🌍';
+  };
+
+  const getRegionColors = (
+    region: string
+  ): { bg: string; border: string; icon: string; accent: string } => {
+    const colors: Record<string, { bg: string; border: string; icon: string; accent: string }> = {
+      America: {
+        bg: isDark ? 'from-blue-500/10 to-blue-600/5' : 'from-blue-50 to-blue-100/50',
+        border: isDark ? 'border-blue-500/20' : 'border-blue-200',
+        icon: isDark ? 'bg-blue-500/20 text-blue-400' : 'bg-blue-100 text-blue-600',
+        accent: isDark ? 'text-blue-400' : 'text-blue-600',
+      },
+      Europe: {
+        bg: isDark ? 'from-green-500/10 to-green-600/5' : 'from-green-50 to-green-100/50',
+        border: isDark ? 'border-green-500/20' : 'border-green-200',
+        icon: isDark ? 'bg-green-500/20 text-green-400' : 'bg-green-100 text-green-600',
+        accent: isDark ? 'text-green-400' : 'text-green-600',
+      },
+      Asia: {
+        bg: isDark ? 'from-orange-500/10 to-orange-600/5' : 'from-orange-50 to-orange-100/50',
+        border: isDark ? 'border-orange-500/20' : 'border-orange-200',
+        icon: isDark ? 'bg-orange-500/20 text-orange-400' : 'bg-orange-100 text-orange-600',
+        accent: isDark ? 'text-orange-400' : 'text-orange-600',
+      },
+      Africa: {
+        bg: isDark ? 'from-purple-500/10 to-purple-600/5' : 'from-purple-50 to-purple-100/50',
+        border: isDark ? 'border-purple-500/20' : 'border-purple-200',
+        icon: isDark ? 'bg-purple-500/20 text-purple-400' : 'bg-purple-100 text-purple-600',
+        accent: isDark ? 'text-purple-400' : 'text-purple-600',
+      },
+      Australia: {
+        bg: isDark ? 'from-teal-500/10 to-teal-600/5' : 'from-teal-50 to-teal-100/50',
+        border: isDark ? 'border-teal-500/20' : 'border-teal-200',
+        icon: isDark ? 'bg-teal-500/20 text-teal-400' : 'bg-teal-100 text-teal-600',
+        accent: isDark ? 'text-teal-400' : 'text-teal-600',
+      },
+      Pacific: {
+        bg: isDark ? 'from-cyan-500/10 to-cyan-600/5' : 'from-cyan-50 to-cyan-100/50',
+        border: isDark ? 'border-cyan-500/20' : 'border-cyan-200',
+        icon: isDark ? 'bg-cyan-500/20 text-cyan-400' : 'bg-cyan-100 text-cyan-600',
+        accent: isDark ? 'text-cyan-400' : 'text-cyan-600',
+      },
+    };
+    const regionColor = colors[region];
+    if (regionColor) {
+      return regionColor;
+    }
+    return colors.America!; // America is always defined in the colors object
   };
 
   return (
@@ -251,260 +294,601 @@ export default function TimezoneExplorer() {
       />
 
       <main className='flex-1 container mx-auto px-4 py-8'>
-        <div className='max-w-6xl mx-auto p-6 bg-white dark:bg-slate-800 rounded-lg shadow-lg'>
-          <div className='flex items-center gap-3 mb-6'>
-            <Globe className='h-8 w-8 text-blue-600' />
-            <h2 className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
-              Timezone Explorer
-            </h2>
+        <div
+          className={`max-w-7xl mx-auto p-8 rounded-2xl border backdrop-blur-sm transition-all duration-300 ${
+            isDark
+              ? 'bg-slate-800/60 border-slate-600 shadow-2xl shadow-slate-900/50'
+              : 'bg-white/80 border-gray-200 shadow-2xl shadow-gray-900/10'
+          }`}
+        >
+          <div className='flex items-center gap-4 mb-8'>
+            <div
+              className={`p-3 rounded-xl shadow-lg transition-all duration-300 ${
+                isDark
+                  ? 'bg-gradient-to-br from-blue-500 to-blue-600 shadow-blue-500/25'
+                  : 'bg-gradient-to-br from-blue-500 to-blue-600 shadow-blue-500/25'
+              }`}
+            >
+              <Globe className='h-8 w-8 text-white' />
+            </div>
+            <div>
+              <h2
+                className={`text-3xl font-bold tracking-tight ${isDark ? 'text-white' : 'text-gray-900'}`}
+              >
+                Timezone Explorer
+              </h2>
+              <p className={`text-sm mt-1 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                Explore world timezones with real-time search and filtering
+              </p>
+            </div>
           </div>
 
           {/* SEO Content */}
-          <div className={`mb-8 p-6 rounded-lg ${isDark ? 'bg-slate-800' : 'bg-blue-50'}`}>
-            <h3 className={`text-lg font-semibold mb-3 ${isDark ? 'text-white' : 'text-gray-900'}`}>
-              Explore World Time Zones in Real-Time
-            </h3>
-            <p className={`mb-4 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
+          <div
+            className={`mb-8 p-6 rounded-xl border transition-all duration-200 ${
+              isDark
+                ? 'bg-gradient-to-br from-blue-500/10 to-indigo-600/5 border-blue-500/20'
+                : 'bg-gradient-to-br from-blue-50 to-indigo-100/50 border-blue-200'
+            }`}
+          >
+            <div className='flex items-center gap-3 mb-4'>
+              <div
+                className={`p-2 rounded-lg ${
+                  isDark ? 'bg-blue-500/20 text-blue-400' : 'bg-blue-100 text-blue-600'
+                }`}
+              >
+                <Clock className='h-5 w-5' />
+              </div>
+              <h3 className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                Explore World Time Zones in Real-Time
+              </h3>
+            </div>
+            <p className={`mb-6 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
               Navigate through global time zones with our comprehensive timezone explorer. View
               current times across different regions, search by location, and filter by continent,
               country, or UTC offset. Essential for international business, travel planning, and
               global team coordination.
             </p>
-            <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+            <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
               <div>
-                <h4 className={`font-medium mb-2 ${isDark ? 'text-blue-400' : 'text-blue-600'}`}>
+                <h4
+                  className={`font-medium mb-3 flex items-center gap-2 ${isDark ? 'text-blue-400' : 'text-blue-600'}`}
+                >
+                  <Search className='h-4 w-4' />
                   Features:
                 </h4>
-                <ul className={`text-sm space-y-1 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
-                  <li>• Real-time clock updates</li>
-                  <li>• IANA timezone database</li>
-                  <li>• Advanced filtering options</li>
-                  <li>• Detailed timezone information</li>
+                <ul className={`text-sm space-y-2 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
+                  <li className='flex items-center gap-2'>
+                    <div className='w-1.5 h-1.5 bg-green-500 rounded-full'></div>
+                    Real-time clock updates
+                  </li>
+                  <li className='flex items-center gap-2'>
+                    <div className='w-1.5 h-1.5 bg-blue-500 rounded-full'></div>
+                    IANA timezone database
+                  </li>
+                  <li className='flex items-center gap-2'>
+                    <div className='w-1.5 h-1.5 bg-purple-500 rounded-full'></div>
+                    Advanced filtering options
+                  </li>
+                  <li className='flex items-center gap-2'>
+                    <div className='w-1.5 h-1.5 bg-orange-500 rounded-full'></div>
+                    Detailed timezone information
+                  </li>
                 </ul>
               </div>
               <div>
-                <h4 className={`font-medium mb-2 ${isDark ? 'text-blue-400' : 'text-blue-600'}`}>
+                <h4
+                  className={`font-medium mb-3 flex items-center gap-2 ${isDark ? 'text-blue-400' : 'text-blue-600'}`}
+                >
+                  <MapPin className='h-4 w-4' />
                   Ideal for:
                 </h4>
-                <ul className={`text-sm space-y-1 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
-                  <li>• International meeting scheduling</li>
-                  <li>• Global team coordination</li>
-                  <li>• Travel time planning</li>
-                  <li>• Timestamp conversion reference</li>
+                <ul className={`text-sm space-y-2 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
+                  <li className='flex items-center gap-2'>
+                    <div className='w-1.5 h-1.5 bg-red-500 rounded-full'></div>
+                    International meeting scheduling
+                  </li>
+                  <li className='flex items-center gap-2'>
+                    <div className='w-1.5 h-1.5 bg-yellow-500 rounded-full'></div>
+                    Global team coordination
+                  </li>
+                  <li className='flex items-center gap-2'>
+                    <div className='w-1.5 h-1.5 bg-teal-500 rounded-full'></div>
+                    Travel time planning
+                  </li>
+                  <li className='flex items-center gap-2'>
+                    <div className='w-1.5 h-1.5 bg-pink-500 rounded-full'></div>
+                    Timestamp conversion reference
+                  </li>
                 </ul>
               </div>
             </div>
           </div>
 
-          {/* Filters */}
-          <div className={`p-4 rounded-lg mb-6 ${isDark ? 'bg-slate-800' : 'bg-gray-50'}`}>
-            <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4'>
-              {/* Search */}
-              <div className='relative'>
-                <Search
-                  className={`absolute left-3 top-3 h-4 w-4 ${isDark ? 'text-gray-500' : 'text-gray-400'}`}
-                />
-                <input
-                  type='text'
-                  value={searchQuery}
-                  onChange={e => setSearchQuery(e.target.value)}
-                  placeholder='Search timezones...'
-                  aria-label='Search timezones by name or region'
-                  className={`w-full pl-10 pr-4 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors ${isDark ? 'bg-slate-700 border-slate-600 text-white placeholder-slate-400' : 'bg-white border-gray-300 text-gray-900'}`}
-                />
-              </div>
-
-              {/* Region Filter */}
-              <select
-                value={selectedRegion}
-                onChange={e => setSelectedRegion(e.target.value)}
-                className={`px-4 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors ${isDark ? 'bg-slate-700 border-slate-600 text-white [&>option]:bg-slate-700 [&>option]:text-white' : 'bg-white border-gray-300 text-gray-900'}`}
+          <div className='grid grid-cols-1 lg:grid-cols-5 gap-8 min-h-[600px]'>
+            {/* Search and Filters */}
+            <div className='lg:col-span-2 space-y-6'>
+              <div
+                className={`p-6 rounded-xl border transition-all duration-200 ${
+                  isDark ? 'bg-slate-700/50 border-slate-600' : 'bg-gray-50/50 border-gray-200'
+                }`}
               >
-                <option value=''>All Regions</option>
-                {regions.map(region => (
-                  <option key={region} value={region}>
-                    {getRegionIcon(region)} {region}
-                  </option>
-                ))}
-              </select>
-
-              {/* Country Filter */}
-              <select
-                value={selectedCountry}
-                onChange={e => setSelectedCountry(e.target.value)}
-                className={`px-4 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors ${isDark ? 'bg-slate-700 border-slate-600 text-white [&>option]:bg-slate-700 [&>option]:text-white' : 'bg-white border-gray-300 text-gray-900'}`}
-              >
-                <option value=''>All Countries</option>
-                {countries.map(country => (
-                  <option key={country} value={country}>
-                    {country}
-                  </option>
-                ))}
-              </select>
-
-              {/* Offset Filter */}
-              <select
-                value={selectedOffset}
-                onChange={e => setSelectedOffset(e.target.value)}
-                className={`px-4 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors ${isDark ? 'bg-slate-700 border-slate-600 text-white [&>option]:bg-slate-700 [&>option]:text-white' : 'bg-white border-gray-300 text-gray-900'}`}
-              >
-                <option value=''>All Offsets</option>
-                {offsets.map(offset => (
-                  <option key={offset} value={offset}>
-                    UTC{offset}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className='flex items-center justify-between'>
-              <div className='flex items-center gap-4'>
-                <label className='flex items-center'>
-                  <input
-                    type='radio'
-                    value='detailed'
-                    checked={format === 'detailed'}
-                    onChange={e => setFormat(e.target.value as 'detailed')}
-                    className='mr-2'
-                  />
-                  Detailed View
-                </label>
-                <label className='flex items-center'>
-                  <input
-                    type='radio'
-                    value='simple'
-                    checked={format === 'simple'}
-                    onChange={e => setFormat(e.target.value as 'simple')}
-                    className='mr-2'
-                  />
-                  Simple View
-                </label>
-              </div>
-
-              <button
-                onClick={resetFilters}
-                className='flex items-center gap-2 px-3 py-1 text-sm text-gray-600 hover:text-gray-800'
-              >
-                <Filter className='h-4 w-4' />
-                Reset Filters
-              </button>
-            </div>
-          </div>
-
-          {/* Error Display */}
-          {error && (
-            <div
-              className={`flex items-center gap-2 p-3 rounded-md mb-6 border ${isDark ? 'bg-red-900/20 border-red-800 text-red-200' : 'bg-red-50 border-red-200 text-red-700'}`}
-              role='alert'
-              aria-live='polite'
-            >
-              <AlertCircle className='h-4 w-4 text-red-500' />
-              <span className={`text-sm ${isDark ? 'text-red-200' : 'text-red-700'}`}>{error}</span>
-            </div>
-          )}
-
-          {/* Loading State */}
-          {loading && (
-            <div className='text-center py-8'>
-              <Clock className='h-8 w-8 animate-spin mx-auto mb-4 text-emerald-600' />
-              <p className='text-gray-600'>Loading timezones...</p>
-            </div>
-          )}
-
-          {/* Timezone List */}
-          {!loading && timezones.length > 0 && (
-            <div className='space-y-4'>
-              <div className='flex items-center justify-between mb-4'>
-                <h3 className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                  Timezones ({timezones.length} shown)
+                <h3
+                  className={`text-lg font-semibold mb-4 ${isDark ? 'text-white' : 'text-gray-900'}`}
+                >
+                  Search & Filter
                 </h3>
-                <div className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-                  Current UTC time: {currentTime.toUTCString()}
+
+                {/* Quick Presets */}
+                <div
+                  className={`p-4 rounded-lg border ${
+                    isDark ? 'border-slate-600 bg-slate-700/30' : 'border-gray-200 bg-gray-50/50'
+                  }`}
+                >
+                  <h4
+                    className={`text-sm font-medium mb-3 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}
+                  >
+                    ⚡ Quick Presets
+                  </h4>
+                  <div className='grid grid-cols-2 gap-2'>
+                    <button
+                      onClick={() => {
+                        setSearchQuery('');
+                        setSelectedRegion('');
+                        setSelectedCountry('');
+                        setSelectedOffset('');
+                      }}
+                      className={`px-3 py-2 text-xs rounded-md transition-all duration-200 ${
+                        isDark
+                          ? 'bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 border border-blue-500/20'
+                          : 'bg-blue-50 text-blue-600 hover:bg-blue-100 border border-blue-200'
+                      }`}
+                    >
+                      🌍 All Timezones
+                    </button>
+                    <button
+                      onClick={() => {
+                        setSearchQuery('');
+                        setSelectedRegion('America');
+                        setSelectedCountry('');
+                        setSelectedOffset('');
+                      }}
+                      className={`px-3 py-2 text-xs rounded-md transition-all duration-200 ${
+                        isDark
+                          ? 'bg-green-500/10 text-green-400 hover:bg-green-500/20 border border-green-500/20'
+                          : 'bg-green-50 text-green-600 hover:bg-green-100 border border-green-200'
+                      }`}
+                    >
+                      🇺🇸 US Timezones
+                    </button>
+                    <button
+                      onClick={() => {
+                        setSearchQuery('');
+                        setSelectedRegion('Europe');
+                        setSelectedCountry('');
+                        setSelectedOffset('');
+                      }}
+                      className={`px-3 py-2 text-xs rounded-md transition-all duration-200 ${
+                        isDark
+                          ? 'bg-purple-500/10 text-purple-400 hover:bg-purple-500/20 border border-purple-500/20'
+                          : 'bg-purple-50 text-purple-600 hover:bg-purple-100 border border-purple-200'
+                      }`}
+                    >
+                      🇪🇺 European Zones
+                    </button>
+                    <button
+                      onClick={() => {
+                        setSearchQuery('');
+                        setSelectedRegion('Asia');
+                        setSelectedCountry('');
+                        setSelectedOffset('');
+                      }}
+                      className={`px-3 py-2 text-xs rounded-md transition-all duration-200 ${
+                        isDark
+                          ? 'bg-orange-500/10 text-orange-400 hover:bg-orange-500/20 border border-orange-500/20'
+                          : 'bg-orange-50 text-orange-600 hover:bg-orange-100 border border-orange-200'
+                      }`}
+                    >
+                      🌏 Asian Zones
+                    </button>
+                  </div>
+                </div>
+
+                <div className='space-y-4'>
+                  {/* Search */}
+                  <div>
+                    <label
+                      className={`block text-sm font-medium mb-2 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}
+                    >
+                      Search Timezones
+                    </label>
+                    <div className='relative'>
+                      <Search
+                        className={`absolute left-3 top-3 h-4 w-4 ${isDark ? 'text-gray-500' : 'text-gray-400'}`}
+                      />
+                      <input
+                        type='text'
+                        value={searchQuery}
+                        onChange={e => setSearchQuery(e.target.value)}
+                        placeholder='Search by name, city, or country...'
+                        aria-label='Search timezones by name or region'
+                        className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 ${isDark ? 'bg-slate-700 border-slate-600 text-white placeholder-slate-400' : 'bg-white border-gray-300 text-gray-900'}`}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Region Filter */}
+                  <div>
+                    <label
+                      className={`block text-sm font-medium mb-2 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}
+                    >
+                      Region
+                    </label>
+                    <div className='relative'>
+                      <Filter
+                        className={`absolute left-3 top-3 h-4 w-4 ${isDark ? 'text-gray-500' : 'text-gray-400'}`}
+                      />
+                      <select
+                        value={selectedRegion}
+                        onChange={e => setSelectedRegion(e.target.value)}
+                        className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 ${isDark ? 'bg-slate-700 border-slate-600 text-white [&>option]:bg-slate-700 [&>option]:text-white' : 'bg-white border-gray-300 text-gray-900'}`}
+                      >
+                        <option value=''>All Regions</option>
+                        {regions.map(region => (
+                          <option key={region} value={region}>
+                            {getRegionIcon(region)} {region}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Country Filter */}
+                  <div>
+                    <label
+                      className={`block text-sm font-medium mb-2 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}
+                    >
+                      Country
+                    </label>
+                    <div className='relative'>
+                      <MapPin
+                        className={`absolute left-3 top-3 h-4 w-4 ${isDark ? 'text-gray-500' : 'text-gray-400'}`}
+                      />
+                      <select
+                        value={selectedCountry}
+                        onChange={e => setSelectedCountry(e.target.value)}
+                        className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 ${isDark ? 'bg-slate-700 border-slate-600 text-white [&>option]:bg-slate-700 [&>option]:text-white' : 'bg-white border-gray-300 text-gray-900'}`}
+                      >
+                        <option value=''>All Countries</option>
+                        {countries.map(country => (
+                          <option key={country} value={country}>
+                            {country}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Offset Filter */}
+                  <div>
+                    <label
+                      className={`block text-sm font-medium mb-2 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}
+                    >
+                      UTC Offset
+                    </label>
+                    <div className='relative'>
+                      <Clock
+                        className={`absolute left-3 top-3 h-4 w-4 ${isDark ? 'text-gray-500' : 'text-gray-400'}`}
+                      />
+                      <select
+                        value={selectedOffset}
+                        onChange={e => setSelectedOffset(e.target.value)}
+                        className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 ${isDark ? 'bg-slate-700 border-slate-600 text-white [&>option]:bg-slate-700 [&>option]:text-white' : 'bg-white border-gray-300 text-gray-900'}`}
+                      >
+                        <option value=''>All Offsets</option>
+                        {offsets.map(offset => (
+                          <option key={offset} value={offset}>
+                            UTC{offset}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
                 </div>
               </div>
 
+              {/* Search Status */}
               <div
-                className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4'
-                role='list'
-                aria-label='Timezone list'
+                className={`p-4 rounded-lg border ${
+                  isDark ? 'bg-slate-700/30 border-slate-600' : 'bg-gray-50 border-gray-200'
+                }`}
               >
-                {timezones.map(timezone => (
-                  <div
-                    key={timezone.id}
-                    className={`border rounded-lg p-4 hover:shadow-md transition-shadow ${isDark ? 'bg-slate-700 border-slate-600' : 'bg-white border-gray-200'}`}
-                    role='listitem'
-                    aria-label={`${timezone.name} timezone information`}
-                  >
-                    <div className='flex items-start justify-between mb-2'>
-                      <div className='flex items-center gap-2'>
-                        <span className='text-lg'>{getRegionIcon(timezone.region)}</span>
-                        <div>
-                          <h4 className='font-medium text-gray-900'>
-                            {timezone.city || timezone.name}
-                          </h4>
-                          <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-                            {timezone.id}
-                          </p>
-                        </div>
-                      </div>
-                      <div className={`text-sm font-mono ${getOffsetColor(timezone.offset)}`}>
-                        {timezone.offset}
-                      </div>
-                    </div>
+                <h4
+                  className={`text-sm font-medium mb-3 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}
+                >
+                  Search Status
+                </h4>
+                <div className='flex items-center gap-2'>
+                  {loading ? (
+                    <>
+                      <Clock
+                        className={`h-4 w-4 animate-spin ${isDark ? 'text-blue-400' : 'text-blue-600'}`}
+                      />
+                      <span className={`text-sm ${isDark ? 'text-blue-400' : 'text-blue-600'}`}>
+                        Searching...
+                      </span>
+                    </>
+                  ) : searchQuery || selectedRegion || selectedCountry || selectedOffset ? (
+                    <>
+                      <Search
+                        className={`h-4 w-4 ${isDark ? 'text-green-400' : 'text-green-600'}`}
+                      />
+                      <span className={`text-sm ${isDark ? 'text-green-400' : 'text-green-600'}`}>
+                        Auto-searching
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      <Globe className={`h-4 w-4 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />
+                      <span className={`text-sm ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
+                        Enter search criteria
+                      </span>
+                    </>
+                  )}
+                </div>
+              </div>
 
-                    <div className='space-y-2'>
-                      <div className='flex items-center gap-2'>
-                        <Clock
-                          className={`h-4 w-4 ${isDark ? 'text-gray-500' : 'text-gray-400'}`}
-                        />
-                        <span className='font-mono text-lg'>{getTimeInTimezone(timezone)}</span>
-                      </div>
-
-                      {format === 'detailed' && (
-                        <>
-                          <div className='flex items-center gap-2'>
-                            <MapPin
-                              className={`h-4 w-4 ${isDark ? 'text-gray-500' : 'text-gray-400'}`}
-                            />
-                            <span
-                              className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}
-                            >
-                              {timezone.region} {timezone.country && `• ${timezone.country}`}
-                            </span>
-                          </div>
-
-                          <div className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-                            <span className='font-medium'>{timezone.abbreviation}</span>
-                            {timezone.isDST && (
-                              <span className='ml-2 text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded'>
-                                DST
-                              </span>
-                            )}
-                          </div>
-
-                          <div className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
-                            {timezone.utcOffset} • {timezone.offsetMinutes > 0 ? '+' : ''}
-                            {timezone.offsetMinutes} minutes
-                          </div>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                ))}
+              {/* View Options */}
+              <div
+                className={`p-4 rounded-lg border ${
+                  isDark ? 'bg-slate-700/30 border-slate-600' : 'bg-gray-50 border-gray-200'
+                }`}
+              >
+                <h4
+                  className={`text-sm font-medium mb-3 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}
+                >
+                  View Options
+                </h4>
+                <div className='space-y-3'>
+                  <label className='flex items-center'>
+                    <input
+                      type='radio'
+                      value='detailed'
+                      checked={format === 'detailed'}
+                      onChange={e => setFormat(e.target.value as 'detailed')}
+                      className='mr-3'
+                    />
+                    <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
+                      Detailed View
+                    </span>
+                  </label>
+                  <label className='flex items-center'>
+                    <input
+                      type='radio'
+                      value='simple'
+                      checked={format === 'simple'}
+                      onChange={e => setFormat(e.target.value as 'simple')}
+                      className='mr-3'
+                    />
+                    <span className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
+                      Simple View
+                    </span>
+                  </label>
+                </div>
+                <button
+                  onClick={resetFilters}
+                  className={`mt-4 w-full flex items-center justify-center gap-2 px-4 py-2 text-sm border rounded-lg transition-colors ${isDark ? 'border-slate-600 hover:bg-slate-700 text-white' : 'border-gray-300 hover:bg-gray-50 text-gray-900'}`}
+                >
+                  <Filter className='h-4 w-4' />
+                  Reset Filters
+                </button>
               </div>
             </div>
-          )}
 
-          {/* No Results */}
-          {!loading && timezones.length === 0 && (
-            <div className={`text-center py-8 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
-              <Globe className='h-12 w-12 mx-auto mb-4 text-gray-300' />
-              <p>No timezones found matching your criteria</p>
-              <button onClick={resetFilters} className='mt-2 text-blue-600 hover:text-blue-800'>
-                Reset filters to see all timezones
-              </button>
+            {/* Results */}
+            <div
+              className='lg:col-span-3 space-y-4'
+              role='region'
+              aria-label='Timezone search results'
+            >
+              {/* Error Display */}
+              {error && (
+                <div
+                  className={`flex items-center gap-2 p-4 rounded-lg border ${isDark ? 'bg-red-900/20 border-red-800 text-red-200' : 'bg-red-50 border-red-200 text-red-700'}`}
+                  role='alert'
+                  aria-live='polite'
+                >
+                  <AlertCircle className='h-4 w-4 text-red-500' />
+                  <span className={`text-sm ${isDark ? 'text-red-200' : 'text-red-700'}`}>
+                    {error}
+                  </span>
+                </div>
+              )}
+
+              {/* Loading State */}
+              {loading && (
+                <div className='text-center py-12'>
+                  <Clock
+                    className={`h-8 w-8 animate-spin mx-auto mb-4 ${isDark ? 'text-blue-400' : 'text-blue-600'}`}
+                  />
+                  <p className={`${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                    Loading timezones...
+                  </p>
+                </div>
+              )}
+
+              {/* Timezone List */}
+              {!loading && timezones.length > 0 && (
+                <div className='space-y-4'>
+                  <div className='flex items-center justify-between mb-4'>
+                    <h3
+                      className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}
+                    >
+                      Timezones ({timezones.length} shown)
+                    </h3>
+                    <div className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                      Current UTC time: {currentTime.toUTCString()}
+                    </div>
+                  </div>
+
+                  <div
+                    className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4'
+                    role='list'
+                    aria-label='Timezone list'
+                  >
+                    {timezones.map(timezone => {
+                      const regionColors = getRegionColors(timezone.region);
+                      return (
+                        <div
+                          key={timezone.id}
+                          className={`border rounded-xl p-6 transition-all duration-200 hover:shadow-lg cursor-pointer bg-gradient-to-br ${regionColors.bg} ${regionColors.border} hover:shadow-lg ${
+                            isDark
+                              ? 'shadow-slate-900/20 hover:shadow-slate-900/30'
+                              : 'shadow-gray-900/5 hover:shadow-gray-900/10'
+                          }`}
+                          role='listitem'
+                          aria-label={`${timezone.name} timezone information`}
+                          onClick={() => {
+                            // Copy timezone info to clipboard
+                            const timezoneInfo = `${timezone.city || timezone.name} (${timezone.id})\nCurrent time: ${getTimeInTimezone(timezone)}\nUTC offset: ${timezone.offset}`;
+                            navigator.clipboard.writeText(timezoneInfo);
+                          }}
+                        >
+                          <div className='flex items-start justify-between mb-4'>
+                            <div className='flex items-center gap-3'>
+                              <div className={`p-2 rounded-lg ${regionColors.icon}`}>
+                                <span className='text-lg'>{getRegionIcon(timezone.region)}</span>
+                              </div>
+                              <div>
+                                <h4
+                                  className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}
+                                >
+                                  {timezone.city || timezone.name}
+                                </h4>
+                                <p
+                                  className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}
+                                >
+                                  {timezone.id}
+                                </p>
+                              </div>
+                            </div>
+                            <div
+                              className={`px-2 py-1 rounded-md text-xs font-mono ${
+                                isDark ? 'bg-slate-600 text-gray-300' : 'bg-gray-100 text-gray-700'
+                              }`}
+                            >
+                              {timezone.offset}
+                            </div>
+                          </div>
+
+                          <div className='space-y-3'>
+                            <div
+                              className={`p-3 rounded-lg border ${
+                                isDark
+                                  ? 'bg-slate-600/30 border-slate-500'
+                                  : 'bg-gray-50 border-gray-200'
+                              }`}
+                            >
+                              <div className='flex items-center gap-2 mb-1'>
+                                <Clock className={`h-4 w-4 ${regionColors.accent}`} />
+                                <span
+                                  className={`text-xs font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`}
+                                >
+                                  Current Time
+                                </span>
+                              </div>
+                              <div
+                                className={`font-mono text-xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}
+                              >
+                                {getTimeInTimezone(timezone)}
+                              </div>
+                            </div>
+
+                            {format === 'detailed' && (
+                              <div className='space-y-2'>
+                                <div className='flex items-center gap-2'>
+                                  <MapPin className={`h-4 w-4 ${regionColors.accent}`} />
+                                  <span
+                                    className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}
+                                  >
+                                    {timezone.region} {timezone.country && `• ${timezone.country}`}
+                                  </span>
+                                </div>
+
+                                <div className='flex items-center gap-2'>
+                                  <span
+                                    className={`px-2 py-1 rounded-md text-xs font-medium ${
+                                      isDark
+                                        ? 'bg-purple-500/20 text-purple-300'
+                                        : 'bg-purple-100 text-purple-700'
+                                    }`}
+                                  >
+                                    {timezone.abbreviation}
+                                  </span>
+                                  {timezone.isDST && (
+                                    <span
+                                      className={`px-2 py-1 rounded-md text-xs font-medium ${
+                                        isDark
+                                          ? 'bg-yellow-500/20 text-yellow-300'
+                                          : 'bg-yellow-100 text-yellow-700'
+                                      }`}
+                                    >
+                                      DST Active
+                                    </span>
+                                  )}
+                                </div>
+
+                                <div className='flex items-center gap-2'>
+                                  <span
+                                    className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}
+                                  >
+                                    UTC{timezone.utcOffset} •{' '}
+                                    {timezone.offsetMinutes > 0 ? '+' : ''}
+                                    {timezone.offsetMinutes} minutes
+                                  </span>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* No Results */}
+              {!loading && timezones.length === 0 && (
+                <div
+                  className={`text-center py-12 px-6 rounded-xl border-2 border-dashed transition-all duration-200 ${
+                    isDark ? 'border-slate-600 bg-slate-700/30' : 'border-gray-300 bg-gray-50/50'
+                  }`}
+                >
+                  <div
+                    className={`p-4 rounded-full mx-auto mb-4 w-fit ${
+                      isDark ? 'bg-blue-500/20 text-blue-400' : 'bg-blue-100 text-blue-600'
+                    }`}
+                  >
+                    <Globe className='h-8 w-8' />
+                  </div>
+                  <h3
+                    className={`text-lg font-semibold mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}
+                  >
+                    No Timezones Found
+                  </h3>
+                  <p className={`text-sm mb-4 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                    No timezones found matching your search criteria
+                  </p>
+                  <button
+                    onClick={resetFilters}
+                    className={`px-4 py-2 text-sm rounded-lg transition-colors ${isDark ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'bg-blue-600 hover:bg-blue-700 text-white'}`}
+                  >
+                    Reset Filters
+                  </button>
+                </div>
+              )}
             </div>
-          )}
+          </div>
         </div>
       </main>
 
