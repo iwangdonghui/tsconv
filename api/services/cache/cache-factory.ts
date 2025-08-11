@@ -124,7 +124,12 @@ export class CacheFactory {
     try {
       // Dynamic import to avoid loading Redis dependencies if not needed
       const { RedisCacheService } = require('./redis-cache-service');
-      return new RedisCacheService(config);
+      return new RedisCacheService(config, {
+        url: process.env.REDIS_URL || 'redis://localhost:6379',
+        password: process.env.REDIS_PASSWORD,
+        maxRetries: 3,
+        fallbackToMemory: true,
+      });
     } catch (error) {
       // eslint-disable-next-line no-console
       console.warn('Failed to load Redis cache service:', error);
@@ -139,7 +144,11 @@ export class CacheFactory {
     try {
       // Dynamic import to avoid loading Upstash dependencies if not needed
       const { UpstashCacheService } = require('./upstash-cache-service');
-      return new UpstashCacheService(config);
+      return new UpstashCacheService(config, {
+        url: process.env.UPSTASH_REDIS_REST_URL,
+        token: process.env.UPSTASH_REDIS_REST_TOKEN,
+        fallbackToMemory: true,
+      });
     } catch (error) {
       // eslint-disable-next-line no-console
       console.warn('Failed to load Upstash cache service:', error);
@@ -154,7 +163,17 @@ export class CacheFactory {
     try {
       // Dynamic import to avoid loading hybrid dependencies if not needed
       const { HybridCacheService } = require('./hybrid-cache-service');
-      return new HybridCacheService(config);
+
+      // Determine L2 provider based on environment
+      const l2Provider = process.env.UPSTASH_REDIS_REST_URL ? 'upstash' : 'redis';
+
+      return new HybridCacheService(config, {
+        l2Provider,
+        syncStrategy: 'write-through',
+        l1MaxSize: Math.floor(config.maxSize * 0.1), // 10% for L1
+        l1TTL: Math.min(config.defaultTTL, 300000), // Max 5 minutes for L1
+        promoteThreshold: 3,
+      });
     } catch (error) {
       // eslint-disable-next-line no-console
       console.warn('Failed to load Hybrid cache service:', error);
