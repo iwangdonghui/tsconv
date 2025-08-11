@@ -189,8 +189,16 @@ function getRelativeTime(date: Date): string {
   return `${prefix} ${Math.floor(absDiff / 2592000)} months ${suffix}`.trim();
 }
 
-// Enhanced convert API with caching and rate limiting
-const enhancedConvertHandler = createRateLimitMiddleware()(
+// Enhanced convert API with strategic caching and enhanced rate limiting
+const enhancedConvertHandler = createRateLimitMiddleware({
+  // Enhanced rate limiter will be automatically used
+  ruleSelector: req => ({
+    identifier: '/api/convert',
+    limit: 120, // Will be overridden by strategy-based limits
+    window: 60000, // 1 minute
+    type: 'ip',
+  }),
+})(
   createCacheMiddleware({
     ttl: 5 * 60 * 1000, // 5 minutes
     cacheControlHeader: 'public, max-age=300, stale-while-revalidate=600',

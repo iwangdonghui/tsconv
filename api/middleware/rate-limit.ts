@@ -4,7 +4,7 @@ import { APIResponse, RateLimiter, RateLimitResult, RateLimitRule } from '../typ
 
 // Rate limit middleware options
 export interface RateLimitMiddlewareOptions {
-  rateLimiter: RateLimiter;
+  rateLimiter?: RateLimiter;
   identifierExtractor?: (req: VercelRequest) => string;
   ruleSelector?: (req: VercelRequest) => RateLimitRule;
   skipSuccessfulRequests?: boolean;
@@ -89,6 +89,11 @@ export const rateLimitMiddleware = (options: RateLimitMiddlewareOptions) => {
     onLimitReached,
     customErrorResponse = defaultErrorResponse,
   } = options;
+
+  // Ensure we have a rate limiter
+  if (!rateLimiter) {
+    throw new Error('Rate limiter is required for rate limit middleware');
+  }
 
   return async (
     req: VercelRequest,
@@ -197,14 +202,19 @@ export const rateLimitMiddleware = (options: RateLimitMiddlewareOptions) => {
   };
 };
 
-// Convenience function for creating rate limit middleware with default rate limiter
+// Convenience function for creating rate limit middleware with enhanced rate limiter
 export const createRateLimitMiddleware = (options?: Partial<RateLimitMiddlewareOptions>) => {
-  // Import rate limiter dynamically to avoid circular dependencies
+  // Use enhanced rate limiter by default
   const getRateLimiter = async (): Promise<RateLimiter> => {
     try {
-      const { RateLimiterFactory } = await import('../services/rate-limiter-factory');
-      return RateLimiterFactory.create();
-    } catch {
+      // Use enhanced rate limiter if not provided in options
+      if (options?.rateLimiter) {
+        return options.rateLimiter;
+      }
+
+      return await getEnhancedRateLimiter();
+    } catch (error) {
+      console.warn('Failed to get enhanced rate limiter, falling back to memory:', error);
       // Fallback to memory rate limiter
       const { MemoryRateLimiter } = await import('../services/rate-limiter');
       return new MemoryRateLimiter({

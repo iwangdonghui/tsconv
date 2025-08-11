@@ -4,48 +4,41 @@
  */
 
 import { BaseCacheService } from './base-cache-service';
-import { 
-  CacheConfiguration, 
-  CacheSetOptions, 
-  CacheGetOptions, 
-  CacheHealthCheck,
+import { HybridCacheConfig, SyncQueueItem } from './hybrid-cache-types';
+import {
   CacheBatchOperation,
-  ICacheService
+  CacheConfiguration,
+  CacheGetOptions,
+  CacheHealthCheck,
+  CacheSetOptions,
+  ICacheService,
 } from './interfaces';
-
-interface HybridCacheConfig {
-  l1Config: Partial<CacheConfiguration>;
-  l2Provider: 'redis' | 'upstash';
-  l2Config?: unknown;
-  syncStrategy: 'write-through' | 'write-back' | 'write-around';
-  l1MaxSize: number;
-  l1TTL: number;
-  promoteThreshold: number; // Number of hits before promoting to L1
-}
+import { RedisCacheService } from './redis-cache-service';
+import { UpstashCacheService } from './upstash-cache-service';
 
 export class HybridCacheService extends BaseCacheService {
-  private l1Cache: ICacheService; // Memory cache
-  private l2Cache: ICacheService; // Redis/Upstash cache
+  private l1Cache!: ICacheService; // Memory cache
+  private l2Cache!: ICacheService; // Redis/Upstash cache
   private hybridConfig: HybridCacheConfig;
   private accessCounts = new Map<string, number>();
-  private syncQueue = new Map<string, { value: any; options: CacheSetOptions; timestamp: number }>();
+  private syncQueue = new Map<string, SyncQueueItem>();
   private syncInterval: ReturnType<typeof setInterval> | null = null;
 
   constructor(config: CacheConfiguration, hybridConfig?: Partial<HybridCacheConfig>) {
     super(config);
-    
+
     this.hybridConfig = {
       l1Config: {
         ...config,
         maxSize: hybridConfig?.l1MaxSize || Math.floor(config.maxSize * 0.1), // 10% of total for L1
-        defaultTTL: hybridConfig?.l1TTL || Math.min(config.defaultTTL, 300000) // Max 5 minutes for L1
+        defaultTTL: hybridConfig?.l1TTL || Math.min(config.defaultTTL, 300000), // Max 5 minutes for L1
       },
       l2Provider: hybridConfig?.l2Provider || 'redis',
       l2Config: hybridConfig?.l2Config,
       syncStrategy: hybridConfig?.syncStrategy || 'write-through',
       l1MaxSize: hybridConfig?.l1MaxSize || Math.floor(config.maxSize * 0.1),
       l1TTL: hybridConfig?.l1TTL || Math.min(config.defaultTTL, 300000),
-      promoteThreshold: hybridConfig?.promoteThreshold || 3
+      promoteThreshold: hybridConfig?.promoteThreshold || 3,
     };
 
     this.initialize();
@@ -59,10 +52,8 @@ export class HybridCacheService extends BaseCacheService {
 
       // Initialize L2 cache (Redis/Upstash)
       if (this.hybridConfig.l2Provider === 'redis') {
-        const { RedisCacheService } = await import('./redis-cache-service');
         this.l2Cache = new RedisCacheService(this.config, this.hybridConfig.l2Config);
       } else {
-        const { UpstashCacheService } = await import('./upstash-cache-service');
         this.l2Cache = new UpstashCacheService(this.config, this.hybridConfig.l2Config);
       }
 
@@ -71,9 +62,10 @@ export class HybridCacheService extends BaseCacheService {
         this.startSyncProcess();
       }
 
+      // eslint-disable-next-line no-console
       console.log(`✅ Hybrid cache initialized: L1(Memory) + L2(${this.hybridConfig.l2Provider})`);
-      
     } catch (error) {
+      // eslint-disable-next-line no-console
       console.error('Failed to initialize hybrid cache:', error);
       throw error;
     }
@@ -89,7 +81,7 @@ export class HybridCacheService extends BaseCacheService {
           type: 'hit',
           key,
           timestamp: Date.now(),
-          metadata: { level: 'L1' }
+          metadata: { level: 'L1' },
         });
         return l1Value;
       }
@@ -102,12 +94,12 @@ export class HybridCacheService extends BaseCacheService {
           type: 'hit',
           key,
           timestamp: Date.now(),
-          metadata: { level: 'L2' }
+          metadata: { level: 'L2' },
         });
 
         // Track access for potential promotion to L1
         this.trackAccess(key);
-        
+
         // Promote to L1 if accessed frequently
         if (this.shouldPromoteToL1(key)) {
           await this.promoteToL1(key, l2Value);
@@ -120,17 +112,16 @@ export class HybridCacheService extends BaseCacheService {
       this.emitEvent({
         type: 'miss',
         key,
-        timestamp: Date.now()
+        timestamp: Date.now(),
       });
 
       return null;
-
     } catch (error) {
       this.emitEvent({
         type: 'error',
         key,
         timestamp: Date.now(),
-        error: error as Error
+        error: error as Error,
       });
       return null;
     }
@@ -144,14 +135,20 @@ export class HybridCacheService extends BaseCacheService {
         case 'write-through':
           // Write to both L1 and L2 synchronously
           await Promise.all([
-            this.l1Cache.set(key, value, { ...options, ttl: Math.min(ttl, this.hybridConfig.l1TTL) }),
-            this.l2Cache.set(key, value, options)
+            this.l1Cache.set(key, value, {
+              ...options,
+              ttl: Math.min(ttl, this.hybridConfig.l1TTL),
+            }),
+            this.l2Cache.set(key, value, options),
           ]);
           break;
 
         case 'write-back':
           // Write to L1 immediately, queue for L2
-          await this.l1Cache.set(key, value, { ...options, ttl: Math.min(ttl, this.hybridConfig.l1TTL) });
+          await this.l1Cache.set(key, value, {
+            ...options,
+            ttl: Math.min(ttl, this.hybridConfig.l1TTL),
+          });
           this.queueForL2Sync(key, value, options);
           break;
 
@@ -166,15 +163,14 @@ export class HybridCacheService extends BaseCacheService {
         type: 'set',
         key,
         timestamp: Date.now(),
-        metadata: { strategy: this.hybridConfig.syncStrategy, ttl }
+        metadata: { strategy: this.hybridConfig.syncStrategy, ttl },
       });
-
     } catch (error) {
       this.emitEvent({
         type: 'error',
         key,
         timestamp: Date.now(),
-        error: error as Error
+        error: error as Error,
       });
       throw error;
     }
@@ -185,7 +181,7 @@ export class HybridCacheService extends BaseCacheService {
       // Delete from both levels
       const [l1Deleted, l2Deleted] = await Promise.all([
         this.l1Cache.delete(key),
-        this.l2Cache.delete(key)
+        this.l2Cache.delete(key),
       ]);
 
       // Remove from sync queue if present
@@ -193,48 +189,39 @@ export class HybridCacheService extends BaseCacheService {
       this.accessCounts.delete(key);
 
       const deleted = l1Deleted || l2Deleted;
-      
+
       if (deleted) {
         this.updateStats('delete');
         this.emitEvent({
           type: 'delete',
           key,
-          timestamp: Date.now()
+          timestamp: Date.now(),
         });
       }
 
       return deleted;
-
     } catch (error) {
       this.emitEvent({
         type: 'error',
         key,
         timestamp: Date.now(),
-        error: error as Error
+        error: error as Error,
       });
       return false;
     }
   }
 
   async exists(key: string): Promise<boolean> {
-    try {
-      // Check L1 first, then L2
-      const l1Exists = await this.l1Cache.exists(key);
-      if (l1Exists) return true;
+    // Check L1 first, then L2
+    const l1Exists = await this.l1Cache.exists(key);
+    if (l1Exists) return true;
 
-      return await this.l2Cache.exists(key);
-
-    } catch (error) {
-      return false;
-    }
+    return await this.l2Cache.exists(key);
   }
 
   async clear(pattern?: string): Promise<void> {
     try {
-      await Promise.all([
-        this.l1Cache.clear(pattern),
-        this.l2Cache.clear(pattern)
-      ]);
+      await Promise.all([this.l1Cache.clear(pattern), this.l2Cache.clear(pattern)]);
 
       // Clear internal tracking
       if (pattern) {
@@ -253,9 +240,8 @@ export class HybridCacheService extends BaseCacheService {
       this.emitEvent({
         type: 'clear',
         timestamp: Date.now(),
-        metadata: { pattern }
+        metadata: { pattern },
       });
-
     } catch (error) {
       throw error;
     }
@@ -266,11 +252,10 @@ export class HybridCacheService extends BaseCacheService {
       // Combine keys from both levels, deduplicate
       const [l1Keys, l2Keys] = await Promise.all([
         this.l1Cache.keys(pattern),
-        this.l2Cache.keys(pattern)
+        this.l2Cache.keys(pattern),
       ]);
 
       return Array.from(new Set([...l1Keys, ...l2Keys]));
-
     } catch (error) {
       return [];
     }
@@ -291,11 +276,11 @@ export class HybridCacheService extends BaseCacheService {
 
   async healthCheck(): Promise<CacheHealthCheck> {
     const startTime = Date.now();
-    
+
     try {
       const [l1Health, l2Health] = await Promise.all([
         this.l1Cache.healthCheck(),
-        this.l2Cache.healthCheck()
+        this.l2Cache.healthCheck(),
       ]);
 
       const responseTime = Date.now() - startTime;
@@ -319,16 +304,15 @@ export class HybridCacheService extends BaseCacheService {
         responseTime,
         lastCheck: Date.now(),
         connectionStatus: status === 'unhealthy' ? 'disconnected' : 'connected',
-        error
+        error,
       };
-
     } catch (error) {
       return {
         status: 'unhealthy',
         responseTime: Date.now() - startTime,
         lastCheck: Date.now(),
         connectionStatus: 'disconnected',
-        error: (error as Error).message
+        error: (error as Error).message,
       };
     }
   }
@@ -343,7 +327,7 @@ export class HybridCacheService extends BaseCacheService {
 
       // Identify missing keys
       l1Results.forEach((result, index) => {
-        if (result === null) {
+        if (result === null && keys[index]) {
           missingKeys.push(keys[index]);
           missingIndices.push(index);
         }
@@ -352,62 +336,69 @@ export class HybridCacheService extends BaseCacheService {
       // Get missing keys from L2
       if (missingKeys.length > 0) {
         const l2Results = await this.l2Cache.mget<T>(missingKeys);
-        
+
         // Merge results and track access for promotion
         l2Results.forEach((result, i) => {
           const originalIndex = missingIndices[i];
           const key = missingKeys[i];
-          
-          l1Results[originalIndex] = result;
-          
-          if (result !== null) {
-            this.trackAccess(key);
-            if (this.shouldPromoteToL1(key)) {
-              // Async promotion, don't wait
-              this.promoteToL1(key, result).catch(console.warn);
+
+          if (originalIndex !== undefined && key !== undefined) {
+            l1Results[originalIndex] = result;
+
+            if (result !== null) {
+              this.trackAccess(key);
+              if (this.shouldPromoteToL1(key)) {
+                // Async promotion, don't wait
+                // eslint-disable-next-line no-console
+                this.promoteToL1(key, result).catch(console.warn);
+              }
             }
           }
         });
       }
 
       return l1Results;
-
     } catch (error) {
       return keys.map(() => null);
     }
   }
 
   override async mset(operations: CacheBatchOperation[]): Promise<void> {
-    try {
-      switch (this.hybridConfig.syncStrategy) {
-        case 'write-through':
-          await Promise.all([
-            this.l1Cache.mset(operations.map(op => ({
+    switch (this.hybridConfig.syncStrategy) {
+      case 'write-through':
+        await Promise.all([
+          this.l1Cache.mset(
+            operations.map(op => ({
               ...op,
-              options: { ...op.options, ttl: Math.min(op.ttl || this.config.defaultTTL, this.hybridConfig.l1TTL) }
-            }))),
-            this.l2Cache.mset(operations)
-          ]);
-          break;
+              options: {
+                ...op.options,
+                ttl: Math.min(op.ttl || this.config.defaultTTL, this.hybridConfig.l1TTL),
+              },
+            }))
+          ),
+          this.l2Cache.mset(operations),
+        ]);
+        break;
 
-        case 'write-back':
-          await this.l1Cache.mset(operations.map(op => ({
+      case 'write-back':
+        await this.l1Cache.mset(
+          operations.map(op => ({
             ...op,
-            options: { ...op.options, ttl: Math.min(op.ttl || this.config.defaultTTL, this.hybridConfig.l1TTL) }
-          })));
-          
-          operations.forEach(op => {
-            this.queueForL2Sync(op.key, op.value, op.options || {});
-          });
-          break;
+            options: {
+              ...op.options,
+              ttl: Math.min(op.ttl || this.config.defaultTTL, this.hybridConfig.l1TTL),
+            },
+          }))
+        );
 
-        case 'write-around':
-          await this.l2Cache.mset(operations);
-          break;
-      }
+        operations.forEach(op => {
+          this.queueForL2Sync(op.key, op.value, op.options || {});
+        });
+        break;
 
-    } catch (error) {
-      throw error;
+      case 'write-around':
+        await this.l2Cache.mset(operations);
+        break;
     }
   }
 
@@ -415,7 +406,7 @@ export class HybridCacheService extends BaseCacheService {
     try {
       const [l1Count, l2Count] = await Promise.all([
         this.l1Cache.mdelete(keys),
-        this.l2Cache.mdelete(keys)
+        this.l2Cache.mdelete(keys),
       ]);
 
       // Clean up tracking
@@ -425,7 +416,6 @@ export class HybridCacheService extends BaseCacheService {
       });
 
       return Math.max(l1Count, l2Count);
-
     } catch (error) {
       return 0;
     }
@@ -445,17 +435,17 @@ export class HybridCacheService extends BaseCacheService {
   private async promoteToL1<T>(key: string, value: T): Promise<void> {
     try {
       await this.l1Cache.set(key, value, {
-        ttl: this.hybridConfig.l1TTL
+        ttl: this.hybridConfig.l1TTL,
       });
-      
+
       this.emitEvent({
         type: 'set',
         key,
         timestamp: Date.now(),
-        metadata: { promoted: true, level: 'L1' }
+        metadata: { promoted: true, level: 'L1' },
       });
-      
     } catch (error) {
+      // eslint-disable-next-line no-console
       console.warn('Failed to promote key to L1:', key, error);
     }
   }
@@ -464,7 +454,7 @@ export class HybridCacheService extends BaseCacheService {
     this.syncQueue.set(key, {
       value,
       options,
-      timestamp: Date.now()
+      timestamp: Date.now(),
     });
   }
 
@@ -482,7 +472,8 @@ export class HybridCacheService extends BaseCacheService {
 
     for (const [key, { value, options, timestamp }] of Array.from(this.syncQueue.entries())) {
       // Skip if too old (prevent stale writes)
-      if (Date.now() - timestamp > 60000) { // 1 minute max age
+      if (Date.now() - timestamp > 60000) {
+        // 1 minute max age
         keysToRemove.push(key);
         continue;
       }
@@ -496,6 +487,7 @@ export class HybridCacheService extends BaseCacheService {
         await this.l2Cache.mset(operations);
         keysToRemove.forEach(key => this.syncQueue.delete(key));
       } catch (error) {
+        // eslint-disable-next-line no-console
         console.warn('Failed to sync to L2 cache:', error);
       }
     }
@@ -517,7 +509,7 @@ export class HybridCacheService extends BaseCacheService {
     if ('destroy' in this.l1Cache && typeof this.l1Cache.destroy === 'function') {
       await this.l1Cache.destroy();
     }
-    
+
     if ('destroy' in this.l2Cache && typeof this.l2Cache.destroy === 'function') {
       await this.l2Cache.destroy();
     }
