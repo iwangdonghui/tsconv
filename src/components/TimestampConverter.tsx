@@ -160,6 +160,7 @@ export default function TimestampConverter() {
     if (historyPanelRef.current && isTouchDevice) {
       return attachGestures(historyPanelRef.current);
     }
+    return undefined;
   }, [attachGestures, isTouchDevice]);
 
   // 初始化
