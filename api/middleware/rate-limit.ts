@@ -1,5 +1,6 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
 import config from '../config/config';
+import { getEnhancedRateLimiter } from '../services/rate-limit/rate-limit-config-init';
 import { APIResponse, RateLimiter, RateLimitResult, RateLimitRule } from '../types/api';
 
 // Rate limit middleware options

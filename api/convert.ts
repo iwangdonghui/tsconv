@@ -72,7 +72,8 @@ async function convertHandler(req: VercelRequest, res: VercelResponse) {
     if (cachedResult) {
       const builder = new ResponseBuilder()
         .setData(cachedResult)
-        .setMetadata({ cached: true, cacheKey });
+        .addMetadata('cached', true)
+        .addMetadata('cacheKey', cacheKey);
       builder.send(res);
       return;
     }
@@ -86,7 +87,10 @@ async function convertHandler(req: VercelRequest, res: VercelResponse) {
       priority: 'high',
     });
 
-    const builder = new ResponseBuilder().setData(result).setMetadata({ cached: false, cacheKey });
+    const builder = new ResponseBuilder()
+      .setData(result)
+      .addMetadata('cached', false)
+      .addMetadata('cacheKey', cacheKey);
     builder.send(res);
   } catch (error) {
     console.error('API Error:', error);

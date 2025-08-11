@@ -3,9 +3,17 @@
  * Applies cache strategies to actual cache operations with intelligent routing
  */
 
-import { ICacheService, CacheableRequest, CacheSetOptions, CacheGetOptions } from './interfaces';
-import { CacheStrategyManager, CacheStrategyType } from './cache-strategy-config';
 import { getCacheService } from './cache-factory';
+import { CacheStrategyManager, CacheStrategyType } from './cache-strategy-config';
+import {
+  CacheableRequest,
+  CacheGetOptions,
+  CacheHealthCheck,
+  CacheKeyOptions,
+  CacheSetOptions,
+  CacheStats,
+  ICacheService,
+} from './interfaces';
 
 export interface CacheOperationContext {
   endpoint: string;
@@ -35,9 +43,11 @@ export class StrategicCacheService implements ICacheService {
   private cacheServices = new Map<string, ICacheService>();
   private metrics = new Map<string, CacheMetrics>();
   private metricsUpdateInterval: ReturnType<typeof setInterval> | null = null;
+  private startTime: number;
 
   constructor(strategyManager?: CacheStrategyManager) {
     this.strategyManager = strategyManager || new CacheStrategyManager();
+    this.startTime = Date.now();
     this.startMetricsCollection();
   }
 
@@ -47,23 +57,22 @@ export class StrategicCacheService implements ICacheService {
   async get<T>(key: string, options?: CacheGetOptions): Promise<T | null> {
     const context = this.extractContextFromKey(key);
     const startTime = Date.now();
-    
+
     try {
       const cacheService = this.getCacheServiceForContext(context);
       const result = await cacheService.get<T>(key, options);
-      
+
       // Update metrics
       this.updateMetrics(context.endpoint, {
         type: result !== null ? 'hit' : 'miss',
-        latency: Date.now() - startTime
+        latency: Date.now() - startTime,
       });
-      
+
       return result;
-      
     } catch (error) {
       this.updateMetrics(context.endpoint, {
         type: 'error',
-        latency: Date.now() - startTime
+        latency: Date.now() - startTime,
       });
       throw error;
     }
@@ -75,32 +84,31 @@ export class StrategicCacheService implements ICacheService {
   async set<T>(key: string, value: T, options?: CacheSetOptions): Promise<void> {
     const context = this.extractContextFromKey(key);
     const startTime = Date.now();
-    
+
     try {
       const cacheService = this.getCacheServiceForContext(context);
       const config = this.strategyManager.getEndpointConfig(context.endpoint);
-      
+
       // Apply strategy-specific options
       const strategicOptions: CacheSetOptions = {
         ...options,
         ttl: options?.ttl || config.defaultTTL,
         compress: options?.compress ?? config.compressionEnabled,
         tags: [...(options?.tags || []), ...(context.tags || [])],
-        priority: context.priority || 'normal'
+        priority: context.priority || 'normal',
       };
-      
+
       await cacheService.set(key, value, strategicOptions);
-      
+
       // Update metrics
       this.updateMetrics(context.endpoint, {
         type: 'set',
-        latency: Date.now() - startTime
+        latency: Date.now() - startTime,
       });
-      
     } catch (error) {
       this.updateMetrics(context.endpoint, {
         type: 'error',
-        latency: Date.now() - startTime
+        latency: Date.now() - startTime,
       });
       throw error;
     }
@@ -139,12 +147,12 @@ export class StrategicCacheService implements ICacheService {
    */
   async keys(pattern?: string): Promise<string[]> {
     const allKeys: string[] = [];
-    
+
     for (const cacheService of this.cacheServices.values()) {
       const keys = await cacheService.keys(pattern);
       allKeys.push(...keys);
     }
-    
+
     // Remove duplicates
     return [...new Set(allKeys)];
   }
@@ -154,11 +162,11 @@ export class StrategicCacheService implements ICacheService {
    */
   async size(): Promise<number> {
     let totalSize = 0;
-    
+
     for (const cacheService of this.cacheServices.values()) {
       totalSize += await cacheService.size();
     }
-    
+
     return totalSize;
   }
 
@@ -178,55 +186,57 @@ export class StrategicCacheService implements ICacheService {
     // Group keys by cache service
     const keyGroups = new Map<ICacheService, string[]>();
     const keyIndexMap = new Map<string, number>();
-    
+
     keys.forEach((key, index) => {
       keyIndexMap.set(key, index);
       const context = this.extractContextFromKey(key);
       const cacheService = this.getCacheServiceForContext(context);
-      
+
       if (!keyGroups.has(cacheService)) {
         keyGroups.set(cacheService, []);
       }
       keyGroups.get(cacheService)!.push(key);
     });
-    
+
     // Execute batch operations
     const results: (T | null)[] = new Array(keys.length).fill(null);
-    
+
     for (const [cacheService, serviceKeys] of keyGroups.entries()) {
       const serviceResults = await cacheService.mget<T>(serviceKeys);
-      
+
       serviceKeys.forEach((key, serviceIndex) => {
         const originalIndex = keyIndexMap.get(key)!;
         results[originalIndex] = serviceResults[serviceIndex];
       });
     }
-    
+
     return results;
   }
 
   /**
    * Batch set operations
    */
-  async mset(operations: Array<{ key: string; value: unknown; ttl?: number; options?: CacheSetOptions }>): Promise<void> {
+  async mset(
+    operations: Array<{ key: string; value: unknown; ttl?: number; options?: CacheSetOptions }>
+  ): Promise<void> {
     // Group operations by cache service
     const operationGroups = new Map<ICacheService, typeof operations>();
-    
+
     for (const operation of operations) {
       const context = this.extractContextFromKey(operation.key);
       const cacheService = this.getCacheServiceForContext(context);
-      
+
       if (!operationGroups.has(cacheService)) {
         operationGroups.set(cacheService, []);
       }
       operationGroups.get(cacheService)!.push(operation);
     }
-    
+
     // Execute batch operations
     const promises = Array.from(operationGroups.entries()).map(([cacheService, ops]) =>
       cacheService.mset(ops)
     );
-    
+
     await Promise.all(promises);
   }
 
@@ -236,46 +246,49 @@ export class StrategicCacheService implements ICacheService {
   async mdelete(keys: string[]): Promise<number> {
     // Group keys by cache service
     const keyGroups = new Map<ICacheService, string[]>();
-    
+
     keys.forEach(key => {
       const context = this.extractContextFromKey(key);
       const cacheService = this.getCacheServiceForContext(context);
-      
+
       if (!keyGroups.has(cacheService)) {
         keyGroups.set(cacheService, []);
       }
       keyGroups.get(cacheService)!.push(key);
     });
-    
+
     // Execute batch operations
     let totalDeleted = 0;
-    
+
     for (const [cacheService, serviceKeys] of keyGroups.entries()) {
       totalDeleted += await cacheService.mdelete(serviceKeys);
     }
-    
+
     return totalDeleted;
   }
 
   /**
    * Generate cache key with strategy context
    */
-  generateKey(request: CacheableRequest, options?: { includeStrategy?: boolean }): string {
+  generateKey(
+    request: CacheableRequest,
+    options?: CacheKeyOptions & { includeStrategy?: boolean }
+  ): string {
     const context: CacheOperationContext = {
       endpoint: request.endpoint,
       userId: request.userId,
-      sessionId: request.sessionId
+      sessionId: request.sessionId,
     };
-    
+
     const cacheService = this.getCacheServiceForContext(context);
     let key = cacheService.generateKey(request);
-    
+
     // Include strategy information in key if requested
     if (options?.includeStrategy) {
       const strategy = this.getStrategyForEndpoint(context.endpoint);
       key = `${strategy}:${key}`;
     }
-    
+
     return key;
   }
 
@@ -300,64 +313,88 @@ export class StrategicCacheService implements ICacheService {
   /**
    * Get cache statistics
    */
-  async stats(): Promise<Record<string, unknown>> {
-    const stats: Record<string, unknown> = {
-      strategies: {},
-      performance: this.strategyManager.getPerformanceSummary(),
-      services: {}
-    };
-    
-    // Get stats from each cache service
+  async stats(): Promise<CacheStats> {
+    let totalHits = 0;
+    let totalMisses = 0;
+    let totalSets = 0;
+    let totalDeletes = 0;
+    let totalSize = 0;
+    const allKeys: string[] = [];
+
+    // Aggregate stats from all cache services
     for (const [key, cacheService] of this.cacheServices.entries()) {
       try {
-        stats.services = { ...stats.services, [key]: await cacheService.stats() };
+        const serviceStats = await cacheService.stats();
+        totalHits += serviceStats.hits;
+        totalMisses += serviceStats.misses;
+        totalSets += serviceStats.sets;
+        totalDeletes += serviceStats.deletes;
+        totalSize += serviceStats.size;
+        allKeys.push(...serviceStats.keys);
       } catch (error) {
-        stats.services = { ...stats.services, [key]: { error: (error as Error).message } };
+        console.warn(`Failed to get stats from cache service ${key}:`, error);
       }
     }
-    
-    // Get endpoint metrics
-    stats.endpoints = Object.fromEntries(this.metrics.entries());
-    
-    return stats;
+
+    const hitRatio = totalHits + totalMisses > 0 ? totalHits / (totalHits + totalMisses) : 0;
+
+    return {
+      hits: totalHits,
+      misses: totalMisses,
+      sets: totalSets,
+      deletes: totalDeletes,
+      size: totalSize,
+      keys: allKeys,
+      hitRatio,
+      uptime: Date.now() - this.startTime,
+    };
   }
 
   /**
    * Health check across all cache services
    */
-  async healthCheck(): Promise<Record<string, unknown>> {
-    const health: Record<string, unknown> = {
-      overall: 'healthy',
-      services: {},
-      strategy: this.strategyManager.getGlobalStrategy()
-    };
-    
+  async healthCheck(): Promise<CacheHealthCheck> {
+    const startTime = Date.now();
     let healthyServices = 0;
     let totalServices = 0;
-    
+    let lastError: string | undefined;
+
     for (const [key, cacheService] of this.cacheServices.entries()) {
       try {
         const serviceHealth = await cacheService.healthCheck();
-        health.services = { ...health.services, [key]: serviceHealth };
-        
         totalServices++;
         if (serviceHealth.status === 'healthy') {
           healthyServices++;
         }
       } catch (error) {
-        health.services = { ...health.services, [key]: { status: 'unhealthy', error: (error as Error).message } };
         totalServices++;
+        lastError = (error as Error).message;
       }
     }
-    
-    // Determine overall health
+
+    const responseTime = Date.now() - startTime;
+    let status: 'healthy' | 'degraded' | 'unhealthy';
+
     if (healthyServices === 0) {
-      health.overall = 'unhealthy';
+      status = 'unhealthy';
     } else if (healthyServices < totalServices) {
-      health.overall = 'degraded';
+      status = 'degraded';
+    } else {
+      status = 'healthy';
     }
-    
-    return health;
+
+    return {
+      status,
+      responseTime,
+      lastCheck: Date.now(),
+      error: lastError,
+      connectionStatus:
+        status === 'healthy'
+          ? 'connected'
+          : status === 'degraded'
+            ? 'reconnecting'
+            : 'disconnected',
+    };
   }
 
   /**
@@ -365,22 +402,22 @@ export class StrategicCacheService implements ICacheService {
    */
   async getByTag(tag: string): Promise<string[]> {
     const allKeys: string[] = [];
-    
+
     for (const cacheService of this.cacheServices.values()) {
       const keys = await cacheService.getByTag(tag);
       allKeys.push(...keys);
     }
-    
+
     return [...new Set(allKeys)];
   }
 
   async deleteByTag(tag: string): Promise<number> {
     let totalDeleted = 0;
-    
+
     for (const cacheService of this.cacheServices.values()) {
       totalDeleted += await cacheService.deleteByTag(tag);
     }
-    
+
     return totalDeleted;
   }
 
@@ -421,13 +458,13 @@ export class StrategicCacheService implements ICacheService {
   // Private helper methods
   private getCacheServiceForContext(context: CacheOperationContext): ICacheService {
     const serviceKey = this.getServiceKeyForEndpoint(context.endpoint);
-    
+
     if (!this.cacheServices.has(serviceKey)) {
       const config = this.strategyManager.getEndpointConfig(context.endpoint);
       const cacheService = getCacheService({ customConfig: config });
       this.cacheServices.set(serviceKey, cacheService);
     }
-    
+
     return this.cacheServices.get(serviceKey)!;
   }
 
@@ -447,17 +484,20 @@ export class StrategicCacheService implements ICacheService {
     // Assuming key format: "prefix:endpoint:hash" or similar
     const parts = key.split(':');
     const endpoint = parts.length > 1 ? parts[1] : 'default';
-    
+
     return {
       endpoint,
-      priority: 'normal'
+      priority: 'normal',
     };
   }
 
-  private updateMetrics(endpoint: string, operation: {
-    type: 'hit' | 'miss' | 'set' | 'error';
-    latency: number;
-  }): void {
+  private updateMetrics(
+    endpoint: string,
+    operation: {
+      type: 'hit' | 'miss' | 'set' | 'error';
+      latency: number;
+    }
+  ): void {
     if (!this.metrics.has(endpoint)) {
       this.metrics.set(endpoint, {
         hits: 0,
@@ -466,12 +506,12 @@ export class StrategicCacheService implements ICacheService {
         errors: 0,
         totalLatency: 0,
         operationCount: 0,
-        lastReset: Date.now()
+        lastReset: Date.now(),
       });
     }
-    
+
     const metrics = this.metrics.get(endpoint)!;
-    
+
     switch (operation.type) {
       case 'hit':
         metrics.hits++;
@@ -486,7 +526,7 @@ export class StrategicCacheService implements ICacheService {
         metrics.errors++;
         break;
     }
-    
+
     metrics.totalLatency += operation.latency;
     metrics.operationCount++;
   }
@@ -503,11 +543,11 @@ export class StrategicCacheService implements ICacheService {
         const hitRate = metrics.hits / (metrics.hits + metrics.misses || 1);
         const avgLatency = metrics.totalLatency / metrics.operationCount;
         const errorRate = metrics.errors / metrics.operationCount;
-        
+
         this.strategyManager.updatePerformanceMetrics(endpoint, {
           hitRate,
           memoryUsage: 0, // Would need to calculate actual memory usage
-          latency: avgLatency
+          latency: avgLatency,
         });
       }
     }
@@ -521,14 +561,14 @@ export class StrategicCacheService implements ICacheService {
       clearInterval(this.metricsUpdateInterval);
       this.metricsUpdateInterval = null;
     }
-    
+
     // Cleanup cache services
     for (const cacheService of this.cacheServices.values()) {
       if ('destroy' in cacheService && typeof cacheService.destroy === 'function') {
         await cacheService.destroy();
       }
     }
-    
+
     this.cacheServices.clear();
     this.metrics.clear();
   }
