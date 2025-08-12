@@ -6,11 +6,11 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
 import { createCacheMiddleware } from './middleware/cache';
 import { createRateLimitMiddleware } from './middleware/rate-limit';
-import { createSecurityMiddleware } from './services/security/unified-security-middleware';
 import { createUnifiedErrorMiddleware } from './services/error-handling/unified-error-middleware';
 import { EnhancedFormatEngine } from './services/format-engine/enhanced-format-engine';
 import { IntelligentFormatDetector } from './services/format-engine/intelligent-format-detector';
-import { APIErrorHandler, ResponseBuilder, withCors } from './utils/response';
+import { createSecurityMiddleware } from './services/security/unified-security-middleware';
+import { APIErrorHandler, withCors } from './utils/response';
 
 interface EnhancedFormatRequest {
   input: string | number;
@@ -48,21 +48,24 @@ interface EnhancedFormatResponse {
       };
     };
     output: {
-      formats: Record<string, {
-        value: string;
-        format_info: {
-          id: string;
-          name: string;
-          pattern: string;
-          category: string;
-        };
-        metadata: {
-          timezone_used: string;
-          locale_used: string;
-          precision_level: string;
-          formatting_time_ms: number;
-        };
-      }>;
+      formats: Record<
+        string,
+        {
+          value: string;
+          format_info: {
+            id: string;
+            name: string;
+            pattern: string;
+            category: string;
+          };
+          metadata: {
+            timezone_used: string;
+            locale_used: string;
+            precision_level: string;
+            formatting_time_ms: number;
+          };
+        }
+      >;
       alternatives?: Record<string, string[]>;
     };
     conversion: {
@@ -121,37 +124,39 @@ async function enhancedFormatConvertHandler(req: VercelRequest, res: VercelRespo
   }
 
   const startTime = Date.now();
-  const requestId = req.headers['x-request-id'] as string || `fmt-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+  const requestId =
+    (req.headers['x-request-id'] as string) ||
+    `fmt-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
   try {
     // Validate request body
     const formatRequest: EnhancedFormatRequest = req.body;
-    
+
     if (!formatRequest.input) {
       return APIErrorHandler.handleBadRequest(res, 'Input is required', {
         expected: 'string or number',
-        received: typeof formatRequest.input
+        received: typeof formatRequest.input,
       });
     }
 
     if (!formatRequest.outputFormats || !Array.isArray(formatRequest.outputFormats)) {
       return APIErrorHandler.handleBadRequest(res, 'Output formats array is required', {
         expected: 'Array of format strings',
-        received: typeof formatRequest.outputFormats
+        received: typeof formatRequest.outputFormats,
       });
     }
 
     if (formatRequest.outputFormats.length === 0) {
       return APIErrorHandler.handleBadRequest(res, 'At least one output format is required', {
         minFormats: 1,
-        maxFormats: 20
+        maxFormats: 20,
       });
     }
 
     if (formatRequest.outputFormats.length > 20) {
       return APIErrorHandler.handleBadRequest(res, 'Too many output formats requested', {
         maxFormats: 20,
-        receivedFormats: formatRequest.outputFormats.length
+        receivedFormats: formatRequest.outputFormats.length,
       });
     }
 
@@ -163,7 +168,7 @@ async function enhancedFormatConvertHandler(req: VercelRequest, res: VercelRespo
       includeValidation: true,
       strictMode: false,
       fallbackToDefault: true,
-      ...formatRequest.options
+      ...formatRequest.options,
     };
 
     const inputString = formatRequest.input.toString();
@@ -173,17 +178,21 @@ async function enhancedFormatConvertHandler(req: VercelRequest, res: VercelRespo
 
     // Step 1: Format Detection (if auto-detect enabled or no input format specified)
     const detectionStartTime = Date.now();
-    
+
     if (options.autoDetect || !formatRequest.inputFormat) {
       detectionResult = formatDetector.detectFormat(inputString);
-      
+
       if (detectionResult.confidence < 0.3 && options.strictMode) {
-        return APIErrorHandler.handleBadRequest(res, 'Unable to detect input format with sufficient confidence', {
-          detected_format: detectionResult.detected_format,
-          confidence: detectionResult.confidence,
-          suggestions: detectionResult.suggestions,
-          strict_mode: true
-        });
+        return APIErrorHandler.handleBadRequest(
+          res,
+          'Unable to detect input format with sufficient confidence',
+          {
+            detected_format: detectionResult.detected_format,
+            confidence: detectionResult.confidence,
+            suggestions: detectionResult.suggestions,
+            strict_mode: true,
+          }
+        );
       }
     }
 
@@ -191,29 +200,37 @@ async function enhancedFormatConvertHandler(req: VercelRequest, res: VercelRespo
 
     // Step 2: Parse Input
     const parseStartTime = Date.now();
-    
+
     if (detectionResult && detectionResult.confidence > 0.5) {
       // Use detected format
       parseResult = formatEngine.parseInput(inputString);
       if (parseResult.success && parseResult.date) {
         parsedDate = parseResult.date;
       } else {
-        throw new Error(`Failed to parse input using detected format: ${detectionResult.detected_format}`);
+        throw new Error(
+          `Failed to parse input using detected format: ${detectionResult.detected_format}`
+        );
       }
     } else if (formatRequest.inputFormat) {
       // Use specified input format
       const format = formatEngine.getFormat(formatRequest.inputFormat);
       if (!format) {
-        return APIErrorHandler.handleBadRequest(res, `Unsupported input format: ${formatRequest.inputFormat}`, {
-          supported_formats: formatEngine.getSupportedFormats().map(f => f.id)
-        });
+        return APIErrorHandler.handleBadRequest(
+          res,
+          `Unsupported input format: ${formatRequest.inputFormat}`,
+          {
+            supported_formats: formatEngine.getSupportedFormats().map(f => f.id),
+          }
+        );
       }
-      
+
       parseResult = formatEngine.parseInput(inputString);
       if (parseResult.success && parseResult.date) {
         parsedDate = parseResult.date;
       } else {
-        throw new Error(`Failed to parse input using specified format: ${formatRequest.inputFormat}`);
+        throw new Error(
+          `Failed to parse input using specified format: ${formatRequest.inputFormat}`
+        );
       }
     } else {
       // Fallback to standard parsing
@@ -250,9 +267,9 @@ async function enhancedFormatConvertHandler(req: VercelRequest, res: VercelRespo
             id: formatResult.format.id,
             name: formatResult.format.name,
             pattern: formatResult.format.pattern,
-            category: formatResult.format.category
+            category: formatResult.format.category,
           },
-          metadata: formatResult.metadata
+          metadata: formatResult.metadata,
         };
 
         // Check if this was a cache hit (simplified check)
@@ -273,13 +290,15 @@ async function enhancedFormatConvertHandler(req: VercelRequest, res: VercelRespo
         outputFormats[outputFormat] = {
           value: null,
           error: `Failed to format using ${outputFormat}`,
-          format_info: formatResult.format ? {
-            id: formatResult.format.id,
-            name: formatResult.format.name,
-            pattern: formatResult.format.pattern,
-            category: formatResult.format.category
-          } : null,
-          metadata: formatResult.metadata
+          format_info: formatResult.format
+            ? {
+                id: formatResult.format.id,
+                name: formatResult.format.name,
+                pattern: formatResult.format.pattern,
+                category: formatResult.format.category,
+              }
+            : null,
+          metadata: formatResult.metadata,
         };
       }
     }
@@ -287,13 +306,13 @@ async function enhancedFormatConvertHandler(req: VercelRequest, res: VercelRespo
     const formatTime = Date.now() - formatStartTime;
 
     // Step 4: Generate Intelligence Insights
-    const formatSuggestions = this.generateFormatSuggestions(formatRequest.outputFormats, parsedDate);
-    const optimizationTips = this.generateOptimizationTips(detectionResult, parseResult, formatRequest);
-    const relatedFormats = this.findRelatedFormats(formatRequest.outputFormats);
+    const formatSuggestions = generateFormatSuggestions(formatRequest.outputFormats, parsedDate);
+    const optimizationTips = generateOptimizationTips(detectionResult, parseResult, formatRequest);
+    const relatedFormats = findRelatedFormats(formatRequest.outputFormats);
     const ambiguityWarnings = detectionResult?.warnings || [];
 
     // Step 5: Calculate timezone information
-    const timezoneInfo = this.calculateTimezoneInfo(
+    const timezoneInfo = calculateTimezoneInfo(
       formatRequest.timezone,
       formatRequest.targetTimezone,
       parsedDate
@@ -305,22 +324,24 @@ async function enhancedFormatConvertHandler(req: VercelRequest, res: VercelRespo
       data: {
         input: {
           value: formatRequest.input,
-          detected_format: detectionResult ? {
-            id: detectionResult.detected_format,
-            name: detectionResult.detected_format,
-            confidence: detectionResult.confidence,
-            category: 'detected'
-          } : undefined,
+          detected_format: detectionResult
+            ? {
+                id: detectionResult.detected_format,
+                name: detectionResult.detected_format,
+                confidence: detectionResult.confidence,
+                category: 'detected',
+              }
+            : undefined,
           parsed_date: parsedDate.toISOString(),
           validation: {
             is_valid: !isNaN(parsedDate.getTime()),
             warnings: detectionResult?.warnings || [],
-            suggestions: detectionResult?.suggestions || []
-          }
+            suggestions: detectionResult?.suggestions || [],
+          },
         },
         output: {
           formats: outputFormats,
-          alternatives: options.includeAlternatives ? alternatives : undefined
+          alternatives: options.includeAlternatives ? alternatives : undefined,
         },
         conversion: {
           timestamp: Math.floor(parsedDate.getTime() / 1000),
@@ -331,15 +352,15 @@ async function enhancedFormatConvertHandler(req: VercelRequest, res: VercelRespo
             detection_time_ms: detectionTime,
             parsing_time_ms: parseTime,
             formatting_time_ms: formatTime,
-            cache_hits: cacheHits
-          }
+            cache_hits: cacheHits,
+          },
         },
         intelligence: {
           format_suggestions: formatSuggestions,
           optimization_tips: optimizationTips,
           related_formats: relatedFormats,
-          ambiguity_warnings: ambiguityWarnings
-        }
+          ambiguity_warnings: ambiguityWarnings,
+        },
       },
       metadata: {
         api_version: '2.0.0',
@@ -347,8 +368,8 @@ async function enhancedFormatConvertHandler(req: VercelRequest, res: VercelRespo
         cache_hit: cacheHits > 0,
         request_id: requestId,
         supported_formats_count: formatEngine.getSupportedFormats().length,
-        detection_confidence: detectionResult?.confidence || 0
-      }
+        detection_confidence: detectionResult?.confidence || 0,
+      },
     };
 
     // Set response headers
@@ -358,7 +379,6 @@ async function enhancedFormatConvertHandler(req: VercelRequest, res: VercelRespo
     res.setHeader('X-Cache-Hits', cacheHits.toString());
 
     return res.status(200).json(response);
-
   } catch (error) {
     console.error('Enhanced format conversion error:', error);
 
@@ -366,7 +386,7 @@ async function enhancedFormatConvertHandler(req: VercelRequest, res: VercelRespo
       endpoint: 'enhanced-format-convert',
       requestId,
       inputValue: req.body?.input,
-      outputFormats: req.body?.outputFormats
+      outputFormats: req.body?.outputFormats,
     });
   }
 }
@@ -374,20 +394,23 @@ async function enhancedFormatConvertHandler(req: VercelRequest, res: VercelRespo
 /**
  * Generate format suggestions
  */
-function generateFormatSuggestions(outputFormats: string[], date: Date): Array<{
+function generateFormatSuggestions(
+  outputFormats: string[],
+  date: Date
+): Array<{
   format: string;
   reason: string;
   use_case: string;
 }> {
   const suggestions = [];
   const formatEngine = EnhancedFormatEngine.getInstance();
-  
+
   // Suggest ISO format if not already included
   if (!outputFormats.includes('iso8601') && !outputFormats.includes('iso')) {
     suggestions.push({
       format: 'iso8601',
       reason: 'Standard format with timezone information',
-      use_case: 'APIs and data exchange'
+      use_case: 'APIs and data exchange',
     });
   }
 
@@ -396,7 +419,7 @@ function generateFormatSuggestions(outputFormats: string[], date: Date): Array<{
     suggestions.push({
       format: 'unix_seconds',
       reason: 'Widely used in programming and databases',
-      use_case: 'Programming and system timestamps'
+      use_case: 'Programming and system timestamps',
     });
   }
 
@@ -405,7 +428,7 @@ function generateFormatSuggestions(outputFormats: string[], date: Date): Array<{
     suggestions.push({
       format: 'relative_time',
       reason: 'Easy to understand for end users',
-      use_case: 'User interfaces and notifications'
+      use_case: 'User interfaces and notifications',
     });
   }
 
@@ -415,11 +438,17 @@ function generateFormatSuggestions(outputFormats: string[], date: Date): Array<{
 /**
  * Generate optimization tips
  */
-function generateOptimizationTips(detectionResult: any, parseResult: any, request: EnhancedFormatRequest): string[] {
+function generateOptimizationTips(
+  detectionResult: any,
+  parseResult: any,
+  request: EnhancedFormatRequest
+): string[] {
   const tips = [];
 
   if (detectionResult && detectionResult.confidence < 0.7) {
-    tips.push('Consider specifying the input format explicitly for better performance and accuracy');
+    tips.push(
+      'Consider specifying the input format explicitly for better performance and accuracy'
+    );
   }
 
   if (request.outputFormats.length > 10) {
@@ -462,14 +491,18 @@ function findRelatedFormats(outputFormats: string[]): string[] {
 /**
  * Calculate timezone information
  */
-function calculateTimezoneInfo(sourceTimezone?: string, targetTimezone?: string, date?: Date): {
+function calculateTimezoneInfo(
+  sourceTimezone?: string,
+  targetTimezone?: string,
+  date?: Date
+): {
   source: string;
   target: string;
   offset_hours: number;
 } {
   const source = sourceTimezone || 'UTC';
   const target = targetTimezone || sourceTimezone || 'UTC';
-  
+
   // Simplified offset calculation
   let offsetHours = 0;
   if (date && source !== target) {
@@ -485,7 +518,7 @@ function calculateTimezoneInfo(sourceTimezone?: string, targetTimezone?: string,
   return {
     source,
     target,
-    offset_hours: offsetHours
+    offset_hours: offsetHours,
   };
 }
 
@@ -531,11 +564,11 @@ const enhancedFormatHandler = async (req: VercelRequest, res: VercelResponse) =>
           createCacheMiddleware({
             ttl: 15 * 60 * 1000, // 15 minutes
             cacheControlHeader: 'public, max-age=900, stale-while-revalidate=1800',
-            keyGenerator: (req) => {
+            keyGenerator: req => {
               const body = req.body || {};
               const cacheKey = `format:${body.input}:${JSON.stringify(body.outputFormats)}:${body.timezone}:${body.locale}`;
               return Buffer.from(cacheKey).toString('base64').slice(0, 64);
-            }
+            },
           })(async (req: VercelRequest, res: VercelResponse) => {
             try {
               await enhancedFormatConvertHandler(req, res);
