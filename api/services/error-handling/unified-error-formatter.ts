@@ -31,13 +31,16 @@ export interface StandardErrorResponse {
     timestamp: number;
     requestId: string;
     statusCode: number;
-    
+
     // Optional fields based on configuration
     details?: Record<string, unknown>;
     suggestions?: string[];
     helpUrl?: string;
     stack?: string;
     context?: Record<string, unknown>;
+    validationErrors?: Array<{ field: string; message: string; code: string }>;
+    timeoutMs?: number;
+    debug?: Record<string, unknown>;
     recovery?: {
       strategy: string;
       attempted: boolean;
@@ -45,7 +48,7 @@ export interface StandardErrorResponse {
       retryAfter?: number;
     };
   };
-  
+
   metadata: {
     processingTime: number;
     correlationId?: string;
@@ -53,8 +56,11 @@ export interface StandardErrorResponse {
     environment: string;
     locale: LocaleCode;
     format: ResponseFormat;
+    errorId?: string;
+    category?: ErrorCategory;
+    severity?: ErrorSeverity;
   };
-  
+
   // Additional response data for specific error types
   retryAfter?: number;
   rateLimit?: {
@@ -75,7 +81,8 @@ const ERROR_MESSAGES: Record<LocaleCode, Record<string, string>> = {
     authorization_error: 'You do not have permission to access this resource.',
     rate_limit_error: 'Too many requests. Please wait a moment before trying again.',
     timeout_error: 'The request took too long to complete. Please try again.',
-    external_service_error: 'An external service is temporarily unavailable. Please try again later.',
+    external_service_error:
+      'An external service is temporarily unavailable. Please try again later.',
     database_error: 'A database error occurred. Please try again later.',
     cache_error: 'A caching error occurred. The request will proceed without caching.',
     security_error: 'A security issue was detected. Please contact support if this persists.',
@@ -84,7 +91,7 @@ const ERROR_MESSAGES: Record<LocaleCode, Record<string, string>> = {
     business_logic_error: 'A business logic error occurred. Please verify your request.',
     unknown_error: 'An unexpected error occurred. Please try again later.',
   },
-  
+
   zh: {
     validation_error: '请求包含无效数据。请检查您的输入并重试。',
     authentication_error: '身份验证失败。请检查您的凭据。',
@@ -100,57 +107,74 @@ const ERROR_MESSAGES: Record<LocaleCode, Record<string, string>> = {
     business_logic_error: '业务逻辑错误。请验证您的请求。',
     unknown_error: '发生意外错误。请稍后重试。',
   },
-  
+
   es: {
-    validation_error: 'La solicitud contiene datos inválidos. Por favor, verifique su entrada e intente nuevamente.',
+    validation_error:
+      'La solicitud contiene datos inválidos. Por favor, verifique su entrada e intente nuevamente.',
     authentication_error: 'Falló la autenticación. Por favor, verifique sus credenciales.',
     authorization_error: 'No tiene permisos para acceder a este recurso.',
-    rate_limit_error: 'Demasiadas solicitudes. Por favor, espere un momento antes de intentar nuevamente.',
+    rate_limit_error:
+      'Demasiadas solicitudes. Por favor, espere un momento antes de intentar nuevamente.',
     timeout_error: 'La solicitud tardó demasiado en completarse. Por favor, intente nuevamente.',
-    external_service_error: 'Un servicio externo no está disponible temporalmente. Por favor, intente más tarde.',
+    external_service_error:
+      'Un servicio externo no está disponible temporalmente. Por favor, intente más tarde.',
     database_error: 'Ocurrió un error de base de datos. Por favor, intente más tarde.',
     cache_error: 'Ocurrió un error de caché. La solicitud continuará sin caché.',
     security_error: 'Se detectó un problema de seguridad. Contacte soporte si esto persiste.',
     system_error: 'Ocurrió un error del sistema. Por favor, intente más tarde.',
-    network_error: 'Ocurrió un error de red. Por favor, verifique su conexión e intente nuevamente.',
-    business_logic_error: 'Ocurrió un error de lógica de negocio. Por favor, verifique su solicitud.',
+    network_error:
+      'Ocurrió un error de red. Por favor, verifique su conexión e intente nuevamente.',
+    business_logic_error:
+      'Ocurrió un error de lógica de negocio. Por favor, verifique su solicitud.',
     unknown_error: 'Ocurrió un error inesperado. Por favor, intente más tarde.',
   },
-  
+
   fr: {
-    validation_error: 'La demande contient des données invalides. Veuillez vérifier votre saisie et réessayer.',
-    authentication_error: 'Échec de l\'authentification. Veuillez vérifier vos identifiants.',
-    authorization_error: 'Vous n\'avez pas la permission d\'accéder à cette ressource.',
+    validation_error:
+      'La demande contient des données invalides. Veuillez vérifier votre saisie et réessayer.',
+    authentication_error: "Échec de l'authentification. Veuillez vérifier vos identifiants.",
+    authorization_error: "Vous n'avez pas la permission d'accéder à cette ressource.",
     rate_limit_error: 'Trop de demandes. Veuillez attendre un moment avant de réessayer.',
     timeout_error: 'La demande a pris trop de temps à se terminer. Veuillez réessayer.',
-    external_service_error: 'Un service externe est temporairement indisponible. Veuillez réessayer plus tard.',
-    database_error: 'Une erreur de base de données s\'est produite. Veuillez réessayer plus tard.',
-    cache_error: 'Une erreur de cache s\'est produite. La demande continuera sans cache.',
+    external_service_error:
+      'Un service externe est temporairement indisponible. Veuillez réessayer plus tard.',
+    database_error: "Une erreur de base de données s'est produite. Veuillez réessayer plus tard.",
+    cache_error: "Une erreur de cache s'est produite. La demande continuera sans cache.",
     security_error: 'Un problème de sécurité a été détecté. Contactez le support si cela persiste.',
-    system_error: 'Une erreur système s\'est produite. Veuillez réessayer plus tard.',
-    network_error: 'Une erreur réseau s\'est produite. Veuillez vérifier votre connexion et réessayer.',
-    business_logic_error: 'Une erreur de logique métier s\'est produite. Veuillez vérifier votre demande.',
-    unknown_error: 'Une erreur inattendue s\'est produite. Veuillez réessayer plus tard.',
+    system_error: "Une erreur système s'est produite. Veuillez réessayer plus tard.",
+    network_error:
+      "Une erreur réseau s'est produite. Veuillez vérifier votre connexion et réessayer.",
+    business_logic_error:
+      "Une erreur de logique métier s'est produite. Veuillez vérifier votre demande.",
+    unknown_error: "Une erreur inattendue s'est produite. Veuillez réessayer plus tard.",
   },
-  
+
   de: {
-    validation_error: 'Die Anfrage enthält ungültige Daten. Bitte überprüfen Sie Ihre Eingabe und versuchen Sie es erneut.',
-    authentication_error: 'Authentifizierung fehlgeschlagen. Bitte überprüfen Sie Ihre Anmeldedaten.',
+    validation_error:
+      'Die Anfrage enthält ungültige Daten. Bitte überprüfen Sie Ihre Eingabe und versuchen Sie es erneut.',
+    authentication_error:
+      'Authentifizierung fehlgeschlagen. Bitte überprüfen Sie Ihre Anmeldedaten.',
     authorization_error: 'Sie haben keine Berechtigung, auf diese Ressource zuzugreifen.',
-    rate_limit_error: 'Zu viele Anfragen. Bitte warten Sie einen Moment, bevor Sie es erneut versuchen.',
+    rate_limit_error:
+      'Zu viele Anfragen. Bitte warten Sie einen Moment, bevor Sie es erneut versuchen.',
     timeout_error: 'Die Anfrage dauerte zu lange. Bitte versuchen Sie es erneut.',
-    external_service_error: 'Ein externer Service ist vorübergehend nicht verfügbar. Bitte versuchen Sie es später erneut.',
+    external_service_error:
+      'Ein externer Service ist vorübergehend nicht verfügbar. Bitte versuchen Sie es später erneut.',
     database_error: 'Ein Datenbankfehler ist aufgetreten. Bitte versuchen Sie es später erneut.',
     cache_error: 'Ein Cache-Fehler ist aufgetreten. Die Anfrage wird ohne Cache fortgesetzt.',
-    security_error: 'Ein Sicherheitsproblem wurde erkannt. Kontaktieren Sie den Support, wenn dies anhält.',
+    security_error:
+      'Ein Sicherheitsproblem wurde erkannt. Kontaktieren Sie den Support, wenn dies anhält.',
     system_error: 'Ein Systemfehler ist aufgetreten. Bitte versuchen Sie es später erneut.',
-    network_error: 'Ein Netzwerkfehler ist aufgetreten. Bitte überprüfen Sie Ihre Verbindung und versuchen Sie es erneut.',
-    business_logic_error: 'Ein Geschäftslogikfehler ist aufgetreten. Bitte überprüfen Sie Ihre Anfrage.',
+    network_error:
+      'Ein Netzwerkfehler ist aufgetreten. Bitte überprüfen Sie Ihre Verbindung und versuchen Sie es erneut.',
+    business_logic_error:
+      'Ein Geschäftslogikfehler ist aufgetreten. Bitte überprüfen Sie Ihre Anfrage.',
     unknown_error: 'Ein unerwarteter Fehler ist aufgetreten. Bitte versuchen Sie es später erneut.',
   },
-  
+
   ja: {
-    validation_error: 'リクエストに無効なデータが含まれています。入力を確認して再試行してください。',
+    validation_error:
+      'リクエストに無効なデータが含まれています。入力を確認して再試行してください。',
     authentication_error: '認証に失敗しました。認証情報を確認してください。',
     authorization_error: 'このリソースにアクセスする権限がありません。',
     rate_limit_error: 'リクエストが多すぎます。しばらく待ってから再試行してください。',
@@ -158,13 +182,14 @@ const ERROR_MESSAGES: Record<LocaleCode, Record<string, string>> = {
     external_service_error: '外部サービスが一時的に利用できません。後で再試行してください。',
     database_error: 'データベースエラーが発生しました。後で再試行してください。',
     cache_error: 'キャッシュエラーが発生しました。リクエストはキャッシュなしで続行されます。',
-    security_error: 'セキュリティの問題が検出されました。問題が続く場合はサポートにお問い合わせください。',
+    security_error:
+      'セキュリティの問題が検出されました。問題が続く場合はサポートにお問い合わせください。',
     system_error: 'システムエラーが発生しました。後で再試行してください。',
     network_error: 'ネットワークエラーが発生しました。接続を確認して再試行してください。',
     business_logic_error: 'ビジネスロジックエラーが発生しました。リクエストを確認してください。',
     unknown_error: '予期しないエラーが発生しました。後で再試行してください。',
   },
-  
+
   ko: {
     validation_error: '요청에 잘못된 데이터가 포함되어 있습니다. 입력을 확인하고 다시 시도하세요.',
     authentication_error: '인증에 실패했습니다. 자격 증명을 확인하세요.',
@@ -198,7 +223,7 @@ export class UnifiedErrorFormatter {
       includeSuggestions: true,
       includeHelpUrl: true,
       sanitizeDetails: process.env.NODE_ENV === 'production',
-      ...defaultConfig
+      ...defaultConfig,
     };
   }
 
@@ -219,10 +244,10 @@ export class UnifiedErrorFormatter {
   ): void {
     const responseConfig = { ...this.defaultConfig, ...config };
     const response = this.formatErrorResponse(error, responseConfig);
-    
+
     // Set response headers
     this.setErrorHeaders(res, error, responseConfig);
-    
+
     // Send response
     res.status(error.statusCode).json(response);
   }
@@ -230,10 +255,7 @@ export class UnifiedErrorFormatter {
   /**
    * Format error response based on configuration
    */
-  formatErrorResponse(
-    error: EnhancedError,
-    config: ErrorResponseConfig
-  ): StandardErrorResponse {
+  formatErrorResponse(error: EnhancedError, config: ErrorResponseConfig): StandardErrorResponse {
     const baseResponse: StandardErrorResponse = {
       success: false,
       error: {
@@ -253,15 +275,15 @@ export class UnifiedErrorFormatter {
         environment: error.details.environment || 'unknown',
         locale: config.locale,
         format: config.format,
-      }
+      },
     };
 
     // Add optional fields based on configuration and format
     this.addOptionalFields(baseResponse, error, config);
-    
+
     // Add format-specific fields
     this.addFormatSpecificFields(baseResponse, error, config);
-    
+
     // Add category-specific fields
     this.addCategorySpecificFields(baseResponse, error, config);
 
@@ -307,7 +329,7 @@ export class UnifiedErrorFormatter {
 
     // Add details
     if (error.details.parameters) {
-      response.error.details = config.sanitizeDetails 
+      response.error.details = config.sanitizeDetails
         ? this.sanitizeDetails(error.details.parameters)
         : error.details.parameters;
     }
@@ -318,8 +340,9 @@ export class UnifiedErrorFormatter {
         strategy: error.recovery.strategy,
         attempted: error.recovery.attempted,
         successful: error.recovery.successful,
-        retryAfter: error.recovery.nextRetryAt ? 
-          Math.ceil((error.recovery.nextRetryAt - Date.now()) / 1000) : undefined
+        retryAfter: error.recovery.nextRetryAt
+          ? Math.ceil((error.recovery.nextRetryAt - Date.now()) / 1000)
+          : undefined,
       };
     }
   }
@@ -356,7 +379,7 @@ export class UnifiedErrorFormatter {
           stack: error.details.stack,
           parameters: error.details.parameters,
           recovery: error.recovery,
-          monitoring: error.monitoring
+          monitoring: error.monitoring,
         };
         break;
     }
@@ -376,7 +399,7 @@ export class UnifiedErrorFormatter {
         if (error.recovery.nextRetryAt) {
           response.retryAfter = Math.ceil((error.recovery.nextRetryAt - Date.now()) / 1000);
         }
-        
+
         // Add rate limit information if available
         if (error.details.parameters) {
           const params = error.details.parameters as any;
@@ -385,7 +408,7 @@ export class UnifiedErrorFormatter {
               limit: params.limit || 0,
               remaining: params.remaining || 0,
               resetTime: params.resetTime || 0,
-              window: params.window || 60000
+              window: params.window || 60000,
             };
           }
         }
@@ -393,14 +416,21 @@ export class UnifiedErrorFormatter {
 
       case 'validation':
         // Add validation errors if available
-        if (error.details.parameters?.errors) {
-          response.error.validationErrors = error.details.parameters.errors;
+        if (error.details.parameters?.errors && Array.isArray(error.details.parameters.errors)) {
+          response.error.validationErrors = error.details.parameters.errors as Array<{
+            field: string;
+            message: string;
+            code: string;
+          }>;
         }
         break;
 
       case 'timeout':
         // Add timeout information
-        if (error.details.parameters?.timeout) {
+        if (
+          error.details.parameters?.timeout &&
+          typeof error.details.parameters.timeout === 'number'
+        ) {
           response.error.timeoutMs = error.details.parameters.timeout;
         }
         break;
@@ -459,13 +489,13 @@ export class UnifiedErrorFormatter {
     }
 
     const sanitized = { ...context };
-    
+
     // Remove sensitive information
     delete sanitized.ip;
     delete sanitized.userAgent;
     delete sanitized.userId;
     delete sanitized.sessionId;
-    
+
     return sanitized;
   }
 
@@ -478,10 +508,10 @@ export class UnifiedErrorFormatter {
     }
 
     const sanitized = { ...details };
-    
+
     // Remove sensitive keys
     const sensitiveKeys = ['password', 'token', 'secret', 'key', 'auth', 'credential'];
-    
+
     Object.keys(sanitized).forEach(key => {
       const lowerKey = key.toLowerCase();
       if (sensitiveKeys.some(sensitive => lowerKey.includes(sensitive))) {
@@ -500,7 +530,7 @@ export class UnifiedErrorFormatter {
     config?: Partial<ErrorResponseConfig>
   ): StandardErrorResponse {
     const responseConfig = { ...this.defaultConfig, ...config };
-    
+
     return {
       success: false,
       error: {
@@ -512,7 +542,7 @@ export class UnifiedErrorFormatter {
         timestamp: Date.now(),
         requestId: this.generateId(),
         statusCode: 400,
-        validationErrors
+        validationErrors,
       },
       metadata: {
         processingTime: 0,
@@ -520,7 +550,7 @@ export class UnifiedErrorFormatter {
         environment: process.env.NODE_ENV || 'unknown',
         locale: responseConfig.locale,
         format: responseConfig.format,
-      }
+      },
     };
   }
 
@@ -535,7 +565,7 @@ export class UnifiedErrorFormatter {
   ): StandardErrorResponse {
     const responseConfig = { ...this.defaultConfig, ...config };
     const retryAfter = Math.ceil((resetTime - Date.now()) / 1000);
-    
+
     return {
       success: false,
       error: {
@@ -560,8 +590,8 @@ export class UnifiedErrorFormatter {
         limit,
         remaining,
         resetTime,
-        window: 60000
-      }
+        window: 60000,
+      },
     };
   }
 
