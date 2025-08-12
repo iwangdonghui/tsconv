@@ -3,6 +3,8 @@
  * Comprehensive health monitoring with layered checks, dependency tracking, and performance optimization
  */
 
+import { HealthCheckPerformanceOptimizer } from './performance-optimizer';
+
 export type HealthStatus = 'healthy' | 'degraded' | 'unhealthy' | 'critical';
 export type CheckLevel = 'basic' | 'standard' | 'comprehensive' | 'deep';
 
@@ -120,10 +122,20 @@ export class EnhancedHealthMonitor {
     service?: string;
   }> = [];
   private performanceHistory: Array<{ timestamp: number; metrics: any }> = [];
+  private performanceOptimizer: HealthCheckPerformanceOptimizer;
 
   constructor() {
     this.initializeServiceRegistry();
     this.startPerformanceTracking();
+    this.performanceOptimizer = HealthCheckPerformanceOptimizer.getInstance({
+      enableParallelExecution: true,
+      enableIntelligentCaching: true,
+      enablePreemptiveChecks: true,
+      enableCircuitBreaker: true,
+      maxConcurrency: 8,
+      cacheStrategy: 'adaptive',
+      timeoutStrategy: 'adaptive',
+    });
   }
 
   static getInstance(): EnhancedHealthMonitor {
@@ -183,6 +195,86 @@ export class EnhancedHealthMonitor {
       console.error('Health check failed:', error);
 
       return this.createFailureResponse(error as Error, Date.now() - startTime);
+    }
+  }
+
+  /**
+   * Perform optimized health check using performance optimizer
+   */
+  async performOptimizedHealthCheck(config: Partial<HealthCheckConfig> = {}): Promise<
+    SystemHealth & {
+      optimization: {
+        totalResponseTime: number;
+        cacheHitRate: number;
+        parallelExecutionGain: number;
+        optimizationSavings: number;
+        executionPlan: any;
+      };
+    }
+  > {
+    const fullConfig: HealthCheckConfig = {
+      level: 'standard',
+      timeout: 5000,
+      includeMetrics: true,
+      includeDependencies: true,
+      includePerformance: true,
+      enableCaching: true,
+      cacheTimeout: 30000,
+      ...config,
+    };
+
+    const startTime = Date.now();
+
+    try {
+      // Use performance optimizer for health checks
+      const optimizedResult = await this.performanceOptimizer.optimizeHealthCheck(
+        this.createHealthCheckTasks(fullConfig),
+        {
+          timeout: fullConfig.timeout,
+          enableCaching: fullConfig.enableCaching,
+          enableParallel: true,
+          level: fullConfig.level,
+        }
+      );
+
+      // Build system health from optimized results
+      const systemHealth = await this.buildSystemHealthFromResults(
+        optimizedResult.results,
+        fullConfig,
+        startTime
+      );
+
+      // Add performance optimization metrics
+      const optimizedSystemHealth = {
+        ...systemHealth,
+        optimization: {
+          totalResponseTime: optimizedResult.metrics.totalResponseTime,
+          cacheHitRate: optimizedResult.metrics.cacheHitRate,
+          parallelExecutionGain: optimizedResult.metrics.parallelExecutionGain,
+          optimizationSavings: optimizedResult.metrics.optimizationSavings,
+          executionPlan: optimizedResult.executionPlan,
+        },
+      };
+
+      // Update performance history
+      this.updatePerformanceHistory(optimizedSystemHealth);
+
+      return optimizedSystemHealth;
+    } catch (error) {
+      console.error('Optimized health check failed:', error);
+
+      // Fallback to regular health check
+      const fallbackHealth = await this.performHealthCheck(config);
+      return {
+        ...fallbackHealth,
+        optimization: {
+          totalResponseTime: Date.now() - startTime,
+          cacheHitRate: 0,
+          parallelExecutionGain: 0,
+          optimizationSavings: 0,
+          executionPlan: null,
+        },
+      };
     }
   }
 
@@ -813,6 +905,206 @@ export class EnhancedHealthMonitor {
 interface ServiceHealthChecker {
   name: string;
   check(): Promise<ServiceHealth>;
+}
+
+  /**
+   * Create health check tasks for performance optimizer
+   */
+  private createHealthCheckTasks(config: HealthCheckConfig): Array<{
+    name: string;
+    executor: () => Promise<any>;
+    priority?: string;
+    dependencies?: string[];
+  }> {
+    const tasks = [];
+
+    // Basic checks (always included)
+    tasks.push(
+      {
+        name: 'api',
+        executor: () => this.checkAPIHealth(),
+        priority: 'critical'
+      },
+      {
+        name: 'memory',
+        executor: () => this.checkMemoryHealth(),
+        priority: 'critical'
+      },
+      {
+        name: 'connectivity',
+        executor: () => this.checkBasicConnectivity(),
+        priority: 'high'
+      }
+    );
+
+    // Standard checks
+    if (config.level !== 'basic') {
+      tasks.push(
+        {
+          name: 'cache',
+          executor: () => this.checkCacheHealth(),
+          priority: 'medium'
+        },
+        {
+          name: 'rate-limiting',
+          executor: () => this.checkRateLimitingHealth(),
+          priority: 'medium'
+        },
+        {
+          name: 'security',
+          executor: () => this.checkSecurityHealth(),
+          priority: 'medium'
+        },
+        {
+          name: 'format-engine',
+          executor: () => this.checkFormatEngineHealth(),
+          priority: 'high'
+        }
+      );
+    }
+
+    // Comprehensive checks
+    if (config.level === 'comprehensive' || config.level === 'deep') {
+      tasks.push(
+        {
+          name: 'batch-processing',
+          executor: () => this.checkBatchProcessingHealth(),
+          priority: 'medium'
+        },
+        {
+          name: 'error-handling',
+          executor: () => this.checkErrorHandlingHealth(),
+          priority: 'high'
+        },
+        {
+          name: 'performance',
+          executor: () => this.checkPerformanceHealth(),
+          priority: 'low'
+        },
+        {
+          name: 'monitoring',
+          executor: () => this.checkMonitoringHealth(),
+          priority: 'low'
+        }
+      );
+    }
+
+    // Deep checks
+    if (config.level === 'deep') {
+      tasks.push(
+        {
+          name: 'database',
+          executor: () => this.checkDatabaseConnectivity(),
+          priority: 'medium',
+          dependencies: ['connectivity']
+        },
+        {
+          name: 'external-services',
+          executor: () => this.checkExternalServicesHealth(),
+          priority: 'low',
+          dependencies: ['connectivity']
+        },
+        {
+          name: 'resource-limits',
+          executor: () => this.checkResourceLimits(),
+          priority: 'medium',
+          dependencies: ['memory']
+        },
+        {
+          name: 'security-compliance',
+          executor: () => this.checkSecurityCompliance(),
+          priority: 'low',
+          dependencies: ['security']
+        }
+      );
+    }
+
+    return tasks;
+  }
+
+  /**
+   * Build system health from optimized results
+   */
+  private async buildSystemHealthFromResults(
+    results: Array<{ name: string; result: any; error?: Error; executionTime: number }>,
+    config: HealthCheckConfig,
+    startTime: number
+  ): Promise<SystemHealth> {
+    const timestamp = Date.now();
+
+    // Initialize system health
+    const systemHealth: SystemHealth = {
+      status: 'healthy',
+      timestamp,
+      uptime: process.uptime(),
+      version: process.env.npm_package_version || '1.0.0',
+      environment: process.env.NODE_ENV || 'development',
+      responseTime: timestamp - startTime,
+      services: {
+        core: [],
+        dependencies: [],
+        external: []
+      },
+      performance: await this.getPerformanceMetrics(),
+      metrics: await this.getSystemMetrics(),
+      alerts: []
+    };
+
+    // Process results into service health
+    results.forEach(result => {
+      const serviceHealth: ServiceHealth = {
+        name: result.name,
+        status: result.error ? 'unhealthy' : 'healthy',
+        responseTime: result.executionTime,
+        lastCheck: timestamp,
+        details: result.error ? { error: result.error.message } : { result: result.result },
+        checks: {
+          connectivity: !result.error,
+          functionality: !result.error,
+          performance: result.executionTime < 1000,
+          resources: true
+        }
+      };
+
+      // Categorize service
+      if (['api', 'memory', 'connectivity'].includes(result.name)) {
+        systemHealth.services.core.push(serviceHealth);
+      } else if (['database', 'external-services', 'resource-limits', 'security-compliance'].includes(result.name)) {
+        systemHealth.services.external.push(serviceHealth);
+      } else {
+        systemHealth.services.dependencies.push(serviceHealth);
+      }
+    });
+
+    // Determine overall status
+    systemHealth.status = this.calculateOverallStatus(systemHealth);
+
+    // Generate alerts
+    systemHealth.alerts = this.generateAlerts(systemHealth);
+
+    return systemHealth;
+  }
+
+  /**
+   * Get performance statistics from optimizer
+   */
+  getOptimizerStats(): any {
+    return this.performanceOptimizer.getPerformanceStats();
+  }
+
+  /**
+   * Clear optimizer cache
+   */
+  clearOptimizerCache(): void {
+    this.performanceOptimizer.clearCache();
+  }
+
+  /**
+   * Reset optimizer circuit breakers
+   */
+  resetOptimizerCircuitBreakers(): void {
+    this.performanceOptimizer.resetCircuitBreakers();
+  }
 }
 
 export default EnhancedHealthMonitor;

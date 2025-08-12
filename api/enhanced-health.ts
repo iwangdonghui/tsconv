@@ -121,8 +121,8 @@ async function enhancedHealthHandler(req: VercelRequest, res: VercelResponse) {
       cacheTimeout: 30000, // 30 seconds cache
     };
 
-    // Perform system health check
-    const systemHealth = await healthMonitor.performHealthCheck(healthConfig);
+    // Perform optimized system health check
+    const systemHealth = await healthMonitor.performOptimizedHealthCheck(healthConfig);
 
     // Get dependency report if requested
     let dependencyReport;
