@@ -99,7 +99,7 @@ jobs:
       
       - name: 📊 Upload coverage
         if: matrix.test-type == 'unit'
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@v5
         with:
           file: ./coverage/lcov.info
           flags: unittests
