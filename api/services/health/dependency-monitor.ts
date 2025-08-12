@@ -101,12 +101,12 @@ export class DependencyMonitor {
         healthCheck: {
           method: 'custom',
           interval: 30000,
-          customChecker: this.checkRedisHealth.bind(this)
+          customChecker: this.checkRedisHealth.bind(this),
         },
         fallback: {
           enabled: true,
-          strategy: 'cache'
-        }
+          strategy: 'cache',
+        },
       },
       {
         name: 'vercel-platform',
@@ -117,12 +117,12 @@ export class DependencyMonitor {
         healthCheck: {
           method: 'custom',
           interval: 60000,
-          customChecker: this.checkVercelHealth.bind(this)
+          customChecker: this.checkVercelHealth.bind(this),
         },
         fallback: {
           enabled: false,
-          strategy: 'offline'
-        }
+          strategy: 'offline',
+        },
       },
       {
         name: 'format-engine',
@@ -133,12 +133,12 @@ export class DependencyMonitor {
         healthCheck: {
           method: 'custom',
           interval: 15000,
-          customChecker: this.checkFormatEngineHealth.bind(this)
+          customChecker: this.checkFormatEngineHealth.bind(this),
         },
         fallback: {
           enabled: true,
-          strategy: 'degraded'
-        }
+          strategy: 'degraded',
+        },
       },
       {
         name: 'batch-processor',
@@ -149,12 +149,12 @@ export class DependencyMonitor {
         healthCheck: {
           method: 'custom',
           interval: 30000,
-          customChecker: this.checkBatchProcessorHealth.bind(this)
+          customChecker: this.checkBatchProcessorHealth.bind(this),
         },
         fallback: {
           enabled: true,
-          strategy: 'degraded'
-        }
+          strategy: 'degraded',
+        },
       },
       {
         name: 'error-handler',
@@ -165,13 +165,13 @@ export class DependencyMonitor {
         healthCheck: {
           method: 'custom',
           interval: 20000,
-          customChecker: this.checkErrorHandlerHealth.bind(this)
+          customChecker: this.checkErrorHandlerHealth.bind(this),
         },
         fallback: {
           enabled: true,
-          strategy: 'mock'
-        }
-      }
+          strategy: 'mock',
+        },
+      },
     ];
 
     defaultDependencies.forEach(dep => this.addDependency(dep));
@@ -182,7 +182,7 @@ export class DependencyMonitor {
    */
   addDependency(config: DependencyConfig): void {
     this.dependencies.set(config.name, config);
-    
+
     // Initialize status
     this.statuses.set(config.name, {
       name: config.name,
@@ -193,7 +193,7 @@ export class DependencyMonitor {
       errorCount: 0,
       consecutiveFailures: 0,
       details: {},
-      history: []
+      history: [],
     });
 
     // Start monitoring
@@ -247,7 +247,7 @@ export class DependencyMonitor {
   private async checkDependency(name: string): Promise<void> {
     const config = this.dependencies.get(name);
     const status = this.statuses.get(name);
-    
+
     if (!config || !status) return;
 
     const startTime = Date.now();
@@ -282,7 +282,7 @@ export class DependencyMonitor {
       status: newStatus,
       responseTime,
       error,
-      checkResult
+      checkResult,
     });
 
     // Check for alerts
@@ -326,15 +326,15 @@ export class DependencyMonitor {
   private async checkRedisHealth(): Promise<boolean> {
     try {
       const { getStrategicCacheService } = await import('../cache/cache-config-init');
-      const cacheService = getStrategicCacheService();
-      
+      const cacheService = await getStrategicCacheService();
+
       const testKey = `dependency-check-${Date.now()}`;
       const testValue = { test: true };
-      
-      await cacheService.set(testKey, testValue, 5000);
+
+      await cacheService.set(testKey, testValue, { ttl: 5000 });
       const result = await cacheService.get(testKey);
-      await cacheService.del(testKey);
-      
+      await cacheService.delete(testKey);
+
       return result !== null;
     } catch (error) {
       return false;
@@ -354,11 +354,11 @@ export class DependencyMonitor {
     try {
       const { EnhancedFormatEngine } = await import('../format-engine/enhanced-format-engine');
       const engine = EnhancedFormatEngine.getInstance();
-      
+
       // Test basic format operation
       const testInput = '1705315845';
       const result = engine.parseInput(testInput);
-      
+
       return result.success && result.confidence > 0.5;
     } catch (error) {
       return false;
@@ -367,13 +367,15 @@ export class DependencyMonitor {
 
   private async checkBatchProcessorHealth(): Promise<boolean> {
     try {
-      const { OptimizedBatchProcessor } = await import('../batch-processing/optimized-batch-processor');
+      const { OptimizedBatchProcessor } = await import(
+        '../batch-processing/optimized-batch-processor'
+      );
       const processor = new OptimizedBatchProcessor();
-      
+
       // Test with small batch
       const testItems = [{ timestamp: Date.now() }];
       const result = await processor.processBatch(testItems, { maxConcurrency: 1 });
-      
+
       return result.stats.successfulItems > 0;
     } catch (error) {
       return false;
@@ -384,11 +386,11 @@ export class DependencyMonitor {
     try {
       const { EnhancedErrorManager } = await import('../error-handling/enhanced-error-manager');
       const manager = EnhancedErrorManager.getInstance();
-      
+
       // Test error handling
       const testError = new Error('Health check test');
       const result = await manager.handleError(testError, {} as any, {} as any);
-      
+
       return result.id !== undefined;
     } catch (error) {
       return false;
@@ -405,7 +407,7 @@ export class DependencyMonitor {
 
       const response = await fetch(url, {
         signal: controller.signal,
-        method: 'GET'
+        method: 'GET',
       });
 
       clearTimeout(timeoutId);
@@ -497,7 +499,7 @@ export class DependencyMonitor {
     status.status = update.status as any;
     status.lastCheck = now;
     status.responseTime = update.responseTime;
-    
+
     if (update.error) {
       status.details.error = update.error;
     } else {
@@ -509,7 +511,7 @@ export class DependencyMonitor {
       timestamp: now,
       status: update.status,
       responseTime: update.responseTime,
-      error: update.error
+      error: update.error,
     });
 
     // Keep only last 100 entries
@@ -537,7 +539,7 @@ export class DependencyMonitor {
         level,
         dependency: name,
         message: `Dependency ${name} status changed from ${oldStatus.status} to ${newStatus}`,
-        timestamp: Date.now()
+        timestamp: Date.now(),
       };
 
       this.triggerAlert(alert);
@@ -549,7 +551,7 @@ export class DependencyMonitor {
         level: 'critical' as const,
         dependency: name,
         message: `Critical dependency ${name} has ${oldStatus.consecutiveFailures} consecutive failures`,
-        timestamp: Date.now()
+        timestamp: Date.now(),
       };
 
       this.triggerAlert(alert);
@@ -559,15 +561,18 @@ export class DependencyMonitor {
   /**
    * Get alert level based on status and criticality
    */
-  private getAlertLevel(status: string, critical: boolean): 'info' | 'warning' | 'error' | 'critical' {
+  private getAlertLevel(
+    status: string,
+    critical: boolean
+  ): 'info' | 'warning' | 'error' | 'critical' {
     if (status === 'unhealthy') {
       return critical ? 'critical' : 'error';
     }
-    
+
     if (status === 'degraded') {
       return critical ? 'error' : 'warning';
     }
-    
+
     return 'info';
   }
 
@@ -576,7 +581,7 @@ export class DependencyMonitor {
    */
   private triggerAlert(alert: any): void {
     console.warn(`🚨 Dependency Alert [${alert.level.toUpperCase()}]: ${alert.message}`);
-    
+
     this.alertCallbacks.forEach(callback => {
       try {
         callback(alert);
@@ -591,7 +596,7 @@ export class DependencyMonitor {
    */
   getDependencyReport(): DependencyReport {
     const dependencies = Array.from(this.statuses.values());
-    
+
     const summary = {
       total: dependencies.length,
       healthy: dependencies.filter(d => d.status === 'healthy').length,
@@ -600,7 +605,7 @@ export class DependencyMonitor {
       critical: dependencies.filter(d => {
         const config = this.dependencies.get(d.name);
         return config?.critical && d.status === 'unhealthy';
-      }).length
+      }).length,
     };
 
     const overallStatus = this.calculateOverallStatus(dependencies);
@@ -613,14 +618,16 @@ export class DependencyMonitor {
       dependencies,
       summary,
       alerts,
-      recommendations
+      recommendations,
     };
   }
 
   /**
    * Calculate overall status
    */
-  private calculateOverallStatus(dependencies: DependencyStatus[]): 'healthy' | 'degraded' | 'unhealthy' {
+  private calculateOverallStatus(
+    dependencies: DependencyStatus[]
+  ): 'healthy' | 'degraded' | 'unhealthy' {
     const criticalDeps = dependencies.filter(d => {
       const config = this.dependencies.get(d.name);
       return config?.critical;
@@ -632,8 +639,10 @@ export class DependencyMonitor {
     }
 
     // If any dependency is unhealthy or critical is degraded, overall is degraded
-    if (dependencies.some(d => d.status === 'unhealthy') || 
-        criticalDeps.some(d => d.status === 'degraded')) {
+    if (
+      dependencies.some(d => d.status === 'unhealthy') ||
+      criticalDeps.some(d => d.status === 'degraded')
+    ) {
       return 'degraded';
     }
 
@@ -655,14 +664,14 @@ export class DependencyMonitor {
           level: config.critical ? 'critical' : 'error',
           dependency: dep.name,
           message: `Dependency ${dep.name} is unhealthy`,
-          timestamp: Date.now()
+          timestamp: Date.now(),
         });
       } else if (dep.status === 'degraded') {
         alerts.push({
           level: config.critical ? 'error' : 'warning',
           dependency: dep.name,
           message: `Dependency ${dep.name} is degraded`,
-          timestamp: Date.now()
+          timestamp: Date.now(),
         });
       }
 
@@ -671,7 +680,7 @@ export class DependencyMonitor {
           level: 'warning',
           dependency: dep.name,
           message: `Dependency ${dep.name} has ${dep.consecutiveFailures} consecutive failures`,
-          timestamp: Date.now()
+          timestamp: Date.now(),
         });
       }
     });
@@ -689,11 +698,15 @@ export class DependencyMonitor {
     const degradedDeps = dependencies.filter(d => d.status === 'degraded');
 
     if (unhealthyDeps.length > 0) {
-      recommendations.push(`Investigate ${unhealthyDeps.length} unhealthy dependencies: ${unhealthyDeps.map(d => d.name).join(', ')}`);
+      recommendations.push(
+        `Investigate ${unhealthyDeps.length} unhealthy dependencies: ${unhealthyDeps.map(d => d.name).join(', ')}`
+      );
     }
 
     if (degradedDeps.length > 0) {
-      recommendations.push(`Monitor ${degradedDeps.length} degraded dependencies: ${degradedDeps.map(d => d.name).join(', ')}`);
+      recommendations.push(
+        `Monitor ${degradedDeps.length} degraded dependencies: ${degradedDeps.map(d => d.name).join(', ')}`
+      );
     }
 
     const slowDeps = dependencies.filter(d => d.responseTime > 5000);
@@ -741,7 +754,7 @@ export class DependencyMonitor {
    * Stop all monitoring
    */
   stopAllMonitoring(): void {
-    this.monitoringIntervals.forEach((interval) => {
+    this.monitoringIntervals.forEach(interval => {
       clearInterval(interval);
     });
     this.monitoringIntervals.clear();

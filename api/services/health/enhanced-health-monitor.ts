@@ -43,13 +43,13 @@ export interface SystemHealth {
   version: string;
   environment: string;
   responseTime: number;
-  
+
   services: {
     core: ServiceHealth[];
     dependencies: ServiceHealth[];
     external: ServiceHealth[];
   };
-  
+
   performance: {
     cpu: {
       usage: number;
@@ -75,7 +75,7 @@ export interface SystemHealth {
       percentage: number;
     };
   };
-  
+
   metrics: {
     requests: {
       total: number;
@@ -97,7 +97,7 @@ export interface SystemHealth {
       operations: number;
     };
   };
-  
+
   alerts: Array<{
     level: 'info' | 'warning' | 'error' | 'critical';
     message: string;
@@ -113,7 +113,12 @@ export class EnhancedHealthMonitor {
   private static instance: EnhancedHealthMonitor;
   private healthCache = new Map<string, { data: SystemHealth; timestamp: number }>();
   private serviceRegistry = new Map<string, ServiceHealthChecker>();
-  private alertHistory: Array<{ level: string; message: string; timestamp: number; service?: string }> = [];
+  private alertHistory: Array<{
+    level: string;
+    message: string;
+    timestamp: number;
+    service?: string;
+  }> = [];
   private performanceHistory: Array<{ timestamp: number; metrics: any }> = [];
 
   constructor() {
@@ -140,11 +145,11 @@ export class EnhancedHealthMonitor {
       includePerformance: true,
       enableCaching: true,
       cacheTimeout: 30000,
-      ...config
+      ...config,
     };
 
     const cacheKey = this.generateCacheKey(fullConfig);
-    
+
     // Check cache first
     if (fullConfig.enableCaching) {
       const cached = this.healthCache.get(cacheKey);
@@ -154,30 +159,29 @@ export class EnhancedHealthMonitor {
     }
 
     const startTime = Date.now();
-    
+
     try {
       // Perform layered health checks
       const systemHealth = await this.executeLayeredHealthCheck(fullConfig);
-      
+
       // Update response time
       systemHealth.responseTime = Date.now() - startTime;
-      
+
       // Cache result
       if (fullConfig.enableCaching) {
         this.healthCache.set(cacheKey, {
           data: systemHealth,
-          timestamp: Date.now()
+          timestamp: Date.now(),
         });
       }
-      
+
       // Update performance history
       this.updatePerformanceHistory(systemHealth);
-      
+
       return systemHealth;
-      
     } catch (error) {
       console.error('Health check failed:', error);
-      
+
       return this.createFailureResponse(error as Error, Date.now() - startTime);
     }
   }
@@ -187,7 +191,7 @@ export class EnhancedHealthMonitor {
    */
   private async executeLayeredHealthCheck(config: HealthCheckConfig): Promise<SystemHealth> {
     const timestamp = Date.now();
-    
+
     // Initialize system health
     const systemHealth: SystemHealth = {
       status: 'healthy',
@@ -199,62 +203,60 @@ export class EnhancedHealthMonitor {
       services: {
         core: [],
         dependencies: [],
-        external: []
+        external: [],
       },
       performance: await this.getPerformanceMetrics(),
       metrics: await this.getSystemMetrics(),
-      alerts: []
+      alerts: [],
     };
 
     // Layer 1: Basic checks (always performed)
     await this.performBasicChecks(systemHealth, config);
-    
+
     // Layer 2: Standard checks
     if (config.level !== 'basic') {
       await this.performStandardChecks(systemHealth, config);
     }
-    
+
     // Layer 3: Comprehensive checks
     if (config.level === 'comprehensive' || config.level === 'deep') {
       await this.performComprehensiveChecks(systemHealth, config);
     }
-    
+
     // Layer 4: Deep checks
     if (config.level === 'deep') {
       await this.performDeepChecks(systemHealth, config);
     }
-    
+
     // Determine overall status
     systemHealth.status = this.calculateOverallStatus(systemHealth);
-    
+
     // Generate alerts
     systemHealth.alerts = this.generateAlerts(systemHealth);
-    
+
     return systemHealth;
   }
 
   /**
    * Layer 1: Basic health checks
    */
-  private async performBasicChecks(systemHealth: SystemHealth, config: HealthCheckConfig): Promise<void> {
-    const checks = [
-      this.checkAPIHealth(),
-      this.checkMemoryHealth(),
-      this.checkBasicConnectivity()
-    ];
+  private async performBasicChecks(
+    systemHealth: SystemHealth,
+    config: HealthCheckConfig
+  ): Promise<void> {
+    const checks = [this.checkAPIHealth(), this.checkMemoryHealth(), this.checkBasicConnectivity()];
 
-    const results = await Promise.allSettled(checks.map(check => 
-      this.withTimeout(check, config.timeout / 4)
-    ));
+    const results = await Promise.allSettled(
+      checks.map(check => this.withTimeout(check, config.timeout / 4))
+    );
 
     results.forEach((result, index) => {
       if (result.status === 'fulfilled') {
         systemHealth.services.core.push(result.value);
       } else {
-        systemHealth.services.core.push(this.createFailedServiceHealth(
-          ['api', 'memory', 'connectivity'][index],
-          result.reason
-        ));
+        systemHealth.services.core.push(
+          this.createFailedServiceHealth(['api', 'memory', 'connectivity'][index], result.reason)
+        );
       }
     });
   }
@@ -262,26 +264,31 @@ export class EnhancedHealthMonitor {
   /**
    * Layer 2: Standard health checks
    */
-  private async performStandardChecks(systemHealth: SystemHealth, config: HealthCheckConfig): Promise<void> {
+  private async performStandardChecks(
+    systemHealth: SystemHealth,
+    config: HealthCheckConfig
+  ): Promise<void> {
     const checks = [
       this.checkCacheHealth(),
       this.checkRateLimitingHealth(),
       this.checkSecurityHealth(),
-      this.checkFormatEngineHealth()
+      this.checkFormatEngineHealth(),
     ];
 
-    const results = await Promise.allSettled(checks.map(check => 
-      this.withTimeout(check, config.timeout / 3)
-    ));
+    const results = await Promise.allSettled(
+      checks.map(check => this.withTimeout(check, config.timeout / 3))
+    );
 
     results.forEach((result, index) => {
       if (result.status === 'fulfilled') {
         systemHealth.services.dependencies.push(result.value);
       } else {
-        systemHealth.services.dependencies.push(this.createFailedServiceHealth(
-          ['cache', 'rate-limiting', 'security', 'format-engine'][index],
-          result.reason
-        ));
+        systemHealth.services.dependencies.push(
+          this.createFailedServiceHealth(
+            ['cache', 'rate-limiting', 'security', 'format-engine'][index],
+            result.reason
+          )
+        );
       }
     });
   }
@@ -289,26 +296,31 @@ export class EnhancedHealthMonitor {
   /**
    * Layer 3: Comprehensive health checks
    */
-  private async performComprehensiveChecks(systemHealth: SystemHealth, config: HealthCheckConfig): Promise<void> {
+  private async performComprehensiveChecks(
+    systemHealth: SystemHealth,
+    config: HealthCheckConfig
+  ): Promise<void> {
     const checks = [
       this.checkBatchProcessingHealth(),
       this.checkErrorHandlingHealth(),
       this.checkPerformanceHealth(),
-      this.checkMonitoringHealth()
+      this.checkMonitoringHealth(),
     ];
 
-    const results = await Promise.allSettled(checks.map(check => 
-      this.withTimeout(check, config.timeout / 2)
-    ));
+    const results = await Promise.allSettled(
+      checks.map(check => this.withTimeout(check, config.timeout / 2))
+    );
 
     results.forEach((result, index) => {
       if (result.status === 'fulfilled') {
         systemHealth.services.dependencies.push(result.value);
       } else {
-        systemHealth.services.dependencies.push(this.createFailedServiceHealth(
-          ['batch-processing', 'error-handling', 'performance', 'monitoring'][index],
-          result.reason
-        ));
+        systemHealth.services.dependencies.push(
+          this.createFailedServiceHealth(
+            ['batch-processing', 'error-handling', 'performance', 'monitoring'][index],
+            result.reason
+          )
+        );
       }
     });
   }
@@ -316,26 +328,31 @@ export class EnhancedHealthMonitor {
   /**
    * Layer 4: Deep health checks
    */
-  private async performDeepChecks(systemHealth: SystemHealth, config: HealthCheckConfig): Promise<void> {
+  private async performDeepChecks(
+    systemHealth: SystemHealth,
+    config: HealthCheckConfig
+  ): Promise<void> {
     const checks = [
       this.checkDatabaseConnectivity(),
       this.checkExternalServicesHealth(),
       this.checkResourceLimits(),
-      this.checkSecurityCompliance()
+      this.checkSecurityCompliance(),
     ];
 
-    const results = await Promise.allSettled(checks.map(check => 
-      this.withTimeout(check, config.timeout)
-    ));
+    const results = await Promise.allSettled(
+      checks.map(check => this.withTimeout(check, config.timeout))
+    );
 
     results.forEach((result, index) => {
       if (result.status === 'fulfilled') {
         systemHealth.services.external.push(result.value);
       } else {
-        systemHealth.services.external.push(this.createFailedServiceHealth(
-          ['database', 'external-services', 'resource-limits', 'security-compliance'][index],
-          result.reason
-        ));
+        systemHealth.services.external.push(
+          this.createFailedServiceHealth(
+            ['database', 'external-services', 'resource-limits', 'security-compliance'][index],
+            result.reason
+          )
+        );
       }
     });
   }
@@ -345,13 +362,13 @@ export class EnhancedHealthMonitor {
    */
   private async checkAPIHealth(): Promise<ServiceHealth> {
     const startTime = Date.now();
-    
+
     try {
       // Test basic API functionality
       const testDate = new Date();
       const iso = testDate.toISOString();
       const unix = Math.floor(testDate.getTime() / 1000);
-      
+
       return {
         name: 'api',
         status: 'healthy',
@@ -360,14 +377,14 @@ export class EnhancedHealthMonitor {
         details: {
           version: process.env.npm_package_version || '1.0.0',
           uptime: process.uptime(),
-          metrics: { iso, unix }
+          metrics: { iso, unix },
         },
         checks: {
           connectivity: true,
           functionality: true,
           performance: true,
-          resources: true
-        }
+          resources: true,
+        },
       };
     } catch (error) {
       return this.createFailedServiceHealth('api', error);
@@ -376,13 +393,13 @@ export class EnhancedHealthMonitor {
 
   private async checkMemoryHealth(): Promise<ServiceHealth> {
     const startTime = Date.now();
-    
+
     try {
       const memoryUsage = process.memoryUsage();
       const heapUsedMB = memoryUsage.heapUsed / 1024 / 1024;
       const heapTotalMB = memoryUsage.heapTotal / 1024 / 1024;
       const heapPercentage = (heapUsedMB / heapTotalMB) * 100;
-      
+
       let status: HealthStatus = 'healthy';
       if (heapPercentage > 90) {
         status = 'critical';
@@ -391,7 +408,7 @@ export class EnhancedHealthMonitor {
       } else if (heapPercentage > 70) {
         status = 'degraded';
       }
-      
+
       return {
         name: 'memory',
         status,
@@ -403,15 +420,15 @@ export class EnhancedHealthMonitor {
             heapTotal: heapTotalMB,
             heapPercentage,
             external: memoryUsage.external / 1024 / 1024,
-            rss: memoryUsage.rss / 1024 / 1024
-          }
+            rss: memoryUsage.rss / 1024 / 1024,
+          },
         },
         checks: {
           connectivity: true,
           functionality: true,
           performance: heapPercentage < 80,
-          resources: heapPercentage < 90
-        }
+          resources: heapPercentage < 90,
+        },
       };
     } catch (error) {
       return this.createFailedServiceHealth('memory', error);
@@ -420,30 +437,30 @@ export class EnhancedHealthMonitor {
 
   private async checkBasicConnectivity(): Promise<ServiceHealth> {
     const startTime = Date.now();
-    
+
     try {
       // Test basic network connectivity
-      const testPromise = new Promise<boolean>((resolve) => {
+      const testPromise = new Promise<boolean>(resolve => {
         // Simulate connectivity test
         setTimeout(() => resolve(true), 10);
       });
-      
+
       const connected = await testPromise;
-      
+
       return {
         name: 'connectivity',
         status: connected ? 'healthy' : 'unhealthy',
         responseTime: Date.now() - startTime,
         lastCheck: Date.now(),
         details: {
-          metrics: { connected }
+          metrics: { connected },
         },
         checks: {
           connectivity: connected,
           functionality: connected,
           performance: true,
-          resources: true
-        }
+          resources: true,
+        },
       };
     } catch (error) {
       return this.createFailedServiceHealth('connectivity', error);
@@ -452,22 +469,22 @@ export class EnhancedHealthMonitor {
 
   private async checkCacheHealth(): Promise<ServiceHealth> {
     const startTime = Date.now();
-    
+
     try {
       // Import cache service dynamically
       const { getStrategicCacheService } = await import('../cache/cache-config-init');
-      const cacheService = getStrategicCacheService();
-      
+      const cacheService = await getStrategicCacheService();
+
       // Test cache operations
       const testKey = `health-check-${Date.now()}`;
       const testValue = { test: true, timestamp: Date.now() };
-      
-      await cacheService.set(testKey, testValue, 5000);
+
+      await cacheService.set(testKey, testValue, { ttl: 5000 });
       const retrieved = await cacheService.get(testKey);
-      await cacheService.del(testKey);
-      
+      await cacheService.delete(testKey);
+
       const isWorking = retrieved !== null;
-      
+
       return {
         name: 'cache',
         status: isWorking ? 'healthy' : 'degraded',
@@ -476,15 +493,15 @@ export class EnhancedHealthMonitor {
         details: {
           metrics: {
             working: isWorking,
-            provider: 'strategic-cache'
-          }
+            provider: 'strategic-cache',
+          },
         },
         checks: {
           connectivity: true,
           functionality: isWorking,
           performance: true,
-          resources: true
-        }
+          resources: true,
+        },
       };
     } catch (error) {
       return this.createFailedServiceHealth('cache', error);
@@ -497,11 +514,11 @@ export class EnhancedHealthMonitor {
   private async getPerformanceMetrics(): Promise<SystemHealth['performance']> {
     const memoryUsage = process.memoryUsage();
     const cpuUsage = process.cpuUsage();
-    
+
     return {
       cpu: {
         usage: (cpuUsage.user + cpuUsage.system) / 1000000, // Convert to milliseconds
-        load: [0, 0, 0] // Not available in Node.js without additional modules
+        load: [0, 0, 0], // Not available in Node.js without additional modules
       },
       memory: {
         used: memoryUsage.rss,
@@ -510,13 +527,13 @@ export class EnhancedHealthMonitor {
         heap: {
           used: memoryUsage.heapUsed,
           total: memoryUsage.heapTotal,
-          percentage: (memoryUsage.heapUsed / memoryUsage.heapTotal) * 100
-        }
+          percentage: (memoryUsage.heapUsed / memoryUsage.heapTotal) * 100,
+        },
       },
       network: {
         latency: 0, // Would need to implement network latency test
-        throughput: 0 // Would need to track request throughput
-      }
+        throughput: 0, // Would need to track request throughput
+      },
     };
   }
 
@@ -526,17 +543,17 @@ export class EnhancedHealthMonitor {
         total: 0, // Would need to implement request tracking
         successful: 0,
         failed: 0,
-        rate: 0
+        rate: 0,
       },
       errors: {
         rate: 0,
-        recent: []
+        recent: [],
       },
       cache: {
         hitRate: 0, // Would get from cache service
         size: 0,
-        operations: 0
-      }
+        operations: 0,
+      },
     };
   }
 
@@ -544,62 +561,62 @@ export class EnhancedHealthMonitor {
     const allServices = [
       ...systemHealth.services.core,
       ...systemHealth.services.dependencies,
-      ...systemHealth.services.external
+      ...systemHealth.services.external,
     ];
 
     const statuses = allServices.map(service => service.status);
-    
+
     if (statuses.some(status => status === 'critical')) {
       return 'critical';
     }
-    
+
     if (statuses.some(status => status === 'unhealthy')) {
       return 'unhealthy';
     }
-    
+
     if (statuses.some(status => status === 'degraded')) {
       return 'degraded';
     }
-    
+
     return 'healthy';
   }
 
   private generateAlerts(systemHealth: SystemHealth): SystemHealth['alerts'] {
     const alerts: SystemHealth['alerts'] = [];
-    
+
     // Memory alerts
     if (systemHealth.performance.memory.heap.percentage > 90) {
       alerts.push({
         level: 'critical',
         message: `Critical memory usage: ${systemHealth.performance.memory.heap.percentage.toFixed(1)}%`,
         timestamp: Date.now(),
-        service: 'memory'
+        service: 'memory',
       });
     } else if (systemHealth.performance.memory.heap.percentage > 80) {
       alerts.push({
         level: 'warning',
         message: `High memory usage: ${systemHealth.performance.memory.heap.percentage.toFixed(1)}%`,
         timestamp: Date.now(),
-        service: 'memory'
+        service: 'memory',
       });
     }
-    
+
     // Service alerts
     const unhealthyServices = [
       ...systemHealth.services.core,
       ...systemHealth.services.dependencies,
-      ...systemHealth.services.external
+      ...systemHealth.services.external,
     ].filter(service => service.status === 'unhealthy' || service.status === 'critical');
-    
+
     unhealthyServices.forEach(service => {
       alerts.push({
         level: service.status === 'critical' ? 'critical' : 'error',
         message: `Service ${service.name} is ${service.status}`,
         timestamp: Date.now(),
-        service: service.name
+        service: service.name,
       });
     });
-    
+
     return alerts;
   }
 
@@ -610,14 +627,14 @@ export class EnhancedHealthMonitor {
       responseTime: 0,
       lastCheck: Date.now(),
       details: {
-        error: error instanceof Error ? error.message : String(error)
+        error: error instanceof Error ? error.message : String(error),
       },
       checks: {
         connectivity: false,
         functionality: false,
         performance: false,
-        resources: false
-      }
+        resources: false,
+      },
     };
   }
 
@@ -632,23 +649,28 @@ export class EnhancedHealthMonitor {
       services: {
         core: [],
         dependencies: [],
-        external: []
+        external: [],
       },
       performance: {
         cpu: { usage: 0, load: [0, 0, 0] },
         memory: { used: 0, total: 0, percentage: 0, heap: { used: 0, total: 0, percentage: 0 } },
-        network: { latency: 0, throughput: 0 }
+        network: { latency: 0, throughput: 0 },
       },
       metrics: {
         requests: { total: 0, successful: 0, failed: 0, rate: 0 },
-        errors: { rate: 1, recent: [{ timestamp: Date.now(), type: 'system', message: error.message }] },
-        cache: { hitRate: 0, size: 0, operations: 0 }
+        errors: {
+          rate: 1,
+          recent: [{ timestamp: Date.now(), type: 'system', message: error.message }],
+        },
+        cache: { hitRate: 0, size: 0, operations: 0 },
       },
-      alerts: [{
-        level: 'critical',
-        message: `Health check system failure: ${error.message}`,
-        timestamp: Date.now()
-      }]
+      alerts: [
+        {
+          level: 'critical',
+          message: `Health check system failure: ${error.message}`,
+          timestamp: Date.now(),
+        },
+      ],
     };
   }
 
@@ -656,7 +678,7 @@ export class EnhancedHealthMonitor {
     const timeoutPromise = new Promise<never>((_, reject) => {
       setTimeout(() => reject(new Error('Health check timeout')), timeout);
     });
-    
+
     return Promise.race([promise, timeoutPromise]);
   }
 
@@ -681,9 +703,9 @@ export class EnhancedHealthMonitor {
       const metrics = await this.getPerformanceMetrics();
       this.performanceHistory.push({
         timestamp: Date.now(),
-        metrics
+        metrics,
       });
-      
+
       // Keep only last 24 hours
       const oneDayAgo = Date.now() - 24 * 60 * 60 * 1000;
       this.performanceHistory = this.performanceHistory.filter(
@@ -697,7 +719,7 @@ export class EnhancedHealthMonitor {
   private updatePerformanceHistory(systemHealth: SystemHealth): void {
     this.performanceHistory.push({
       timestamp: systemHealth.timestamp,
-      metrics: systemHealth.performance
+      metrics: systemHealth.performance,
     });
   }
 
@@ -757,8 +779,8 @@ export class EnhancedHealthMonitor {
         connectivity: true,
         functionality: true,
         performance: true,
-        resources: true
-      }
+        resources: true,
+      },
     };
   }
 
@@ -782,7 +804,7 @@ export class EnhancedHealthMonitor {
   getCacheStats(): { size: number; hitRate: number } {
     return {
       size: this.healthCache.size,
-      hitRate: 0 // Would need to track hits/misses
+      hitRate: 0, // Would need to track hits/misses
     };
   }
 }
