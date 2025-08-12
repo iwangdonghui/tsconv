@@ -142,6 +142,7 @@
     "@testing-library/user-event": "^14.5.1",
     "@types/react": "^18.2.66",
     "@types/react-dom": "^18.2.22",
+    "@tailwindcss/postcss": "^4.1.11",
     "@typescript-eslint/eslint-plugin": "^7.18.0",
     "@typescript-eslint/parser": "^7.18.0",
     "@vitejs/plugin-react": "^5.0.0",
