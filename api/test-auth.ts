@@ -5,13 +5,13 @@
  */
 
 import { VercelRequest, VercelResponse } from '@vercel/node';
-import { createCorsHeaders } from './utils/response';
+import { defaultAPISecurityMiddleware } from './middleware/api-security';
 import {
-  apiKeyAuthMiddleware,
   adminAuthMiddleware,
+  apiKeyAuthMiddleware,
   optionalAuthMiddleware,
 } from './middleware/auth';
-import { defaultAPISecurityMiddleware } from './middleware/api-security';
+import { createCorsHeaders } from './utils/response';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Set CORS headers
@@ -35,58 +35,63 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   // Apply API security middleware
-  defaultAPISecurityMiddleware(req, res, () => {
-    const authType = req.query.auth as string;
+  return await new Promise(resolve => {
+    defaultAPISecurityMiddleware()(req, res, () => {
+      const authType = req.query.auth as string;
 
-    switch (authType) {
-      case 'required':
-        // Test required authentication
-        apiKeyAuthMiddleware(req, res, () => {
-          return res.status(200).json({
-            success: true,
-            message: 'Authentication required - access granted',
-            data: {
-              authenticated: true,
-              authMethod: (req as any).auth?.method,
-              userId: (req as any).auth?.userId,
-              roles: (req as any).auth?.roles,
-            },
+      switch (authType) {
+        case 'required':
+          // Test required authentication
+          apiKeyAuthMiddleware(req, res, () => {
+            res.status(200).json({
+              success: true,
+              message: 'Authentication required - access granted',
+              data: {
+                authenticated: true,
+                authMethod: (req as any).auth?.method,
+                userId: (req as any).auth?.userId,
+                roles: (req as any).auth?.roles,
+              },
+            });
+            resolve(null);
           });
-        });
-        break;
+          break;
 
-      case 'admin':
-        // Test admin authentication
-        adminAuthMiddleware(req, res, () => {
-          return res.status(200).json({
-            success: true,
-            message: 'Admin authentication - access granted',
-            data: {
-              authenticated: true,
-              authMethod: (req as any).auth?.method,
-              userId: (req as any).auth?.userId,
-              roles: (req as any).auth?.roles,
-            },
+        case 'admin':
+          // Test admin authentication
+          adminAuthMiddleware(req, res, () => {
+            res.status(200).json({
+              success: true,
+              message: 'Admin authentication - access granted',
+              data: {
+                authenticated: true,
+                authMethod: (req as any).auth?.method,
+                userId: (req as any).auth?.userId,
+                roles: (req as any).auth?.roles,
+              },
+            });
+            resolve(null);
           });
-        });
-        break;
+          break;
 
-      case 'optional':
-      default:
-        // Test optional authentication
-        optionalAuthMiddleware(req, res, () => {
-          return res.status(200).json({
-            success: true,
-            message: 'Optional authentication - access granted',
-            data: {
-              authenticated: (req as any).auth?.authenticated || false,
-              authMethod: (req as any).auth?.method || 'none',
-              userId: (req as any).auth?.userId,
-              roles: (req as any).auth?.roles || [],
-            },
+        case 'optional':
+        default:
+          // Test optional authentication
+          optionalAuthMiddleware(req, res, () => {
+            res.status(200).json({
+              success: true,
+              message: 'Optional authentication - access granted',
+              data: {
+                authenticated: (req as any).auth?.authenticated || false,
+                authMethod: (req as any).auth?.method || 'none',
+                userId: (req as any).auth?.userId,
+                roles: (req as any).auth?.roles || [],
+              },
+            });
+            resolve(null);
           });
-        });
-        break;
-    }
+          break;
+      }
+    });
   });
 }

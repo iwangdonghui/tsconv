@@ -202,8 +202,9 @@ async function calculateTimezoneDifference(
 
 function normalizeTimezone(timezone: string): string {
   // Check if it's an alias
-  if (TIMEZONE_ALIASES[timezone.toUpperCase()]) {
-    return TIMEZONE_ALIASES[timezone.toUpperCase()];
+  const alias = TIMEZONE_ALIASES[timezone.toUpperCase()];
+  if (alias) {
+    return alias;
   }
 
   // Return as-is if it looks like a valid IANA timezone

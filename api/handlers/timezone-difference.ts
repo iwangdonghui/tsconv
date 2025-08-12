@@ -263,8 +263,9 @@ async function calculateTimezoneDifference(request: TimezoneDifferenceRequest): 
 
 function normalizeTimezone(timezone: string): string {
   // Check if it's an alias
-  if (TIMEZONE_ALIASES[timezone.toUpperCase()]) {
-    return TIMEZONE_ALIASES[timezone.toUpperCase()];
+  const alias = TIMEZONE_ALIASES[timezone.toUpperCase()];
+  if (alias) {
+    return alias;
   }
 
   // Return as-is if it looks like a valid IANA timezone
@@ -312,9 +313,11 @@ function getTimezoneInfo(timezone: string, date: Date): any {
 
 function getTimezoneOffset(timezone: string, date: Date): number {
   try {
-    // Create a date in the target timezone
+    // Create a date in the target timezone (intermediate kept for clarity)
     const utcTime = date.getTime() + date.getTimezoneOffset() * 60000;
-    const __targetTime = new Date(utcTime + getTimezoneOffsetMinutes(timezone, date) * 60000);
+    void utcTime; // avoid TS6133 when not used directly
+    // Compute target time if needed in future debugging
+    // const __targetTime = new Date(utcTime + getTimezoneOffsetMinutes(timezone, date) * 60000);
 
     // Calculate offset in minutes from UTC
     return getTimezoneOffsetMinutes(timezone, date);

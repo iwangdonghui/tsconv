@@ -1,10 +1,11 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
-import { RateLimiter, RateLimitRule, RateLimitResult, APIResponse } from '../types/api';
-import config, { getRateLimitRule } from '../config/config';
+import config from '../config/config';
+import { getEnhancedRateLimiter } from '../services/rate-limit/rate-limit-config-init';
+import { APIResponse, RateLimiter, RateLimitResult, RateLimitRule } from '../types/api';
 
 // Rate limit middleware options
 export interface RateLimitMiddlewareOptions {
-  rateLimiter: RateLimiter;
+  rateLimiter?: RateLimiter;
   identifierExtractor?: (req: VercelRequest) => string;
   ruleSelector?: (req: VercelRequest) => RateLimitRule;
   skipSuccessfulRequests?: boolean;
@@ -34,8 +35,10 @@ const defaultIdentifierExtractor = (req: VercelRequest): string => {
   const forwarded = req.headers['x-forwarded-for'];
   const ip = forwarded
     ? Array.isArray(forwarded)
-      ? forwarded[0]
-      : forwarded.split(',')[0].trim()
+      ? (forwarded?.[0] ?? 'unknown')
+      : typeof forwarded === 'string'
+        ? (forwarded?.split(',')[0]?.trim() ?? 'unknown')
+        : 'unknown'
     : req.headers['x-real-ip'] || 'unknown';
 
   return `ip:${ip}`;
@@ -87,6 +90,11 @@ export const rateLimitMiddleware = (options: RateLimitMiddlewareOptions) => {
     onLimitReached,
     customErrorResponse = defaultErrorResponse,
   } = options;
+
+  // Ensure we have a rate limiter
+  if (!rateLimiter) {
+    throw new Error('Rate limiter is required for rate limit middleware');
+  }
 
   return async (
     req: VercelRequest,
@@ -195,14 +203,19 @@ export const rateLimitMiddleware = (options: RateLimitMiddlewareOptions) => {
   };
 };
 
-// Convenience function for creating rate limit middleware with default rate limiter
+// Convenience function for creating rate limit middleware with enhanced rate limiter
 export const createRateLimitMiddleware = (options?: Partial<RateLimitMiddlewareOptions>) => {
-  // Import rate limiter dynamically to avoid circular dependencies
+  // Use enhanced rate limiter by default
   const getRateLimiter = async (): Promise<RateLimiter> => {
     try {
-      const { RateLimiterFactory } = await import('../services/rate-limiter-factory');
-      return RateLimiterFactory.create();
-    } catch {
+      // Use enhanced rate limiter if not provided in options
+      if (options?.rateLimiter) {
+        return options.rateLimiter;
+      }
+
+      return await getEnhancedRateLimiter();
+    } catch (error) {
+      console.warn('Failed to get enhanced rate limiter, falling back to memory:', error);
       // Fallback to memory rate limiter
       const { MemoryRateLimiter } = await import('../services/rate-limiter');
       return new MemoryRateLimiter({
@@ -231,17 +244,21 @@ export const createRateLimitMiddleware = (options?: Partial<RateLimitMiddlewareO
 export const bypassRateLimit = (req: VercelRequest): boolean => {
   // Check for bypass header (for internal services)
   const bypassHeader = req.headers['x-rate-limit-bypass'];
-  if (bypassHeader === process.env.RATE_LIMIT_BYPASS_TOKEN) {
+  if (
+    bypassHeader &&
+    process.env.RATE_LIMIT_BYPASS_TOKEN &&
+    bypassHeader === process.env.RATE_LIMIT_BYPASS_TOKEN
+  ) {
     return true;
   }
 
   // Check for admin API key
   const apiKey = req.headers['x-api-key'];
-  if (apiKey === process.env.ADMIN_API_KEY) {
+  if (apiKey && process.env.ADMIN_API_KEY && apiKey === process.env.ADMIN_API_KEY) {
     return true;
   }
 
-  // Check for localhost in development
+  // Check for localhost in development (disabled in test env)
   if (process.env.NODE_ENV === 'development') {
     const ip = req.headers['x-forwarded-for'] || req.headers['x-real-ip'] || 'unknown';
     if (ip.toString().includes('127.0.0.1') || ip.toString().includes('localhost')) {

@@ -6,14 +6,14 @@
  */
 
 import { VercelRequest, VercelResponse } from '@vercel/node';
-import type { ValidationResult, ValidationError, TypedAPIResponse } from '../../src/types/advanced';
+import type { TypedAPIResponse, ValidationError, ValidationResult } from '../../src/types/advanced';
 import {
+  createValidationError,
+  createValidationResult,
+  isObject,
   isValidTimestamp,
   isValidTimestampMs,
   isValidTimezoneId,
-  isObject,
-  createValidationResult,
-  createValidationError,
 } from '../../src/utils/type-guards';
 
 // ============================================================================
@@ -138,7 +138,7 @@ function validateFieldType(
       }
       break;
 
-    case 'number':
+    case 'number': {
       const numValue = typeof value === 'string' ? parseFloat(value) : value;
       if (typeof numValue !== 'number' || isNaN(numValue)) {
         return createValidationResult(false, undefined, [
@@ -147,6 +147,7 @@ function validateFieldType(
       }
       value = numValue;
       break;
+    }
 
     case 'boolean':
       if (typeof value === 'string') {
@@ -158,7 +159,7 @@ function validateFieldType(
       }
       break;
 
-    case 'timestamp':
+    case 'timestamp': {
       const timestampValue = typeof value === 'string' ? parseInt(value, 10) : value;
       if (!isValidTimestamp(timestampValue)) {
         return createValidationResult(false, undefined, [
@@ -167,8 +168,9 @@ function validateFieldType(
       }
       value = timestampValue;
       break;
+    }
 
-    case 'timestampMs':
+    case 'timestampMs': {
       const timestampMsValue = typeof value === 'string' ? parseInt(value, 10) : value;
       if (!isValidTimestampMs(timestampMsValue)) {
         return createValidationResult(false, undefined, [
@@ -182,6 +184,7 @@ function validateFieldType(
       }
       value = timestampMsValue;
       break;
+    }
 
     case 'timezone':
       if (!isValidTimezoneId(value)) {
@@ -316,7 +319,7 @@ export function validateResponse<T>(
   dataValidator?: (data: unknown) => data is T
 ): ValidationResult<TypedAPIResponse<T>> {
   if (!isObject(response)) {
-    return createValidationResult(false, undefined, [
+    return createValidationResult<TypedAPIResponse<T>>(false, undefined as never, [
       createValidationError('response', 'Response must be an object', 'INVALID_TYPE', response),
     ]);
   }
@@ -369,7 +372,7 @@ export function validateResponse<T>(
 
   return errors.length === 0
     ? createValidationResult(true, response as unknown as TypedAPIResponse<T>)
-    : createValidationResult(false, undefined, errors);
+    : createValidationResult<TypedAPIResponse<T>>(false, undefined as never, errors);
 }
 
 // ============================================================================

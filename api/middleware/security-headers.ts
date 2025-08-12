@@ -105,22 +105,26 @@ function buildHSTSHeader(config: SecurityHeadersConfig['hsts'] = {}): string {
  * Gets environment-specific security headers
  */
 function getEnvironmentHeaders(environment: string): Record<string, string> {
-  const headers = { ...DEFAULT_SECURITY_HEADERS };
+  const headers: Record<string, string> = { ...DEFAULT_SECURITY_HEADERS };
 
   switch (environment) {
     case 'development':
       // Relax some restrictions for development
       headers['Cross-Origin-Embedder-Policy'] = 'unsafe-none';
       headers['Cross-Origin-Resource-Policy'] = 'cross-origin';
-      // Remove HSTS in development
-      delete headers['Strict-Transport-Security'];
+      // Remove HSTS in development if present
+      if ('Strict-Transport-Security' in headers) {
+        delete headers['Strict-Transport-Security'];
+      }
       break;
 
     case 'test':
       // Minimal headers for testing
       headers['Cross-Origin-Embedder-Policy'] = 'unsafe-none';
       headers['Cross-Origin-Resource-Policy'] = 'cross-origin';
-      delete headers['Strict-Transport-Security'];
+      if ('Strict-Transport-Security' in headers) {
+        delete headers['Strict-Transport-Security'];
+      }
       break;
 
     case 'production':
@@ -348,4 +352,4 @@ export function getSecurityHeadersSummary(res: VercelResponse): Record<string, s
 // Exports
 // ============================================================================
 
-export { DEFAULT_SECURITY_HEADERS, buildHSTSHeader, getEnvironmentHeaders };
+export { buildHSTSHeader, DEFAULT_SECURITY_HEADERS, getEnvironmentHeaders };

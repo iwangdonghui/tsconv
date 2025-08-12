@@ -297,8 +297,10 @@ export const performanceMonitoringMiddleware = (options: PerformanceMonitoringOp
         userAgent: includeHeaders ? userAgent : undefined,
         ip: collectDetailedMetrics
           ? Array.isArray(ip)
-            ? ip[0]
-            : ip.toString().split(',')[0].trim()
+            ? (ip?.[0] ?? 'unknown')
+            : typeof ip === 'string'
+              ? (ip?.split(',')[0]?.trim() ?? 'unknown')
+              : 'unknown'
           : undefined,
         cacheHit,
         rateLimited,
@@ -536,8 +538,10 @@ export async function getPerformanceMetrics(options?: {
 
   // Calculate average times for each endpoint
   for (const endpoint in endpoints) {
-    endpoints[endpoint].averageTime =
-      endpoints[endpoint].averageTime / endpoints[endpoint].requests;
+    const ep = endpoints[endpoint];
+    if (ep) {
+      ep.averageTime = ep.requests > 0 ? ep.averageTime / ep.requests : 0;
+    }
   }
 
   return {

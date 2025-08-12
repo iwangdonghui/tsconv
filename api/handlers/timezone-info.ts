@@ -1,6 +1,6 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
+import { CommonTimezone, TimezoneInfo } from '../types/api';
 import { APIErrorHandler, createCorsHeaders } from '../utils/response';
-import { TimezoneInfo, CommonTimezone } from '../types/api';
 
 // Common timezone data
 const COMMON_TIMEZONES: CommonTimezone[] = [
@@ -418,8 +418,9 @@ async function getDetailedTimezoneInfo(
 
 function normalizeTimezone(timezone: string): string {
   // Check if it's an alias
-  if (TIMEZONE_ALIASES[timezone.toUpperCase()]) {
-    return TIMEZONE_ALIASES[timezone.toUpperCase()];
+  const alias = TIMEZONE_ALIASES[timezone.toUpperCase()];
+  if (alias) {
+    return alias;
   }
 
   // Return as-is if it looks like a valid IANA timezone

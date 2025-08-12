@@ -1,9 +1,9 @@
 import {
   CustomFormat,
+  FormatService,
+  FormattedResult,
   FormatValidationResult,
   SupportedFormat,
-  FormattedResult,
-  FormatService,
 } from '../types/api';
 
 class FormatServiceImpl implements FormatService {
@@ -483,10 +483,11 @@ class FormatServiceImpl implements FormatService {
       hh: String(date.getHours() % 12 || 12).padStart(2, '0'),
       A: date.getHours() >= 12 ? 'PM' : 'AM',
       a: date.getHours() >= 12 ? 'pm' : 'am',
-      ddd: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][date.getDay()],
-      MMM: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][
-        date.getMonth()
-      ],
+      ddd: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][date.getDay()] ?? '',
+      MMM:
+        ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][
+          date.getMonth()
+        ] ?? '',
       X: Math.floor(date.getTime() / 1000).toString(),
       x: date.getTime().toString(),
       ZZ: this.getTimezoneOffset(date),
@@ -497,7 +498,7 @@ class FormatServiceImpl implements FormatService {
     // Sort by length descending to avoid partial replacements
     const sortedKeys = Object.keys(replacements).sort((a, b) => b.length - a.length);
     for (const key of sortedKeys) {
-      const value = replacements[key];
+      const value = replacements[key] ?? '';
       result = result.replace(new RegExp(key, 'g'), value);
     }
 
@@ -592,12 +593,12 @@ class FormatServiceImpl implements FormatService {
 
       const [, year, month, day, hour, minute, second] = match;
       const parsedDate = new Date(
-        parseInt(year),
-        parseInt(month) - 1, // Month is 0-indexed
-        parseInt(day),
-        parseInt(hour),
-        parseInt(minute),
-        parseInt(second),
+        parseInt(year ?? '0'),
+        parseInt(month ?? '1') - 1, // Month is 0-indexed
+        parseInt(day ?? '1'),
+        parseInt(hour ?? '0'),
+        parseInt(minute ?? '0'),
+        parseInt(second ?? '0'),
         0
       );
 
@@ -617,9 +618,9 @@ class FormatServiceImpl implements FormatService {
 
       const [, month, day, year] = match;
       const parsedDate = new Date(
-        parseInt(year),
-        parseInt(month) - 1, // Month is 0-indexed
-        parseInt(day),
+        parseInt(year ?? '0'),
+        parseInt(month ?? '1') - 1, // Month is 0-indexed
+        parseInt(day ?? '1'),
         0,
         0,
         0,
@@ -642,9 +643,9 @@ class FormatServiceImpl implements FormatService {
 
       const [, day, month, year] = match;
       const parsedDate = new Date(
-        parseInt(year),
-        parseInt(month) - 1, // Month is 0-indexed
-        parseInt(day),
+        parseInt(year ?? '0'),
+        parseInt(month ?? '1') - 1, // Month is 0-indexed
+        parseInt(day ?? '1'),
         0,
         0,
         0,
@@ -667,9 +668,9 @@ class FormatServiceImpl implements FormatService {
 
       const [, year, month, day] = match;
       const parsedDate = new Date(
-        parseInt(year),
-        parseInt(month) - 1, // Month is 0-indexed
-        parseInt(day),
+        parseInt(year ?? '0'),
+        parseInt(month ?? '1') - 1, // Month is 0-indexed
+        parseInt(day ?? '1'),
         0,
         0,
         0,
@@ -741,13 +742,13 @@ class FormatServiceImpl implements FormatService {
       let regexPattern = pattern;
 
       // Escape special regex characters in the pattern except for the placeholders
-      regexPattern = regexPattern.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      regexPattern = regexPattern.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // eslint-disable-line no-useless-escape
 
       // Replace placeholders with their regex patterns (longest first to avoid conflicts)
       const sortedKeys = Object.keys(namedGroups).sort((a, b) => b.length - a.length);
       for (const key of sortedKeys) {
-        const value = namedGroups[key];
-        const escapedKey = key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const value = namedGroups[key] ?? '';
+        const escapedKey = key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // eslint-disable-line no-useless-escape
         regexPattern = regexPattern.replace(new RegExp(escapedKey, 'g'), value);
       }
 

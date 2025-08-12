@@ -1,6 +1,6 @@
 import { Redis } from '@upstash/redis';
-import { RateLimiter, RateLimitRule, RateLimitResult, RateLimitStats } from '../types/api';
 import config from '../config/config';
+import { RateLimiter, RateLimitResult, RateLimitRule, RateLimitStats } from '../types/api';
 // Note: MemoryRateLimiter is defined locally in this file
 
 class UpstashRateLimiter implements RateLimiter {
@@ -298,9 +298,20 @@ class UpstashRateLimiter implements RateLimiter {
       const rateLimitResults: RateLimitResult[] = [];
 
       for (let i = 0; i < requests.length; i++) {
-        const { rule } = requests[i];
+        const req = requests[i];
+        const rule = req?.rule;
         const resultIndex = i * 3 + 1; // Each request has 3 operations, we want the zcard result
         const currentCount = (results?.[resultIndex] as any)?.[1] || 0;
+
+        if (!rule) {
+          rateLimitResults.push({
+            allowed: false,
+            remaining: 0,
+            resetTime: now,
+            totalLimit: 0,
+          });
+          continue;
+        }
 
         const windowStart = Math.floor(now / rule.window) * rule.window;
         const nextResetTime = windowStart + rule.window;
@@ -480,4 +491,4 @@ class MemoryRateLimiter implements RateLimiter {
   }
 }
 
-export { UpstashRateLimiter, MemoryRateLimiter };
+export { MemoryRateLimiter, UpstashRateLimiter };

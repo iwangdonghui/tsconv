@@ -1,6 +1,6 @@
 import { Redis } from '@upstash/redis';
-import { CacheService, CacheStats, CacheableRequest } from '../types/api';
 import config from '../config/config';
+import { CacheService, CacheStats, CacheableRequest } from '../types/api';
 import { MemoryCacheService } from './cache-service';
 
 class UpstashCacheService implements CacheService {
@@ -169,7 +169,7 @@ class UpstashCacheService implements CacheService {
         const dbsize = await this.redis.dbsize();
 
         // Memory info not available in Upstash
-        const __memoryUsed = 0; // Not available in Upstash
+        // const __memoryUsed = 0; // Not available in Upstash
 
         // Get sample keys for debugging
         const sampleKeys = await this.scanKeys('*');
@@ -320,3 +320,4 @@ class UpstashCacheService implements CacheService {
 }
 
 export { UpstashCacheService };
+export default UpstashCacheService;
