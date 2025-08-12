@@ -2,6 +2,7 @@ import { VercelRequest, VercelResponse } from '@vercel/node';
 import { createCacheMiddleware } from './middleware/cache';
 import { createRateLimitMiddleware } from './middleware/rate-limit';
 import { getStrategicCacheService } from './services/cache/cache-config-init';
+import { createUnifiedErrorMiddleware } from './services/error-handling/unified-error-middleware';
 import formatService from './services/format-service';
 import { createSecurityMiddleware } from './services/security/unified-security-middleware';
 import { convertTimezone } from './utils/conversion-utils';
@@ -194,7 +195,7 @@ function getRelativeTime(date: Date): string {
   return `${prefix} ${Math.floor(absDiff / 2592000)} months ${suffix}`.trim();
 }
 
-// Enhanced convert API with unified security, strategic caching, and enhanced rate limiting
+// Enhanced convert API with unified security, error handling, strategic caching, and enhanced rate limiting
 const securityMiddleware = createSecurityMiddleware({
   policyLevel: process.env.NODE_ENV === 'production' ? 'strict' : 'standard',
   enableThreatDetection: true,
@@ -204,25 +205,68 @@ const securityMiddleware = createSecurityMiddleware({
   },
 });
 
-const enhancedConvertHandler = (req: VercelRequest, res: VercelResponse) => {
-  // Apply security middleware first
-  securityMiddleware(req, res, () => {
-    // Then apply rate limiting
-    createRateLimitMiddleware({
-      ruleSelector: req => ({
-        identifier: '/api/convert',
-        limit: 120, // Will be overridden by strategy-based limits
-        window: 60000, // 1 minute
-        type: 'ip',
-      }),
-    })(
-      // Finally apply caching
-      createCacheMiddleware({
-        ttl: 5 * 60 * 1000, // 5 minutes
-        cacheControlHeader: 'public, max-age=300, stale-while-revalidate=600',
-      })(convertHandler)
-    )(req, res);
-  });
+const errorMiddleware = createUnifiedErrorMiddleware({
+  enableRecovery: process.env.NODE_ENV === 'production',
+  enableFormatting: true,
+  enableMonitoring: true,
+  enableLogging: true,
+  responseFormat: {
+    format: process.env.NODE_ENV === 'development' ? 'debug' : 'standard',
+    locale: 'en',
+    includeStack: process.env.NODE_ENV === 'development',
+    includeContext: process.env.NODE_ENV === 'development',
+    sanitizeDetails: process.env.NODE_ENV === 'production',
+  },
+  recovery: {
+    retry: {
+      maxAttempts: 3,
+      baseDelayMs: 1000,
+      exponentialBackoff: true,
+    },
+    circuitBreaker: {
+      failureThreshold: 5,
+      recoveryTimeoutMs: 60000,
+    },
+    fallback: {
+      enabled: true,
+      timeoutMs: 5000,
+    },
+  },
+});
+
+const enhancedConvertHandler = async (req: VercelRequest, res: VercelResponse) => {
+  try {
+    // Apply security middleware first
+    await new Promise<void>((resolve, reject) => {
+      securityMiddleware(req, res, () => {
+        // Then apply rate limiting
+        createRateLimitMiddleware({
+          ruleSelector: req => ({
+            identifier: '/api/convert',
+            limit: 120, // Will be overridden by strategy-based limits
+            window: 60000, // 1 minute
+            type: 'ip',
+          }),
+        })(
+          // Finally apply caching
+          createCacheMiddleware({
+            ttl: 5 * 60 * 1000, // 5 minutes
+            cacheControlHeader: 'public, max-age=300, stale-while-revalidate=600',
+          })(async (req: VercelRequest, res: VercelResponse) => {
+            try {
+              await convertHandler(req, res);
+              resolve();
+            } catch (error) {
+              reject(error);
+            }
+          })
+        )(req, res);
+      });
+    });
+  } catch (error) {
+    // Handle errors with unified error middleware
+    await errorMiddleware(error as Error, req, res);
+  }
 };
 
 export default enhancedConvertHandler;
