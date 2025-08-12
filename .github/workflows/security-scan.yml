@@ -283,7 +283,7 @@ jobs:
         run: npm ci --prefer-offline --no-audit
       
       - name: 📥 Download all artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v5
         continue-on-error: true
       
       - name: 🔒 Run comprehensive security scan

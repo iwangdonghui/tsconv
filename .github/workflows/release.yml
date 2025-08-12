@@ -151,7 +151,7 @@ jobs:
         uses: actions/checkout@v4
       
       - name: 📦 Download build artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v5
         with:
           name: release-${{ needs.validate.outputs.version }}
       
@@ -207,7 +207,7 @@ jobs:
           fetch-depth: 0
       
       - name: 📦 Download build artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v5
         with:
           name: release-${{ needs.validate.outputs.version }}
       
@@ -283,7 +283,7 @@ jobs:
         uses: actions/checkout@v4
       
       - name: 📦 Download build artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v5
         with:
           name: release-${{ needs.validate.outputs.version }}
       
