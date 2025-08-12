@@ -3,6 +3,10 @@
   "framework": "vite",
   "rewrites": [
     {
+      "source": "/api/enhanced-health",
+      "destination": "/api/enhanced-health"
+    },
+    {
       "source": "/api/enhanced-format-convert",
       "destination": "/api/enhanced-format-convert"
     },
