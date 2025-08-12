@@ -891,23 +891,6 @@ export class EnhancedHealthMonitor {
   }
 
   /**
-   * Get cache statistics
-   */
-  getCacheStats(): { size: number; hitRate: number } {
-    return {
-      size: this.healthCache.size,
-      hitRate: 0, // Would need to track hits/misses
-    };
-  }
-}
-
-// Service health checker interface
-interface ServiceHealthChecker {
-  name: string;
-  check(): Promise<ServiceHealth>;
-}
-
-  /**
    * Create health check tasks for performance optimizer
    */
   private createHealthCheckTasks(config: HealthCheckConfig): Array<{
@@ -923,17 +906,17 @@ interface ServiceHealthChecker {
       {
         name: 'api',
         executor: () => this.checkAPIHealth(),
-        priority: 'critical'
+        priority: 'critical',
       },
       {
         name: 'memory',
         executor: () => this.checkMemoryHealth(),
-        priority: 'critical'
+        priority: 'critical',
       },
       {
         name: 'connectivity',
         executor: () => this.checkBasicConnectivity(),
-        priority: 'high'
+        priority: 'high',
       }
     );
 
@@ -943,22 +926,22 @@ interface ServiceHealthChecker {
         {
           name: 'cache',
           executor: () => this.checkCacheHealth(),
-          priority: 'medium'
+          priority: 'medium',
         },
         {
           name: 'rate-limiting',
           executor: () => this.checkRateLimitingHealth(),
-          priority: 'medium'
+          priority: 'medium',
         },
         {
           name: 'security',
           executor: () => this.checkSecurityHealth(),
-          priority: 'medium'
+          priority: 'medium',
         },
         {
           name: 'format-engine',
           executor: () => this.checkFormatEngineHealth(),
-          priority: 'high'
+          priority: 'high',
         }
       );
     }
@@ -969,22 +952,22 @@ interface ServiceHealthChecker {
         {
           name: 'batch-processing',
           executor: () => this.checkBatchProcessingHealth(),
-          priority: 'medium'
+          priority: 'medium',
         },
         {
           name: 'error-handling',
           executor: () => this.checkErrorHandlingHealth(),
-          priority: 'high'
+          priority: 'high',
         },
         {
           name: 'performance',
           executor: () => this.checkPerformanceHealth(),
-          priority: 'low'
+          priority: 'low',
         },
         {
           name: 'monitoring',
           executor: () => this.checkMonitoringHealth(),
-          priority: 'low'
+          priority: 'low',
         }
       );
     }
@@ -996,25 +979,25 @@ interface ServiceHealthChecker {
           name: 'database',
           executor: () => this.checkDatabaseConnectivity(),
           priority: 'medium',
-          dependencies: ['connectivity']
+          dependencies: ['connectivity'],
         },
         {
           name: 'external-services',
           executor: () => this.checkExternalServicesHealth(),
           priority: 'low',
-          dependencies: ['connectivity']
+          dependencies: ['connectivity'],
         },
         {
           name: 'resource-limits',
           executor: () => this.checkResourceLimits(),
           priority: 'medium',
-          dependencies: ['memory']
+          dependencies: ['memory'],
         },
         {
           name: 'security-compliance',
           executor: () => this.checkSecurityCompliance(),
           priority: 'low',
-          dependencies: ['security']
+          dependencies: ['security'],
         }
       );
     }
@@ -1043,11 +1026,11 @@ interface ServiceHealthChecker {
       services: {
         core: [],
         dependencies: [],
-        external: []
+        external: [],
       },
       performance: await this.getPerformanceMetrics(),
       metrics: await this.getSystemMetrics(),
-      alerts: []
+      alerts: [],
     };
 
     // Process results into service health
@@ -1057,19 +1040,23 @@ interface ServiceHealthChecker {
         status: result.error ? 'unhealthy' : 'healthy',
         responseTime: result.executionTime,
         lastCheck: timestamp,
-        details: result.error ? { error: result.error.message } : { result: result.result },
+        details: result.error ? { error: result.error.message } : { metrics: result.result },
         checks: {
           connectivity: !result.error,
           functionality: !result.error,
           performance: result.executionTime < 1000,
-          resources: true
-        }
+          resources: true,
+        },
       };
 
       // Categorize service
       if (['api', 'memory', 'connectivity'].includes(result.name)) {
         systemHealth.services.core.push(serviceHealth);
-      } else if (['database', 'external-services', 'resource-limits', 'security-compliance'].includes(result.name)) {
+      } else if (
+        ['database', 'external-services', 'resource-limits', 'security-compliance'].includes(
+          result.name
+        )
+      ) {
         systemHealth.services.external.push(serviceHealth);
       } else {
         systemHealth.services.dependencies.push(serviceHealth);
@@ -1105,6 +1092,22 @@ interface ServiceHealthChecker {
   resetOptimizerCircuitBreakers(): void {
     this.performanceOptimizer.resetCircuitBreakers();
   }
+
+  /**
+   * Get cache statistics
+   */
+  getCacheStats(): { size: number; hitRate: number } {
+    return {
+      size: this.healthCache.size,
+      hitRate: 0, // Would need to track hits/misses
+    };
+  }
+}
+
+// Service health checker interface
+interface ServiceHealthChecker {
+  name: string;
+  check(): Promise<ServiceHealth>;
 }
 
 export default EnhancedHealthMonitor;
