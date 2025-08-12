@@ -69,11 +69,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         result = { status: 'connected', dbsize: await redis.dbsize() };
         break;
 
-      case 'stats':
+      case 'stats': {
         // Upstash doesn't have info(), use alternative approach
         await redis.ping();
         const keys = await redis.keys('*');
-        const _dbSize = await redis.dbsize(); // Available for future use
+        // Note: Upstash does not expose DB size reliably; avoid unused variable to satisfy TS
 
         // Since Upstash doesn't provide detailed info, use basic stats
         const stats: RedisStats = {
@@ -88,20 +88,23 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
         result = stats;
         break;
+      }
 
-      case 'keys':
+      case 'keys': {
         const searchPattern = pattern || '*';
         result = await redis.keys(searchPattern);
         break;
+      }
 
-      case 'get':
+      case 'get': {
         if (!key) {
           return APIErrorHandler.handleBadRequest(res, 'Key is required for get operation');
         }
         result = await redis.get(key);
         break;
+      }
 
-      case 'set':
+      case 'set': {
         if (!key || value === undefined) {
           return APIErrorHandler.handleBadRequest(
             res,
@@ -115,14 +118,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         }
         result = { success: true, key, value, ttl };
         break;
+      }
 
-      case 'del':
+      case 'del': {
         if (!key) {
           return APIErrorHandler.handleBadRequest(res, 'Key is required for delete operation');
         }
         const deleted = await redis.del(key);
         result = { success: true, key, deleted: deleted === 1 };
         break;
+      }
 
       case 'flushall':
         await redis.flushall();
@@ -151,7 +156,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 }
 
+// @ts-ignore - helper retained for future Redis versions
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function _extractInfoValue(lines: string[], key: string): string | null {
   const line = lines.find(l => l.startsWith(`${key}:`));
   return line ? line.split(':')[1]?.trim() || null : null;
 }
+void _extractInfoValue; // mark as intentionally unused

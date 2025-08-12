@@ -6,7 +6,6 @@
  */
 
 import { VercelRequest, VercelResponse } from '@vercel/node';
-import config from '../config/config';
 
 // ============================================================================
 // Enhanced Security Headers Configuration
@@ -486,11 +485,11 @@ export const developmentSecurityHeadersMiddleware = createEnhancedSecurityHeader
 // ============================================================================
 
 export {
-  DEFAULT_ENHANCED_CONFIG,
-  buildHSTSHeader,
-  buildXSSProtectionHeader,
-  buildPermissionsPolicyHeader,
-  buildExpectCTHeader,
   buildClearSiteDataHeader,
+  buildExpectCTHeader,
+  buildHSTSHeader,
+  buildPermissionsPolicyHeader,
   buildTimingAllowOriginHeader,
+  buildXSSProtectionHeader,
+  DEFAULT_ENHANCED_CONFIG,
 };

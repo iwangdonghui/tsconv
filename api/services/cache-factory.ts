@@ -1,5 +1,5 @@
-import { CacheService } from '../types/api';
 import config from '../config/config';
+import { CacheService } from '../types/api';
 import { MemoryCacheService } from './cache-service';
 
 /**
@@ -83,9 +83,16 @@ export class CacheFactory {
   private static createUpstashCache(): CacheService {
     try {
       // Dynamic import to avoid loading Upstash dependencies if not needed
-      const UpstashCacheServiceModule = require('./upstash-cache-service.ts');
+      // In Vitest, ESM/CJS interop can differ; support both default and named exports
+      // Try both ESM and CJS paths to satisfy vitest resolver
+      let UpstashCacheServiceModule: any;
+      try {
+        UpstashCacheServiceModule = require('./upstash-cache-service');
+      } catch (e) {
+        UpstashCacheServiceModule = require('./upstash-cache-service.ts');
+      }
       const UpstashCacheService =
-        UpstashCacheServiceModule.UpstashCacheService || UpstashCacheServiceModule.default;
+        UpstashCacheServiceModule?.UpstashCacheService ?? UpstashCacheServiceModule?.default;
       return new UpstashCacheService();
     } catch (error) {
       console.warn('Failed to load Upstash cache service:', error);
@@ -278,4 +285,4 @@ export default CacheFactory;
 export { MemoryCacheService } from './cache-service';
 
 // Re-export types for convenience
-export type { CacheService, CacheStats, CacheableRequest } from '../types/api';
+export type { CacheableRequest, CacheService, CacheStats } from '../types/api';

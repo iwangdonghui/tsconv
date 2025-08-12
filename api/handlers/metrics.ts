@@ -109,7 +109,7 @@ async function getCacheMetrics() {
 
     // Get cache keys and basic stats
     const keys = await redis.keys('tsconv:cache:*');
-    const _dbSize = await redis.dbsize(); // Available for future use
+    // Note: Upstash does not expose DB size reliably; avoid unused variable to satisfy TS
 
     // Upstash Redis doesn't support INFO command, use default values
     let memoryUsage = '0B';
@@ -259,7 +259,7 @@ async function getRedisMetrics() {
 
     // Test connection with ping and get basic stats
     await redis.ping();
-    const _dbSize = await redis.dbsize(); // Available for future use
+    // Note: Upstash does not expose DB size reliably; avoid unused variable to satisfy TS
 
     const responseTime = Date.now() - startTime;
     // Upstash doesn't provide detailed info, use basic metrics
@@ -287,8 +287,11 @@ async function getRedisMetrics() {
   }
 }
 
-// Helper function for extracting Redis info values (currently unused but kept for future use)
+// Helper function for extracting Redis info values (kept for potential future use)
+// @ts-ignore - not currently used in Upstash env but kept for parity
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function _extractInfoValue(lines: string[], key: string): string | null {
   const line = lines.find(l => l.startsWith(`${key}:`));
   return line ? line.split(':')[1]?.trim() || null : null;
 }
+void _extractInfoValue; // mark as intentionally unused

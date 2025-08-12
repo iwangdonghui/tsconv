@@ -208,9 +208,9 @@ function getTimezoneLocation(timezone: string) {
   const parts = timezone.split('/');
   if (parts.length >= 2) {
     return {
-      continent: parts[0],
-      city: parts[1].replace(/_/g, ' '),
-      region: parts.length > 2 ? parts[2].replace(/_/g, ' ') : null,
+      continent: parts[0] ?? null,
+      city: (parts[1] ?? '').replace(/_/g, ' '),
+      region: parts.length > 2 ? (parts[2] ?? '').replace(/_/g, ' ') : null,
     };
   }
   return {

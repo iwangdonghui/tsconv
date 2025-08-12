@@ -1,9 +1,4 @@
-import {
-  BatchConversionRequest,
-  BatchConversionResult,
-  ValidationResult,
-  ValidationError,
-} from '../types/api';
+import { BatchConversionResult, ValidationError, ValidationResult } from '../types/api';
 
 export function validateBatchRequest(body: any): ValidationResult {
   const errors: ValidationError[] = [];

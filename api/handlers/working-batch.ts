@@ -1,6 +1,6 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
-import { APIErrorHandler, createCorsHeaders, validateRequest } from '../utils/response';
 import { convertTimestamp } from '../utils/conversion-utils';
+import { APIErrorHandler, createCorsHeaders, validateRequest } from '../utils/response';
 
 const MAX_BATCH_SIZE = 50;
 const DEFAULT_TIMEOUT = 30000; // 30 seconds
@@ -247,7 +247,7 @@ async function processWorkingBatchConversion(
       // Validate individual item
       if (item === null || item === undefined) {
         results.push({
-          input: item,
+          input: item ?? 'undefined',
           success: false,
           error: 'Timestamp cannot be null or undefined',
           processingTime: Date.now() - itemStartTime,
@@ -285,7 +285,7 @@ async function processWorkingBatchConversion(
       });
     } catch (error) {
       results.push({
-        input: item,
+        input: item ?? 'undefined',
         success: false,
         error: `Conversion failed: ${(error as Error).message}`,
         processingTime: Date.now() - itemStartTime,

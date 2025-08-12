@@ -1,14 +1,14 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
 
-interface WorkdaysRequest {
-  startDate: string;
-  endDate?: string;
-  days?: number;
-  excludeWeekends: boolean;
-  excludeHolidays: boolean;
-  country: string;
-  mode: 'dateRange' | 'dayCount';
-}
+// interface WorkdaysRequest {
+//   startDate: string;
+//   endDate?: string;
+//   days?: number;
+//   excludeWeekends: boolean;
+//   excludeHolidays: boolean;
+//   country: string;
+//   mode: 'dateRange' | 'dayCount';
+// }
 
 interface Holiday {
   date: string;
@@ -114,9 +114,9 @@ function calculateWorkdays(
 
     if (isExcluded) {
       excludedDates.push({
-        date: current.toISOString().split('T')[0],
+        date: current.toISOString().split('T')[0] ?? '',
         reason: exclusionReason,
-        ...(holidayName && { name: holidayName }),
+        ...(holidayName ? { name: holidayName } : {}),
       });
     } else {
       workdays++;

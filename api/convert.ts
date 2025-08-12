@@ -1,9 +1,12 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
-import { APIErrorHandler, ResponseBuilder, withCors } from './utils/response';
 import { createCacheMiddleware } from './middleware/cache';
 import { createRateLimitMiddleware } from './middleware/rate-limit';
+import { getStrategicCacheService } from './services/cache/cache-config-init';
+import { createUnifiedErrorMiddleware } from './services/error-handling/unified-error-middleware';
 import formatService from './services/format-service';
+import { createSecurityMiddleware } from './services/security/unified-security-middleware';
 import { convertTimezone } from './utils/conversion-utils';
+import { APIErrorHandler, ResponseBuilder, withCors } from './utils/response';
 
 async function convertHandler(req: VercelRequest, res: VercelResponse) {
   withCors(res);
@@ -35,7 +38,7 @@ async function convertHandler(req: VercelRequest, res: VercelResponse) {
       );
     }
 
-    // Process conversion logic here...
+    // Process conversion logic with strategic caching
     const inputValue = timestamp || date;
     const isTimestamp = !!timestamp;
 
@@ -50,9 +53,46 @@ async function convertHandler(req: VercelRequest, res: VercelResponse) {
     if (timezone) options.timezone = String(timezone);
     if (targetTimezone) options.targetTimezone = String(targetTimezone);
 
+    // Get strategic cache service
+    const strategicCache = await getStrategicCacheService();
+
+    // Generate cache key for strategic caching
+    const cacheKey = strategicCache.generateKey(
+      {
+        endpoint: '/api/convert',
+        parameters: {
+          input: inputValue,
+          isTimestamp,
+          ...options,
+        },
+      },
+      { includeStrategy: true }
+    );
+
+    // Try to get cached result
+    const cachedResult = await strategicCache.get(cacheKey);
+    if (cachedResult) {
+      const builder = new ResponseBuilder()
+        .setData(cachedResult)
+        .addMetadata('cached', true)
+        .addMetadata('cacheKey', cacheKey);
+      builder.send(res);
+      return;
+    }
+
+    // Process conversion
     const result = await processConversion(inputValue, isTimestamp, options);
 
-    const builder = new ResponseBuilder().setData(result);
+    // Cache the result with strategic options
+    await strategicCache.set(cacheKey, result, {
+      tags: ['conversion', 'timestamp', options.format || 'default'],
+      priority: 'high',
+    });
+
+    const builder = new ResponseBuilder()
+      .setData(result)
+      .addMetadata('cached', false)
+      .addMetadata('cacheKey', cacheKey);
     builder.send(res);
   } catch (error) {
     console.error('API Error:', error);
@@ -155,12 +195,78 @@ function getRelativeTime(date: Date): string {
   return `${prefix} ${Math.floor(absDiff / 2592000)} months ${suffix}`.trim();
 }
 
-// Enhanced convert API with caching and rate limiting
-const enhancedConvertHandler = createRateLimitMiddleware()(
-  createCacheMiddleware({
-    ttl: 5 * 60 * 1000, // 5 minutes
-    cacheControlHeader: 'public, max-age=300, stale-while-revalidate=600',
-  })(convertHandler)
-);
+// Enhanced convert API with unified security, error handling, strategic caching, and enhanced rate limiting
+const securityMiddleware = createSecurityMiddleware({
+  policyLevel: process.env.NODE_ENV === 'production' ? 'strict' : 'standard',
+  enableThreatDetection: true,
+  enableRealTimeBlocking: process.env.NODE_ENV === 'production',
+  loggerConfig: {
+    logLevel: process.env.NODE_ENV === 'development' ? 'debug' : 'warn',
+  },
+});
+
+const errorMiddleware = createUnifiedErrorMiddleware({
+  enableRecovery: process.env.NODE_ENV === 'production',
+  enableFormatting: true,
+  enableMonitoring: true,
+  enableLogging: true,
+  responseFormat: {
+    format: process.env.NODE_ENV === 'development' ? 'debug' : 'standard',
+    locale: 'en',
+    includeStack: process.env.NODE_ENV === 'development',
+    includeContext: process.env.NODE_ENV === 'development',
+    sanitizeDetails: process.env.NODE_ENV === 'production',
+  },
+  recovery: {
+    retry: {
+      maxAttempts: 3,
+      baseDelayMs: 1000,
+      exponentialBackoff: true,
+    },
+    circuitBreaker: {
+      failureThreshold: 5,
+      recoveryTimeoutMs: 60000,
+    },
+    fallback: {
+      enabled: true,
+      timeoutMs: 5000,
+    },
+  },
+});
+
+const enhancedConvertHandler = async (req: VercelRequest, res: VercelResponse) => {
+  try {
+    // Apply security middleware first
+    await new Promise<void>((resolve, reject) => {
+      securityMiddleware(req, res, () => {
+        // Then apply rate limiting
+        createRateLimitMiddleware({
+          ruleSelector: req => ({
+            identifier: '/api/convert',
+            limit: 120, // Will be overridden by strategy-based limits
+            window: 60000, // 1 minute
+            type: 'ip',
+          }),
+        })(
+          // Finally apply caching
+          createCacheMiddleware({
+            ttl: 5 * 60 * 1000, // 5 minutes
+            cacheControlHeader: 'public, max-age=300, stale-while-revalidate=600',
+          })(async (req: VercelRequest, res: VercelResponse) => {
+            try {
+              await convertHandler(req, res);
+              resolve();
+            } catch (error) {
+              reject(error);
+            }
+          })
+        )(req, res);
+      });
+    });
+  } catch (error) {
+    // Handle errors with unified error middleware
+    await errorMiddleware(error as Error, req, res);
+  }
+};
 
 export default enhancedConvertHandler;

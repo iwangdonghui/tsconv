@@ -3,6 +3,22 @@
   "framework": "vite",
   "rewrites": [
     {
+      "source": "/api/enhanced-admin/(.*)",
+      "destination": "/api/enhanced-admin"
+    },
+    {
+      "source": "/api/enhanced-health",
+      "destination": "/api/enhanced-health"
+    },
+    {
+      "source": "/api/enhanced-format-convert",
+      "destination": "/api/enhanced-format-convert"
+    },
+    {
+      "source": "/api/optimized-batch-convert",
+      "destination": "/api/optimized-batch-convert"
+    },
+    {
       "source": "/api/batch-convert",
       "destination": "/api/v1/batch-convert"
     },
