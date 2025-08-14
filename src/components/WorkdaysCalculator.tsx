@@ -269,11 +269,11 @@ Settings: Weekends ${result.data.settings?.excludeWeekends ? 'excluded' : 'inclu
               <Calculator className='h-8 w-8 text-white' />
             </div>
             <div>
-              <h2
+              <h1
                 className={`text-3xl font-bold tracking-tight ${isDark ? 'text-white' : 'text-gray-900'}`}
               >
                 Workdays Calculator
-              </h2>
+              </h1>
               <p className={`text-sm mt-1 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
                 Professional business day calculations
               </p>
@@ -296,9 +296,9 @@ Settings: Weekends ${result.data.settings?.excludeWeekends ? 'excluded' : 'inclu
               >
                 <TrendingUp className='h-5 w-5' />
               </div>
-              <h3 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+              <h2 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
                 Calculate Business Days with Precision
-              </h3>
+              </h2>
             </div>
             <p className={`mb-6 leading-relaxed ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
               Our workdays calculator helps you determine the exact number of business days between
@@ -318,9 +318,9 @@ Settings: Weekends ${result.data.settings?.excludeWeekends ? 'excluded' : 'inclu
                   <CheckCircle
                     className={`h-5 w-5 ${isDark ? 'text-green-400' : 'text-green-600'}`}
                   />
-                  <h4 className={`font-semibold ${isDark ? 'text-blue-400' : 'text-blue-600'}`}>
+                  <h3 className={`font-semibold ${isDark ? 'text-blue-400' : 'text-blue-600'}`}>
                     Key Features
-                  </h4>
+                  </h3>
                 </div>
                 <ul className={`space-y-2 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
                   <li className='flex items-center gap-2 text-sm'>
@@ -352,9 +352,9 @@ Settings: Weekends ${result.data.settings?.excludeWeekends ? 'excluded' : 'inclu
                   <TrendingUp
                     className={`h-5 w-5 ${isDark ? 'text-purple-400' : 'text-purple-600'}`}
                   />
-                  <h4 className={`font-semibold ${isDark ? 'text-purple-400' : 'text-purple-600'}`}>
+                  <h3 className={`font-semibold ${isDark ? 'text-purple-400' : 'text-purple-600'}`}>
                     Perfect For
-                  </h4>
+                  </h3>
                 </div>
                 <ul className={`space-y-2 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
                   <li className='flex items-center gap-2 text-sm'>
@@ -397,9 +397,9 @@ Settings: Weekends ${result.data.settings?.excludeWeekends ? 'excluded' : 'inclu
                   >
                     <Calculator className='h-5 w-5' />
                   </div>
-                  <h3 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                  <h2 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
                     Calculation Settings
-                  </h3>
+                  </h2>
                 </div>
 
                 <fieldset className='space-y-6'>
@@ -541,11 +541,11 @@ Settings: Weekends ${result.data.settings?.excludeWeekends ? 'excluded' : 'inclu
                   {/* Options */}
                   <div className='space-y-4'>
                     <div>
-                      <h4
+                      <h3
                         className={`text-sm font-medium mb-3 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}
                       >
                         Exclusion Options
-                      </h4>
+                      </h3>
                       <div className='space-y-3'>
                         <label
                           className={`flex items-center p-3 rounded-lg border cursor-pointer transition-colors ${
@@ -823,11 +823,11 @@ Settings: Weekends ${result.data.settings?.excludeWeekends ? 'excluded' : 'inclu
                     <div className='flex items-center justify-between mb-6'>
                       <div className='flex items-center gap-3'>
                         <CheckCircle className='h-6 w-6 text-green-500' />
-                        <h3
+                        <h2
                           className={`text-xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}
                         >
                           Calculation Results
-                        </h3>
+                        </h2>
                         {result.metadata.cached && (
                           <span
                             className={`text-xs px-3 py-1 rounded-full font-medium ${isDark ? 'bg-green-900/30 text-green-400' : 'bg-green-100 text-green-800'}`}
@@ -939,12 +939,12 @@ Settings: Weekends ${result.data.settings?.excludeWeekends ? 'excluded' : 'inclu
 
                     {/* Detailed Breakdown */}
                     <div className='space-y-4 mb-6'>
-                      <h4
+                      <h3
                         className={`text-lg font-semibold flex items-center gap-2 ${isDark ? 'text-white' : 'text-gray-900'}`}
                       >
                         <Calendar className='h-5 w-5 text-blue-500' />
                         Breakdown Analysis
-                      </h4>
+                      </h3>
 
                       <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
                         {/* Total Days Card */}
@@ -1064,11 +1064,11 @@ Settings: Weekends ${result.data.settings?.excludeWeekends ? 'excluded' : 'inclu
                     <div
                       className={`p-5 rounded-lg border ${isDark ? 'border-slate-600 bg-slate-700/50' : 'border-gray-200 bg-gray-50'}`}
                     >
-                      <h4
+                      <h3
                         className={`text-sm font-semibold mb-3 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}
                       >
                         Calculation Details
-                      </h4>
+                      </h3>
                       <div className='space-y-2'>
                         <div className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
                           <span className='font-medium'>Calculation Period:</span>
@@ -1119,12 +1119,12 @@ Settings: Weekends ${result.data.settings?.excludeWeekends ? 'excluded' : 'inclu
                       <div
                         className={`p-5 rounded-lg border ${isDark ? 'border-yellow-600 bg-yellow-900/20' : 'border-yellow-200 bg-yellow-50'}`}
                       >
-                        <h4
+                        <h3
                           className={`font-semibold mb-3 flex items-center gap-2 ${isDark ? 'text-yellow-300' : 'text-yellow-800'}`}
                         >
                           <AlertCircle className='h-4 w-4' />
                           Excluded Dates Details
-                        </h4>
+                        </h3>
                         <div
                           className={`text-sm max-h-40 overflow-y-auto space-y-1 ${isDark ? 'text-yellow-200' : 'text-yellow-700'}`}
                         >
@@ -1171,11 +1171,11 @@ Settings: Weekends ${result.data.settings?.excludeWeekends ? 'excluded' : 'inclu
                         className={`h-12 w-12 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}
                       />
                     </div>
-                    <h3
+                    <h2
                       className={`text-lg font-semibold mb-2 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}
                     >
                       Real-time Results
-                    </h3>
+                    </h2>
                     <p
                       className={`text-sm mb-4 max-w-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}
                     >

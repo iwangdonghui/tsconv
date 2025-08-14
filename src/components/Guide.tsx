@@ -143,9 +143,9 @@ export default function Guide() {
                   {article.icon}
                 </div>
                 <div className='min-w-0'>
-                  <h3 className='text-lg sm:text-xl font-semibold mb-2 leading-tight'>
+                  <h2 className='text-lg sm:text-xl font-semibold mb-2 leading-tight'>
                     {article.title}
-                  </h3>
+                  </h2>
                   <p className='text-sm sm:text-base text-slate-600 dark:text-slate-400 leading-relaxed'>
                     {article.description}
                   </p>

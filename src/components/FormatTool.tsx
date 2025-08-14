@@ -299,11 +299,11 @@ export default function FormatTool() {
               <Palette className='h-8 w-8 text-white' />
             </div>
             <div>
-              <h2
+              <h1
                 className={`text-3xl font-bold tracking-tight ${isDark ? 'text-white' : 'text-gray-900'}`}
               >
                 Date Format Tool
-              </h2>
+              </h1>
               <p className={`text-sm mt-1 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
                 Transform dates and timestamps with custom formatting patterns
               </p>
@@ -326,9 +326,9 @@ export default function FormatTool() {
               >
                 <Palette className='h-5 w-5' />
               </div>
-              <h3 className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+              <h2 className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
                 Professional Date and Time Formatting
-              </h3>
+              </h2>
             </div>
             <p className={`mb-4 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
               Transform timestamps and dates into any format you need with our comprehensive date
@@ -342,12 +342,12 @@ export default function FormatTool() {
                   isDark ? 'bg-slate-700/30 border-slate-600' : 'bg-white/60 border-gray-200'
                 }`}
               >
-                <h4
+                <h3
                   className={`font-medium mb-3 flex items-center gap-2 ${isDark ? 'text-blue-400' : 'text-blue-600'}`}
                 >
                   <Settings className='h-4 w-4' />
                   Format Options:
-                </h4>
+                </h3>
                 <ul className={`text-sm space-y-2 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
                   <li className='flex items-center gap-2'>
                     <div className='w-1.5 h-1.5 bg-blue-500 rounded-full'></div>
@@ -372,12 +372,12 @@ export default function FormatTool() {
                   isDark ? 'bg-slate-700/30 border-slate-600' : 'bg-white/60 border-gray-200'
                 }`}
               >
-                <h4
+                <h3
                   className={`font-medium mb-3 flex items-center gap-2 ${isDark ? 'text-green-400' : 'text-green-600'}`}
                 >
                   <Target className='h-4 w-4' />
                   Perfect for:
-                </h4>
+                </h3>
                 <ul className={`text-sm space-y-2 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
                   <li className='flex items-center gap-2'>
                     <div className='w-1.5 h-1.5 bg-blue-500 rounded-full'></div>
@@ -442,11 +442,11 @@ export default function FormatTool() {
                   isDark ? 'border-slate-600 bg-slate-700/30' : 'border-gray-200 bg-gray-50/50'
                 }`}
               >
-                <h4
+                <h3
                   className={`text-sm font-medium mb-3 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}
                 >
                   ⚡ Quick Presets
-                </h4>
+                </h3>
                 <div className='grid grid-cols-2 gap-2'>
                   <button
                     onClick={() => {
@@ -694,11 +694,11 @@ export default function FormatTool() {
                   <div className='flex items-center justify-between mb-4'>
                     <div className='flex items-center gap-2'>
                       <CheckCircle className='h-5 w-5 text-green-500' />
-                      <h3
+                      <h2
                         className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}
                       >
                         Formatted Result
-                      </h3>
+                      </h2>
                       {result.metadata.cached && (
                         <span className='text-xs bg-green-100 text-green-800 px-2 py-1 rounded'>
                           Cached
@@ -767,12 +767,12 @@ export default function FormatTool() {
                           : 'bg-gradient-to-br from-green-50 to-green-100/50 border-green-200 shadow-lg shadow-green-500/5'
                       }`}
                     >
-                      <h4
+                      <h3
                         className={`font-medium mb-3 flex items-center gap-2 ${isDark ? 'text-green-400' : 'text-green-600'}`}
                       >
                         <Settings className='h-4 w-4' />
                         Template Used:
-                      </h4>
+                      </h3>
                       <div
                         className={`text-sm space-y-2 ${isDark ? 'text-green-300' : 'text-green-700'}`}
                       >
@@ -810,12 +810,12 @@ export default function FormatTool() {
                         : 'bg-gradient-to-br from-purple-50 to-purple-100/50 border-purple-200 shadow-lg shadow-purple-500/5'
                     }`}
                   >
-                    <h4
+                    <h3
                       className={`font-medium mb-3 flex items-center gap-2 ${isDark ? 'text-purple-400' : 'text-purple-600'}`}
                     >
                       <Target className='h-4 w-4' />
                       Input Details:
-                    </h4>
+                    </h3>
                     <div
                       className={`text-sm space-y-3 ${isDark ? 'text-purple-300' : 'text-purple-700'}`}
                     >
@@ -895,11 +895,11 @@ export default function FormatTool() {
                   >
                     <Type className='h-8 w-8' />
                   </div>
-                  <h3
+                  <h2
                     className={`text-lg font-semibold mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}
                   >
                     Ready to Format
-                  </h3>
+                  </h2>
                   <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
                     Enter a timestamp or date and select a format to see the formatted result
                   </p>
