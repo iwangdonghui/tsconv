@@ -213,10 +213,24 @@ Seconds: ${formatNumber(result.data.difference.seconds)}`;
       <style
         dangerouslySetInnerHTML={{
           __html: `
+          /* Calendar picker indicator styling */
           input[type="date"]::-webkit-calendar-picker-indicator,
           input[type="time"]::-webkit-calendar-picker-indicator {
             filter: ${isDark ? 'invert(1)' : 'none'};
             cursor: pointer;
+            opacity: ${isDark ? '0.8' : '0.7'};
+            width: 16px;
+            height: 16px;
+            padding: 2px;
+            border-radius: 3px;
+            transition: opacity 0.2s ease;
+          }
+
+          /* Hover effect for calendar icon */
+          input[type="date"]:hover::-webkit-calendar-picker-indicator,
+          input[type="time"]:hover::-webkit-calendar-picker-indicator {
+            opacity: 1;
+            background-color: ${isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)'};
           }
 
           /* Enhanced dark mode support */
@@ -238,7 +252,13 @@ Seconds: ${formatNumber(result.data.difference.seconds)}`;
               color: white;
             }
           `
-              : ''
+              : `
+            /* Light mode specific styles */
+            input[type="date"]::-webkit-calendar-picker-indicator,
+            input[type="time"]::-webkit-calendar-picker-indicator {
+              filter: contrast(1.2) brightness(0.8);
+            }
+          `
           }
         `,
         }}
@@ -484,15 +504,12 @@ Seconds: ${formatNumber(result.data.difference.seconds)}`;
                       Start Date
                     </label>
                     <div className='relative'>
-                      <Calendar
-                        className={`absolute left-3 top-3 h-4 w-4 ${isDark ? 'text-gray-500' : 'text-gray-400'}`}
-                      />
                       <input
                         type='date'
                         aria-label='Select date'
                         value={startDate}
                         onChange={e => setStartDate(e.target.value)}
-                        className={`w-full pl-10 pr-4 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent ${isDark ? 'bg-slate-700 border-slate-600 text-white placeholder-slate-400' : 'bg-white border-gray-300 text-gray-900'}`}
+                        className={`w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent ${isDark ? 'bg-slate-700 border-slate-600 text-white placeholder-slate-400' : 'bg-white border-gray-300 text-gray-900'}`}
                       />
                     </div>
                     <button
@@ -540,15 +557,12 @@ Seconds: ${formatNumber(result.data.difference.seconds)}`;
                       End Date
                     </label>
                     <div className='relative'>
-                      <Calendar
-                        className={`absolute left-3 top-3 h-4 w-4 ${isDark ? 'text-gray-500' : 'text-gray-400'}`}
-                      />
                       <input
                         type='date'
                         aria-label='Select date'
                         value={endDate}
                         onChange={e => setEndDate(e.target.value)}
-                        className={`w-full pl-10 pr-4 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent ${isDark ? 'bg-slate-700 border-slate-600 text-white placeholder-slate-400' : 'bg-white border-gray-300 text-gray-900'}`}
+                        className={`w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent ${isDark ? 'bg-slate-700 border-slate-600 text-white placeholder-slate-400' : 'bg-white border-gray-300 text-gray-900'}`}
                       />
                     </div>
                   </div>

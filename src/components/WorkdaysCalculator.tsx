@@ -194,23 +194,30 @@ Settings: Weekends ${result.data.settings?.excludeWeekends ? 'excluded' : 'inclu
       <style
         dangerouslySetInnerHTML={{
           __html: `
+          /* Calendar picker indicator styling */
           input[type="date"]::-webkit-calendar-picker-indicator,
           input[type="time"]::-webkit-calendar-picker-indicator {
             filter: ${isDark ? 'invert(1)' : 'none'};
             cursor: pointer;
+            opacity: ${isDark ? '0.8' : '0.7'};
+            width: 16px;
+            height: 16px;
+            padding: 2px;
+            border-radius: 3px;
+            transition: opacity 0.2s ease;
           }
 
+          /* Hover effect for calendar icon */
+          input[type="date"]:hover::-webkit-calendar-picker-indicator,
+          input[type="time"]:hover::-webkit-calendar-picker-indicator {
+            opacity: 1;
+            background-color: ${isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)'};
+          }
+
+          /* Date text styling */
           input[type="date"]::-webkit-datetime-edit,
           input[type="time"]::-webkit-datetime-edit {
             color: ${isDark ? 'white' : 'inherit'};
-          }
-
-          /* Enhanced dark mode support for date picker popup */
-          @media (prefers-color-scheme: dark) {
-            input[type="date"]::-webkit-calendar-picker-indicator,
-            input[type="time"]::-webkit-calendar-picker-indicator {
-              filter: invert(1);
-            }
           }
 
           /* Force dark mode styles */
@@ -235,7 +242,13 @@ Settings: Weekends ${result.data.settings?.excludeWeekends ? 'excluded' : 'inclu
               color: white;
             }
           `
-              : ''
+              : `
+            /* Light mode specific styles */
+            input[type="date"]::-webkit-calendar-picker-indicator,
+            input[type="time"]::-webkit-calendar-picker-indicator {
+              filter: contrast(1.2) brightness(0.8);
+            }
+          `
           }
         `,
         }}
@@ -474,15 +487,12 @@ Settings: Weekends ${result.data.settings?.excludeWeekends ? 'excluded' : 'inclu
                       Start Date
                     </label>
                     <div className='relative'>
-                      <Calendar
-                        className={`absolute left-3 top-3 h-4 w-4 ${isDark ? 'text-gray-500' : 'text-gray-400'}`}
-                      />
                       <input
                         type='date'
                         aria-label='Select start date'
                         value={startDate}
                         onChange={e => setStartDate(e.target.value)}
-                        className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 shadow-sm hover:shadow-md ${isDark ? 'bg-slate-700 border-slate-600 text-white placeholder-slate-400 hover:border-slate-500' : 'bg-white border-gray-300 text-gray-900 hover:border-gray-400'}`}
+                        className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 shadow-sm hover:shadow-md ${isDark ? 'bg-slate-700 border-slate-600 text-white placeholder-slate-400 hover:border-slate-500' : 'bg-white border-gray-300 text-gray-900 hover:border-gray-400'}`}
                       />
                     </div>
                     <button
@@ -506,15 +516,12 @@ Settings: Weekends ${result.data.settings?.excludeWeekends ? 'excluded' : 'inclu
                         End Date
                       </label>
                       <div className='relative'>
-                        <Calendar
-                          className={`absolute left-3 top-3 h-4 w-4 ${isDark ? 'text-gray-500' : 'text-gray-400'}`}
-                        />
                         <input
                           type='date'
                           aria-label='Select end date'
                           value={endDate}
                           onChange={e => setEndDate(e.target.value)}
-                          className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 shadow-sm hover:shadow-md ${isDark ? 'bg-slate-700 border-slate-600 text-white placeholder-slate-400 hover:border-slate-500' : 'bg-white border-gray-300 text-gray-900 hover:border-gray-400'}`}
+                          className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 shadow-sm hover:shadow-md ${isDark ? 'bg-slate-700 border-slate-600 text-white placeholder-slate-400 hover:border-slate-500' : 'bg-white border-gray-300 text-gray-900 hover:border-gray-400'}`}
                         />
                       </div>
                     </div>

@@ -1,7 +1,6 @@
 import { AlertCircle, Clock, Filter, Globe, MapPin, Search } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
-import { useLanguage } from '../contexts/LanguageContext';
 import { useTheme } from '../contexts/ThemeContext';
 import Footer from './Footer';
 import Header from './Header';
@@ -59,7 +58,7 @@ export default function TimezoneExplorer() {
   const [currentTime, setCurrentTime] = useState(new Date());
 
   const { isDark } = useTheme();
-  const { t: _t } = useLanguage();
+  // const { t: _t } = useLanguage(); // Currently not used
 
   // Update current time every second
   useEffect(() => {
