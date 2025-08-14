@@ -93,7 +93,7 @@ export class OptimizedBatchProcessor {
 
   constructor() {
     this.processingStats = this.initializeStats();
-    
+
     // Start cache cleanup interval
     setInterval(() => this.cleanupCache(), 300000); // 5 minutes
   }
@@ -126,27 +126,26 @@ export class OptimizedBatchProcessor {
       retryFailedItems: true,
       maxRetries: 3,
       retryDelay: 1000,
-      ...options
+      ...options,
     };
 
     try {
       // Preprocess items
       const processedItems = await this.preprocessItems(items, opts);
-      
+
       // Process with optimizations
       const results = await this.executeOptimizedProcessing(processedItems, opts, startTime);
-      
+
       // Post-process results
       const finalResults = await this.postprocessResults(results, opts);
-      
+
       // Calculate final stats
       this.calculateFinalStats(finalResults, startTime);
-      
+
       return {
         results: finalResults,
-        stats: this.processingStats
+        stats: this.processingStats,
       };
-
     } catch (error) {
       console.error('Batch processing failed:', error);
       throw error;
@@ -192,7 +191,7 @@ export class OptimizedBatchProcessor {
   ): Promise<BatchResult[]> {
     const results: BatchResult[] = [];
     const chunks = this.createOptimalChunks(items, options);
-    
+
     let activeConcurrency = 0;
     let peakConcurrency = 0;
     const concurrencyHistory: number[] = [];
@@ -210,7 +209,7 @@ export class OptimizedBatchProcessor {
             results.length + index,
             options
           );
-          
+
           // Update progress
           if (options.enableProgressTracking) {
             this.updateProgress(results.length + index + 1, items.length, startTime);
@@ -224,7 +223,7 @@ export class OptimizedBatchProcessor {
 
       // Wait for chunk completion
       const chunkResults = await Promise.allSettled(chunkPromises);
-      
+
       // Process chunk results
       chunkResults.forEach((result, index) => {
         if (result.status === 'fulfilled') {
@@ -233,15 +232,15 @@ export class OptimizedBatchProcessor {
         } else {
           // Handle failed items
           const failedResult: BatchResult = {
-            id: chunk[index].id,
+            id: chunk[index]?.id || `unknown-${index}`,
             success: false,
             error: {
               code: 'PROCESSING_ERROR',
               message: result.reason?.message || 'Unknown error',
-              details: { originalError: result.reason }
+              details: { originalError: result.reason },
             },
             processingTime: 0,
-            index: results.length + index
+            index: results.length + index,
           };
           results.push(failedResult);
           this.updateProcessingStats(failedResult);
@@ -257,10 +256,11 @@ export class OptimizedBatchProcessor {
     // Update concurrency stats
     this.processingStats.concurrencyStats = {
       maxConcurrency: options.maxConcurrency || 10,
-      averageConcurrency: concurrencyHistory.length > 0 
-        ? concurrencyHistory.reduce((a, b) => a + b, 0) / concurrencyHistory.length 
-        : 0,
-      peakConcurrency
+      averageConcurrency:
+        concurrencyHistory.length > 0
+          ? concurrencyHistory.reduce((a, b) => a + b, 0) / concurrencyHistory.length
+          : 0,
+      peakConcurrency,
     };
 
     return results;
@@ -281,14 +281,14 @@ export class OptimizedBatchProcessor {
     if (options.enableCaching && this.cache.has(cacheKey)) {
       const cached = this.cache.get(cacheKey)!;
       cached.hits++;
-      
+
       return {
         id: item.id,
         success: true,
         data: cached.data,
         processingTime: Date.now() - itemStartTime,
         index,
-        cacheHit: true
+        cacheHit: true,
       };
     }
 
@@ -299,13 +299,13 @@ export class OptimizedBatchProcessor {
         ...duplicateResult,
         id: item.id,
         index,
-        processingTime: Date.now() - itemStartTime
+        processingTime: Date.now() - itemStartTime,
       };
     }
 
     // Create processing promise
     const processingPromise = this.processItemCore(item, index, itemStartTime);
-    
+
     // Store in deduplication map
     if (options.enableDeduplication) {
       this.deduplicationMap.set(cacheKey, processingPromise);
@@ -318,7 +318,7 @@ export class OptimizedBatchProcessor {
       this.cache.set(cacheKey, {
         data: result.data,
         timestamp: Date.now(),
-        hits: 1
+        hits: 1,
       });
     }
 
@@ -335,9 +335,8 @@ export class OptimizedBatchProcessor {
   ): Promise<BatchResult> {
     try {
       // Validate timestamp
-      const timestamp = typeof item.timestamp === 'string' 
-        ? parseInt(item.timestamp, 10) 
-        : item.timestamp;
+      const timestamp =
+        typeof item.timestamp === 'string' ? parseInt(item.timestamp, 10) : item.timestamp;
 
       if (isNaN(timestamp)) {
         throw new Error('Invalid timestamp format');
@@ -360,14 +359,13 @@ export class OptimizedBatchProcessor {
           metadata: {
             ...conversionResult.metadata,
             priority: item.priority,
-            processingOrder: index
-          }
+            processingOrder: index,
+          },
         },
         processingTime: Date.now() - startTime,
         index,
-        priority: item.priority
+        priority: item.priority,
       };
-
     } catch (error) {
       return {
         id: item.id,
@@ -377,12 +375,12 @@ export class OptimizedBatchProcessor {
           message: (error as Error).message,
           details: {
             originalInput: item.timestamp,
-            itemIndex: index
-          }
+            itemIndex: index,
+          },
         },
         processingTime: Date.now() - startTime,
         index,
-        priority: item.priority
+        priority: item.priority,
       };
     }
   }
@@ -412,7 +410,7 @@ export class OptimizedBatchProcessor {
    */
   private prioritizeItems(items: BatchItem[]): BatchItem[] {
     const priorityOrder = { critical: 0, high: 1, normal: 2, low: 3 };
-    
+
     return items.sort((a, b) => {
       const aPriority = priorityOrder[a.priority || 'normal'];
       const bPriority = priorityOrder[b.priority || 'normal'];
@@ -428,7 +426,7 @@ export class OptimizedBatchProcessor {
       if (item.timestamp === null || item.timestamp === undefined) {
         return false;
       }
-      
+
       if (typeof item.timestamp === 'string' && item.timestamp.trim() === '') {
         return false;
       }
@@ -440,17 +438,14 @@ export class OptimizedBatchProcessor {
   /**
    * Create optimal chunks based on item characteristics
    */
-  private createOptimalChunks(
-    items: BatchItem[],
-    options: BatchProcessingOptions
-  ): BatchItem[][] {
+  private createOptimalChunks(items: BatchItem[], options: BatchProcessingOptions): BatchItem[][] {
     const chunkSize = options.chunkSize || 50;
     const chunks: BatchItem[][] = [];
 
     // Group by priority if prioritization is enabled
     if (options.enablePrioritization) {
       const priorityGroups = new Map<string, BatchItem[]>();
-      
+
       items.forEach(item => {
         const priority = item.priority || 'normal';
         if (!priorityGroups.has(priority)) {
@@ -482,9 +477,9 @@ export class OptimizedBatchProcessor {
       item.timestamp,
       JSON.stringify(item.outputFormats || []),
       item.timezone || '',
-      item.targetTimezone || ''
+      item.targetTimezone || '',
     ];
-    
+
     return Buffer.from(keyComponents.join('|')).toString('base64');
   }
 
@@ -493,7 +488,7 @@ export class OptimizedBatchProcessor {
    */
   private updateProcessingStats(result: BatchResult): void {
     this.processingStats.processedItems++;
-    
+
     if (result.success) {
       this.processingStats.successfulItems++;
     } else {
@@ -505,7 +500,10 @@ export class OptimizedBatchProcessor {
     }
 
     // Update timing stats
-    if (this.processingStats.fastestItem === 0 || result.processingTime < this.processingStats.fastestItem) {
+    if (
+      this.processingStats.fastestItem === 0 ||
+      result.processingTime < this.processingStats.fastestItem
+    ) {
       this.processingStats.fastestItem = result.processingTime;
     }
 
@@ -521,7 +519,7 @@ export class OptimizedBatchProcessor {
     const elapsed = Date.now() - startTime;
     const percentage = (completed / total) * 100;
     const currentThroughput = completed / (elapsed / 1000);
-    const estimatedTimeRemaining = (total - completed) / currentThroughput * 1000;
+    const estimatedTimeRemaining = ((total - completed) / currentThroughput) * 1000;
 
     const progress: ProgressUpdate = {
       completed,
@@ -530,7 +528,7 @@ export class OptimizedBatchProcessor {
       estimatedTimeRemaining,
       currentThroughput,
       errors: this.processingStats.failedItems,
-      cacheHits: this.processingStats.cacheHits
+      cacheHits: this.processingStats.cacheHits,
     };
 
     this.progressCallbacks.forEach(callback => {
@@ -548,7 +546,7 @@ export class OptimizedBatchProcessor {
   private shouldApplyBackpressure(results: BatchResult[]): boolean {
     const memoryUsage = process.memoryUsage();
     const heapUsedMB = memoryUsage.heapUsed / 1024 / 1024;
-    
+
     // Apply backpressure if memory usage exceeds 500MB
     return heapUsedMB > 500;
   }
@@ -558,7 +556,7 @@ export class OptimizedBatchProcessor {
    */
   private async applyBackpressure(): Promise<void> {
     await new Promise(resolve => setTimeout(resolve, 100));
-    
+
     // Force garbage collection if available
     if (global.gc) {
       global.gc();
@@ -590,11 +588,12 @@ export class OptimizedBatchProcessor {
   private calculateFinalStats(results: BatchResult[], startTime: number): void {
     const totalTime = Date.now() - startTime;
     this.processingStats.totalProcessingTime = totalTime;
-    
+
     const processingTimes = results.map(r => r.processingTime);
-    this.processingStats.averageItemTime = processingTimes.length > 0
-      ? processingTimes.reduce((a, b) => a + b, 0) / processingTimes.length
-      : 0;
+    this.processingStats.averageItemTime =
+      processingTimes.length > 0
+        ? processingTimes.reduce((a, b) => a + b, 0) / processingTimes.length
+        : 0;
 
     this.processingStats.throughputPerSecond = results.length / (totalTime / 1000);
 
@@ -603,7 +602,7 @@ export class OptimizedBatchProcessor {
     this.processingStats.memoryUsage = {
       heapUsed: memoryUsage.heapUsed,
       heapTotal: memoryUsage.heapTotal,
-      external: memoryUsage.external
+      external: memoryUsage.external,
     };
   }
 
@@ -626,13 +625,13 @@ export class OptimizedBatchProcessor {
       memoryUsage: {
         heapUsed: 0,
         heapTotal: 0,
-        external: 0
+        external: 0,
       },
       concurrencyStats: {
         maxConcurrency: 0,
         averageConcurrency: 0,
-        peakConcurrency: 0
-      }
+        peakConcurrency: 0,
+      },
     };
   }
 
@@ -697,9 +696,10 @@ export class OptimizedBatchProcessor {
 
     return {
       size: this.cache.size,
-      hitRate: totalHits > 0 ? (totalHits / (totalHits + this.processingStats.processedItems)) * 100 : 0,
+      hitRate:
+        totalHits > 0 ? (totalHits / (totalHits + this.processingStats.processedItems)) * 100 : 0,
       totalHits,
-      memoryUsage
+      memoryUsage,
     };
   }
 

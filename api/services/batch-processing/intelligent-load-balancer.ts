@@ -280,6 +280,10 @@ export class IntelligentLoadBalancer {
         (a, b) => this.calculateNodeScore(b, workload) - this.calculateNodeScore(a, workload)
       )[0];
 
+      if (!bestNode) {
+        throw new Error('No available nodes in the same region');
+      }
+
       return {
         selectedNode: bestNode,
         reason: `Geographic proximity - same region: ${workload.region}`,
@@ -291,6 +295,10 @@ export class IntelligentLoadBalancer {
     const bestNode = nodes.sort(
       (a, b) => this.calculateNodeScore(b, workload) - this.calculateNodeScore(a, workload)
     )[0];
+
+    if (!bestNode) {
+      throw new Error('No available nodes for geographic selection');
+    }
 
     return {
       selectedNode: bestNode,
@@ -317,14 +325,18 @@ export class IntelligentLoadBalancer {
     }));
 
     nodeScores.sort((a, b) => b.score - a.score);
-    const selectedNode = nodeScores[0].node;
+    const bestNodeScore = nodeScores[0];
+    if (!bestNodeScore) {
+      throw new Error('No available nodes for adaptive selection');
+    }
+    const selectedNode = bestNodeScore.node;
 
     // Update adaptive weights based on historical performance
     this.updateAdaptiveWeights();
 
     return {
       selectedNode,
-      reason: `Adaptive selection - score: ${nodeScores[0].score.toFixed(3)} (capacity: ${selectedNode.capacity}, load: ${selectedNode.currentLoad}, response: ${selectedNode.averageResponseTime}ms)`,
+      reason: `Adaptive selection - score: ${bestNodeScore.score.toFixed(3)} (capacity: ${selectedNode.capacity}, load: ${selectedNode.currentLoad}, response: ${selectedNode.averageResponseTime}ms)`,
       confidence: 0.95,
     };
   }
@@ -404,7 +416,7 @@ export class IntelligentLoadBalancer {
   private updateAdaptiveWeights(): void {
     const recentHistory = this.requestHistory.slice(-100); // Last 100 requests
 
-    this.nodes.forEach((node, nodeId) => {
+    this.nodes.forEach((_node, nodeId) => {
       const nodeRequests = recentHistory.filter(req => req.nodeId === nodeId);
 
       if (nodeRequests.length === 0) return;

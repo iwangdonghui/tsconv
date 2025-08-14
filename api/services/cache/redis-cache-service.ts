@@ -278,7 +278,7 @@ export class RedisCacheService extends BaseCacheService {
   }
 
   // Batch operations
-  async mget<T>(keys: string[]): Promise<(T | null)[]> {
+  override async mget<T>(keys: string[]): Promise<(T | null)[]> {
     if (!this.connected && this.fallbackCache) {
       return (await this.fallbackCache.mget(keys)) as (T | null)[];
     }
@@ -288,7 +288,7 @@ export class RedisCacheService extends BaseCacheService {
     return keys.map(() => null);
   }
 
-  async mset(operations: CacheBatchOperation[]): Promise<void> {
+  override async mset(operations: CacheBatchOperation[]): Promise<void> {
     if (!this.connected && this.fallbackCache) {
       return await this.fallbackCache.mset(operations);
     }
@@ -297,7 +297,7 @@ export class RedisCacheService extends BaseCacheService {
     // In real implementation: use Redis pipeline
   }
 
-  async mdelete(keys: string[]): Promise<number> {
+  override async mdelete(keys: string[]): Promise<number> {
     if (!this.connected && this.fallbackCache) {
       return await this.fallbackCache.mdelete(keys);
     }
