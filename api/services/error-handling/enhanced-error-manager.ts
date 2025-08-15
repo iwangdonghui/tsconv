@@ -362,8 +362,8 @@ export class EnhancedErrorManager {
    */
   private async handleCircuitBreaker(
     error: EnhancedError,
-    _req: VercelRequest,
-    _res: VercelResponse
+    req: VercelRequest,
+    res: VercelResponse
   ): Promise<void> {
     const circuitKey = `${error.context.endpoint}:${error.category}`;
     const circuit = this.circuitBreakers.get(circuitKey) || {
@@ -400,8 +400,8 @@ export class EnhancedErrorManager {
    */
   private async attemptGracefulDegradation(
     error: EnhancedError,
-    _req: VercelRequest,
-    _res: VercelResponse
+    req: VercelRequest,
+    res: VercelResponse
   ): Promise<void> {
     if (!this.config.gracefulDegradationEnabled) {
       return;
@@ -793,7 +793,7 @@ export class EnhancedErrorManager {
     return (
       (req.headers['x-forwarded-for'] as string) ||
       (req.headers['x-real-ip'] as string) ||
-      req.connection?.remoteAddress ||
+      (req.connection?.remoteAddress as string) ||
       '127.0.0.1'
     )
       .split(',')[0]

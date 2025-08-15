@@ -89,7 +89,7 @@ export class OptimizedBatchProcessor {
   private progressCallbacks: Array<(progress: ProgressUpdate) => void> = [];
   private processingStats: BatchProcessingStats;
   private activeTasks = new Set<Promise<any>>();
-  private priorityQueues = new Map<string, BatchItem[]>();
+  // private priorityQueues = new Map<string, BatchItem[]>(); // Currently not used
 
   constructor() {
     this.processingStats = this.initializeStats();
@@ -232,7 +232,7 @@ export class OptimizedBatchProcessor {
         } else {
           // Handle failed items
           const failedResult: BatchResult = {
-            id: chunk[index]?.id || `unknown-${index}`,
+            id: chunk[index].id,
             success: false,
             error: {
               code: 'PROCESSING_ERROR',
@@ -543,7 +543,7 @@ export class OptimizedBatchProcessor {
   /**
    * Check if backpressure should be applied
    */
-  private shouldApplyBackpressure(results: BatchResult[]): boolean {
+  private shouldApplyBackpressure(_results: BatchResult[]): boolean {
     const memoryUsage = process.memoryUsage();
     const heapUsedMB = memoryUsage.heapUsed / 1024 / 1024;
 
