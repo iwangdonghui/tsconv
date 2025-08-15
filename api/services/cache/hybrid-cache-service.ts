@@ -13,8 +13,8 @@ import {
   CacheSetOptions,
   ICacheService,
 } from './interfaces';
-import { RedisCacheService } from './redis-cache-service';
-import { UpstashCacheService } from './upstash-cache-service';
+import { RedisCacheService, RedisConfig } from './redis-cache-service';
+import { UpstashCacheService, UpstashConfig } from './upstash-cache-service';
 
 export class HybridCacheService extends BaseCacheService {
   private l1Cache!: ICacheService; // Memory cache

@@ -391,7 +391,7 @@ export class UnifiedErrorFormatter {
   private addCategorySpecificFields(
     response: StandardErrorResponse,
     error: EnhancedError,
-    config: ErrorResponseConfig
+    _config: ErrorResponseConfig
   ): void {
     switch (error.category) {
       case 'rate_limit':

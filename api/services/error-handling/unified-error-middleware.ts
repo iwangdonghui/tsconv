@@ -4,16 +4,16 @@
  */
 
 import { VercelRequest, VercelResponse } from '@vercel/node';
-import { EnhancedErrorManager, ErrorCategory, ErrorSeverity, RecoveryStrategy } from './enhanced-error-manager';
-import { UnifiedErrorFormatter, ErrorResponseConfig } from './unified-error-formatter';
+import { EnhancedErrorManager, ErrorSeverity, RecoveryStrategy } from './enhanced-error-manager';
 import { ErrorRecoveryManager } from './error-recovery-strategies';
+import { ErrorResponseConfig, UnifiedErrorFormatter } from './unified-error-formatter';
 
 export interface ErrorMiddlewareConfig {
   enableRecovery: boolean;
   enableFormatting: boolean;
   enableMonitoring: boolean;
   enableLogging: boolean;
-  
+
   // Error manager configuration
   errorManager?: {
     maxRetries: number;
@@ -23,10 +23,10 @@ export interface ErrorMiddlewareConfig {
     circuitBreakerThreshold: number;
     gracefulDegradationEnabled: boolean;
   };
-  
+
   // Response formatting configuration
   responseFormat?: Partial<ErrorResponseConfig>;
-  
+
   // Recovery configuration
   recovery?: {
     retry?: {
@@ -47,7 +47,7 @@ export interface ErrorMiddlewareConfig {
       queueSize: number;
     };
   };
-  
+
   // Monitoring configuration
   monitoring?: {
     enableMetrics: boolean;
@@ -55,7 +55,7 @@ export interface ErrorMiddlewareConfig {
     enableTracing: boolean;
     sampleRate: number;
   };
-  
+
   // Custom handlers
   onError?: (error: Error, context: ErrorContext) => void;
   onRecovery?: (error: Error, strategy: RecoveryStrategy, successful: boolean) => void;
@@ -85,11 +85,14 @@ export class UnifiedErrorMiddleware {
   private errorFormatter: UnifiedErrorFormatter;
   private recoveryManager: ErrorRecoveryManager;
   private config: ErrorMiddlewareConfig;
-  private errorMetrics = new Map<string, {
-    count: number;
-    lastOccurred: number;
-    averageProcessingTime: number;
-  }>();
+  private errorMetrics = new Map<
+    string,
+    {
+      count: number;
+      lastOccurred: number;
+      averageProcessingTime: number;
+    }
+  >();
 
   constructor(config: Partial<ErrorMiddlewareConfig> = {}) {
     this.config = {
@@ -112,7 +115,7 @@ export class UnifiedErrorMiddleware {
         enableTracing: false,
         sampleRate: 1.0,
       },
-      ...config
+      ...config,
     };
 
     // Initialize components
@@ -139,7 +142,7 @@ export class UnifiedErrorMiddleware {
       try {
         // Handle the error with recovery strategies
         const enhancedError = await this.handleErrorWithRecovery(error, req, res, context);
-        
+
         // Update processing time
         enhancedError.monitoring.processingTime = Date.now() - startTime;
         context.processingTime = enhancedError.monitoring.processingTime;
@@ -172,7 +175,7 @@ export class UnifiedErrorMiddleware {
         if (this.config.enableFormatting) {
           this.errorFormatter.sendErrorResponse(enhancedError, res, {
             ...this.config.responseFormat,
-            correlationId: context.correlationId
+            correlationId: context.correlationId,
           });
         } else {
           // Send basic error response
@@ -182,14 +185,13 @@ export class UnifiedErrorMiddleware {
               code: enhancedError.code,
               message: enhancedError.userMessage,
               timestamp: enhancedError.timestamp,
-              requestId: enhancedError.requestId
-            }
+              requestId: enhancedError.requestId,
+            },
           });
         }
-
       } catch (middlewareError) {
         console.error('Error in unified error middleware:', middlewareError);
-        
+
         // Fallback error response
         res.status(500).json({
           success: false,
@@ -197,8 +199,8 @@ export class UnifiedErrorMiddleware {
             code: 'MIDDLEWARE_ERROR',
             message: 'An error occurred while processing the error',
             timestamp: Date.now(),
-            requestId: context.requestId
-          }
+            requestId: context.requestId,
+          },
         });
       }
     };
@@ -215,7 +217,7 @@ export class UnifiedErrorMiddleware {
   ): Promise<any> {
     // Create enhanced error
     const enhancedError = await this.errorManager.handleError(error, req, res, {
-      context: context.metadata
+      context: context.metadata,
     });
 
     // Attempt recovery if enabled
@@ -255,9 +257,9 @@ export class UnifiedErrorMiddleware {
       };
 
       await this.recoveryManager.executeWithRecovery(mockOperation, recoveryContext);
-      
+
       enhancedError.recovery.successful = true;
-      
+
       // Call recovery callback if provided
       if (this.config.onRecovery) {
         this.config.onRecovery(
@@ -266,10 +268,9 @@ export class UnifiedErrorMiddleware {
           true
         );
       }
-      
     } catch (recoveryError) {
       enhancedError.recovery.successful = false;
-      
+
       // Call recovery callback if provided
       if (this.config.onRecovery) {
         this.config.onRecovery(
@@ -278,7 +279,7 @@ export class UnifiedErrorMiddleware {
           false
         );
       }
-      
+
       throw recoveryError;
     }
   }
@@ -288,20 +289,20 @@ export class UnifiedErrorMiddleware {
    */
   private createErrorContext(req: VercelRequest, startTime: number): ErrorContext {
     return {
-      requestId: req.headers['x-request-id'] as string || this.generateRequestId(),
+      requestId: (req.headers['x-request-id'] as string) || this.generateRequestId(),
       endpoint: req.url || '',
       method: req.method || 'GET',
       userAgent: req.headers['user-agent'],
       ip: this.extractClientIP(req),
       userId: req.headers['x-user-id'] as string,
       sessionId: req.headers['x-session-id'] as string,
-      correlationId: req.headers['x-correlation-id'] as string || this.generateCorrelationId(),
+      correlationId: (req.headers['x-correlation-id'] as string) || this.generateCorrelationId(),
       startTime,
       metadata: {
         query: req.query,
         body: req.body,
-        headers: req.headers
-      }
+        headers: req.headers,
+      },
     };
   }
 
@@ -321,14 +322,14 @@ export class UnifiedErrorMiddleware {
         method: context.method,
         ip: context.ip,
         userAgent: context.userAgent,
-        processingTime: context.processingTime
+        processingTime: context.processingTime,
       },
       recovery: {
         strategy: enhancedError.recovery.strategy,
         attempted: enhancedError.recovery.attempted,
-        successful: enhancedError.recovery.successful
+        successful: enhancedError.recovery.successful,
       },
-      timestamp: enhancedError.timestamp
+      timestamp: enhancedError.timestamp,
     };
 
     // Log based on severity
@@ -358,14 +359,13 @@ export class UnifiedErrorMiddleware {
     const existing = this.errorMetrics.get(metricKey) || {
       count: 0,
       lastOccurred: 0,
-      averageProcessingTime: 0
+      averageProcessingTime: 0,
     };
 
     existing.count++;
     existing.lastOccurred = enhancedError.timestamp;
-    existing.averageProcessingTime = (
-      existing.averageProcessingTime + (context.processingTime || 0)
-    ) / 2;
+    existing.averageProcessingTime =
+      (existing.averageProcessingTime + (context.processingTime || 0)) / 2;
 
     this.errorMetrics.set(metricKey, existing);
   }
@@ -382,14 +382,20 @@ export class UnifiedErrorMiddleware {
     // Check for error rate thresholds
     const metricKey = `${enhancedError.category}:${enhancedError.code}`;
     const metrics = this.errorMetrics.get(metricKey);
-    
-    if (metrics && metrics.count > 10) { // Threshold: 10 errors
+
+    if (metrics && metrics.count > 10) {
+      // Threshold: 10 errors
       this.triggerAlert(enhancedError, context, `High error rate: ${metrics.count} occurrences`);
     }
 
     // Check for slow processing
-    if (context.processingTime && context.processingTime > 5000) { // 5 seconds
-      this.triggerAlert(enhancedError, context, `Slow error processing: ${context.processingTime}ms`);
+    if (context.processingTime && context.processingTime > 5000) {
+      // 5 seconds
+      this.triggerAlert(
+        enhancedError,
+        context,
+        `Slow error processing: ${context.processingTime}ms`
+      );
     }
   }
 
@@ -403,15 +409,15 @@ export class UnifiedErrorMiddleware {
         id: enhancedError.id,
         code: enhancedError.code,
         category: enhancedError.category,
-        severity: enhancedError.severity
+        severity: enhancedError.severity,
       },
       context: {
         requestId: context.requestId,
         endpoint: context.endpoint,
         method: context.method,
-        processingTime: context.processingTime
+        processingTime: context.processingTime,
       },
-      timestamp: Date.now()
+      timestamp: Date.now(),
     };
 
     console.error('🚨 ERROR ALERT:', JSON.stringify(alertData, null, 2));
@@ -442,6 +448,7 @@ export class UnifiedErrorMiddleware {
 
     this.errorMetrics.forEach((metrics, key) => {
       const [category] = key.split(':');
+      if (!category) return;
       errorsByCategory[category] = (errorsByCategory[category] || 0) + metrics.count;
       totalErrors += metrics.count;
     });
@@ -452,7 +459,7 @@ export class UnifiedErrorMiddleware {
       .map(([key, metrics]) => ({
         key,
         count: metrics.count,
-        lastOccurred: metrics.lastOccurred
+        lastOccurred: metrics.lastOccurred,
       }));
 
     return {
@@ -460,7 +467,7 @@ export class UnifiedErrorMiddleware {
       errorsByCategory,
       errorsBySeverity,
       topErrors,
-      recoveryStats: this.recoveryManager.getRecoveryStats()
+      recoveryStats: this.recoveryManager.getRecoveryStats(),
     };
   }
 
@@ -469,7 +476,7 @@ export class UnifiedErrorMiddleware {
    */
   updateConfig(updates: Partial<ErrorMiddlewareConfig>): void {
     this.config = { ...this.config, ...updates };
-    
+
     if (updates.responseFormat) {
       this.errorFormatter.updateDefaultConfig(updates.responseFormat);
     }
@@ -497,7 +504,7 @@ export class UnifiedErrorMiddleware {
   }> {
     const now = Date.now();
     const oneHour = 3600000;
-    
+
     let recentErrors = 0;
     let totalRecoveryAttempts = 0;
     let successfulRecoveries = 0;
@@ -512,7 +519,7 @@ export class UnifiedErrorMiddleware {
     const circuitBreakerStatus = recoveryStats.circuitBreaker.state;
 
     let status: 'healthy' | 'degraded' | 'unhealthy' = 'healthy';
-    
+
     if (circuitBreakerStatus === 'OPEN' || recentErrors > 100) {
       status = 'unhealthy';
     } else if (circuitBreakerStatus === 'HALF_OPEN' || recentErrors > 50) {
@@ -525,14 +532,16 @@ export class UnifiedErrorMiddleware {
         errorManager: 'healthy',
         errorFormatter: 'healthy',
         recoveryManager: circuitBreakerStatus === 'OPEN' ? 'unhealthy' : 'healthy',
-        monitoring: this.config.enableMonitoring ? 'healthy' : 'disabled'
+        monitoring: this.config.enableMonitoring ? 'healthy' : 'disabled',
       },
       metrics: {
         totalErrors: Array.from(this.errorMetrics.values()).reduce((sum, m) => sum + m.count, 0),
         recentErrors,
-        recoverySuccessRate: recoveryStats.retry.averageAttempts > 0 ? 
-          (1 - recoveryStats.retry.averageAttempts / 3) * 100 : 100
-      }
+        recoverySuccessRate:
+          recoveryStats.retry.averageAttempts > 0
+            ? (1 - recoveryStats.retry.averageAttempts / 3) * 100
+            : 100,
+      },
     };
   }
 
@@ -549,11 +558,13 @@ export class UnifiedErrorMiddleware {
 
   private extractClientIP(req: VercelRequest): string {
     return (
-      req.headers['x-forwarded-for'] as string ||
-      req.headers['x-real-ip'] as string ||
+      (req.headers['x-forwarded-for'] as string) ||
+      (req.headers['x-real-ip'] as string) ||
       req.connection?.remoteAddress ||
       '127.0.0.1'
-    ).split(',')[0].trim();
+    )
+      .split(',')[0]
+      .trim();
   }
 }
 
@@ -568,51 +579,54 @@ export function createUnifiedErrorMiddleware(config: Partial<ErrorMiddlewareConf
 /**
  * Create environment-specific error middleware
  */
-export const createDevelopmentErrorMiddleware = () => createUnifiedErrorMiddleware({
-  enableRecovery: false,
-  responseFormat: {
-    format: 'debug',
-    includeStack: true,
-    includeContext: true,
-  },
-  monitoring: {
-    enableMetrics: true,
-    enableAlerting: false,
-    enableTracing: true,
-    sampleRate: 1.0,
-  }
-});
+export const createDevelopmentErrorMiddleware = () =>
+  createUnifiedErrorMiddleware({
+    enableRecovery: false,
+    responseFormat: {
+      format: 'debug',
+      includeStack: true,
+      includeContext: true,
+    },
+    monitoring: {
+      enableMetrics: true,
+      enableAlerting: false,
+      enableTracing: true,
+      sampleRate: 1.0,
+    },
+  });
 
-export const createProductionErrorMiddleware = () => createUnifiedErrorMiddleware({
-  enableRecovery: true,
-  responseFormat: {
-    format: 'standard',
-    includeStack: false,
-    includeContext: false,
-    sanitizeDetails: true,
-  },
-  monitoring: {
-    enableMetrics: true,
-    enableAlerting: true,
-    enableTracing: false,
-    sampleRate: 0.1,
-  }
-});
+export const createProductionErrorMiddleware = () =>
+  createUnifiedErrorMiddleware({
+    enableRecovery: true,
+    responseFormat: {
+      format: 'standard',
+      includeStack: false,
+      includeContext: false,
+      sanitizeDetails: true,
+    },
+    monitoring: {
+      enableMetrics: true,
+      enableAlerting: true,
+      enableTracing: false,
+      sampleRate: 0.1,
+    },
+  });
 
-export const createTestingErrorMiddleware = () => createUnifiedErrorMiddleware({
-  enableRecovery: false,
-  enableLogging: false,
-  responseFormat: {
-    format: 'minimal',
-    includeStack: false,
-    includeContext: false,
-  },
-  monitoring: {
-    enableMetrics: false,
-    enableAlerting: false,
-    enableTracing: false,
-    sampleRate: 0,
-  }
-});
+export const createTestingErrorMiddleware = () =>
+  createUnifiedErrorMiddleware({
+    enableRecovery: false,
+    enableLogging: false,
+    responseFormat: {
+      format: 'minimal',
+      includeStack: false,
+      includeContext: false,
+    },
+    monitoring: {
+      enableMetrics: false,
+      enableAlerting: false,
+      enableTracing: false,
+      sampleRate: 0,
+    },
+  });
 
 export default UnifiedErrorMiddleware;

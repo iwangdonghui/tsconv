@@ -12,7 +12,7 @@ import {
   CacheSetOptions,
 } from './interfaces';
 
-interface UpstashConfig {
+export interface UpstashConfig {
   url?: string;
   token?: string;
   fallbackToMemory?: boolean;

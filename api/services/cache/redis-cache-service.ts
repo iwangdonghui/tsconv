@@ -12,7 +12,7 @@ import {
   CacheSetOptions,
 } from './interfaces';
 
-interface RedisConfig {
+export interface RedisConfig {
   url?: string;
   password?: string;
   maxRetries?: number;

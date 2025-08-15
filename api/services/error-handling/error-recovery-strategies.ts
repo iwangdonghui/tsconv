@@ -3,7 +3,7 @@
  * Comprehensive error recovery mechanisms with circuit breakers, retries, and fallbacks
  */
 
-import { VercelRequest, VercelResponse } from '@vercel/node';
+// import { VercelRequest, VercelResponse } from '@vercel/node'; // Currently not used
 import { EnhancedError, ErrorCategory, RecoveryStrategy } from './enhanced-error-manager';
 
 export interface RetryConfig {
@@ -60,7 +60,7 @@ export class RetryStrategy {
       exponentialBackoff: true,
       jitterEnabled: true,
       retryableErrors: ['timeout', 'network', 'external_service', 'database'],
-      ...config
+      ...config,
     };
   }
 
@@ -106,14 +106,14 @@ export class RetryStrategy {
     for (let attempt = 1; attempt <= this.config.maxAttempts; attempt++) {
       try {
         const result = await operation();
-        
+
         // Reset retry count on success
         this.retryAttempts.delete(key);
-        
+
         return result;
       } catch (error) {
         lastError = error as Error;
-        
+
         // Check if we should retry
         if (attempt === this.config.maxAttempts) {
           break;
@@ -132,7 +132,7 @@ export class RetryStrategy {
 
     // Update retry attempts
     this.retryAttempts.set(key, this.config.maxAttempts);
-    
+
     throw lastError!;
   }
 
@@ -145,12 +145,15 @@ export class RetryStrategy {
     averageAttempts: number;
   } {
     const totalRetries = this.retryAttempts.size;
-    const totalAttempts = Array.from(this.retryAttempts.values()).reduce((sum, attempts) => sum + attempts, 0);
-    
+    const totalAttempts = Array.from(this.retryAttempts.values()).reduce(
+      (sum, attempts) => sum + attempts,
+      0
+    );
+
     return {
       totalRetries,
       activeRetries: totalRetries,
-      averageAttempts: totalRetries > 0 ? totalAttempts / totalRetries : 0
+      averageAttempts: totalRetries > 0 ? totalAttempts / totalRetries : 0,
     };
   }
 
@@ -169,7 +172,7 @@ export class CircuitBreaker {
     totalRequests: 0,
     failedRequests: 0,
     successfulRequests: 0,
-    rejectedRequests: 0
+    rejectedRequests: 0,
   };
 
   constructor(config: Partial<CircuitBreakerConfig> = {}) {
@@ -178,7 +181,7 @@ export class CircuitBreaker {
       recoveryTimeoutMs: 60000,
       monitoringWindowMs: 60000,
       halfOpenMaxCalls: 3,
-      ...config
+      ...config,
     };
 
     this.state = {
@@ -186,7 +189,7 @@ export class CircuitBreaker {
       failureCount: 0,
       lastFailureTime: 0,
       nextAttemptTime: 0,
-      halfOpenCalls: 0
+      halfOpenCalls: 0,
     };
   }
 
@@ -202,23 +205,26 @@ export class CircuitBreaker {
       throw new Error('Circuit breaker is OPEN - request rejected');
     }
 
-    if (this.state.state === 'HALF_OPEN' && this.state.halfOpenCalls >= this.config.halfOpenMaxCalls) {
+    if (
+      this.state.state === 'HALF_OPEN' &&
+      this.state.halfOpenCalls >= this.config.halfOpenMaxCalls
+    ) {
       this.metrics.rejectedRequests++;
       throw new Error('Circuit breaker is HALF_OPEN - max calls exceeded');
     }
 
     try {
       this.metrics.totalRequests++;
-      
+
       if (this.state.state === 'HALF_OPEN') {
         this.state.halfOpenCalls++;
       }
 
       const result = await operation();
-      
+
       // Success - reset failure count
       this.onSuccess();
-      
+
       return result;
     } catch (error) {
       // Failure - increment failure count
@@ -232,7 +238,7 @@ export class CircuitBreaker {
    */
   private onSuccess(): void {
     this.metrics.successfulRequests++;
-    
+
     if (this.state.state === 'HALF_OPEN') {
       // Transition to CLOSED if enough successful calls
       if (this.state.halfOpenCalls >= this.config.halfOpenMaxCalls) {
@@ -277,16 +283,16 @@ export class CircuitBreaker {
   getStatus(): {
     state: CircuitState;
     failureCount: number;
-    metrics: typeof this.metrics;
+    metrics: CircuitBreakerMetrics;
     nextAttemptTime?: number;
   } {
     this.updateState();
-    
+
     return {
       state: this.state.state,
       failureCount: this.state.failureCount,
       metrics: { ...this.metrics },
-      nextAttemptTime: this.state.state === 'OPEN' ? this.state.nextAttemptTime : undefined
+      nextAttemptTime: this.state.state === 'OPEN' ? this.state.nextAttemptTime : undefined,
     };
   }
 
@@ -299,14 +305,14 @@ export class CircuitBreaker {
       failureCount: 0,
       lastFailureTime: 0,
       nextAttemptTime: 0,
-      halfOpenCalls: 0
+      halfOpenCalls: 0,
     };
-    
+
     this.metrics = {
       totalRequests: 0,
       failedRequests: 0,
       successfulRequests: 0,
-      rejectedRequests: 0
+      rejectedRequests: 0,
     };
   }
 }
@@ -322,7 +328,7 @@ export class FallbackStrategy {
     this.config = {
       enabled: true,
       timeoutMs: 5000,
-      ...config
+      ...config,
     };
   }
 
@@ -341,13 +347,13 @@ export class FallbackStrategy {
     try {
       // Execute with timeout
       const result = await this.withTimeout(operation(), this.config.timeoutMs);
-      
+
       // Cache successful result for future fallback
       this.fallbackCache.set(fallbackKey, {
         data: result,
-        timestamp: Date.now()
+        timestamp: Date.now(),
       });
-      
+
       return result;
     } catch (error) {
       // Try custom fallback first
@@ -362,7 +368,7 @@ export class FallbackStrategy {
       // Try configured fallback function
       if (this.config.fallbackFunction) {
         try {
-          return await this.config.fallbackFunction() as T;
+          return (await this.config.fallbackFunction()) as T;
         } catch (fallbackError) {
           console.warn('Configured fallback failed:', fallbackError);
         }
@@ -402,7 +408,7 @@ export class FallbackStrategy {
       promise,
       new Promise<never>((_, reject) => {
         setTimeout(() => reject(new Error('Operation timeout')), timeoutMs);
-      })
+      }),
     ]);
   }
 
@@ -424,7 +430,7 @@ export class FallbackStrategy {
     return {
       cacheSize: this.fallbackCache.size,
       cacheHitRate: 0, // Would need to track hits/misses
-      enabled: this.config.enabled
+      enabled: this.config.enabled,
     };
   }
 }
@@ -447,7 +453,7 @@ export class BulkheadStrategy {
       maxConcurrentRequests: 10,
       queueSize: 50,
       timeoutMs: 30000,
-      ...config
+      ...config,
     };
   }
 
@@ -473,7 +479,7 @@ export class BulkheadStrategy {
         operation: operation as () => Promise<unknown>,
         resolve: resolve as (value: unknown) => void,
         reject,
-        timestamp: Date.now()
+        timestamp: Date.now(),
       });
 
       // Set timeout for queued request
@@ -513,11 +519,11 @@ export class BulkheadStrategy {
    */
   private processQueue(): void {
     while (
-      this.requestQueue.length > 0 && 
+      this.requestQueue.length > 0 &&
       this.activeRequests < this.config.maxConcurrentRequests
     ) {
       const request = this.requestQueue.shift()!;
-      
+
       // Check if request has timed out
       if (Date.now() - request.timestamp > this.config.timeoutMs) {
         request.reject(new Error('Bulkhead queue timeout'));
@@ -545,7 +551,7 @@ export class BulkheadStrategy {
       activeRequests: this.activeRequests,
       queuedRequests: this.requestQueue.length,
       maxConcurrentRequests: this.config.maxConcurrentRequests,
-      queueSize: this.config.queueSize
+      queueSize: this.config.queueSize,
     };
   }
 }
@@ -559,12 +565,14 @@ export class ErrorRecoveryManager {
   private fallbackStrategy: FallbackStrategy;
   private bulkheadStrategy: BulkheadStrategy;
 
-  constructor(config: {
-    retry?: Partial<RetryConfig>;
-    circuitBreaker?: Partial<CircuitBreakerConfig>;
-    fallback?: Partial<FallbackConfig>;
-    bulkhead?: Partial<BulkheadConfig>;
-  } = {}) {
+  constructor(
+    config: {
+      retry?: Partial<RetryConfig>;
+      circuitBreaker?: Partial<CircuitBreakerConfig>;
+      fallback?: Partial<FallbackConfig>;
+      bulkhead?: Partial<BulkheadConfig>;
+    } = {}
+  ) {
     this.retryStrategy = new RetryStrategy(config.retry);
     this.circuitBreaker = new CircuitBreaker(config.circuitBreaker);
     this.fallbackStrategy = new FallbackStrategy(config.fallback);
@@ -631,7 +639,7 @@ export class ErrorRecoveryManager {
       retry: this.retryStrategy.getRetryStats(),
       circuitBreaker: this.circuitBreaker.getStatus(),
       fallback: this.fallbackStrategy.getStats(),
-      bulkhead: this.bulkheadStrategy.getStatus()
+      bulkhead: this.bulkheadStrategy.getStatus(),
     };
   }
 
