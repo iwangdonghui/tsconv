@@ -232,7 +232,7 @@ export class OptimizedBatchProcessor {
         } else {
           // Handle failed items
           const failedResult: BatchResult = {
-            id: chunk[index].id,
+            id: chunk[index]?.id || `unknown-${index}`,
             success: false,
             error: {
               code: 'PROCESSING_ERROR',
