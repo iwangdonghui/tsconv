@@ -123,7 +123,7 @@ export class IntelligentFormatDetector {
         confidence: 0.98,
         category: 'iso',
         examples: ['2024-01-15T10:30:45.123Z', '2024-01-15T10:30:45+05:30'],
-        extractor: input => {
+        extractor: (input: string): { [key: string]: string | number } => {
           const match = input.match(
             /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(\.\d{3})?(.+)$/
           );
@@ -135,7 +135,7 @@ export class IntelligentFormatDetector {
               hour: parseInt(match[4] || '0'),
               minute: parseInt(match[5] || '0'),
               second: parseInt(match[6] || '0'),
-              timezone: match[8],
+              timezone: match[8] || '',
             };
           }
           return {};
@@ -169,8 +169,18 @@ export class IntelligentFormatDetector {
         category: 'locale',
         examples: ['01/15/2024', '12/31/2023', '1/1/2024'],
         validator: input => {
-          const [month, day, year] = input.split('/').map(Number);
-          return month >= 1 && month <= 12 && day >= 1 && day <= 31 && year >= 1900;
+          const parts = input.split('/').map(Number);
+          const [month, day, year] = parts;
+          return (
+            month !== undefined &&
+            day !== undefined &&
+            year !== undefined &&
+            month >= 1 &&
+            month <= 12 &&
+            day >= 1 &&
+            day <= 31 &&
+            year >= 1900
+          );
         },
       },
 
@@ -360,8 +370,8 @@ export class IntelligentFormatDetector {
     const warnings = this.generateWarnings(trimmedInput, matches, ambiguityScore);
 
     const result: DetectionResult = {
-      detected_format: matches.length > 0 ? matches[0].pattern.id : 'unknown',
-      confidence: matches.length > 0 ? matches[0].confidence : 0,
+      detected_format: matches.length > 0 ? matches[0]?.pattern.id || 'unknown' : 'unknown',
+      confidence: matches.length > 0 ? matches[0]?.confidence || 0 : 0,
       alternatives: matches.slice(1, 4).map(match => ({
         format: match.pattern.id,
         confidence: match.confidence,
@@ -473,8 +483,8 @@ export class IntelligentFormatDetector {
     }
 
     // Check confidence spread
-    const topConfidence = matches[0].confidence;
-    const secondConfidence = matches[1].confidence;
+    const topConfidence = matches[0]?.confidence || 0;
+    const secondConfidence = matches[1]?.confidence || 0;
     const confidenceDiff = topConfidence - secondConfidence;
 
     // High ambiguity if top matches are close in confidence
@@ -511,7 +521,10 @@ export class IntelligentFormatDetector {
           "Input contains letters. Consider if it's a relative time or cultural format."
         );
       }
-    } else if (matches.length > 1 && matches[0].confidence - matches[1].confidence < 0.2) {
+    } else if (
+      matches.length > 1 &&
+      (matches[0]?.confidence || 0) - (matches[1]?.confidence || 0) < 0.2
+    ) {
       suggestions.push(
         'Multiple formats detected with similar confidence. Consider providing more context.'
       );
@@ -553,7 +566,7 @@ export class IntelligentFormatDetector {
       warnings.push('High ambiguity detected. Multiple formats match with similar confidence.');
     }
 
-    if (matches.length > 0 && matches[0].confidence < 0.6) {
+    if (matches.length > 0 && (matches[0]?.confidence || 0) < 0.6) {
       warnings.push(
         'Low confidence detection. Format may not be standard or input may be malformed.'
       );
@@ -567,8 +580,8 @@ export class IntelligentFormatDetector {
     if (/\d{4}-\d{2}-\d{2}/.test(input)) {
       const dateMatch = input.match(/(\d{4})-(\d{2})-(\d{2})/);
       if (dateMatch) {
-        const month = parseInt(dateMatch[2]);
-        const day = parseInt(dateMatch[3]);
+        const month = parseInt(dateMatch[2] || '0');
+        const day = parseInt(dateMatch[3] || '0');
         if (month > 12) {
           warnings.push('Invalid month detected (> 12).');
         }
@@ -584,7 +597,7 @@ export class IntelligentFormatDetector {
   /**
    * Update statistics
    */
-  private updateStatistics(input: string, result: DetectionResult): void {
+  private updateStatistics(_input: string, result: DetectionResult): void {
     this.statistics.total_detections++;
 
     // Update format frequency

@@ -114,7 +114,7 @@ export interface SystemHealth {
 export class EnhancedHealthMonitor {
   private static instance: EnhancedHealthMonitor;
   private healthCache = new Map<string, { data: SystemHealth; timestamp: number }>();
-  private serviceRegistry = new Map<string, ServiceHealthChecker>();
+  // private serviceRegistry = new Map<string, ServiceHealthChecker>(); // Currently not used
   private alertHistory: Array<{
     level: string;
     message: string;
