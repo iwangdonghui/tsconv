@@ -506,8 +506,8 @@ export class UnifiedErrorMiddleware {
     const oneHour = 3600000;
 
     let recentErrors = 0;
-    let totalRecoveryAttempts = 0;
-    let successfulRecoveries = 0;
+    // let totalRecoveryAttempts = 0; // Currently not used
+    // let successfulRecoveries = 0; // Currently not used
 
     this.errorMetrics.forEach(metrics => {
       if (now - metrics.lastOccurred < oneHour) {
@@ -560,7 +560,7 @@ export class UnifiedErrorMiddleware {
     return (
       (req.headers['x-forwarded-for'] as string) ||
       (req.headers['x-real-ip'] as string) ||
-      req.connection?.remoteAddress ||
+      (req.connection?.remoteAddress as string) ||
       '127.0.0.1'
     )
       .split(',')[0]
