@@ -115,12 +115,12 @@ export class EnhancedHealthMonitor {
   private static instance: EnhancedHealthMonitor;
   private healthCache = new Map<string, { data: SystemHealth; timestamp: number }>();
   // private serviceRegistry = new Map<string, ServiceHealthChecker>(); // Currently not used
-  private alertHistory: Array<{
-    level: string;
-    message: string;
-    timestamp: number;
-    service?: string;
-  }> = [];
+  // private alertHistory: Array<{
+  //   level: string;
+  //   message: string;
+  //   timestamp: number;
+  //   service?: string;
+  // }> = []; // Currently not used
   private performanceHistory: Array<{ timestamp: number; metrics: any }> = [];
   private performanceOptimizer: HealthCheckPerformanceOptimizer;
 
@@ -347,7 +347,10 @@ export class EnhancedHealthMonitor {
         systemHealth.services.core.push(result.value);
       } else {
         systemHealth.services.core.push(
-          this.createFailedServiceHealth(['api', 'memory', 'connectivity'][index], result.reason)
+          this.createFailedServiceHealth(
+            ['api', 'memory', 'connectivity'][index] || 'unknown',
+            result.reason
+          )
         );
       }
     });
@@ -377,7 +380,7 @@ export class EnhancedHealthMonitor {
       } else {
         systemHealth.services.dependencies.push(
           this.createFailedServiceHealth(
-            ['cache', 'rate-limiting', 'security', 'format-engine'][index],
+            ['cache', 'rate-limiting', 'security', 'format-engine'][index] || 'unknown',
             result.reason
           )
         );
@@ -409,7 +412,7 @@ export class EnhancedHealthMonitor {
       } else {
         systemHealth.services.dependencies.push(
           this.createFailedServiceHealth(
-            ['batch-processing', 'error-handling', 'performance', 'monitoring'][index],
+            ['batch-processing', 'error-handling', 'performance', 'monitoring'][index] || 'unknown',
             result.reason
           )
         );
@@ -441,7 +444,8 @@ export class EnhancedHealthMonitor {
       } else {
         systemHealth.services.external.push(
           this.createFailedServiceHealth(
-            ['database', 'external-services', 'resource-limits', 'security-compliance'][index],
+            ['database', 'external-services', 'resource-limits', 'security-compliance'][index] ||
+              'unknown',
             result.reason
           )
         );
@@ -1010,7 +1014,7 @@ export class EnhancedHealthMonitor {
    */
   private async buildSystemHealthFromResults(
     results: Array<{ name: string; result: any; error?: Error; executionTime: number }>,
-    config: HealthCheckConfig,
+    _config: HealthCheckConfig,
     startTime: number
   ): Promise<SystemHealth> {
     const timestamp = Date.now();
@@ -1104,10 +1108,10 @@ export class EnhancedHealthMonitor {
   }
 }
 
-// Service health checker interface
-interface ServiceHealthChecker {
-  name: string;
-  check(): Promise<ServiceHealth>;
-}
+// Service health checker interface (currently not used)
+// interface ServiceHealthChecker {
+//   name: string;
+//   check(): Promise<ServiceHealth>;
+// }
 
 export default EnhancedHealthMonitor;

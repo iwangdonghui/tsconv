@@ -4,7 +4,6 @@
  */
 
 import { EnhancedHealthMonitor } from './enhanced-health-monitor';
-import { HealthCheckPerformanceOptimizer } from './performance-optimizer';
 
 export interface BenchmarkConfig {
   iterations: number;
@@ -58,11 +57,11 @@ export interface BenchmarkMetrics {
  */
 export class PerformanceBenchmark {
   private healthMonitor: EnhancedHealthMonitor;
-  private optimizer: HealthCheckPerformanceOptimizer;
+  // private optimizer: HealthCheckPerformanceOptimizer; // Currently not used
 
   constructor() {
     this.healthMonitor = EnhancedHealthMonitor.getInstance();
-    this.optimizer = HealthCheckPerformanceOptimizer.getInstance();
+    // this.optimizer = HealthCheckPerformanceOptimizer.getInstance(); // Currently not used
   }
 
   /**
@@ -77,7 +76,7 @@ export class PerformanceBenchmark {
       enableCaching: true,
       enableParallel: true,
       concurrencyLevels: [1, 2, 4, 8],
-      ...config
+      ...config,
     };
 
     console.log('🚀 Starting health check performance benchmark...');
@@ -100,7 +99,11 @@ export class PerformanceBenchmark {
     const comparison = this.calculateComparison(unoptimizedResults, optimizedResults);
 
     // Generate recommendations
-    const recommendations = this.generateRecommendations(unoptimizedResults, optimizedResults, comparison);
+    const recommendations = this.generateRecommendations(
+      unoptimizedResults,
+      optimizedResults,
+      comparison
+    );
 
     const result: BenchmarkResult = {
       config: fullConfig,
@@ -108,9 +111,9 @@ export class PerformanceBenchmark {
       results: {
         unoptimized: unoptimizedResults,
         optimized: optimizedResults,
-        comparison
+        comparison,
       },
-      recommendations
+      recommendations,
     };
 
     const totalTime = Date.now() - startTime;
@@ -125,7 +128,7 @@ export class PerformanceBenchmark {
    */
   private async performWarmup(config: BenchmarkConfig): Promise<void> {
     console.log(`🔥 Performing ${config.warmupRuns} warmup runs...`);
-    
+
     for (let i = 0; i < config.warmupRuns; i++) {
       try {
         await this.healthMonitor.performHealthCheck({ level: 'basic' });
@@ -157,7 +160,7 @@ export class PerformanceBenchmark {
           await this.healthMonitor.performHealthCheck({
             level,
             enableCaching: false, // Disable caching for fair comparison
-            timeout: 10000
+            timeout: 10000,
           });
 
           const responseTime = Date.now() - startTime;
@@ -167,7 +170,6 @@ export class PerformanceBenchmark {
           measurements.push(responseTime);
           memoryMeasurements.push(memoryUsed);
           cpuMeasurements.push((cpuUsed.user + cpuUsed.system) / 1000000); // Convert to ms
-
         } catch (error) {
           errors++;
           measurements.push(10000); // Penalty for errors
@@ -175,7 +177,13 @@ export class PerformanceBenchmark {
       }
     }
 
-    return this.calculateMetrics(measurements, memoryMeasurements, cpuMeasurements, errors, config.iterations * config.levels.length);
+    return this.calculateMetrics(
+      measurements,
+      memoryMeasurements,
+      cpuMeasurements,
+      errors,
+      config.iterations * config.levels.length
+    );
   }
 
   /**
@@ -198,7 +206,7 @@ export class PerformanceBenchmark {
           const result = await this.healthMonitor.performOptimizedHealthCheck({
             level,
             enableCaching: config.enableCaching,
-            timeout: 10000
+            timeout: 10000,
           });
 
           const responseTime = Date.now() - startTime;
@@ -213,7 +221,6 @@ export class PerformanceBenchmark {
           if (result.optimization && result.optimization.cacheHitRate > 0) {
             totalCacheHits++;
           }
-
         } catch (error) {
           errors++;
           measurements.push(10000); // Penalty for errors
@@ -221,7 +228,13 @@ export class PerformanceBenchmark {
       }
     }
 
-    const metrics = this.calculateMetrics(measurements, memoryMeasurements, cpuMeasurements, errors, config.iterations * config.levels.length);
+    const metrics = this.calculateMetrics(
+      measurements,
+      memoryMeasurements,
+      cpuMeasurements,
+      errors,
+      config.iterations * config.levels.length
+    );
     metrics.cacheHitRate = (totalCacheHits / (config.iterations * config.levels.length)) * 100;
 
     return metrics;
@@ -239,10 +252,11 @@ export class PerformanceBenchmark {
   ): BenchmarkMetrics {
     const sortedTimes = [...responseTimes].sort((a, b) => a - b);
     const sum = responseTimes.reduce((a, b) => a + b, 0);
-    const mean = sum / responseTimes.length;
-    
+    const mean = responseTimes.length > 0 ? sum / responseTimes.length : 0;
+
     // Calculate standard deviation
-    const variance = responseTimes.reduce((acc, time) => acc + Math.pow(time - mean, 2), 0) / responseTimes.length;
+    const variance =
+      responseTimes.reduce((acc, time) => acc + Math.pow(time - mean, 2), 0) / responseTimes.length;
     const standardDeviation = Math.sqrt(variance);
 
     // Calculate percentiles
@@ -252,9 +266,9 @@ export class PerformanceBenchmark {
 
     return {
       averageResponseTime: mean,
-      medianResponseTime: sortedTimes[medianIndex],
-      p95ResponseTime: sortedTimes[p95Index],
-      p99ResponseTime: sortedTimes[p99Index],
+      medianResponseTime: sortedTimes[medianIndex] || 0,
+      p95ResponseTime: sortedTimes[p95Index] || 0,
+      p99ResponseTime: sortedTimes[p99Index] || 0,
       minResponseTime: Math.min(...responseTimes),
       maxResponseTime: Math.max(...responseTimes),
       standardDeviation,
@@ -263,12 +277,12 @@ export class PerformanceBenchmark {
       errorRate: (errors / totalRequests) * 100,
       memoryUsage: {
         average: memoryUsages.reduce((a, b) => a + b, 0) / memoryUsages.length,
-        peak: Math.max(...memoryUsages)
+        peak: Math.max(...memoryUsages),
       },
       cpuUsage: {
         average: cpuUsages.reduce((a, b) => a + b, 0) / cpuUsages.length,
-        peak: Math.max(...cpuUsages)
-      }
+        peak: Math.max(...cpuUsages),
+      },
     };
   }
 
@@ -284,24 +298,37 @@ export class PerformanceBenchmark {
     parallelizationGain: number;
     overallImprovement: number;
   } {
-    const speedImprovement = ((unoptimized.averageResponseTime - optimized.averageResponseTime) / unoptimized.averageResponseTime) * 100;
+    const speedImprovement =
+      ((unoptimized.averageResponseTime - optimized.averageResponseTime) /
+        unoptimized.averageResponseTime) *
+      100;
     const cacheEffectiveness = optimized.cacheHitRate;
-    
+
     // Estimate parallelization gain based on throughput improvement
-    const throughputImprovement = ((optimized.throughput - unoptimized.throughput) / unoptimized.throughput) * 100;
+    const throughputImprovement =
+      ((optimized.throughput - unoptimized.throughput) / unoptimized.throughput) * 100;
     const parallelizationGain = Math.max(0, throughputImprovement - cacheEffectiveness);
-    
+
     // Overall improvement considers multiple factors
-    const memoryImprovement = ((unoptimized.memoryUsage.average - optimized.memoryUsage.average) / unoptimized.memoryUsage.average) * 100;
-    const cpuImprovement = ((unoptimized.cpuUsage.average - optimized.cpuUsage.average) / unoptimized.cpuUsage.average) * 100;
-    
-    const overallImprovement = (speedImprovement * 0.4 + throughputImprovement * 0.3 + memoryImprovement * 0.2 + cpuImprovement * 0.1);
+    const memoryImprovement =
+      ((unoptimized.memoryUsage.average - optimized.memoryUsage.average) /
+        unoptimized.memoryUsage.average) *
+      100;
+    const cpuImprovement =
+      ((unoptimized.cpuUsage.average - optimized.cpuUsage.average) / unoptimized.cpuUsage.average) *
+      100;
+
+    const overallImprovement =
+      speedImprovement * 0.4 +
+      throughputImprovement * 0.3 +
+      memoryImprovement * 0.2 +
+      cpuImprovement * 0.1;
 
     return {
       speedImprovement: Math.max(0, speedImprovement),
       cacheEffectiveness,
       parallelizationGain: Math.max(0, parallelizationGain),
-      overallImprovement: Math.max(0, overallImprovement)
+      overallImprovement: Math.max(0, overallImprovement),
     };
   }
 
@@ -316,11 +343,17 @@ export class PerformanceBenchmark {
     const recommendations: string[] = [];
 
     if (comparison.speedImprovement > 50) {
-      recommendations.push('🚀 Excellent speed improvement! Consider enabling optimization by default.');
+      recommendations.push(
+        '🚀 Excellent speed improvement! Consider enabling optimization by default.'
+      );
     } else if (comparison.speedImprovement > 20) {
-      recommendations.push('⚡ Good speed improvement. Optimization is beneficial for this workload.');
+      recommendations.push(
+        '⚡ Good speed improvement. Optimization is beneficial for this workload.'
+      );
     } else if (comparison.speedImprovement < 10) {
-      recommendations.push('⚠️ Limited speed improvement. Consider tuning optimization parameters.');
+      recommendations.push(
+        '⚠️ Limited speed improvement. Consider tuning optimization parameters.'
+      );
     }
 
     if (optimized.cacheHitRate > 70) {
@@ -330,23 +363,33 @@ export class PerformanceBenchmark {
     }
 
     if (comparison.parallelizationGain > 30) {
-      recommendations.push('🔀 Significant parallelization gains. Consider increasing concurrency limits.');
+      recommendations.push(
+        '🔀 Significant parallelization gains. Consider increasing concurrency limits.'
+      );
     }
 
     if (optimized.errorRate > unoptimized.errorRate) {
-      recommendations.push('❌ Optimization increased error rate. Review timeout and retry settings.');
+      recommendations.push(
+        '❌ Optimization increased error rate. Review timeout and retry settings.'
+      );
     }
 
     if (optimized.memoryUsage.peak > unoptimized.memoryUsage.peak * 1.5) {
-      recommendations.push('🧠 Optimization increased memory usage. Consider memory-efficient strategies.');
+      recommendations.push(
+        '🧠 Optimization increased memory usage. Consider memory-efficient strategies.'
+      );
     }
 
     if (optimized.p99ResponseTime > unoptimized.p99ResponseTime) {
-      recommendations.push('📊 P99 latency increased. Optimization may cause occasional slowdowns.');
+      recommendations.push(
+        '📊 P99 latency increased. Optimization may cause occasional slowdowns.'
+      );
     }
 
     if (recommendations.length === 0) {
-      recommendations.push('✅ Performance optimization is working well with current configuration.');
+      recommendations.push(
+        '✅ Performance optimization is working well with current configuration.'
+      );
     }
 
     return recommendations;
@@ -382,7 +425,7 @@ export class PerformanceBenchmark {
     return {
       unoptimized: unoptimizedTime,
       optimized: optimizedTime,
-      improvement
+      improvement,
     };
   }
 
