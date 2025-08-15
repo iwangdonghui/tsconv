@@ -211,7 +211,7 @@ export class EnhancedRateLimiter implements RateLimiter {
   /**
    * Fallback increment using simple in-memory rate limiting
    */
-  private fallbackIncrement(identifier: string, rule: RateLimitRule): RateLimitResult {
+  private fallbackIncrement(_identifier: string, rule: RateLimitRule): RateLimitResult {
     // Simple fallback implementation
     return {
       allowed: true,
