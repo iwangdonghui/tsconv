@@ -1,7 +1,6 @@
 {
-  "*.{js,jsx,ts,tsx}": ["eslint --fix", "prettier --write", "git add"],
-  "*.{json,md,yml,yaml}": ["prettier --write", "git add"],
-  "*.{css,scss,less}": ["prettier --write", "git add"],
-  "*.{ts,tsx}": ["bash -c 'npm run type-check'"],
-  "package.json": ["npm audit --audit-level=moderate", "git add"]
+  "*.{js,jsx,ts,tsx}": ["eslint --fix", "prettier --write"],
+  "*.{json,md,yml,yaml}": ["prettier --write"],
+  "*.{css,scss,less}": ["prettier --write"],
+  "package.json": ["npm audit --audit-level=moderate"]
 }

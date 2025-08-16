@@ -1,8 +1,9 @@
 // Workdays calculation API
 
-import { CacheManager } from './cache-utils';
-import { SecurityManager, RATE_LIMITS } from './security';
 import { recordAnalyticsMiddleware } from './analytics-api';
+import { CacheManager } from './cache-utils';
+import { RATE_LIMITS, SecurityManager } from './security';
+import { logError } from './utils/logger';
 
 interface Env {
   UPSTASH_REDIS_REST_URL?: string;
@@ -22,23 +23,15 @@ interface WorkdaysRequest {
   includeEndDate?: boolean;
 }
 
-interface WorkdaysResponse {
-  success: boolean;
-  data: {
-    startDate: string;
-    endDate: string;
-    totalDays: number;
-    workdays: number;
-    weekends: number;
-    holidays: number;
-    excludedDates: string[];
-    businessDaysOnly: number;
-  };
-  metadata: {
-    timestamp: string;
-    processingTime: string;
-    cached: boolean;
-  };
+interface WorkdaysResult {
+  startDate: string;
+  endDate: string;
+  totalDays: number;
+  workdays: number;
+  weekends: number;
+  holidays: number;
+  excludedDates: string[];
+  businessDaysOnly: number;
 }
 
 // Common holidays by country (simplified)
@@ -183,7 +176,10 @@ export async function handleWorkdays(request: Request, env: Env): Promise<Respon
     try {
       await cacheManager.set('CONVERT_API', cacheKey, result);
     } catch (error) {
-      console.error('Failed to cache workdays result:', error);
+      logError(
+        'Failed to cache workdays result',
+        error instanceof Error ? error : new Error(String(error))
+      );
     }
 
     const response = new Response(
@@ -205,7 +201,7 @@ export async function handleWorkdays(request: Request, env: Env): Promise<Respon
     recordAnalyticsMiddleware(request, response, env, startTime);
     return response;
   } catch (error) {
-    console.error('Workdays API error:', error);
+    logError('Workdays API error', error instanceof Error ? error : new Error(String(error)));
 
     const response = new Response(
       JSON.stringify({
@@ -223,7 +219,7 @@ export async function handleWorkdays(request: Request, env: Env): Promise<Respon
   }
 }
 
-function calculateWorkdays(params: WorkdaysRequest): any {
+function calculateWorkdays(params: WorkdaysRequest): WorkdaysResult {
   const startDate = new Date(params.startDate);
   let endDate: Date;
 

@@ -2,6 +2,7 @@
 
 import { AnalyticsManager } from './analytics';
 import { SecurityManager } from './security';
+import { logError } from './utils/logger';
 
 interface Env {
   UPSTASH_REDIS_REST_URL?: string;
@@ -75,7 +76,7 @@ export async function handleAnalytics(
         );
     }
   } catch (error) {
-    console.error('Analytics API error:', error);
+    logError('Analytics API error', error instanceof Error ? error : new Error(String(error)));
 
     return new Response(
       JSON.stringify({
@@ -241,10 +242,16 @@ export async function recordAnalyticsMiddleware(
 
     // Record asynchronously to not block response
     analyticsManager.recordEvent(event).catch(error => {
-      console.error('Failed to record analytics event:', error);
+      logError(
+        'Failed to record analytics event',
+        error instanceof Error ? error : new Error(String(error))
+      );
     });
   } catch (error) {
-    console.error('Analytics middleware error:', error);
+    logError(
+      'Analytics middleware error',
+      error instanceof Error ? error : new Error(String(error))
+    );
   }
 }
 
@@ -338,7 +345,10 @@ export async function securityMiddleware(
 
     return { allowed: true };
   } catch (error) {
-    console.error('Security middleware error:', error);
+    logError(
+      'Security middleware error',
+      error instanceof Error ? error : new Error(String(error))
+    );
     // Fail open - allow request if security check fails
     return { allowed: true };
   }

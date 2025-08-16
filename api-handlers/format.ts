@@ -1,8 +1,9 @@
 // Custom format template API
 
-import { CacheManager } from './cache-utils';
-import { SecurityManager, RATE_LIMITS } from './security';
 import { recordAnalyticsMiddleware } from './analytics-api';
+import { CacheManager } from './cache-utils';
+import { RATE_LIMITS, SecurityManager } from './security';
+import { logError } from './utils/logger';
 
 interface Env {
   UPSTASH_REDIS_REST_URL?: string;
@@ -182,7 +183,10 @@ export async function handleFormat(request: Request, env: Env): Promise<Response
     try {
       await cacheManager.set('CONVERT_API', cacheKey, result);
     } catch (error) {
-      console.error('Failed to cache format result:', error);
+      logError(
+        'Failed to cache format result',
+        error instanceof Error ? error : new Error(String(error))
+      );
     }
 
     const response = new Response(
@@ -203,7 +207,7 @@ export async function handleFormat(request: Request, env: Env): Promise<Response
     recordAnalyticsMiddleware(request, response, env, startTime);
     return response;
   } catch (error) {
-    console.error('Format API error:', error);
+    logError('Format API error', error instanceof Error ? error : new Error(String(error)));
 
     const response = new Response(
       JSON.stringify({
@@ -221,7 +225,7 @@ export async function handleFormat(request: Request, env: Env): Promise<Response
   }
 }
 
-function formatDate(params: FormatRequest): any {
+function formatDate(params: FormatRequest): string {
   // Get the date object
   let date: Date;
 
@@ -268,7 +272,11 @@ function formatDate(params: FormatRequest): any {
   };
 }
 
-function applyFormat(date: Date, format: string, timezone?: string, locale?: string): string {
+// eslint-disable-next-line no-unused-vars
+
+function applyFormat(date: Date, format: string, _timezone?: string, _locale?: string): string {
+  void _timezone;
+  void _locale;
   // Enhanced implementation with proper month names and ordinals
 
   const year = date.getFullYear();
