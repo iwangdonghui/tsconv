@@ -396,14 +396,14 @@ async function enhancedFormatConvertHandler(req: VercelRequest, res: VercelRespo
  */
 function generateFormatSuggestions(
   outputFormats: string[],
-  date: Date
+  _date: Date
 ): Array<{
   format: string;
   reason: string;
   use_case: string;
 }> {
   const suggestions = [];
-  const formatEngine = EnhancedFormatEngine.getInstance();
+  // const formatEngine = EnhancedFormatEngine.getInstance(); // Currently not used
 
   // Suggest ISO format if not already included
   if (!outputFormats.includes('iso8601') && !outputFormats.includes('iso')) {
@@ -440,7 +440,7 @@ function generateFormatSuggestions(
  */
 function generateOptimizationTips(
   detectionResult: any,
-  parseResult: any,
+  _parseResult: any,
   request: EnhancedFormatRequest
 ): string[] {
   const tips = [];
@@ -553,7 +553,7 @@ const enhancedFormatHandler = async (req: VercelRequest, res: VercelResponse) =>
       securityMiddleware(req, res, () => {
         // Then apply rate limiting
         createRateLimitMiddleware({
-          ruleSelector: req => ({
+          ruleSelector: _req => ({
             identifier: '/api/enhanced-format-convert',
             limit: 200, // Higher limit for format conversion
             window: 60000,

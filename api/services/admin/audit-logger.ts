@@ -18,7 +18,13 @@ export interface AuditEvent {
   duration: number;
   status: 'success' | 'failure' | 'error' | 'warning';
   severity: 'low' | 'medium' | 'high' | 'critical';
-  category: 'authentication' | 'authorization' | 'data_access' | 'data_modification' | 'system_admin' | 'security';
+  category:
+    | 'authentication'
+    | 'authorization'
+    | 'data_access'
+    | 'data_modification'
+    | 'system_admin'
+    | 'security';
   details: {
     requestBody?: any;
     responseStatus: number;
@@ -139,8 +145,7 @@ export class EnhancedAuditLogger {
   private static instance: EnhancedAuditLogger;
   private events: AuditEvent[] = [];
   private maxEvents: number = 100000;
-  private retentionPeriod: number = 365 * 24 * 60 * 60 * 1000; // 1 year
-  private encryptionKey: string = 'audit-encryption-key'; // In production, use proper key management
+
   private complianceRules = new Map<string, any>();
   private anomalyDetectors = new Map<string, (events: AuditEvent[]) => any[]>();
 
@@ -160,7 +165,9 @@ export class EnhancedAuditLogger {
   /**
    * Log audit event
    */
-  logEvent(event: Omit<AuditEvent, 'id' | 'timestamp' | 'context' | 'compliance' | 'metadata'>): void {
+  logEvent(
+    event: Omit<AuditEvent, 'id' | 'timestamp' | 'context' | 'compliance' | 'metadata'>
+  ): void {
     const auditEvent: AuditEvent = {
       ...event,
       id: this.generateEventId(),
@@ -169,15 +176,15 @@ export class EnhancedAuditLogger {
         correlationId: this.generateCorrelationId(),
         traceId: this.generateTraceId(),
         riskScore: this.calculateRiskScore(event),
-        flags: this.generateFlags(event)
+        flags: this.generateFlags(event),
       },
       compliance: this.determineCompliance(event),
       metadata: {
         version: '1.0.0',
         source: 'enhanced-audit-logger',
         tags: this.generateTags(event),
-        customFields: {}
-      }
+        customFields: {},
+      },
     };
 
     // Encrypt sensitive data if required
@@ -237,8 +244,8 @@ export class EnhancedAuditLogger {
     }
 
     if (query.timeRange) {
-      filteredEvents = filteredEvents.filter(e => 
-        e.timestamp >= query.timeRange!.start && e.timestamp <= query.timeRange!.end
+      filteredEvents = filteredEvents.filter(
+        e => e.timestamp >= query.timeRange!.start && e.timestamp <= query.timeRange!.end
       );
     }
 
@@ -251,19 +258,20 @@ export class EnhancedAuditLogger {
     }
 
     if (query.riskScore) {
-      filteredEvents = filteredEvents.filter(e => 
-        e.context.riskScore >= query.riskScore!.min && e.context.riskScore <= query.riskScore!.max
+      filteredEvents = filteredEvents.filter(
+        e =>
+          e.context.riskScore >= query.riskScore!.min && e.context.riskScore <= query.riskScore!.max
       );
     }
 
     if (query.flags && query.flags.length > 0) {
-      filteredEvents = filteredEvents.filter(e => 
+      filteredEvents = filteredEvents.filter(e =>
         query.flags!.some(flag => e.context.flags.includes(flag))
       );
     }
 
     if (query.regulations && query.regulations.length > 0) {
-      filteredEvents = filteredEvents.filter(e => 
+      filteredEvents = filteredEvents.filter(e =>
         query.regulations!.some(reg => e.compliance.regulations.includes(reg))
       );
     }
@@ -312,7 +320,7 @@ export class EnhancedAuditLogger {
       breakdown,
       trends,
       anomalies,
-      compliance
+      compliance,
     };
   }
 
@@ -340,15 +348,15 @@ export class EnhancedAuditLogger {
 
     // Base score by action type
     const actionScores: Record<string, number> = {
-      'login': 2,
-      'logout': 1,
-      'create': 3,
-      'update': 4,
-      'delete': 6,
-      'admin_access': 7,
-      'permission_change': 8,
-      'system_config': 9,
-      'data_export': 5
+      login: 2,
+      logout: 1,
+      create: 3,
+      update: 4,
+      delete: 6,
+      admin_access: 7,
+      permission_change: 8,
+      system_config: 9,
+      data_export: 5,
     };
 
     score += actionScores[event.action] || 3;
@@ -442,7 +450,7 @@ export class EnhancedAuditLogger {
       regulations,
       dataClassification,
       retentionPeriod,
-      encryptionRequired
+      encryptionRequired,
     };
   }
 
@@ -467,13 +475,18 @@ export class EnhancedAuditLogger {
   /**
    * Analytics generation methods
    */
-  private generateSummary(events: AuditEvent[], timeRange?: { start: number; end: number }): AuditAnalytics['summary'] {
+  private generateSummary(
+    events: AuditEvent[],
+    timeRange?: { start: number; end: number }
+  ): AuditAnalytics['summary'] {
     const uniqueUsers = new Set(events.map(e => e.userId)).size;
     const uniqueIPs = new Set(events.map(e => e.ipAddress)).size;
     const successfulEvents = events.filter(e => e.status === 'success').length;
     const successRate = events.length > 0 ? (successfulEvents / events.length) * 100 : 0;
-    const averageRiskScore = events.length > 0 ? 
-      events.reduce((sum, e) => sum + e.context.riskScore, 0) / events.length : 0;
+    const averageRiskScore =
+      events.length > 0
+        ? events.reduce((sum, e) => sum + e.context.riskScore, 0) / events.length
+        : 0;
 
     return {
       totalEvents: events.length,
@@ -481,7 +494,7 @@ export class EnhancedAuditLogger {
       uniqueUsers,
       uniqueIPs,
       successRate,
-      averageRiskScore
+      averageRiskScore,
     };
   }
 
@@ -494,7 +507,7 @@ export class EnhancedAuditLogger {
       byStatus: {},
       byUser: {},
       byIP: {},
-      byHour: {}
+      byHour: {},
     };
 
     events.forEach(event => {
@@ -527,8 +540,8 @@ export class EnhancedAuditLogger {
     events.forEach(event => {
       const date = new Date(event.timestamp);
       const hour = date.getHours();
-      const dayKey = date.toISOString().split('T')[0];
-      const weekKey = this.getWeekKey(date);
+      const dayKey = date.toISOString().split('T')[0] || date.toDateString();
+      const weekKey = this.getWeekKey(date) || date.toDateString();
 
       // Group by hour
       if (!hourlyGroups.has(hour)) hourlyGroups.set(hour, []);
@@ -545,17 +558,20 @@ export class EnhancedAuditLogger {
 
     // Calculate trends
     hourlyGroups.forEach((groupEvents, hour) => {
-      const avgRiskScore = groupEvents.reduce((sum, e) => sum + e.context.riskScore, 0) / groupEvents.length;
+      const avgRiskScore =
+        groupEvents.reduce((sum, e) => sum + e.context.riskScore, 0) / groupEvents.length;
       hourly.push({ hour, count: groupEvents.length, riskScore: avgRiskScore });
     });
 
     dailyGroups.forEach((groupEvents, date) => {
-      const avgRiskScore = groupEvents.reduce((sum, e) => sum + e.context.riskScore, 0) / groupEvents.length;
+      const avgRiskScore =
+        groupEvents.reduce((sum, e) => sum + e.context.riskScore, 0) / groupEvents.length;
       daily.push({ date, count: groupEvents.length, riskScore: avgRiskScore });
     });
 
     weeklyGroups.forEach((groupEvents, week) => {
-      const avgRiskScore = groupEvents.reduce((sum, e) => sum + e.context.riskScore, 0) / groupEvents.length;
+      const avgRiskScore =
+        groupEvents.reduce((sum, e) => sum + e.context.riskScore, 0) / groupEvents.length;
       weekly.push({ week, count: groupEvents.length, riskScore: avgRiskScore });
     });
 
@@ -564,8 +580,11 @@ export class EnhancedAuditLogger {
 
   private generateComplianceAnalytics(events: AuditEvent[]): AuditAnalytics['compliance'] {
     const byRegulation: Record<string, number> = {};
-    let active = 0, nearExpiry = 0, expired = 0;
-    let encrypted = 0, unencrypted = 0;
+    let active = 0,
+      nearExpiry = 0,
+      expired = 0;
+    let encrypted = 0,
+      unencrypted = 0;
 
     const now = Date.now();
     const thirtyDaysMs = 30 * 24 * 60 * 60 * 1000;
@@ -577,7 +596,7 @@ export class EnhancedAuditLogger {
       });
 
       // Check retention status
-      const expiryTime = event.timestamp + (event.compliance.retentionPeriod * 24 * 60 * 60 * 1000);
+      const expiryTime = event.timestamp + event.compliance.retentionPeriod * 24 * 60 * 60 * 1000;
       if (expiryTime < now) {
         expired++;
       } else if (expiryTime < now + thirtyDaysMs) {
@@ -597,7 +616,7 @@ export class EnhancedAuditLogger {
     return {
       byRegulation,
       retentionStatus: { active, nearExpiry, expired },
-      encryptionStatus: { encrypted, unencrypted }
+      encryptionStatus: { encrypted, unencrypted },
     };
   }
 
@@ -629,7 +648,7 @@ export class EnhancedAuditLogger {
       retentionPeriod: 2555, // 7 years
       encryptionRequired: true,
       applicableResources: ['users', 'personal_data'],
-      requiredFields: ['userId', 'action', 'timestamp']
+      requiredFields: ['userId', 'action', 'timestamp'],
     });
 
     // SOX rules
@@ -637,7 +656,7 @@ export class EnhancedAuditLogger {
       retentionPeriod: 2555, // 7 years
       encryptionRequired: true,
       applicableResources: ['financial', 'accounting'],
-      requiredFields: ['userId', 'action', 'timestamp', 'changes']
+      requiredFields: ['userId', 'action', 'timestamp', 'changes'],
     });
   }
 
@@ -647,21 +666,21 @@ export class EnhancedAuditLogger {
   private initializeAnomalyDetectors(): void {
     // Failed login attempts detector
     this.anomalyDetectors.set('failed_logins', (events: AuditEvent[]) => {
-      const recentFailures = events.filter(e => 
-        e.action === 'login' && 
-        e.status === 'failure' && 
-        Date.now() - e.timestamp < 60000 // Last minute
+      const recentFailures = events.filter(
+        e => e.action === 'login' && e.status === 'failure' && Date.now() - e.timestamp < 60000 // Last minute
       );
 
       if (recentFailures.length >= 5) {
-        return [{
-          type: 'suspicious_login_activity',
-          description: `${recentFailures.length} failed login attempts in the last minute`,
-          severity: 'high',
-          timestamp: Date.now(),
-          affectedEvents: recentFailures.map(e => e.id),
-          riskScore: 8
-        }];
+        return [
+          {
+            type: 'suspicious_login_activity',
+            description: `${recentFailures.length} failed login attempts in the last minute`,
+            severity: 'high',
+            timestamp: Date.now(),
+            affectedEvents: recentFailures.map(e => e.id),
+            riskScore: 8,
+          },
+        ];
       }
 
       return [];
@@ -676,14 +695,16 @@ export class EnhancedAuditLogger {
       });
 
       if (unusualHourEvents.length >= 3) {
-        return [{
-          type: 'unusual_activity_hours',
-          description: `${unusualHourEvents.length} events during unusual hours`,
-          severity: 'medium',
-          timestamp: Date.now(),
-          affectedEvents: unusualHourEvents.map(e => e.id),
-          riskScore: 6
-        }];
+        return [
+          {
+            type: 'unusual_activity_hours',
+            description: `${unusualHourEvents.length} events during unusual hours`,
+            severity: 'medium',
+            timestamp: Date.now(),
+            affectedEvents: unusualHourEvents.map(e => e.id),
+            riskScore: 6,
+          },
+        ];
       }
 
       return [];
@@ -711,7 +732,9 @@ export class EnhancedAuditLogger {
 
   private getWeekKey(date: Date): string {
     const year = date.getFullYear();
-    const week = Math.ceil((date.getTime() - new Date(year, 0, 1).getTime()) / (7 * 24 * 60 * 60 * 1000));
+    const week = Math.ceil(
+      (date.getTime() - new Date(year, 0, 1).getTime()) / (7 * 24 * 60 * 60 * 1000)
+    );
     return `${year}-W${week.toString().padStart(2, '0')}`;
   }
 
@@ -723,11 +746,22 @@ export class EnhancedAuditLogger {
   private outputToConsole(event: AuditEvent): void {
     const severity = event.severity.toUpperCase();
     const riskScore = event.context.riskScore;
-    console.log(`[AUDIT:${severity}] ${event.action} on ${event.resource} by ${event.userId} (Risk: ${riskScore})`);
+    console.log(
+      `[AUDIT:${severity}] ${event.action} on ${event.resource} by ${event.userId} (Risk: ${riskScore})`
+    );
   }
 
   private exportToCSV(events: AuditEvent[]): string {
-    const headers = ['id', 'timestamp', 'userId', 'action', 'resource', 'status', 'ipAddress', 'riskScore'];
+    const headers = [
+      'id',
+      'timestamp',
+      'userId',
+      'action',
+      'resource',
+      'status',
+      'ipAddress',
+      'riskScore',
+    ];
     const rows = events.map(event => [
       event.id,
       new Date(event.timestamp).toISOString(),
@@ -736,14 +770,16 @@ export class EnhancedAuditLogger {
       event.resource,
       event.status,
       event.ipAddress,
-      event.context.riskScore
+      event.context.riskScore,
     ]);
 
     return [headers, ...rows].map(row => row.join(',')).join('\n');
   }
 
   private exportToXML(events: AuditEvent[]): string {
-    const xmlEvents = events.map(event => `
+    const xmlEvents = events
+      .map(
+        event => `
       <event>
         <id>${event.id}</id>
         <timestamp>${new Date(event.timestamp).toISOString()}</timestamp>
@@ -754,20 +790,26 @@ export class EnhancedAuditLogger {
         <ipAddress>${event.ipAddress}</ipAddress>
         <riskScore>${event.context.riskScore}</riskScore>
       </event>
-    `).join('');
+    `
+      )
+      .join('');
 
     return `<?xml version="1.0" encoding="UTF-8"?><auditEvents>${xmlEvents}</auditEvents>`;
   }
 
   private startMaintenanceTasks(): void {
     // Clean up expired events every hour
-    setInterval(() => {
-      const now = Date.now();
-      this.events = this.events.filter(event => {
-        const expiryTime = event.timestamp + (event.compliance.retentionPeriod * 24 * 60 * 60 * 1000);
-        return expiryTime > now;
-      });
-    }, 60 * 60 * 1000);
+    setInterval(
+      () => {
+        const now = Date.now();
+        this.events = this.events.filter(event => {
+          const expiryTime =
+            event.timestamp + event.compliance.retentionPeriod * 24 * 60 * 60 * 1000;
+          return expiryTime > now;
+        });
+      },
+      60 * 60 * 1000
+    );
   }
 
   /**

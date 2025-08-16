@@ -1,10 +1,47 @@
 // Cloudflare Pages adapter for health API
 
 import { CacheManager } from './cache-utils';
+import { logError } from './utils/logger';
 
 interface Env {
   UPSTASH_REDIS_REST_URL?: string;
   UPSTASH_REDIS_REST_TOKEN?: string;
+}
+
+interface HealthStatus {
+  status: string;
+  timestamp: string;
+  uptime: number;
+  version: string;
+  environment: string;
+  responseTime: number;
+}
+
+interface ServiceStatus {
+  api: string;
+  cache: string;
+  redis: string;
+}
+
+interface SystemDetails {
+  memory: {
+    used: string;
+    total: string;
+  };
+  system: {
+    platform: string;
+    runtime: string;
+  };
+  performance: {
+    responseTime: string;
+    requestsPerSecond: string;
+  };
+  cache: unknown;
+}
+
+interface HealthResult extends HealthStatus {
+  services: ServiceStatus;
+  details?: SystemDetails;
 }
 
 export async function handleHealth(request: Request, env: Env): Promise<Response> {
@@ -45,7 +82,7 @@ export async function handleHealth(request: Request, env: Env): Promise<Response
     const responseTime = Date.now() - startTime;
     health.responseTime = responseTime;
 
-    const result: any = {
+    const result: HealthResult = {
       ...health,
       services: {
         api: 'healthy',
@@ -87,7 +124,7 @@ export async function handleHealth(request: Request, env: Env): Promise<Response
       headers: { 'Content-Type': 'application/json' },
     });
   } catch (error) {
-    console.error('Health API Error:', error);
+    logError('Health API Error', error instanceof Error ? error : new Error(String(error)));
 
     return new Response(
       JSON.stringify({

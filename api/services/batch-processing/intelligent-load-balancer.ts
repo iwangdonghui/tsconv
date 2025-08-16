@@ -19,7 +19,13 @@ export interface WorkerNode {
 }
 
 export interface LoadBalancingStrategy {
-  name: 'round_robin' | 'least_connections' | 'weighted_round_robin' | 'least_response_time' | 'adaptive' | 'geographic';
+  name:
+    | 'round_robin'
+    | 'least_connections'
+    | 'weighted_round_robin'
+    | 'least_response_time'
+    | 'adaptive'
+    | 'geographic';
   config: Record<string, unknown>;
 }
 
@@ -100,7 +106,7 @@ export class IntelligentLoadBalancer {
    */
   selectNode(workload: BatchWorkload): LoadBalancingDecision {
     const availableNodes = this.getAvailableNodes(workload);
-    
+
     if (availableNodes.length === 0) {
       throw new Error('No available nodes for workload processing');
     }
@@ -152,7 +158,7 @@ export class IntelligentLoadBalancer {
       confidence,
       alternativeNodes,
       estimatedCompletionTime,
-      loadDistribution
+      loadDistribution,
     };
   }
 
@@ -171,10 +177,15 @@ export class IntelligentLoadBalancer {
       return aRequests - bRequests;
     });
 
+    const selectedNode = sortedNodes[0];
+    if (!selectedNode) {
+      throw new Error('No available nodes for load balancing');
+    }
+
     return {
-      selectedNode: sortedNodes[0],
+      selectedNode,
       reason: 'Round robin - least recently used node',
-      confidence: 0.7
+      confidence: 0.7,
     };
   }
 
@@ -187,11 +198,16 @@ export class IntelligentLoadBalancer {
     confidence: number;
   } {
     const sortedNodes = nodes.sort((a, b) => a.currentLoad - b.currentLoad);
-    
+
+    const selectedNode = sortedNodes[0];
+    if (!selectedNode) {
+      throw new Error('No available nodes for load balancing');
+    }
+
     return {
-      selectedNode: sortedNodes[0],
-      reason: `Least connections - ${sortedNodes[0].currentLoad} active connections`,
-      confidence: 0.8
+      selectedNode,
+      reason: `Least connections - ${selectedNode.currentLoad} active connections`,
+      confidence: 0.8,
     };
   }
 
@@ -206,15 +222,20 @@ export class IntelligentLoadBalancer {
     // Calculate weighted scores
     const weightedNodes = nodes.map(node => ({
       node,
-      score: (node.capacity * node.priority) / (node.currentLoad + 1)
+      score: (node.capacity * node.priority) / (node.currentLoad + 1),
     }));
 
     weightedNodes.sort((a, b) => b.score - a.score);
 
+    const selectedWeightedNode = weightedNodes[0];
+    if (!selectedWeightedNode) {
+      throw new Error('No available nodes for load balancing');
+    }
+
     return {
-      selectedNode: weightedNodes[0].node,
-      reason: `Weighted round robin - highest weighted score: ${weightedNodes[0].score.toFixed(2)}`,
-      confidence: 0.75
+      selectedNode: selectedWeightedNode.node,
+      reason: `Weighted round robin - highest weighted score: ${selectedWeightedNode.score.toFixed(2)}`,
+      confidence: 0.75,
     };
   }
 
@@ -227,53 +248,72 @@ export class IntelligentLoadBalancer {
     confidence: number;
   } {
     const sortedNodes = nodes.sort((a, b) => a.averageResponseTime - b.averageResponseTime);
-    
+
+    const selectedNode = sortedNodes[0];
+    if (!selectedNode) {
+      throw new Error('No available nodes for load balancing');
+    }
+
     return {
-      selectedNode: sortedNodes[0],
-      reason: `Least response time - ${sortedNodes[0].averageResponseTime}ms average`,
-      confidence: 0.85
+      selectedNode,
+      reason: `Least response time - ${selectedNode.averageResponseTime}ms average`,
+      confidence: 0.85,
     };
   }
 
   /**
    * Geographic selection
    */
-  private geographicSelection(nodes: WorkerNode[], workload: BatchWorkload): {
+  private geographicSelection(
+    nodes: WorkerNode[],
+    workload: BatchWorkload
+  ): {
     selectedNode: WorkerNode;
     reason: string;
     confidence: number;
   } {
     // Prefer nodes in the same region
     const sameRegionNodes = nodes.filter(node => node.region === workload.region);
-    
+
     if (sameRegionNodes.length > 0) {
-      const bestNode = sameRegionNodes.sort((a, b) => 
-        this.calculateNodeScore(b, workload) - this.calculateNodeScore(a, workload)
+      const bestNode = sameRegionNodes.sort(
+        (a, b) => this.calculateNodeScore(b, workload) - this.calculateNodeScore(a, workload)
       )[0];
-      
+
+      if (!bestNode) {
+        throw new Error('No available nodes in the same region');
+      }
+
       return {
         selectedNode: bestNode,
         reason: `Geographic proximity - same region: ${workload.region}`,
-        confidence: 0.9
+        confidence: 0.9,
       };
     }
 
     // Fallback to best available node
-    const bestNode = nodes.sort((a, b) => 
-      this.calculateNodeScore(b, workload) - this.calculateNodeScore(a, workload)
+    const bestNode = nodes.sort(
+      (a, b) => this.calculateNodeScore(b, workload) - this.calculateNodeScore(a, workload)
     )[0];
+
+    if (!bestNode) {
+      throw new Error('No available nodes for geographic selection');
+    }
 
     return {
       selectedNode: bestNode,
       reason: 'Geographic fallback - best available node',
-      confidence: 0.6
+      confidence: 0.6,
     };
   }
 
   /**
    * Adaptive selection with machine learning-like optimization
    */
-  private adaptiveSelection(nodes: WorkerNode[], workload: BatchWorkload): {
+  private adaptiveSelection(
+    nodes: WorkerNode[],
+    workload: BatchWorkload
+  ): {
     selectedNode: WorkerNode;
     reason: string;
     confidence: number;
@@ -281,19 +321,23 @@ export class IntelligentLoadBalancer {
     // Calculate adaptive scores for each node
     const nodeScores = nodes.map(node => ({
       node,
-      score: this.calculateAdaptiveScore(node, workload)
+      score: this.calculateAdaptiveScore(node, workload),
     }));
 
     nodeScores.sort((a, b) => b.score - a.score);
-    const selectedNode = nodeScores[0].node;
+    const bestNodeScore = nodeScores[0];
+    if (!bestNodeScore) {
+      throw new Error('No available nodes for adaptive selection');
+    }
+    const selectedNode = bestNodeScore.node;
 
     // Update adaptive weights based on historical performance
     this.updateAdaptiveWeights();
 
     return {
       selectedNode,
-      reason: `Adaptive selection - score: ${nodeScores[0].score.toFixed(3)} (capacity: ${selectedNode.capacity}, load: ${selectedNode.currentLoad}, response: ${selectedNode.averageResponseTime}ms)`,
-      confidence: 0.95
+      reason: `Adaptive selection - score: ${bestNodeScore.score.toFixed(3)} (capacity: ${selectedNode.capacity}, load: ${selectedNode.currentLoad}, response: ${selectedNode.averageResponseTime}ms)`,
+      confidence: 0.95,
     };
   }
 
@@ -303,30 +347,31 @@ export class IntelligentLoadBalancer {
   private calculateAdaptiveScore(node: WorkerNode, workload: BatchWorkload): number {
     const adaptiveWeight = this.adaptiveWeights.get(node.id) || 1.0;
     const baseScore = this.calculateNodeScore(node, workload);
-    
+
     // Apply adaptive weight
     const adaptiveScore = baseScore * adaptiveWeight;
-    
+
     // Apply workload-specific adjustments
     let workloadAdjustment = 1.0;
-    
+
     // Priority adjustment
     if (workload.priority === 'critical' && node.priority > 8) {
       workloadAdjustment *= 1.2;
     } else if (workload.priority === 'low' && node.priority < 5) {
       workloadAdjustment *= 0.8;
     }
-    
+
     // Complexity adjustment
     const complexityRatio = workload.estimatedComplexity / 100;
     if (complexityRatio > 0.8 && node.capacity > 80) {
       workloadAdjustment *= 1.1;
     }
-    
+
     // Deadline adjustment
     if (workload.deadline) {
       const timeRemaining = workload.deadline - Date.now();
-      if (timeRemaining < 30000 && node.averageResponseTime < 1000) { // 30 seconds, 1 second
+      if (timeRemaining < 30000 && node.averageResponseTime < 1000) {
+        // 30 seconds, 1 second
         workloadAdjustment *= 1.3;
       }
     }
@@ -343,15 +388,16 @@ export class IntelligentLoadBalancer {
     const responseTimeScore = 1 / (1 + node.averageResponseTime / 1000);
     const errorRateScore = 1 - node.errorRate;
     const priorityScore = node.priority / 10;
-    
+
     // Capability matching
-    const capabilityScore = workload.requiredCapabilities.every(cap => 
+    const capabilityScore = workload.requiredCapabilities.every(cap =>
       node.capabilities.includes(cap)
-    ) ? 1.0 : 0.5;
-    
+    )
+      ? 1.0
+      : 0.5;
+
     // Health score
-    const healthScore = node.status === 'healthy' ? 1.0 : 
-                      node.status === 'degraded' ? 0.7 : 0.3;
+    const healthScore = node.status === 'healthy' ? 1.0 : node.status === 'degraded' ? 0.7 : 0.3;
 
     // Weighted combination
     return (
@@ -369,22 +415,23 @@ export class IntelligentLoadBalancer {
    */
   private updateAdaptiveWeights(): void {
     const recentHistory = this.requestHistory.slice(-100); // Last 100 requests
-    
-    this.nodes.forEach((node, nodeId) => {
+
+    this.nodes.forEach((_node, nodeId) => {
       const nodeRequests = recentHistory.filter(req => req.nodeId === nodeId);
-      
+
       if (nodeRequests.length === 0) return;
-      
+
       const successRate = nodeRequests.filter(req => req.success).length / nodeRequests.length;
-      const avgResponseTime = nodeRequests.reduce((sum, req) => sum + req.responseTime, 0) / nodeRequests.length;
-      
+      const avgResponseTime =
+        nodeRequests.reduce((sum, req) => sum + req.responseTime, 0) / nodeRequests.length;
+
       // Calculate performance score
       const performanceScore = successRate * (1 / (1 + avgResponseTime / 1000));
-      
+
       // Update adaptive weight
       const currentWeight = this.adaptiveWeights.get(nodeId) || 1.0;
       const newWeight = currentWeight * 0.9 + performanceScore * 0.1; // Exponential moving average
-      
+
       this.adaptiveWeights.set(nodeId, Math.max(0.1, Math.min(2.0, newWeight))); // Clamp between 0.1 and 2.0
     });
 
@@ -400,17 +447,17 @@ export class IntelligentLoadBalancer {
       if (node.status === 'offline' || node.status === 'unhealthy') {
         return false;
       }
-      
+
       // Check capacity
       if (node.currentLoad >= node.capacity) {
         return false;
       }
-      
+
       // Check capabilities
-      const hasRequiredCapabilities = workload.requiredCapabilities.every(cap => 
+      const hasRequiredCapabilities = workload.requiredCapabilities.every(cap =>
         node.capabilities.includes(cap)
       );
-      
+
       return hasRequiredCapabilities;
     });
   }
@@ -420,9 +467,9 @@ export class IntelligentLoadBalancer {
    */
   private estimateCompletionTime(node: WorkerNode, workload: BatchWorkload): number {
     const baseTime = node.averageResponseTime;
-    const complexityMultiplier = 1 + (workload.estimatedComplexity / 100);
-    const loadMultiplier = 1 + (node.currentLoad / node.capacity);
-    
+    const complexityMultiplier = 1 + workload.estimatedComplexity / 100;
+    const loadMultiplier = 1 + node.currentLoad / node.capacity;
+
     return baseTime * complexityMultiplier * loadMultiplier;
   }
 
@@ -436,13 +483,18 @@ export class IntelligentLoadBalancer {
   /**
    * Record request completion
    */
-  recordRequest(nodeId: string, responseTime: number, success: boolean, workloadSize: number): void {
+  recordRequest(
+    nodeId: string,
+    responseTime: number,
+    success: boolean,
+    workloadSize: number
+  ): void {
     this.requestHistory.push({
       timestamp: Date.now(),
       nodeId,
       responseTime,
       success,
-      workloadSize
+      workloadSize,
     });
 
     // Update node metrics
@@ -450,12 +502,12 @@ export class IntelligentLoadBalancer {
     if (node) {
       // Update average response time
       node.averageResponseTime = (node.averageResponseTime + responseTime) / 2;
-      
+
       // Update error rate
       const recentRequests = this.requestHistory
         .filter(req => req.nodeId === nodeId && req.timestamp > Date.now() - 300000) // Last 5 minutes
         .slice(-20); // Last 20 requests
-      
+
       if (recentRequests.length > 0) {
         const errors = recentRequests.filter(req => !req.success).length;
         node.errorRate = errors / recentRequests.length;
@@ -489,11 +541,11 @@ export class IntelligentLoadBalancer {
    * Perform health checks on all nodes
    */
   private async performHealthChecks(): Promise<void> {
-    const healthCheckPromises = Array.from(this.nodes.values()).map(async (node) => {
+    const healthCheckPromises = Array.from(this.nodes.values()).map(async node => {
       try {
         // Simulate health check (in real implementation, this would be an HTTP request)
         const isHealthy = Math.random() > 0.05; // 95% uptime simulation
-        
+
         if (isHealthy) {
           if (node.status === 'unhealthy' || node.status === 'offline') {
             node.status = 'healthy';
@@ -503,7 +555,7 @@ export class IntelligentLoadBalancer {
           node.status = 'unhealthy';
           console.log(`❌ Node ${node.id} health check failed`);
         }
-        
+
         node.lastHealthCheck = Date.now();
       } catch (error) {
         node.status = 'offline';
@@ -526,7 +578,7 @@ export class IntelligentLoadBalancer {
       throughput: 0,
       nodeUtilization: {},
       strategyEffectiveness: {},
-      adaptiveAdjustments: 0
+      adaptiveAdjustments: 0,
     };
   }
 
@@ -536,9 +588,10 @@ export class IntelligentLoadBalancer {
   getMetrics(): LoadBalancerMetrics {
     // Calculate current metrics
     const recentRequests = this.requestHistory.slice(-100);
-    
+
     if (recentRequests.length > 0) {
-      this.metrics.averageResponseTime = recentRequests.reduce((sum, req) => sum + req.responseTime, 0) / recentRequests.length;
+      this.metrics.averageResponseTime =
+        recentRequests.reduce((sum, req) => sum + req.responseTime, 0) / recentRequests.length;
       this.metrics.throughput = recentRequests.length / 60; // Requests per minute
     }
 

@@ -55,10 +55,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
           if (req.query.timeRange) {
             const [start, end] = (req.query.timeRange as string).split(',');
-            filter.timeRange = {
-              start: parseInt(start),
-              end: parseInt(end),
-            };
+            if (start && end) {
+              filter.timeRange = {
+                start: parseInt(start),
+                end: parseInt(end),
+              };
+            }
           }
 
           const logs = securityMiddleware.getSecurityLogs(filter);

@@ -99,14 +99,14 @@ export class EnhancedFormatEngine {
         aliases: ['iso', 'iso8601', 'standard'],
         inputPatterns: [
           /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{3})?Z?$/,
-          /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{3})?[+-]\d{2}:\d{2}$/
+          /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{3})?[+-]\d{2}:\d{2}$/,
         ],
-        outputFormatter: (date) => date.toISOString(),
+        outputFormatter: date => date.toISOString(),
         metadata: {
           precision: 'second',
           timezone_aware: true,
-          locale_dependent: false
-        }
+          locale_dependent: false,
+        },
       },
 
       // Unix timestamps
@@ -119,17 +119,17 @@ export class EnhancedFormatEngine {
         category: 'standard',
         aliases: ['unix', 'timestamp', 'epoch'],
         inputPatterns: [/^\d{10}$/],
-        outputFormatter: (date) => Math.floor(date.getTime() / 1000).toString(),
-        inputParser: (input) => new Date(parseInt(input) * 1000),
-        validation: (input) => {
+        outputFormatter: date => Math.floor(date.getTime() / 1000).toString(),
+        inputParser: input => new Date(parseInt(input) * 1000),
+        validation: input => {
           const num = parseInt(input);
           return num >= 0 && num <= 2147483647; // Valid Unix timestamp range
         },
         metadata: {
           precision: 'second',
           timezone_aware: false,
-          locale_dependent: false
-        }
+          locale_dependent: false,
+        },
       },
 
       {
@@ -141,13 +141,13 @@ export class EnhancedFormatEngine {
         category: 'standard',
         aliases: ['unix-ms', 'timestamp-ms', 'epoch-ms'],
         inputPatterns: [/^\d{13}$/],
-        outputFormatter: (date) => date.getTime().toString(),
-        inputParser: (input) => new Date(parseInt(input)),
+        outputFormatter: date => date.getTime().toString(),
+        inputParser: input => new Date(parseInt(input)),
         metadata: {
           precision: 'second',
           timezone_aware: false,
-          locale_dependent: false
-        }
+          locale_dependent: false,
+        },
       },
 
       // Business formats
@@ -160,13 +160,13 @@ export class EnhancedFormatEngine {
         category: 'business',
         aliases: ['excel', 'excel-serial', 'spreadsheet'],
         inputPatterns: [/^\d+(\.\d+)?$/],
-        outputFormatter: (date) => {
+        outputFormatter: date => {
           const excelEpoch = new Date(1900, 0, 1);
           const diffTime = date.getTime() - excelEpoch.getTime();
           const diffDays = diffTime / (1000 * 60 * 60 * 24);
           return (diffDays + 2).toString(); // Excel has a leap year bug for 1900
         },
-        inputParser: (input) => {
+        inputParser: input => {
           const serial = parseFloat(input);
           const excelEpoch = new Date(1900, 0, 1);
           return new Date(excelEpoch.getTime() + (serial - 2) * 24 * 60 * 60 * 1000);
@@ -175,8 +175,8 @@ export class EnhancedFormatEngine {
           precision: 'day',
           timezone_aware: false,
           locale_dependent: false,
-          use_case: 'spreadsheet'
-        }
+          use_case: 'spreadsheet',
+        },
       },
 
       // Database formats
@@ -189,7 +189,7 @@ export class EnhancedFormatEngine {
         category: 'technical',
         aliases: ['mysql', 'sql-datetime', 'database'],
         inputPatterns: [/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/],
-        outputFormatter: (date) => {
+        outputFormatter: date => {
           const year = date.getFullYear();
           const month = String(date.getMonth() + 1).padStart(2, '0');
           const day = String(date.getDate()).padStart(2, '0');
@@ -202,8 +202,8 @@ export class EnhancedFormatEngine {
           precision: 'second',
           timezone_aware: false,
           locale_dependent: false,
-          use_case: 'database'
-        }
+          use_case: 'database',
+        },
       },
 
       // Cultural formats
@@ -216,7 +216,7 @@ export class EnhancedFormatEngine {
         category: 'cultural',
         aliases: ['chinese', 'zh-cn', 'traditional-chinese'],
         inputPatterns: [/^\d{4}年\d{1,2}月\d{1,2}日( \d{1,2}时\d{1,2}分\d{1,2}秒)?$/],
-        outputFormatter: (date) => {
+        outputFormatter: date => {
           const year = date.getFullYear();
           const month = date.getMonth() + 1;
           const day = date.getDate();
@@ -230,8 +230,8 @@ export class EnhancedFormatEngine {
           timezone_aware: false,
           locale_dependent: true,
           language: 'zh',
-          region: 'CN'
-        }
+          region: 'CN',
+        },
       },
 
       {
@@ -243,7 +243,7 @@ export class EnhancedFormatEngine {
         category: 'cultural',
         aliases: ['japanese', 'ja-jp', 'era-japanese'],
         inputPatterns: [/^(令和|平成|昭和)\d{1,2}年\d{1,2}月\d{1,2}日$/],
-        outputFormatter: (date) => {
+        outputFormatter: date => {
           // Simplified Reiwa era calculation (started May 1, 2019)
           const reiwaStart = new Date(2019, 4, 1);
           if (date >= reiwaStart) {
@@ -260,8 +260,8 @@ export class EnhancedFormatEngine {
           timezone_aware: false,
           locale_dependent: true,
           language: 'ja',
-          region: 'JP'
-        }
+          region: 'JP',
+        },
       },
 
       // Technical formats
@@ -274,13 +274,13 @@ export class EnhancedFormatEngine {
         category: 'technical',
         aliases: ['rfc3339', 'internet-datetime'],
         inputPatterns: [/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{3})?([+-]\d{2}:\d{2}|Z)$/],
-        outputFormatter: (date) => date.toISOString(),
+        outputFormatter: date => date.toISOString(),
         metadata: {
           precision: 'second',
           timezone_aware: true,
           locale_dependent: false,
-          use_case: 'internet'
-        }
+          use_case: 'internet',
+        },
       },
 
       {
@@ -292,7 +292,7 @@ export class EnhancedFormatEngine {
         category: 'technical',
         aliases: ['log', 'syslog', 'application-log'],
         inputPatterns: [/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3}$/],
-        outputFormatter: (date) => {
+        outputFormatter: date => {
           const year = date.getFullYear();
           const month = String(date.getMonth() + 1).padStart(2, '0');
           const day = String(date.getDate()).padStart(2, '0');
@@ -306,8 +306,8 @@ export class EnhancedFormatEngine {
           precision: 'second',
           timezone_aware: false,
           locale_dependent: false,
-          use_case: 'logging'
-        }
+          use_case: 'logging',
+        },
       },
 
       // Relative formats
@@ -321,22 +321,22 @@ export class EnhancedFormatEngine {
         aliases: ['relative', 'ago', 'human-relative'],
         inputPatterns: [
           /^(\d+)\s+(second|minute|hour|day|week|month|year)s?\s+ago$/,
-          /^in\s+(\d+)\s+(second|minute|hour|day|week|month|year)s?$/
+          /^in\s+(\d+)\s+(second|minute|hour|day|week|month|year)s?$/,
         ],
-        outputFormatter: (date) => this.formatRelativeTime(date),
-        inputParser: (input) => this.parseRelativeTime(input),
+        outputFormatter: date => this.formatRelativeTime(date),
+        inputParser: input => this.parseRelativeTime(input),
         metadata: {
           precision: 'minute',
           timezone_aware: false,
-          locale_dependent: true
-        }
-      }
+          locale_dependent: true,
+        },
+      },
     ];
 
     // Register all formats
     formats.forEach(format => {
       this.formats.set(format.id, format);
-      
+
       // Register aliases
       format.aliases.forEach(alias => {
         this.aliasMap.set(alias.toLowerCase(), format.id);
@@ -372,8 +372,8 @@ export class EnhancedFormatEngine {
       alternatives: [],
       warnings: [],
       metadata: {
-        input_type: 'custom'
-      }
+        input_type: 'custom',
+      },
     };
 
     // Try each format
@@ -387,8 +387,8 @@ export class EnhancedFormatEngine {
       for (const pattern of format.inputPatterns) {
         if (pattern.test(input)) {
           try {
-            let parsedDate: Date;
-            
+            let parsedDate: Date | null;
+
             if (format.inputParser) {
               parsedDate = format.inputParser(input);
             } else {
@@ -398,11 +398,11 @@ export class EnhancedFormatEngine {
             if (parsedDate && !isNaN(parsedDate.getTime())) {
               // Calculate confidence based on pattern specificity
               const confidence = this.calculateParseConfidence(input, format, pattern);
-              
+
               candidates.push({
                 format,
                 confidence,
-                parsed_date: parsedDate
+                parsed_date: parsedDate,
               });
             }
           } catch (error) {
@@ -417,10 +417,12 @@ export class EnhancedFormatEngine {
 
     if (candidates.length > 0) {
       const best = candidates[0];
-      result.success = true;
-      result.date = best.parsed_date;
-      result.format = best.format;
-      result.confidence = best.confidence;
+      if (best) {
+        result.success = true;
+        result.date = best.parsed_date;
+        result.format = best.format;
+        result.confidence = best.confidence;
+      }
       result.alternatives = candidates.slice(1, 4); // Top 3 alternatives
       result.metadata.input_type = this.detectInputType(input);
     }
@@ -436,7 +438,7 @@ export class EnhancedFormatEngine {
   formatDate(date: Date, formatId: string, timezone?: string, locale?: string): FormatResult {
     const startTime = Date.now();
     const cacheKey = `format:${date.getTime()}:${formatId}:${timezone}:${locale}`;
-    
+
     if (this.formatCache.has(cacheKey)) {
       return this.formatCache.get(cacheKey)!;
     }
@@ -453,14 +455,14 @@ export class EnhancedFormatEngine {
           timezone_used: timezone || 'UTC',
           locale_used: locale || 'en-US',
           precision_level: 'unknown',
-          formatting_time_ms: Date.now() - startTime
-        }
+          formatting_time_ms: Date.now() - startTime,
+        },
       };
     }
 
     try {
       const formatted = format.outputFormatter(date, timezone, locale);
-      
+
       const result: FormatResult = {
         success: true,
         formatted,
@@ -469,8 +471,8 @@ export class EnhancedFormatEngine {
           timezone_used: timezone || 'UTC',
           locale_used: locale || 'en-US',
           precision_level: format.metadata.precision || 'second',
-          formatting_time_ms: Date.now() - startTime
-        }
+          formatting_time_ms: Date.now() - startTime,
+        },
       };
 
       // Cache result
@@ -484,8 +486,8 @@ export class EnhancedFormatEngine {
           timezone_used: timezone || 'UTC',
           locale_used: locale || 'en-US',
           precision_level: format.metadata.precision || 'second',
-          formatting_time_ms: Date.now() - startTime
-        }
+          formatting_time_ms: Date.now() - startTime,
+        },
       };
     }
   }
@@ -498,7 +500,7 @@ export class EnhancedFormatEngine {
       const formatIds = this.categoryIndex.get(category) || [];
       return formatIds.map(id => this.formats.get(id)!).filter(Boolean);
     }
-    
+
     return Array.from(this.formats.values());
   }
 
@@ -513,7 +515,11 @@ export class EnhancedFormatEngine {
   /**
    * Calculate parse confidence
    */
-  private calculateParseConfidence(input: string, format: FormatDefinition, pattern: RegExp): number {
+  private calculateParseConfidence(
+    input: string,
+    format: FormatDefinition,
+    pattern: RegExp
+  ): number {
     let confidence = 0.5; // Base confidence
 
     // Pattern specificity bonus
@@ -545,19 +551,19 @@ export class EnhancedFormatEngine {
     if (/^\d+$/.test(input)) {
       return 'timestamp';
     }
-    
+
     if (/^\d{4}-\d{2}-\d{2}T/.test(input)) {
       return 'iso';
     }
-    
+
     if (/ago|in \d+/.test(input)) {
       return 'relative';
     }
-    
+
     if (/^\d{1,2}\/\d{1,2}\/\d{4}/.test(input)) {
       return 'locale';
     }
-    
+
     return 'custom';
   }
 
@@ -598,23 +604,23 @@ export class EnhancedFormatEngine {
    */
   private parseRelativeTime(input: string): Date | null {
     const now = new Date();
-    
+
     // Parse "X units ago"
     const agoMatch = input.match(/^(\d+)\s+(second|minute|hour|day|week|month|year)s?\s+ago$/);
     if (agoMatch) {
-      const amount = parseInt(agoMatch[1]);
-      const unit = agoMatch[2];
+      const amount = parseInt(agoMatch[1] || '0');
+      const unit = agoMatch[2] || 'second';
       return this.subtractTime(now, amount, unit);
     }
-    
+
     // Parse "in X units"
     const inMatch = input.match(/^in\s+(\d+)\s+(second|minute|hour|day|week|month|year)s?$/);
     if (inMatch) {
-      const amount = parseInt(inMatch[1]);
-      const unit = inMatch[2];
+      const amount = parseInt(inMatch[1] || '0');
+      const unit = inMatch[2] || 'second';
       return this.addTime(now, amount, unit);
     }
-    
+
     return null;
   }
 
@@ -623,7 +629,7 @@ export class EnhancedFormatEngine {
    */
   private addTime(date: Date, amount: number, unit: string): Date {
     const result = new Date(date);
-    
+
     switch (unit) {
       case 'second':
         result.setSeconds(result.getSeconds() + amount);
@@ -638,7 +644,7 @@ export class EnhancedFormatEngine {
         result.setDate(result.getDate() + amount);
         break;
       case 'week':
-        result.setDate(result.getDate() + (amount * 7));
+        result.setDate(result.getDate() + amount * 7);
         break;
       case 'month':
         result.setMonth(result.getMonth() + amount);
@@ -647,7 +653,7 @@ export class EnhancedFormatEngine {
         result.setFullYear(result.getFullYear() + amount);
         break;
     }
-    
+
     return result;
   }
 
@@ -676,12 +682,12 @@ export class EnhancedFormatEngine {
     return {
       parseCache: {
         size: this.parseCache.size,
-        hitRate: 0 // Would need to track hits/misses
+        hitRate: 0, // Would need to track hits/misses
       },
       formatCache: {
         size: this.formatCache.size,
-        hitRate: 0 // Would need to track hits/misses
-      }
+        hitRate: 0, // Would need to track hits/misses
+      },
     };
   }
 }

@@ -371,7 +371,7 @@ export class AdminQueryOptimizer {
   /**
    * Index management
    */
-  private getOrCreateIndex(field: string, data: any[]): DataIndex | null {
+  private getOrCreateIndex(field: string, data: any[]): DataIndex | undefined {
     const indexKey = field;
     let index = this.dataIndexes.get(indexKey);
 
@@ -385,7 +385,7 @@ export class AdminQueryOptimizer {
     return index;
   }
 
-  private createIndex(field: string, data: any[]): DataIndex | null {
+  private createIndex(field: string, data: any[]): DataIndex | undefined {
     const values = new Map<any, number[]>();
 
     data.forEach((item, index) => {
@@ -460,7 +460,9 @@ export class AdminQueryOptimizer {
     // Limit cache size
     if (this.queryCache.size > 1000) {
       const oldestKey = Array.from(this.queryCache.keys())[0];
-      this.queryCache.delete(oldestKey);
+      if (oldestKey !== undefined) {
+        this.queryCache.delete(oldestKey);
+      }
     }
   }
 
@@ -546,14 +548,14 @@ export class AdminQueryOptimizer {
   }
 
   private invalidateCacheForResource(resource: string): void {
-    for (const [key, cached] of this.queryCache.entries()) {
+    for (const [key, _cached] of this.queryCache.entries()) {
       if (key.includes(`"resource":"${resource}"`)) {
         this.queryCache.delete(key);
       }
     }
   }
 
-  private invalidateIndexesForResource(resource: string): void {
+  private invalidateIndexesForResource(_resource: string): void {
     // In a real implementation, you'd track which indexes belong to which resources
     this.dataIndexes.clear();
   }

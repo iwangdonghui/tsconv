@@ -206,7 +206,8 @@ export class StrategicCacheService implements ICacheService {
 
       serviceKeys.forEach((key, serviceIndex) => {
         const originalIndex = keyIndexMap.get(key)!;
-        results[originalIndex] = serviceResults[serviceIndex];
+        const serviceResult = serviceResults[serviceIndex];
+        results[originalIndex] = serviceResult === undefined ? null : serviceResult;
       });
     }
 
@@ -359,7 +360,7 @@ export class StrategicCacheService implements ICacheService {
     let totalServices = 0;
     let lastError: string | undefined;
 
-    for (const [key, cacheService] of this.cacheServices.entries()) {
+    for (const [_key, cacheService] of this.cacheServices.entries()) {
       try {
         const serviceHealth = await cacheService.healthCheck();
         totalServices++;
@@ -483,7 +484,7 @@ export class StrategicCacheService implements ICacheService {
     // Extract endpoint from key structure
     // Assuming key format: "prefix:endpoint:hash" or similar
     const parts = key.split(':');
-    const endpoint = parts.length > 1 ? parts[1] : 'default';
+    const endpoint = parts.length > 1 ? parts[1] || 'default' : 'default';
 
     return {
       endpoint,
@@ -542,7 +543,7 @@ export class StrategicCacheService implements ICacheService {
       if (metrics.operationCount > 0) {
         const hitRate = metrics.hits / (metrics.hits + metrics.misses || 1);
         const avgLatency = metrics.totalLatency / metrics.operationCount;
-        const errorRate = metrics.errors / metrics.operationCount;
+        // const errorRate = metrics.errors / metrics.operationCount; // Currently not used
 
         this.strategyManager.updatePerformanceMetrics(endpoint, {
           hitRate,

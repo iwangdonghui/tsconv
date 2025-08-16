@@ -1,6 +1,7 @@
 // Cache administration API for monitoring and management
 
 import { CacheManager } from './cache-utils';
+import { logError } from './utils/logger';
 
 interface Env {
   UPSTASH_REDIS_REST_URL?: string;
@@ -71,7 +72,7 @@ export async function handleCacheAdmin(
         );
     }
   } catch (error) {
-    console.error('Cache admin error:', error);
+    logError('Cache admin error', error instanceof Error ? error : new Error(String(error)));
 
     return new Response(
       JSON.stringify({

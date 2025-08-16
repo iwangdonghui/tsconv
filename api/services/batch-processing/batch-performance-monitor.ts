@@ -82,7 +82,7 @@ export class BatchPerformanceMonitor {
       maxErrorRatePercent: 5,
       maxLatencyMs: 5000,
       minCacheHitRatePercent: 70,
-      ...thresholds
+      ...thresholds,
     };
   }
 
@@ -125,7 +125,7 @@ export class BatchPerformanceMonitor {
     batchId: string,
     batchSize: number,
     processingTime: number,
-    successCount: number,
+    _successCount: number,
     errorCount: number,
     cacheStats: {
       hitRate: number;
@@ -151,16 +151,16 @@ export class BatchPerformanceMonitor {
         heapUsed: memoryUsage.heapUsed,
         heapTotal: memoryUsage.heapTotal,
         external: memoryUsage.external,
-        rss: memoryUsage.rss
+        rss: memoryUsage.rss,
       },
       cpuUsage: {
         user: cpuUsage.user / 1000000, // Convert to milliseconds
-        system: cpuUsage.system / 1000000
+        system: cpuUsage.system / 1000000,
       },
       concurrency: concurrencyStats,
       cachePerformance: cacheStats,
       errorRate: (errorCount / batchSize) * 100,
-      retryRate: 0 // Would be calculated based on retry statistics
+      retryRate: 0, // Would be calculated based on retry statistics
     };
 
     this.metrics.push(metrics);
@@ -173,7 +173,7 @@ export class BatchPerformanceMonitor {
    */
   private collectSystemMetrics(): void {
     const memoryUsage = process.memoryUsage();
-    const cpuUsage = process.cpuUsage();
+    // const cpuUsage = process.cpuUsage(); // Currently not used
 
     // Check memory threshold
     const heapUsedMB = memoryUsage.heapUsed / 1024 / 1024;
@@ -189,8 +189,8 @@ export class BatchPerformanceMonitor {
           'Consider reducing batch size',
           'Enable garbage collection optimization',
           'Implement memory-efficient data structures',
-          'Add memory cleanup between batches'
-        ]
+          'Add memory cleanup between batches',
+        ],
       });
     }
   }
@@ -212,8 +212,8 @@ export class BatchPerformanceMonitor {
         recommendations: [
           'Reduce batch size',
           'Implement streaming processing',
-          'Optimize data structures'
-        ]
+          'Optimize data structures',
+        ],
       });
     }
 
@@ -221,7 +221,8 @@ export class BatchPerformanceMonitor {
     if (metrics.throughput < this.thresholds.minThroughputPerSecond) {
       this.triggerAlert({
         type: 'throughput',
-        severity: metrics.throughput < this.thresholds.minThroughputPerSecond * 0.5 ? 'high' : 'medium',
+        severity:
+          metrics.throughput < this.thresholds.minThroughputPerSecond * 0.5 ? 'high' : 'medium',
         message: `Batch ${metrics.batchId}: Low throughput ${metrics.throughput.toFixed(2)} items/sec`,
         threshold: this.thresholds.minThroughputPerSecond,
         actualValue: metrics.throughput,
@@ -230,8 +231,8 @@ export class BatchPerformanceMonitor {
           'Increase concurrency',
           'Optimize processing algorithm',
           'Enable caching',
-          'Use parallel processing'
-        ]
+          'Use parallel processing',
+        ],
       });
     }
 
@@ -248,8 +249,8 @@ export class BatchPerformanceMonitor {
           'Improve input validation',
           'Add retry mechanisms',
           'Investigate error patterns',
-          'Implement circuit breakers'
-        ]
+          'Implement circuit breakers',
+        ],
       });
     }
 
@@ -266,8 +267,8 @@ export class BatchPerformanceMonitor {
           'Optimize processing logic',
           'Reduce batch size',
           'Implement parallel processing',
-          'Use more efficient algorithms'
-        ]
+          'Use more efficient algorithms',
+        ],
       });
     }
 
@@ -284,8 +285,8 @@ export class BatchPerformanceMonitor {
           'Optimize cache key generation',
           'Increase cache size',
           'Improve cache eviction policy',
-          'Pre-warm cache with common data'
-        ]
+          'Pre-warm cache with common data',
+        ],
       });
     }
   }
@@ -297,11 +298,11 @@ export class BatchPerformanceMonitor {
     const alert: PerformanceAlert = {
       id: `alert-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       timestamp: Date.now(),
-      ...alertData
+      ...alertData,
     };
 
     this.alerts.push(alert);
-    
+
     // Notify callbacks
     this.alertCallbacks.forEach(callback => {
       try {
@@ -327,7 +328,8 @@ export class BatchPerformanceMonitor {
     }
 
     // Analyze memory usage patterns
-    const avgMemoryUsage = recentMetrics.reduce((sum, m) => sum + m.memoryUsage.heapUsed, 0) / recentMetrics.length;
+    const avgMemoryUsage =
+      recentMetrics.reduce((sum, m) => sum + m.memoryUsage.heapUsed, 0) / recentMetrics.length;
     const memoryUsageMB = avgMemoryUsage / 1024 / 1024;
 
     if (memoryUsageMB > this.thresholds.maxMemoryUsageMB * 0.8) {
@@ -337,13 +339,14 @@ export class BatchPerformanceMonitor {
         description: 'High memory usage detected across recent batches',
         expectedImprovement: '30-50% reduction in memory usage',
         implementation: 'Implement streaming processing and reduce batch sizes',
-        estimatedEffort: 'medium'
+        estimatedEffort: 'medium',
       });
     }
 
     // Analyze throughput patterns
-    const avgThroughput = recentMetrics.reduce((sum, m) => sum + m.throughput, 0) / recentMetrics.length;
-    
+    const avgThroughput =
+      recentMetrics.reduce((sum, m) => sum + m.throughput, 0) / recentMetrics.length;
+
     if (avgThroughput < this.thresholds.minThroughputPerSecond * 1.5) {
       recommendations.push({
         type: 'concurrency',
@@ -351,13 +354,14 @@ export class BatchPerformanceMonitor {
         description: 'Throughput could be improved with better concurrency',
         expectedImprovement: '20-40% increase in throughput',
         implementation: 'Increase concurrency limits and optimize chunk sizes',
-        estimatedEffort: 'low'
+        estimatedEffort: 'low',
       });
     }
 
     // Analyze cache performance
-    const avgCacheHitRate = recentMetrics.reduce((sum, m) => sum + m.cachePerformance.hitRate, 0) / recentMetrics.length;
-    
+    const avgCacheHitRate =
+      recentMetrics.reduce((sum, m) => sum + m.cachePerformance.hitRate, 0) / recentMetrics.length;
+
     if (avgCacheHitRate < this.thresholds.minCacheHitRatePercent) {
       recommendations.push({
         type: 'caching',
@@ -365,13 +369,14 @@ export class BatchPerformanceMonitor {
         description: 'Cache hit rate is below optimal levels',
         expectedImprovement: '15-25% improvement in processing speed',
         implementation: 'Optimize cache key generation and increase cache size',
-        estimatedEffort: 'low'
+        estimatedEffort: 'low',
       });
     }
 
     // Analyze error patterns
-    const avgErrorRate = recentMetrics.reduce((sum, m) => sum + m.errorRate, 0) / recentMetrics.length;
-    
+    const avgErrorRate =
+      recentMetrics.reduce((sum, m) => sum + m.errorRate, 0) / recentMetrics.length;
+
     if (avgErrorRate > this.thresholds.maxErrorRatePercent * 0.5) {
       recommendations.push({
         type: 'algorithm',
@@ -379,7 +384,7 @@ export class BatchPerformanceMonitor {
         description: 'Error rate indicates potential data quality or processing issues',
         expectedImprovement: '50-80% reduction in error rate',
         implementation: 'Improve input validation and add robust error handling',
-        estimatedEffort: 'medium'
+        estimatedEffort: 'medium',
       });
     }
 
@@ -419,25 +424,33 @@ export class BatchPerformanceMonitor {
           avgThroughput: 0,
           avgMemoryUsage: 0,
           avgErrorRate: 0,
-          avgCacheHitRate: 0
+          avgCacheHitRate: 0,
         },
         trends: {
           throughputTrend: 'stable',
           memoryTrend: 'stable',
-          errorTrend: 'stable'
+          errorTrend: 'stable',
         },
         alerts: relevantAlerts,
-        recommendations: []
+        recommendations: [],
       };
     }
 
     // Calculate summary statistics
     const summary = {
       totalBatches: relevantMetrics.length,
-      avgThroughput: relevantMetrics.reduce((sum, m) => sum + m.throughput, 0) / relevantMetrics.length,
-      avgMemoryUsage: relevantMetrics.reduce((sum, m) => sum + m.memoryUsage.heapUsed, 0) / relevantMetrics.length / 1024 / 1024,
-      avgErrorRate: relevantMetrics.reduce((sum, m) => sum + m.errorRate, 0) / relevantMetrics.length,
-      avgCacheHitRate: relevantMetrics.reduce((sum, m) => sum + m.cachePerformance.hitRate, 0) / relevantMetrics.length
+      avgThroughput:
+        relevantMetrics.reduce((sum, m) => sum + m.throughput, 0) / relevantMetrics.length,
+      avgMemoryUsage:
+        relevantMetrics.reduce((sum, m) => sum + m.memoryUsage.heapUsed, 0) /
+        relevantMetrics.length /
+        1024 /
+        1024,
+      avgErrorRate:
+        relevantMetrics.reduce((sum, m) => sum + m.errorRate, 0) / relevantMetrics.length,
+      avgCacheHitRate:
+        relevantMetrics.reduce((sum, m) => sum + m.cachePerformance.hitRate, 0) /
+        relevantMetrics.length,
     };
 
     // Calculate trends
@@ -447,7 +460,7 @@ export class BatchPerformanceMonitor {
       summary,
       trends,
       alerts: relevantAlerts,
-      recommendations: this.generateOptimizationRecommendations()
+      recommendations: this.generateOptimizationRecommendations(),
     };
   }
 
@@ -463,7 +476,7 @@ export class BatchPerformanceMonitor {
       return {
         throughputTrend: 'stable',
         memoryTrend: 'stable',
-        errorTrend: 'stable'
+        errorTrend: 'stable',
       };
     }
 
@@ -474,30 +487,38 @@ export class BatchPerformanceMonitor {
     const firstHalfAvgs = {
       throughput: firstHalf.reduce((sum, m) => sum + m.throughput, 0) / firstHalf.length,
       memory: firstHalf.reduce((sum, m) => sum + m.memoryUsage.heapUsed, 0) / firstHalf.length,
-      errors: firstHalf.reduce((sum, m) => sum + m.errorRate, 0) / firstHalf.length
+      errors: firstHalf.reduce((sum, m) => sum + m.errorRate, 0) / firstHalf.length,
     };
 
     const secondHalfAvgs = {
       throughput: secondHalf.reduce((sum, m) => sum + m.throughput, 0) / secondHalf.length,
       memory: secondHalf.reduce((sum, m) => sum + m.memoryUsage.heapUsed, 0) / secondHalf.length,
-      errors: secondHalf.reduce((sum, m) => sum + m.errorRate, 0) / secondHalf.length
+      errors: secondHalf.reduce((sum, m) => sum + m.errorRate, 0) / secondHalf.length,
     };
 
     const threshold = 0.1; // 10% change threshold
 
     return {
-      throughputTrend: this.getTrend(firstHalfAvgs.throughput, secondHalfAvgs.throughput, threshold),
+      throughputTrend: this.getTrend(
+        firstHalfAvgs.throughput,
+        secondHalfAvgs.throughput,
+        threshold
+      ),
       memoryTrend: this.getTrend(secondHalfAvgs.memory, firstHalfAvgs.memory, threshold), // Lower memory is better
-      errorTrend: this.getTrend(secondHalfAvgs.errors, firstHalfAvgs.errors, threshold) // Lower errors is better
+      errorTrend: this.getTrend(secondHalfAvgs.errors, firstHalfAvgs.errors, threshold), // Lower errors is better
     };
   }
 
   /**
    * Determine trend direction
    */
-  private getTrend(oldValue: number, newValue: number, threshold: number): 'improving' | 'declining' | 'stable' {
+  private getTrend(
+    oldValue: number,
+    newValue: number,
+    threshold: number
+  ): 'improving' | 'declining' | 'stable' {
     const change = (newValue - oldValue) / oldValue;
-    
+
     if (change > threshold) {
       return 'improving';
     } else if (change < -threshold) {
@@ -520,7 +541,7 @@ export class BatchPerformanceMonitor {
   private cleanupOldMetrics(): void {
     const maxAge = 24 * 60 * 60 * 1000; // 24 hours
     const cutoff = Date.now() - maxAge;
-    
+
     this.metrics = this.metrics.filter(m => m.timestamp > cutoff);
     this.alerts = this.alerts.filter(a => a.timestamp > cutoff);
   }
@@ -577,7 +598,7 @@ export class BatchPerformanceMonitor {
       metrics: [...this.metrics],
       alerts: [...this.alerts],
       thresholds: { ...this.thresholds },
-      exportTimestamp: Date.now()
+      exportTimestamp: Date.now(),
     };
   }
 }

@@ -1,9 +1,13 @@
 // Cloudflare Pages adapter for convert API
 
 import { CacheManager } from './cache-utils';
+import { logError } from './utils/logger';
 
 // Simple timezone conversion function
-function convertTimezone(date: Date, fromTz: string, toTz: string): Date {
+// eslint-disable-next-line no-unused-vars
+function convertTimezone(date: Date, _sourceTz: string, _targetTz: string): Date {
+  void _sourceTz;
+  void _targetTz;
   // Basic timezone conversion using Intl API
   try {
     const utcTime = date.getTime() + date.getTimezoneOffset() * 60000;
@@ -224,7 +228,10 @@ export async function handleConvert(request: Request, env: Env): Promise<Respons
     try {
       await cacheManager.set('CONVERT_API', cacheKey, result);
     } catch (error) {
-      console.error('Failed to cache convert result:', error);
+      logError(
+        'Failed to cache convert result',
+        error instanceof Error ? error : new Error(String(error))
+      );
     }
 
     return new Response(
@@ -242,7 +249,7 @@ export async function handleConvert(request: Request, env: Env): Promise<Respons
       }
     );
   } catch (error) {
-    console.error('Convert API Error:', error);
+    logError('Convert API Error', error instanceof Error ? error : new Error(String(error)));
 
     return new Response(
       JSON.stringify({

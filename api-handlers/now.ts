@@ -1,11 +1,30 @@
 // Cloudflare Pages adapter for now API
 
+import { logError } from './utils/logger';
+
 interface Env {
   UPSTASH_REDIS_REST_URL?: string;
   UPSTASH_REDIS_REST_TOKEN?: string;
 }
 
-export async function handleNow(request: Request, env: Env): Promise<Response> {
+interface TimezoneInfo {
+  name: string;
+  time: string;
+  iso: string;
+}
+
+interface NowResult {
+  timestamp: number;
+  milliseconds: number;
+  iso: string;
+  utc: string;
+  local: string;
+  timezone?: TimezoneInfo;
+  timezoneError?: string;
+}
+
+// eslint-disable-next-line no-unused-vars
+export async function handleNow(request: Request, _env: Env): Promise<Response> {
   if (request.method !== 'GET') {
     return new Response(
       JSON.stringify({
@@ -27,7 +46,7 @@ export async function handleNow(request: Request, env: Env): Promise<Response> {
     const now = new Date();
     const timestamp = Math.floor(now.getTime() / 1000);
 
-    const result: any = {
+    const result: NowResult = {
       timestamp,
       milliseconds: now.getTime(),
       iso: now.toISOString(),
@@ -50,7 +69,7 @@ export async function handleNow(request: Request, env: Env): Promise<Response> {
 
     // Filter result based on format parameter
     if (format !== 'all') {
-      const filteredResult: any = { timestamp };
+      const filteredResult: Partial<NowResult> = { timestamp };
 
       switch (format.toLowerCase()) {
         case 'iso':
@@ -81,7 +100,7 @@ export async function handleNow(request: Request, env: Env): Promise<Response> {
       headers: { 'Content-Type': 'application/json' },
     });
   } catch (error) {
-    console.error('Now API Error:', error);
+    logError('Now API Error', error instanceof Error ? error : new Error(String(error)));
 
     return new Response(
       JSON.stringify({

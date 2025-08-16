@@ -3,8 +3,8 @@
  * Centralized security configuration management for different environments and use cases
  */
 
-import { UnifiedSecurityMiddleware, SecurityMiddlewareConfig } from './unified-security-middleware';
 import { SecurityPolicyLevel } from './security-policy-manager';
+import { SecurityMiddlewareConfig, UnifiedSecurityMiddleware } from './unified-security-middleware';
 
 export interface SecurityEnvironmentConfig {
   policyLevel: SecurityPolicyLevel;
@@ -39,8 +39,8 @@ export const SECURITY_ENVIRONMENT_CONFIGS: Record<string, SecurityEnvironmentCon
       },
       responseSecurity: {
         hideServerInfo: false, // Show server info in development
-      }
-    }
+      },
+    },
   },
 
   test: {
@@ -58,8 +58,8 @@ export const SECURITY_ENVIRONMENT_CONFIGS: Record<string, SecurityEnvironmentCon
       },
       threatDetection: {
         confidenceThreshold: 95, // Very high threshold for testing
-      }
-    }
+      },
+    },
   },
 
   staging: {
@@ -76,8 +76,8 @@ export const SECURITY_ENVIRONMENT_CONFIGS: Record<string, SecurityEnvironmentCon
       },
       threatDetection: {
         confidenceThreshold: 70,
-      }
-    }
+      },
+    },
   },
 
   production: {
@@ -101,8 +101,8 @@ export const SECURITY_ENVIRONMENT_CONFIGS: Record<string, SecurityEnvironmentCon
       botDetection: {
         challengeMode: true,
         behaviorAnalysis: true,
-      }
-    }
+      },
+    },
   },
 
   'high-security': {
@@ -118,18 +118,52 @@ export const SECURITY_ENVIRONMENT_CONFIGS: Record<string, SecurityEnvironmentCon
         maxRequestSize: 1 * 1024 * 1024, // 1MB
         allowedCountries: ['US', 'CA', 'GB', 'DE', 'FR', 'JP', 'AU'],
         blockedUserAgents: [
-          'curl', 'wget', 'python-requests', 'bot', 'crawler', 'spider', 'scraper',
-          'scanner', 'test', 'monitor', 'check', 'probe'
+          'curl',
+          'wget',
+          'python-requests',
+          'bot',
+          'crawler',
+          'spider',
+          'scraper',
+          'scanner',
+          'test',
+          'monitor',
+          'check',
+          'probe',
         ],
       },
       inputValidation: {
         maxFieldLength: 100,
         maxFieldCount: 5,
         blockedPatterns: [
-          '<script', 'javascript:', 'data:text/html', 'vbscript:', 'onload=', 'onerror=',
-          'eval(', 'setTimeout(', 'setInterval(', 'Function(', 'constructor', 'prototype',
-          'union', 'select', 'insert', 'update', 'delete', 'drop', 'create', 'alter',
-          'exec', 'system', 'cmd', 'shell', 'bash', 'powershell', 'wget', 'curl'
+          '<script',
+          'javascript:',
+          'data:text/html',
+          'vbscript:',
+          'onload=',
+          'onerror=',
+          'eval(',
+          'setTimeout(',
+          'setInterval(',
+          'Function(',
+          'constructor',
+          'prototype',
+          'union',
+          'select',
+          'insert',
+          'update',
+          'delete',
+          'drop',
+          'create',
+          'alter',
+          'exec',
+          'system',
+          'cmd',
+          'shell',
+          'bash',
+          'powershell',
+          'wget',
+          'curl',
         ],
       },
       threatDetection: {
@@ -141,12 +175,18 @@ export const SECURITY_ENVIRONMENT_CONFIGS: Record<string, SecurityEnvironmentCon
       },
       botDetection: {
         challengeMode: true,
-        honeypotFields: ['email_confirm', 'website', 'phone_backup', 'company_name', 'referral_code'],
+        honeypotFields: [
+          'email_confirm',
+          'website',
+          'phone_backup',
+          'company_name',
+          'referral_code',
+        ],
         behaviorAnalysis: true,
         fingerprintTracking: true,
-      }
-    }
-  }
+      },
+    },
+  },
 };
 
 /**
@@ -190,9 +230,9 @@ export class SecurityConfigInitializer {
       customPolicyConfig: envConfig.customPolicyOverrides,
       loggerConfig: {
         maxLogs: envConfig.maxLogs,
-        retentionPeriod: envConfig.retentionPeriod,
-        logLevel: envConfig.logLevel,
-      }
+        retentionPeriod: envConfig?.retentionPeriod || 7,
+        logLevel: envConfig?.logLevel || 'info',
+      },
     };
 
     // Initialize security middleware
@@ -203,8 +243,12 @@ export class SecurityConfigInitializer {
     console.log(`🔒 Security system initialized for ${env} environment`);
     console.log(`📊 Policy level: ${envConfig.policyLevel}`);
     console.log(`🔍 Threat detection: ${envConfig.enableThreatDetection ? 'enabled' : 'disabled'}`);
-    console.log(`🚫 Real-time blocking: ${envConfig.enableRealTimeBlocking ? 'enabled' : 'disabled'}`);
-    console.log(`📝 Logging: ${envConfig.enableLogging ? 'enabled' : 'disabled'} (level: ${envConfig.logLevel})`);
+    console.log(
+      `🚫 Real-time blocking: ${envConfig.enableRealTimeBlocking ? 'enabled' : 'disabled'}`
+    );
+    console.log(
+      `📝 Logging: ${envConfig.enableLogging ? 'enabled' : 'disabled'} (level: ${envConfig.logLevel})`
+    );
 
     return this.securityMiddleware;
   }
@@ -219,16 +263,23 @@ export class SecurityConfigInitializer {
   /**
    * Update security configuration
    */
-  updateConfiguration(environment: string, customConfig?: Partial<SecurityEnvironmentConfig>): void {
+  updateConfiguration(
+    environment: string,
+    customConfig?: Partial<SecurityEnvironmentConfig>
+  ): void {
     if (!this.securityMiddleware) {
       throw new Error('Security system not initialized');
     }
 
-    const envConfig = SECURITY_ENVIRONMENT_CONFIGS[environment] || SECURITY_ENVIRONMENT_CONFIGS.development;
+    const envConfig =
+      SECURITY_ENVIRONMENT_CONFIGS[environment] || SECURITY_ENVIRONMENT_CONFIGS.development;
     const mergedConfig = { ...envConfig, ...customConfig };
 
     // Update policy level
-    this.securityMiddleware.updatePolicy(mergedConfig.policyLevel, `Environment changed to ${environment}`);
+    this.securityMiddleware.updatePolicy(
+      mergedConfig.policyLevel,
+      `Environment changed to ${environment}`
+    );
 
     // Apply custom policy overrides
     if (mergedConfig.customPolicyOverrides) {
@@ -258,7 +309,7 @@ export class SecurityConfigInitializer {
       environment: this.currentEnvironment,
       configuration: envConfig,
       currentStats: stats,
-      availableEnvironments: Object.keys(SECURITY_ENVIRONMENT_CONFIGS)
+      availableEnvironments: Object.keys(SECURITY_ENVIRONMENT_CONFIGS),
     };
   }
 
@@ -286,8 +337,8 @@ export class SecurityConfigInitializer {
             rateLimiting: {
               enabled: true,
               strictMode: false,
-            }
-          }
+            },
+          },
         };
         break;
 
@@ -303,8 +354,8 @@ export class SecurityConfigInitializer {
             },
             threatDetection: {
               confidenceThreshold: 30, // Very sensitive for admin
-            }
-          }
+            },
+          },
         };
         break;
 
@@ -320,8 +371,8 @@ export class SecurityConfigInitializer {
             botDetection: {
               enabled: true,
               challengeMode: false, // Don't challenge public users
-            }
-          }
+            },
+          },
         };
         break;
 
@@ -334,8 +385,8 @@ export class SecurityConfigInitializer {
             requestFiltering: {
               maxRequestSize: 50 * 1024 * 1024, // 50MB for internal
               blockedUserAgents: [], // Allow all for internal
-            }
-          }
+            },
+          },
         };
         break;
     }
@@ -347,7 +398,7 @@ export class SecurityConfigInitializer {
       loggerConfig: {
         ...baseConfig,
         logLevel: customConfig.logLevel || baseConfig.logLevel,
-      }
+      },
     };
 
     return new UnifiedSecurityMiddleware(middlewareConfig);
@@ -376,7 +427,7 @@ export class SecurityConfigInitializer {
       environment: this.currentEnvironment,
       timestamp: new Date().toISOString(),
       configuration: SECURITY_ENVIRONMENT_CONFIGS[this.currentEnvironment],
-      stats: this.securityMiddleware?.getSecurityStats() || null
+      stats: this.securityMiddleware?.getSecurityStats() || null,
     };
 
     return JSON.stringify(config, null, 2);
@@ -408,7 +459,7 @@ export class SecurityConfigInitializer {
     const components: Record<string, string> = {
       initialization: this.initialized ? 'healthy' : 'unhealthy',
       middleware: this.securityMiddleware ? 'healthy' : 'unhealthy',
-      environment: this.currentEnvironment in SECURITY_ENVIRONMENT_CONFIGS ? 'healthy' : 'degraded'
+      environment: this.currentEnvironment in SECURITY_ENVIRONMENT_CONFIGS ? 'healthy' : 'degraded',
     };
 
     if (this.securityMiddleware) {
@@ -428,7 +479,7 @@ export class SecurityConfigInitializer {
       environment: this.currentEnvironment,
       initialized: this.initialized,
       components,
-      issues
+      issues,
     };
   }
 }
@@ -436,7 +487,9 @@ export class SecurityConfigInitializer {
 /**
  * Convenience function to get initialized security middleware
  */
-export async function getSecurityMiddleware(environment?: string): Promise<UnifiedSecurityMiddleware> {
+export async function getSecurityMiddleware(
+  environment?: string
+): Promise<UnifiedSecurityMiddleware> {
   const initializer = SecurityConfigInitializer.getInstance();
   return await initializer.initialize(environment);
 }

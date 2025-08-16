@@ -1,6 +1,7 @@
 // Security middleware and utilities
 
 import { CacheManager } from './cache-utils';
+import { logError } from './utils/logger';
 
 interface Env {
   UPSTASH_REDIS_REST_URL?: string;
@@ -57,7 +58,9 @@ export class SecurityManager {
       await this.cacheManager.increment('STATS', rateLimitKey);
 
       // Set expiry for the key (cleanup)
-      const ttl = Math.ceil((windowStart + config.windowMs - now) / 1000);
+      const _ttlSeconds = Math.ceil((windowStart + config.windowMs - now) / 1000); // currently unused
+      void _ttlSeconds;
+
       // Note: We should set TTL here, but our current cache implementation doesn't support it easily
 
       return {
@@ -66,7 +69,10 @@ export class SecurityManager {
         resetTime: windowStart + config.windowMs,
       };
     } catch (error) {
-      console.error('Rate limit check failed:', error);
+      logError(
+        'Rate limit check failed',
+        error instanceof Error ? error : new Error(String(error))
+      );
       // Fail open - allow request if rate limiting fails
       return {
         allowed: true,
@@ -126,7 +132,10 @@ export class SecurityManager {
 
       return { suspicious: false };
     } catch (error) {
-      console.error('Suspicious activity check failed:', error);
+      logError(
+        'Suspicious activity check failed',
+        error instanceof Error ? error : new Error(String(error))
+      );
       return { suspicious: false };
     }
   }
@@ -166,11 +175,19 @@ export class SecurityManager {
   }
 
   // Validate request input
-  validateInput(input: any, rules: ValidationRules): { valid: boolean; errors: string[] } {
+  validateInput(input: unknown, rules: ValidationRules): { valid: boolean; errors: string[] } {
     const errors: string[] = [];
 
+    // Type guard to ensure input is an object
+    if (typeof input !== 'object' || input === null) {
+      errors.push('Input must be an object');
+      return { valid: false, errors };
+    }
+
+    const inputObj = input as Record<string, unknown>;
+
     for (const [field, rule] of Object.entries(rules)) {
-      const value = input[field];
+      const value = inputObj[field];
 
       if (rule.required && (value === undefined || value === null || value === '')) {
         errors.push(`${field} is required`);
@@ -229,7 +246,10 @@ export class SecurityManager {
       const today = new Date().toISOString().split('T')[0];
       await this.cacheManager.increment('STATS', `security:daily:${today}:${event.type}`);
     } catch (error) {
-      console.error('Failed to log security event:', error);
+      logError(
+        'Failed to log security event',
+        error instanceof Error ? error : new Error(String(error))
+      );
     }
   }
 
@@ -237,12 +257,16 @@ export class SecurityManager {
   private async getRecentRequestCount(ip: string): Promise<number> {
     try {
       const now = Date.now();
-      const oneMinuteAgo = now - 60000; // 1 minute ago
+      const _oneMinuteAgo = now - 60000; // 1 minute ago (kept for potential future logic)
+      void _oneMinuteAgo;
       const key = `ip_requests:${ip}:${Math.floor(now / 60000)}`; // Per minute bucket
 
       return (await this.cacheManager.get('STATS', key)) || 0;
     } catch (error) {
-      console.error('Failed to get recent request count:', error);
+      logError(
+        'Failed to get recent request count',
+        error instanceof Error ? error : new Error(String(error))
+      );
       return 0;
     }
   }

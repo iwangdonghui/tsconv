@@ -1,7 +1,6 @@
 import { AlertCircle, Clock, Filter, Globe, MapPin, Search } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
-import { useLanguage } from '../contexts/LanguageContext';
 import { useTheme } from '../contexts/ThemeContext';
 import Footer from './Footer';
 import Header from './Header';
@@ -59,7 +58,7 @@ export default function TimezoneExplorer() {
   const [currentTime, setCurrentTime] = useState(new Date());
 
   const { isDark } = useTheme();
-  const { t: _t } = useLanguage();
+  // const { t: _t } = useLanguage(); // Currently not used
 
   // Update current time every second
   useEffect(() => {
@@ -312,11 +311,11 @@ export default function TimezoneExplorer() {
               <Globe className='h-8 w-8 text-white' />
             </div>
             <div>
-              <h2
+              <h1
                 className={`text-3xl font-bold tracking-tight ${isDark ? 'text-white' : 'text-gray-900'}`}
               >
                 Timezone Explorer
-              </h2>
+              </h1>
               <p className={`text-sm mt-1 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
                 Explore world timezones with real-time search and filtering
               </p>
@@ -339,9 +338,9 @@ export default function TimezoneExplorer() {
               >
                 <Clock className='h-5 w-5' />
               </div>
-              <h3 className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+              <h2 className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
                 Explore World Time Zones in Real-Time
-              </h3>
+              </h2>
             </div>
             <p className={`mb-6 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
               Navigate through global time zones with our comprehensive timezone explorer. View
@@ -351,12 +350,12 @@ export default function TimezoneExplorer() {
             </p>
             <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
               <div>
-                <h4
+                <h3
                   className={`font-medium mb-3 flex items-center gap-2 ${isDark ? 'text-blue-400' : 'text-blue-600'}`}
                 >
                   <Search className='h-4 w-4' />
                   Features:
-                </h4>
+                </h3>
                 <ul className={`text-sm space-y-2 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
                   <li className='flex items-center gap-2'>
                     <div className='w-1.5 h-1.5 bg-green-500 rounded-full'></div>
@@ -377,12 +376,12 @@ export default function TimezoneExplorer() {
                 </ul>
               </div>
               <div>
-                <h4
+                <h3
                   className={`font-medium mb-3 flex items-center gap-2 ${isDark ? 'text-blue-400' : 'text-blue-600'}`}
                 >
                   <MapPin className='h-4 w-4' />
                   Ideal for:
-                </h4>
+                </h3>
                 <ul className={`text-sm space-y-2 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
                   <li className='flex items-center gap-2'>
                     <div className='w-1.5 h-1.5 bg-red-500 rounded-full'></div>
@@ -413,11 +412,11 @@ export default function TimezoneExplorer() {
                   isDark ? 'bg-slate-700/50 border-slate-600' : 'bg-gray-50/50 border-gray-200'
                 }`}
               >
-                <h3
+                <h2
                   className={`text-lg font-semibold mb-4 ${isDark ? 'text-white' : 'text-gray-900'}`}
                 >
                   Search & Filter
-                </h3>
+                </h2>
 
                 {/* Quick Presets */}
                 <div
@@ -425,11 +424,11 @@ export default function TimezoneExplorer() {
                     isDark ? 'border-slate-600 bg-slate-700/30' : 'border-gray-200 bg-gray-50/50'
                   }`}
                 >
-                  <h4
+                  <h3
                     className={`text-sm font-medium mb-3 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}
                   >
                     ⚡ Quick Presets
-                  </h4>
+                  </h3>
                   <div className='grid grid-cols-2 gap-2'>
                     <button
                       onClick={() => {
@@ -603,11 +602,11 @@ export default function TimezoneExplorer() {
                   isDark ? 'bg-slate-700/30 border-slate-600' : 'bg-gray-50 border-gray-200'
                 }`}
               >
-                <h4
+                <h3
                   className={`text-sm font-medium mb-3 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}
                 >
                   Search Status
-                </h4>
+                </h3>
                 <div className='flex items-center gap-2'>
                   {loading ? (
                     <>
@@ -644,11 +643,11 @@ export default function TimezoneExplorer() {
                   isDark ? 'bg-slate-700/30 border-slate-600' : 'bg-gray-50 border-gray-200'
                 }`}
               >
-                <h4
+                <h3
                   className={`text-sm font-medium mb-3 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}
                 >
                   View Options
-                </h4>
+                </h3>
                 <div className='space-y-3'>
                   <label className='flex items-center'>
                     <input
@@ -721,11 +720,11 @@ export default function TimezoneExplorer() {
               {!loading && timezones.length > 0 && (
                 <div className='space-y-4'>
                   <div className='flex items-center justify-between mb-4'>
-                    <h3
+                    <h2
                       className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}
                     >
                       Timezones ({timezones.length} shown)
-                    </h3>
+                    </h2>
                     <div className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
                       Current UTC time: {currentTime.toUTCString()}
                     </div>
@@ -760,11 +759,11 @@ export default function TimezoneExplorer() {
                                 <span className='text-lg'>{getRegionIcon(timezone.region)}</span>
                               </div>
                               <div>
-                                <h4
+                                <h3
                                   className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}
                                 >
                                   {timezone.city || timezone.name}
-                                </h4>
+                                </h3>
                                 <p
                                   className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}
                                 >
@@ -871,11 +870,11 @@ export default function TimezoneExplorer() {
                   >
                     <Globe className='h-8 w-8' />
                   </div>
-                  <h3
+                  <h2
                     className={`text-lg font-semibold mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}
                   >
                     No Timezones Found
-                  </h3>
+                  </h2>
                   <p className={`text-sm mb-4 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
                     No timezones found matching your search criteria
                   </p>

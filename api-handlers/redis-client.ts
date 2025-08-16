@@ -1,13 +1,15 @@
 // Redis client adapter for Cloudflare Workers/Pages
 // Supports both Upstash Redis and fallback to memory cache
 
-interface RedisResponse {
-  result?: any;
+import { logError, logWarn } from './utils/logger';
+
+interface RedisResponse<T = unknown> {
+  result?: T;
   error?: string;
 }
 
-interface CacheEntry {
-  value: any;
+interface CacheEntry<T = unknown> {
+  value: T;
   expiry: number;
 }
 
@@ -15,7 +17,7 @@ class MemoryCache {
   private cache = new Map<string, CacheEntry>();
   private maxSize = 1000; // Limit memory usage
 
-  set(key: string, value: any, ttlSeconds: number = 3600): boolean {
+  set(key: string, value: unknown, ttlSeconds: number = 3600): boolean {
     // Clean expired entries if cache is getting full
     if (this.cache.size >= this.maxSize) {
       this.cleanup();
@@ -114,7 +116,7 @@ export class RedisClient {
 
       return await response.json();
     } catch (error) {
-      console.error('Redis request error:', error);
+      logError('Redis request error', error instanceof Error ? error : new Error(String(error)));
       throw error;
     }
   }
@@ -135,7 +137,7 @@ export class RedisClient {
         return this.memoryCache.set(key, value, ttlSeconds);
       }
     } catch (error) {
-      console.warn('Redis SET failed, using memory cache:', error);
+      logWarn('Redis SET failed, using memory cache', { error: String(error) });
       return this.memoryCache.set(key, value, ttlSeconds);
     }
   }
@@ -151,7 +153,7 @@ export class RedisClient {
         return this.memoryCache.get(key);
       }
     } catch (error) {
-      console.warn('Redis GET failed, using memory cache:', error);
+      logWarn('Redis GET failed, using memory cache', { error: String(error) });
       return this.memoryCache.get(key);
     }
   }
@@ -166,7 +168,7 @@ export class RedisClient {
         return this.memoryCache.del(key);
       }
     } catch (error) {
-      console.warn('Redis DEL failed, using memory cache:', error);
+      logWarn('Redis DEL failed, using memory cache', { error: String(error) });
       return this.memoryCache.del(key);
     }
   }
@@ -181,7 +183,7 @@ export class RedisClient {
         return this.memoryCache.exists(key);
       }
     } catch (error) {
-      console.warn('Redis EXISTS failed, using memory cache:', error);
+      logWarn('Redis EXISTS failed, using memory cache', { error: String(error) });
       return this.memoryCache.exists(key);
     }
   }
@@ -195,7 +197,7 @@ export class RedisClient {
         return true; // Memory cache is always "available"
       }
     } catch (error) {
-      console.warn('Redis PING failed:', error);
+      logWarn('Redis PING failed', { error: String(error) });
       return false;
     }
   }
@@ -213,7 +215,7 @@ export class RedisClient {
         return newValue;
       }
     } catch (error) {
-      console.warn('Redis INCR failed, using memory cache:', error);
+      logWarn('Redis INCR failed, using memory cache', { error: String(error) });
       const current = this.memoryCache.get(key) || 0;
       const newValue = current + 1;
       this.memoryCache.set(key, newValue, 3600);
@@ -235,7 +237,7 @@ export class RedisClient {
         return false;
       }
     } catch (error) {
-      console.warn('Redis EXPIRE failed:', error);
+      logWarn('Redis EXPIRE failed', { error: String(error) });
       return false;
     }
   }

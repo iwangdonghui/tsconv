@@ -1,9 +1,30 @@
 // Environment variables debugging endpoint
 
+import { logError } from './utils/logger';
+
 interface Env {
   UPSTASH_REDIS_REST_URL?: string;
   UPSTASH_REDIS_REST_TOKEN?: string;
   REDIS_ENABLED?: string;
+}
+
+interface EnvVarCheck {
+  configured: boolean;
+  value: string | null;
+  length: number;
+  type?: string;
+}
+
+interface EnvCheck {
+  UPSTASH_REDIS_REST_URL: EnvVarCheck;
+  UPSTASH_REDIS_REST_TOKEN: EnvVarCheck;
+  REDIS_ENABLED: EnvVarCheck;
+}
+
+interface ConnectionTest {
+  success: boolean;
+  error?: string;
+  response?: unknown;
 }
 
 export async function handleEnvDebug(request: Request, env: Env): Promise<Response> {
@@ -119,7 +140,7 @@ export async function handleEnvDebug(request: Request, env: Env): Promise<Respon
       }
     );
   } catch (error) {
-    console.error('Environment debug error:', error);
+    logError('Environment debug error', error instanceof Error ? error : new Error(String(error)));
 
     return new Response(
       JSON.stringify({
@@ -135,8 +156,8 @@ export async function handleEnvDebug(request: Request, env: Env): Promise<Respon
 }
 
 function generateRecommendations(
-  envCheck: any,
-  connectionTest: any,
+  envCheck: EnvCheck,
+  connectionTest: ConnectionTest | null,
   shouldBeEnabled: boolean
 ): string[] {
   const recommendations = [];

@@ -96,10 +96,10 @@ export class IntelligentFormatDetector {
         confidence: 0.95,
         category: 'timestamp',
         examples: ['1705315845', '1640995200'],
-        validator: (input) => {
+        validator: input => {
           const num = parseInt(input);
           return num >= 946684800 && num <= 2147483647; // 2000-01-01 to 2038-01-19
-        }
+        },
       },
 
       {
@@ -109,10 +109,10 @@ export class IntelligentFormatDetector {
         confidence: 0.95,
         category: 'timestamp',
         examples: ['1705315845123', '1640995200000'],
-        validator: (input) => {
+        validator: input => {
           const num = parseInt(input);
           return num >= 946684800000 && num <= 2147483647000;
-        }
+        },
       },
 
       // ISO formats
@@ -123,30 +123,32 @@ export class IntelligentFormatDetector {
         confidence: 0.98,
         category: 'iso',
         examples: ['2024-01-15T10:30:45.123Z', '2024-01-15T10:30:45+05:30'],
-        extractor: (input) => {
-          const match = input.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(\.\d{3})?(.+)$/);
+        extractor: (input: string): { [key: string]: string | number } => {
+          const match = input.match(
+            /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(\.\d{3})?(.+)$/
+          );
           if (match) {
             return {
-              year: parseInt(match[1]),
-              month: parseInt(match[2]),
-              day: parseInt(match[3]),
-              hour: parseInt(match[4]),
-              minute: parseInt(match[5]),
-              second: parseInt(match[6]),
-              timezone: match[8]
+              year: parseInt(match[1] || '0'),
+              month: parseInt(match[2] || '0'),
+              day: parseInt(match[3] || '0'),
+              hour: parseInt(match[4] || '0'),
+              minute: parseInt(match[5] || '0'),
+              second: parseInt(match[6] || '0'),
+              timezone: match[8] || '',
             };
           }
           return {};
-        }
+        },
       },
 
       {
         id: 'iso8601_date',
         name: 'ISO 8601 Date Only',
         regex: /^\d{4}-\d{2}-\d{2}$/,
-        confidence: 0.90,
+        confidence: 0.9,
         category: 'iso',
-        examples: ['2024-01-15', '2023-12-31']
+        examples: ['2024-01-15', '2023-12-31'],
       },
 
       {
@@ -155,7 +157,7 @@ export class IntelligentFormatDetector {
         regex: /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$/,
         confidence: 0.85,
         category: 'iso',
-        examples: ['2024-01-15T10:30:45']
+        examples: ['2024-01-15T10:30:45'],
       },
 
       // US formats
@@ -166,19 +168,30 @@ export class IntelligentFormatDetector {
         confidence: 0.75,
         category: 'locale',
         examples: ['01/15/2024', '12/31/2023', '1/1/2024'],
-        validator: (input) => {
-          const [month, day, year] = input.split('/').map(Number);
-          return month >= 1 && month <= 12 && day >= 1 && day <= 31 && year >= 1900;
-        }
+        validator: input => {
+          const parts = input.split('/').map(Number);
+          const [month, day, year] = parts;
+          return (
+            month !== undefined &&
+            day !== undefined &&
+            year !== undefined &&
+            month >= 1 &&
+            month <= 12 &&
+            day >= 1 &&
+            day <= 31 &&
+            year >= 1900
+          );
+        },
       },
 
       {
         id: 'us_datetime_slash',
         name: 'US DateTime (MM/DD/YYYY HH:mm:ss)',
-        regex: /^(0?[1-9]|1[0-2])\/(0?[1-9]|[12]\d|3[01])\/\d{4}\s+\d{1,2}:\d{2}(:\d{2})?(\s*(AM|PM))?$/i,
-        confidence: 0.80,
+        regex:
+          /^(0?[1-9]|1[0-2])\/(0?[1-9]|[12]\d|3[01])\/\d{4}\s+\d{1,2}:\d{2}(:\d{2})?(\s*(AM|PM))?$/i,
+        confidence: 0.8,
         category: 'locale',
-        examples: ['01/15/2024 10:30:45', '12/31/2023 11:59 PM']
+        examples: ['01/15/2024 10:30:45', '12/31/2023 11:59 PM'],
       },
 
       // European formats
@@ -186,9 +199,9 @@ export class IntelligentFormatDetector {
         id: 'eu_date_slash',
         name: 'European Date (DD/MM/YYYY)',
         regex: /^(0?[1-9]|[12]\d|3[01])\/(0?[1-9]|1[0-2])\/\d{4}$/,
-        confidence: 0.70, // Lower confidence due to ambiguity with US format
+        confidence: 0.7, // Lower confidence due to ambiguity with US format
         category: 'locale',
-        examples: ['15/01/2024', '31/12/2023']
+        examples: ['15/01/2024', '31/12/2023'],
       },
 
       {
@@ -197,7 +210,7 @@ export class IntelligentFormatDetector {
         regex: /^(0?[1-9]|[12]\d|3[01])\.(0?[1-9]|1[0-2])\.\d{4}$/,
         confidence: 0.85,
         category: 'locale',
-        examples: ['15.01.2024', '31.12.2023']
+        examples: ['15.01.2024', '31.12.2023'],
       },
 
       // Database formats
@@ -205,9 +218,9 @@ export class IntelligentFormatDetector {
         id: 'mysql_datetime',
         name: 'MySQL DATETIME',
         regex: /^\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2}$/,
-        confidence: 0.90,
+        confidence: 0.9,
         category: 'database',
-        examples: ['2024-01-15 10:30:45', '2023-12-31 23:59:59']
+        examples: ['2024-01-15 10:30:45', '2023-12-31 23:59:59'],
       },
 
       {
@@ -216,7 +229,7 @@ export class IntelligentFormatDetector {
         regex: /^\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2}\.\d{6}$/,
         confidence: 0.95,
         category: 'database',
-        examples: ['2024-01-15 10:30:45.123456']
+        examples: ['2024-01-15 10:30:45.123456'],
       },
 
       // RFC formats
@@ -226,7 +239,7 @@ export class IntelligentFormatDetector {
         regex: /^[A-Za-z]{3},\s+\d{1,2}\s+[A-Za-z]{3}\s+\d{4}\s+\d{2}:\d{2}:\d{2}\s+[+-]\d{4}$/,
         confidence: 0.95,
         category: 'rfc',
-        examples: ['Mon, 15 Jan 2024 10:30:45 +0000']
+        examples: ['Mon, 15 Jan 2024 10:30:45 +0000'],
       },
 
       // Log formats
@@ -234,9 +247,9 @@ export class IntelligentFormatDetector {
         id: 'apache_log',
         name: 'Apache Log Format',
         regex: /^\d{2}\/[A-Za-z]{3}\/\d{4}:\d{2}:\d{2}:\d{2}\s+[+-]\d{4}$/,
-        confidence: 0.90,
+        confidence: 0.9,
         category: 'log',
-        examples: ['15/Jan/2024:10:30:45 +0000']
+        examples: ['15/Jan/2024:10:30:45 +0000'],
       },
 
       {
@@ -245,7 +258,7 @@ export class IntelligentFormatDetector {
         regex: /^[A-Za-z]{3}\s+\d{1,2}\s+\d{2}:\d{2}:\d{2}$/,
         confidence: 0.85,
         category: 'log',
-        examples: ['Jan 15 10:30:45']
+        examples: ['Jan 15 10:30:45'],
       },
 
       // Relative time
@@ -255,7 +268,7 @@ export class IntelligentFormatDetector {
         regex: /^\d+\s+(second|minute|hour|day|week|month|year)s?\s+ago$/i,
         confidence: 0.95,
         category: 'relative',
-        examples: ['2 hours ago', '3 days ago', '1 week ago']
+        examples: ['2 hours ago', '3 days ago', '1 week ago'],
       },
 
       {
@@ -264,7 +277,7 @@ export class IntelligentFormatDetector {
         regex: /^in\s+\d+\s+(second|minute|hour|day|week|month|year)s?$/i,
         confidence: 0.95,
         category: 'relative',
-        examples: ['in 2 hours', 'in 3 days', 'in 1 week']
+        examples: ['in 2 hours', 'in 3 days', 'in 1 week'],
       },
 
       // Excel formats
@@ -272,13 +285,13 @@ export class IntelligentFormatDetector {
         id: 'excel_serial',
         name: 'Excel Serial Date',
         regex: /^\d{5}\.\d+$/,
-        confidence: 0.70,
+        confidence: 0.7,
         category: 'business',
         examples: ['45310.4379861111'],
-        validator: (input) => {
+        validator: input => {
           const num = parseFloat(input);
           return num >= 1 && num <= 2958465; // Valid Excel date range
-        }
+        },
       },
 
       // Cultural formats
@@ -288,7 +301,7 @@ export class IntelligentFormatDetector {
         regex: /^\d{4}年\d{1,2}月\d{1,2}日(\s+\d{1,2}时\d{1,2}分\d{1,2}秒)?$/,
         confidence: 0.95,
         category: 'cultural',
-        examples: ['2024年1月15日', '2024年1月15日 10时30分45秒']
+        examples: ['2024年1月15日', '2024年1月15日 10时30分45秒'],
       },
 
       {
@@ -297,8 +310,8 @@ export class IntelligentFormatDetector {
         regex: /^(令和|平成|昭和)\d{1,2}年\d{1,2}月\d{1,2}日$/,
         confidence: 0.95,
         category: 'cultural',
-        examples: ['令和6年1月15日', '平成35年12月31日']
-      }
+        examples: ['令和6年1月15日', '平成35年12月31日'],
+      },
     ];
   }
 
@@ -308,10 +321,10 @@ export class IntelligentFormatDetector {
   detectFormat(input: string): DetectionResult {
     const startTime = Date.now();
     const trimmedInput = input.trim();
-    
+
     // Character analysis
     const charAnalysis = this.analyzeCharacters(trimmedInput);
-    
+
     // Find matching patterns
     const matches: Array<{
       pattern: DetectionPattern;
@@ -341,7 +354,7 @@ export class IntelligentFormatDetector {
         matches.push({
           pattern,
           confidence: Math.max(0, Math.min(1, confidence)),
-          reason
+          reason,
         });
       }
     }
@@ -357,22 +370,22 @@ export class IntelligentFormatDetector {
     const warnings = this.generateWarnings(trimmedInput, matches, ambiguityScore);
 
     const result: DetectionResult = {
-      detected_format: matches.length > 0 ? matches[0].pattern.id : 'unknown',
-      confidence: matches.length > 0 ? matches[0].confidence : 0,
+      detected_format: matches.length > 0 ? matches[0]?.pattern.id || 'unknown' : 'unknown',
+      confidence: matches.length > 0 ? matches[0]?.confidence || 0 : 0,
       alternatives: matches.slice(1, 4).map(match => ({
         format: match.pattern.id,
         confidence: match.confidence,
-        reason: match.reason
+        reason: match.reason,
       })),
       metadata: {
         input_length: trimmedInput.length,
         character_analysis: charAnalysis,
         pattern_matches: matches.map(m => m.pattern.id),
         ambiguity_score: ambiguityScore,
-        processing_time_ms: Date.now() - startTime
+        processing_time_ms: Date.now() - startTime,
       },
       suggestions,
-      warnings
+      warnings,
     };
 
     // Update statistics
@@ -382,7 +395,7 @@ export class IntelligentFormatDetector {
     this.detectionHistory.push({
       input: trimmedInput,
       result,
-      timestamp: Date.now()
+      timestamp: Date.now(),
     });
 
     // Cleanup old history
@@ -403,7 +416,7 @@ export class IntelligentFormatDetector {
     spaces: number;
   } {
     const analysis = { digits: 0, letters: 0, symbols: 0, spaces: 0 };
-    
+
     for (const char of input) {
       if (/\d/.test(char)) {
         analysis.digits++;
@@ -431,7 +444,9 @@ export class IntelligentFormatDetector {
 
     // Timestamp patterns should be mostly digits
     if (pattern.category === 'timestamp') {
-      const digitRatio = charAnalysis.digits / (charAnalysis.digits + charAnalysis.letters + charAnalysis.symbols + charAnalysis.spaces);
+      const digitRatio =
+        charAnalysis.digits /
+        (charAnalysis.digits + charAnalysis.letters + charAnalysis.symbols + charAnalysis.spaces);
       if (digitRatio > 0.9) {
         adjustment += 0.1;
       } else if (digitRatio < 0.7) {
@@ -441,7 +456,8 @@ export class IntelligentFormatDetector {
 
     // ISO patterns should have specific symbol patterns
     if (pattern.category === 'iso') {
-      if (charAnalysis.symbols >= 2) { // At least dashes and colons
+      if (charAnalysis.symbols >= 2) {
+        // At least dashes and colons
         adjustment += 0.05;
       }
     }
@@ -459,14 +475,16 @@ export class IntelligentFormatDetector {
   /**
    * Calculate ambiguity score
    */
-  private calculateAmbiguityScore(matches: Array<{ pattern: DetectionPattern; confidence: number }>): number {
+  private calculateAmbiguityScore(
+    matches: Array<{ pattern: DetectionPattern; confidence: number }>
+  ): number {
     if (matches.length <= 1) {
       return 0;
     }
 
     // Check confidence spread
-    const topConfidence = matches[0].confidence;
-    const secondConfidence = matches[1].confidence;
+    const topConfidence = matches[0]?.confidence || 0;
+    const secondConfidence = matches[1]?.confidence || 0;
     const confidenceDiff = topConfidence - secondConfidence;
 
     // High ambiguity if top matches are close in confidence
@@ -493,26 +511,42 @@ export class IntelligentFormatDetector {
 
     if (matches.length === 0) {
       suggestions.push('No format detected. Try using a standard format like ISO 8601.');
-      
+
       if (charAnalysis.digits > 8 && charAnalysis.letters === 0) {
-        suggestions.push('Input appears to be numeric. Consider if it\'s a Unix timestamp.');
+        suggestions.push("Input appears to be numeric. Consider if it's a Unix timestamp.");
       }
-      
+
       if (charAnalysis.letters > 0) {
-        suggestions.push('Input contains letters. Consider if it\'s a relative time or cultural format.');
+        suggestions.push(
+          "Input contains letters. Consider if it's a relative time or cultural format."
+        );
       }
-    } else if (matches.length > 1 && matches[0].confidence - matches[1].confidence < 0.2) {
-      suggestions.push('Multiple formats detected with similar confidence. Consider providing more context.');
-      suggestions.push(`Top candidates: ${matches.slice(0, 3).map(m => m.pattern.name).join(', ')}`);
+    } else if (
+      matches.length > 1 &&
+      (matches[0]?.confidence || 0) - (matches[1]?.confidence || 0) < 0.2
+    ) {
+      suggestions.push(
+        'Multiple formats detected with similar confidence. Consider providing more context.'
+      );
+      suggestions.push(
+        `Top candidates: ${matches
+          .slice(0, 3)
+          .map(m => m.pattern.name)
+          .join(', ')}`
+      );
     }
 
     // Specific suggestions based on patterns
     if (input.includes('/') && matches.some(m => m.pattern.category === 'locale')) {
-      suggestions.push('Date contains slashes. US format (MM/DD/YYYY) vs European (DD/MM/YYYY) ambiguity possible.');
+      suggestions.push(
+        'Date contains slashes. US format (MM/DD/YYYY) vs European (DD/MM/YYYY) ambiguity possible.'
+      );
     }
 
     if (/^\d+$/.test(input) && input.length !== 10 && input.length !== 13) {
-      suggestions.push('Numeric input with unusual length. Standard Unix timestamps are 10 (seconds) or 13 (milliseconds) digits.');
+      suggestions.push(
+        'Numeric input with unusual length. Standard Unix timestamps are 10 (seconds) or 13 (milliseconds) digits.'
+      );
     }
 
     return suggestions;
@@ -532,8 +566,10 @@ export class IntelligentFormatDetector {
       warnings.push('High ambiguity detected. Multiple formats match with similar confidence.');
     }
 
-    if (matches.length > 0 && matches[0].confidence < 0.6) {
-      warnings.push('Low confidence detection. Format may not be standard or input may be malformed.');
+    if (matches.length > 0 && (matches[0]?.confidence || 0) < 0.6) {
+      warnings.push(
+        'Low confidence detection. Format may not be standard or input may be malformed.'
+      );
     }
 
     // Check for common issues
@@ -544,8 +580,8 @@ export class IntelligentFormatDetector {
     if (/\d{4}-\d{2}-\d{2}/.test(input)) {
       const dateMatch = input.match(/(\d{4})-(\d{2})-(\d{2})/);
       if (dateMatch) {
-        const month = parseInt(dateMatch[2]);
-        const day = parseInt(dateMatch[3]);
+        const month = parseInt(dateMatch[2] || '0');
+        const day = parseInt(dateMatch[3] || '0');
         if (month > 12) {
           warnings.push('Invalid month detected (> 12).');
         }
@@ -561,12 +597,12 @@ export class IntelligentFormatDetector {
   /**
    * Update statistics
    */
-  private updateStatistics(input: string, result: DetectionResult): void {
+  private updateStatistics(_input: string, result: DetectionResult): void {
     this.statistics.total_detections++;
 
     // Update format frequency
     if (result.detected_format !== 'unknown') {
-      this.statistics.format_frequency[result.detected_format] = 
+      this.statistics.format_frequency[result.detected_format] =
         (this.statistics.format_frequency[result.detected_format] || 0) + 1;
     }
 
@@ -587,10 +623,13 @@ export class IntelligentFormatDetector {
     // Calculate common patterns from recent history
     const recentHistory = this.detectionHistory.slice(-100);
     const patternFreq = new Map<string, number>();
-    
+
     recentHistory.forEach(entry => {
       if (entry.result.detected_format !== 'unknown') {
-        patternFreq.set(entry.result.detected_format, (patternFreq.get(entry.result.detected_format) || 0) + 1);
+        patternFreq.set(
+          entry.result.detected_format,
+          (patternFreq.get(entry.result.detected_format) || 0) + 1
+        );
       }
     });
 
@@ -603,12 +642,12 @@ export class IntelligentFormatDetector {
         examples: recentHistory
           .filter(entry => entry.result.detected_format === pattern)
           .slice(0, 3)
-          .map(entry => entry.input)
+          .map(entry => entry.input),
       }));
 
     return {
       ...this.statistics,
-      common_patterns: commonPatterns
+      common_patterns: commonPatterns,
     };
   }
 
@@ -622,10 +661,10 @@ export class IntelligentFormatDetector {
       confidence_distribution: {
         high: 0,
         medium: 0,
-        low: 0
+        low: 0,
       },
       common_patterns: [],
-      error_patterns: []
+      error_patterns: [],
     };
   }
 

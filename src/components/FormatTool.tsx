@@ -249,14 +249,38 @@ export default function FormatTool() {
       />
       <Header />
 
-      {/* Custom styles for date picker in dark mode */}
+      {/* Custom styles for date picker and select elements */}
       <style
         dangerouslySetInnerHTML={{
           __html: `
+          /* Date picker styling */
           input[type="date"]::-webkit-calendar-picker-indicator,
           input[type="time"]::-webkit-calendar-picker-indicator {
             filter: ${isDark ? 'invert(1)' : 'none'};
             cursor: pointer;
+            opacity: ${isDark ? '0.8' : '0.7'};
+            width: 16px;
+            height: 16px;
+            padding: 2px;
+            border-radius: 3px;
+            transition: opacity 0.2s ease;
+          }
+
+          input[type="date"]:hover::-webkit-calendar-picker-indicator,
+          input[type="time"]:hover::-webkit-calendar-picker-indicator {
+            opacity: 1;
+            background-color: ${isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)'};
+          }
+
+          /* Select dropdown arrow styling */
+          select {
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='${isDark ? '%23ffffff' : '%23374151'}' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            background-size: 16px;
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
           }
 
           /* Enhanced dark mode support */
@@ -274,7 +298,13 @@ export default function FormatTool() {
               color: white;
             }
           `
-              : ''
+              : `
+            /* Light mode specific styles */
+            input[type="date"]::-webkit-calendar-picker-indicator,
+            input[type="time"]::-webkit-calendar-picker-indicator {
+              filter: contrast(1.2) brightness(0.8);
+            }
+          `
           }
         `,
         }}
@@ -292,18 +322,18 @@ export default function FormatTool() {
             <div
               className={`p-3 rounded-xl shadow-lg transition-all duration-300 ${
                 isDark
-                  ? 'bg-gradient-to-br from-purple-500 to-purple-600 shadow-purple-500/25'
-                  : 'bg-gradient-to-br from-purple-500 to-purple-600 shadow-purple-500/25'
+                  ? 'bg-gradient-to-br from-blue-500 to-blue-600 shadow-blue-500/25'
+                  : 'bg-gradient-to-br from-blue-500 to-blue-600 shadow-blue-500/25'
               }`}
             >
               <Palette className='h-8 w-8 text-white' />
             </div>
             <div>
-              <h2
+              <h1
                 className={`text-3xl font-bold tracking-tight ${isDark ? 'text-white' : 'text-gray-900'}`}
               >
                 Date Format Tool
-              </h2>
+              </h1>
               <p className={`text-sm mt-1 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
                 Transform dates and timestamps with custom formatting patterns
               </p>
@@ -314,21 +344,21 @@ export default function FormatTool() {
           <div
             className={`mb-8 p-6 rounded-xl border transition-all duration-200 ${
               isDark
-                ? 'bg-gradient-to-br from-purple-500/10 to-purple-600/5 border-purple-500/20'
-                : 'bg-gradient-to-br from-purple-50 to-purple-100/50 border-purple-200'
+                ? 'bg-gradient-to-br from-blue-500/10 to-blue-600/5 border-blue-500/20'
+                : 'bg-gradient-to-br from-blue-50 to-blue-100/50 border-blue-200'
             }`}
           >
             <div className='flex items-center gap-3 mb-4'>
               <div
                 className={`p-2 rounded-lg ${
-                  isDark ? 'bg-purple-500/20 text-purple-400' : 'bg-purple-100 text-purple-600'
+                  isDark ? 'bg-blue-500/20 text-blue-400' : 'bg-blue-100 text-blue-600'
                 }`}
               >
                 <Palette className='h-5 w-5' />
               </div>
-              <h3 className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+              <h2 className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
                 Professional Date and Time Formatting
-              </h3>
+              </h2>
             </div>
             <p className={`mb-4 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
               Transform timestamps and dates into any format you need with our comprehensive date
@@ -342,12 +372,12 @@ export default function FormatTool() {
                   isDark ? 'bg-slate-700/30 border-slate-600' : 'bg-white/60 border-gray-200'
                 }`}
               >
-                <h4
+                <h3
                   className={`font-medium mb-3 flex items-center gap-2 ${isDark ? 'text-blue-400' : 'text-blue-600'}`}
                 >
                   <Settings className='h-4 w-4' />
                   Format Options:
-                </h4>
+                </h3>
                 <ul className={`text-sm space-y-2 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
                   <li className='flex items-center gap-2'>
                     <div className='w-1.5 h-1.5 bg-blue-500 rounded-full'></div>
@@ -372,12 +402,12 @@ export default function FormatTool() {
                   isDark ? 'bg-slate-700/30 border-slate-600' : 'bg-white/60 border-gray-200'
                 }`}
               >
-                <h4
+                <h3
                   className={`font-medium mb-3 flex items-center gap-2 ${isDark ? 'text-green-400' : 'text-green-600'}`}
                 >
                   <Target className='h-4 w-4' />
                   Perfect for:
-                </h4>
+                </h3>
                 <ul className={`text-sm space-y-2 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
                   <li className='flex items-center gap-2'>
                     <div className='w-1.5 h-1.5 bg-blue-500 rounded-full'></div>
@@ -442,11 +472,11 @@ export default function FormatTool() {
                   isDark ? 'border-slate-600 bg-slate-700/30' : 'border-gray-200 bg-gray-50/50'
                 }`}
               >
-                <h4
+                <h3
                   className={`text-sm font-medium mb-3 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}
                 >
                   ⚡ Quick Presets
-                </h4>
+                </h3>
                 <div className='grid grid-cols-2 gap-2'>
                   <button
                     onClick={() => {
@@ -589,7 +619,7 @@ export default function FormatTool() {
                 <select
                   value={format}
                   onChange={e => setFormat(e.target.value)}
-                  className={`w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent ${isDark ? 'bg-slate-700 border-slate-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
+                  className={`w-full pl-4 pr-10 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent ${isDark ? 'bg-slate-700 border-slate-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
                 >
                   {templates &&
                     Object.keys(templates.templates).map(templateName => (
@@ -694,11 +724,11 @@ export default function FormatTool() {
                   <div className='flex items-center justify-between mb-4'>
                     <div className='flex items-center gap-2'>
                       <CheckCircle className='h-5 w-5 text-green-500' />
-                      <h3
+                      <h2
                         className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}
                       >
                         Formatted Result
-                      </h3>
+                      </h2>
                       {result.metadata.cached && (
                         <span className='text-xs bg-green-100 text-green-800 px-2 py-1 rounded'>
                           Cached
@@ -767,12 +797,12 @@ export default function FormatTool() {
                           : 'bg-gradient-to-br from-green-50 to-green-100/50 border-green-200 shadow-lg shadow-green-500/5'
                       }`}
                     >
-                      <h4
+                      <h3
                         className={`font-medium mb-3 flex items-center gap-2 ${isDark ? 'text-green-400' : 'text-green-600'}`}
                       >
                         <Settings className='h-4 w-4' />
                         Template Used:
-                      </h4>
+                      </h3>
                       <div
                         className={`text-sm space-y-2 ${isDark ? 'text-green-300' : 'text-green-700'}`}
                       >
@@ -810,12 +840,12 @@ export default function FormatTool() {
                         : 'bg-gradient-to-br from-purple-50 to-purple-100/50 border-purple-200 shadow-lg shadow-purple-500/5'
                     }`}
                   >
-                    <h4
+                    <h3
                       className={`font-medium mb-3 flex items-center gap-2 ${isDark ? 'text-purple-400' : 'text-purple-600'}`}
                     >
                       <Target className='h-4 w-4' />
                       Input Details:
-                    </h4>
+                    </h3>
                     <div
                       className={`text-sm space-y-3 ${isDark ? 'text-purple-300' : 'text-purple-700'}`}
                     >
@@ -895,11 +925,11 @@ export default function FormatTool() {
                   >
                     <Type className='h-8 w-8' />
                   </div>
-                  <h3
+                  <h2
                     className={`text-lg font-semibold mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}
                   >
                     Ready to Format
-                  </h3>
+                  </h2>
                   <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
                     Enter a timestamp or date and select a format to see the formatted result
                   </p>

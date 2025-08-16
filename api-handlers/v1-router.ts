@@ -5,6 +5,34 @@ interface Env {
   UPSTASH_REDIS_REST_TOKEN?: string;
 }
 
+interface ConvertInput {
+  timestamp: number;
+  timezone?: string;
+  targetTimezone?: string;
+}
+
+interface ConvertOutput {
+  timestamp: number;
+  iso: string;
+  utc: string;
+  local: string;
+  unix: number;
+  milliseconds: number;
+  formats?: Record<string, string>;
+}
+
+interface ConvertMetadata {
+  processingTime: string;
+  timestamp: string;
+  version: string;
+}
+
+interface ConvertResult {
+  input: ConvertInput;
+  output: ConvertOutput;
+  metadata?: ConvertMetadata;
+}
+
 export async function handleV1Routes(
   request: Request,
   env: Env,
@@ -38,7 +66,10 @@ export async function handleV1Routes(
   }
 }
 
-async function handleV1Convert(request: Request, env: Env): Promise<Response> {
+async function handleV1Convert(request: Request, _env: Env): Promise<Response> {
+  // eslint-disable-next-line no-unused-vars
+  void _env;
+
   // Enhanced convert with more features
   if (request.method !== 'POST') {
     return new Response(
@@ -78,7 +109,7 @@ async function handleV1Convert(request: Request, env: Env): Promise<Response> {
 
     const date = new Date(timestamp * 1000);
 
-    const result: any = {
+    const result: ConvertResult = {
       input: { timestamp, timezone, targetTimezone },
       output: {
         timestamp,
@@ -133,7 +164,10 @@ async function handleV1Convert(request: Request, env: Env): Promise<Response> {
   }
 }
 
-async function handleV1Batch(request: Request, env: Env): Promise<Response> {
+async function handleV1Batch(request: Request, _env: Env): Promise<Response> {
+  // eslint-disable-next-line no-unused-vars
+  void _env;
+
   if (request.method !== 'POST') {
     return new Response(
       JSON.stringify({
@@ -149,7 +183,7 @@ async function handleV1Batch(request: Request, env: Env): Promise<Response> {
 
   try {
     const body = await request.json();
-    const { timestamps, outputFormats = [] } = body;
+    const { timestamps } = body;
 
     if (!Array.isArray(timestamps) || timestamps.length === 0) {
       return new Response(
@@ -219,7 +253,12 @@ async function handleV1Batch(request: Request, env: Env): Promise<Response> {
   }
 }
 
-async function handleV1Formats(request: Request, env: Env): Promise<Response> {
+// eslint-disable-next-line no-unused-vars
+
+async function handleV1Formats(_request: Request, _env: Env): Promise<Response> {
+  void _request;
+  void _env;
+
   const formats = {
     timestamp: 'Unix timestamp (seconds since epoch)',
     milliseconds: 'Milliseconds since epoch',
@@ -240,7 +279,12 @@ async function handleV1Formats(request: Request, env: Env): Promise<Response> {
   );
 }
 
-async function handleV1Timezones(request: Request, env: Env): Promise<Response> {
+// eslint-disable-next-line no-unused-vars
+
+async function handleV1Timezones(_request: Request, _env: Env): Promise<Response> {
+  void _request;
+  void _env;
+
   // Basic timezone list (you can expand this)
   const timezones = [
     'UTC',
@@ -264,7 +308,8 @@ async function handleV1Timezones(request: Request, env: Env): Promise<Response> 
   );
 }
 
-async function handleV1Health(request: Request, env: Env): Promise<Response> {
+// eslint-disable-next-line no-unused-vars
+async function handleV1Health(_request: Request, _env: Env): Promise<Response> {
   return new Response(
     JSON.stringify({
       status: 'healthy',

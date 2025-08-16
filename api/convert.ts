@@ -241,7 +241,7 @@ const enhancedConvertHandler = async (req: VercelRequest, res: VercelResponse) =
       securityMiddleware(req, res, () => {
         // Then apply rate limiting
         createRateLimitMiddleware({
-          ruleSelector: req => ({
+          ruleSelector: _req => ({
             identifier: '/api/convert',
             limit: 120, // Will be overridden by strategy-based limits
             window: 60000, // 1 minute

@@ -1,6 +1,13 @@
 // Cache utilities and strategies for API responses
 
 import { RedisClient } from './redis-client';
+import { logDebug, logError, logWarn } from './utils/logger';
+
+interface Env {
+  UPSTASH_REDIS_REST_URL?: string;
+  UPSTASH_REDIS_REST_TOKEN?: string;
+  REDIS_ENABLED?: string;
+}
 
 export interface CacheConfig {
   ttl: number; // Time to live in seconds
@@ -13,6 +20,17 @@ export interface CacheStats {
   misses: number;
   hitRate: number;
   totalRequests: number;
+}
+
+interface HealthCheckStats {
+  redis: unknown;
+  cache: Record<string, CacheStats>;
+}
+
+interface HealthCheckResult {
+  status: string;
+  redis: boolean;
+  stats: HealthCheckStats;
 }
 
 // Cache configurations for different types of data
@@ -65,7 +83,7 @@ export class CacheManager {
   private redis: RedisClient;
   private stats: Map<string, CacheStats>;
 
-  constructor(env: any) {
+  constructor(env: Env) {
     this.redis = new RedisClient(env);
     this.stats = new Map();
   }
@@ -111,14 +129,17 @@ export class CacheManager {
       this.updateStats(configKey, hit);
 
       if (hit) {
-        console.log(`Cache HIT: ${key}`);
+        logDebug(`Cache HIT: ${key}`);
         return cached as T;
       } else {
-        console.log(`Cache MISS: ${key}`);
+        logDebug(`Cache MISS: ${key}`);
         return null;
       }
     } catch (error) {
-      console.error(`Cache GET error for ${configKey}:`, error);
+      logError(
+        `Cache GET error for ${configKey}`,
+        error instanceof Error ? error : new Error(String(error))
+      );
       this.updateStats(configKey, false);
       return null;
     }
@@ -138,12 +159,15 @@ export class CacheManager {
       const success = await this.redis.set(key, data, config.ttl);
 
       if (success) {
-        console.log(`Cache SET: ${key} (TTL: ${config.ttl}s)`);
+        logDebug(`Cache SET: ${key} (TTL: ${config.ttl}s)`);
       }
 
       return success;
     } catch (error) {
-      console.error(`Cache SET error for ${configKey}:`, error);
+      logError(
+        `Cache SET error for ${configKey}`,
+        error instanceof Error ? error : new Error(String(error))
+      );
       return false;
     }
   }
@@ -157,12 +181,15 @@ export class CacheManager {
       const success = await this.redis.del(key);
 
       if (success) {
-        console.log(`Cache DEL: ${key}`);
+        logDebug(`Cache DEL: ${key}`);
       }
 
       return success;
     } catch (error) {
-      console.error(`Cache DEL error for ${configKey}:`, error);
+      logError(
+        `Cache DEL error for ${configKey}`,
+        error instanceof Error ? error : new Error(String(error))
+      );
       return false;
     }
   }
@@ -185,12 +212,18 @@ export class CacheManager {
 
       // Cache the result (don't await to avoid blocking response)
       this.set(configKey, identifier, data).catch(error => {
-        console.error(`Background cache SET failed for ${configKey}:`, error);
+        logError(
+          `Background cache SET failed for ${configKey}`,
+          error instanceof Error ? error : new Error(String(error))
+        );
       });
 
       return data;
     } catch (error) {
-      console.error(`Fetch function failed for ${configKey}:`, error);
+      logError(
+        `Fetch function failed for ${configKey}`,
+        error instanceof Error ? error : new Error(String(error))
+      );
       throw error;
     }
   }
@@ -208,7 +241,10 @@ export class CacheManager {
       }
       return count;
     } catch (error) {
-      console.error(`Cache INCREMENT error for ${configKey}:`, error);
+      logError(
+        `Cache INCREMENT error for ${configKey}`,
+        error instanceof Error ? error : new Error(String(error))
+      );
       return 1; // Fallback value
     }
   }
@@ -228,7 +264,7 @@ export class CacheManager {
   }
 
   // Health check
-  async healthCheck(): Promise<{ status: string; redis: boolean; stats: any }> {
+  async healthCheck(): Promise<HealthCheckResult> {
     try {
       const redisPing = await this.redis.ping();
       const redisStats = this.redis.getStats();
@@ -253,7 +289,7 @@ export class CacheManager {
 
   // Clear all cache (useful for testing)
   async clearAll(): Promise<void> {
-    console.warn('Clearing all cache statistics');
+    logWarn('Clearing all cache statistics');
     this.stats.clear();
     // Note: We don't clear Redis here as it might affect other applications
   }

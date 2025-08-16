@@ -233,7 +233,7 @@ async function routeAdminRequest(
   req: AdminRequest,
   action: string,
   correlationId: string,
-  startTime: number
+  _startTime: number
 ): Promise<any> {
   const baseResponse = {
     success: true,
@@ -285,7 +285,7 @@ async function routeAdminRequest(
 /**
  * Individual action handlers
  */
-async function handleDashboard(req: AdminRequest, baseResponse: any): Promise<any> {
+async function handleDashboard(_req: AdminRequest, baseResponse: any): Promise<any> {
   const adminStats = adminAuth.getAdminStats();
   const queryStats = queryOptimizer.getQueryStats();
   const auditAnalytics = auditLogger.generateAnalytics({
@@ -339,7 +339,7 @@ async function handleUsers(req: AdminRequest, baseResponse: any): Promise<any> {
   throw new Error(`Method ${req.method} not supported for users endpoint`);
 }
 
-async function handleSessions(req: AdminRequest, baseResponse: any): Promise<any> {
+async function handleSessions(_req: AdminRequest, baseResponse: any): Promise<any> {
   const sessions = adminAuth.getSessions();
   return {
     ...baseResponse,
@@ -387,7 +387,7 @@ async function handleAudit(req: AdminRequest, baseResponse: any): Promise<any> {
   };
 }
 
-async function handleHealth(req: AdminRequest, baseResponse: any): Promise<any> {
+async function handleHealth(_req: AdminRequest, baseResponse: any): Promise<any> {
   // Would integrate with health monitoring system
   return {
     ...baseResponse,
@@ -407,7 +407,7 @@ async function handleHealth(req: AdminRequest, baseResponse: any): Promise<any> 
   };
 }
 
-async function handleMetrics(req: AdminRequest, baseResponse: any): Promise<any> {
+async function handleMetrics(_req: AdminRequest, baseResponse: any): Promise<any> {
   const adminStats = adminAuth.getAdminStats();
   const queryStats = queryOptimizer.getQueryStats();
   const auditAnalytics = auditLogger.generateAnalytics();
@@ -440,7 +440,7 @@ async function handleCache(req: AdminRequest, baseResponse: any): Promise<any> {
   };
 }
 
-async function handleSecurity(req: AdminRequest, baseResponse: any): Promise<any> {
+async function handleSecurity(_req: AdminRequest, baseResponse: any): Promise<any> {
   const recentAuditEvents = auditLogger.queryEvents({
     limit: 100,
     timeRange: {
@@ -495,12 +495,6 @@ async function handleQuery(req: AdminRequest, baseResponse: any): Promise<any> {
     ...baseResponse,
     data: result,
   };
-}
-
-// Set response headers and finalize
-function finalizeResponse(baseResponse: any, startTime: number): any {
-  baseResponse.metadata.processingTime = Date.now() - startTime;
-  return baseResponse;
 }
 
 export default enhancedAdminHandler;
