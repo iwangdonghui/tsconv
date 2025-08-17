@@ -790,12 +790,12 @@ export class EnhancedErrorManager {
   }
 
   private extractClientIP(req: VercelRequest): string {
-    const ip =
+    const ip: string =
       (req.headers['x-forwarded-for'] as string) ||
       (req.headers['x-real-ip'] as string) ||
       (req.connection?.remoteAddress as string) ||
       '127.0.0.1';
-    return (ip || '127.0.0.1').split(',')[0].trim();
+    return (ip || '127.0.0.1').split(',')[0]!.trim();
   }
 
   /**

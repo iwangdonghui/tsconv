@@ -221,6 +221,10 @@ export class SecurityConfigInitializer {
     // Get environment configuration
     const envConfig = SECURITY_ENVIRONMENT_CONFIGS[env] || SECURITY_ENVIRONMENT_CONFIGS.development;
 
+    if (!envConfig) {
+      throw new Error(`Security configuration not found for environment: ${env}`);
+    }
+
     // Create middleware configuration
     const middlewareConfig: SecurityMiddlewareConfig = {
       policyLevel: envConfig.policyLevel,
@@ -230,8 +234,8 @@ export class SecurityConfigInitializer {
       customPolicyConfig: envConfig.customPolicyOverrides,
       loggerConfig: {
         maxLogs: envConfig.maxLogs,
-        retentionPeriod: envConfig?.retentionPeriod || 7,
-        logLevel: envConfig?.logLevel || 'info',
+        retentionPeriod: envConfig.retentionPeriod || 7,
+        logLevel: envConfig.logLevel || 'info',
       },
     };
 
@@ -273,6 +277,11 @@ export class SecurityConfigInitializer {
 
     const envConfig =
       SECURITY_ENVIRONMENT_CONFIGS[environment] || SECURITY_ENVIRONMENT_CONFIGS.development;
+
+    if (!envConfig) {
+      throw new Error(`Security configuration not found for environment: ${environment}`);
+    }
+
     const mergedConfig = { ...envConfig, ...customConfig };
 
     // Update policy level
@@ -322,6 +331,13 @@ export class SecurityConfigInitializer {
     }
 
     const baseConfig = SECURITY_ENVIRONMENT_CONFIGS[this.currentEnvironment];
+
+    if (!baseConfig) {
+      throw new Error(
+        `Security configuration not found for environment: ${this.currentEnvironment}`
+      );
+    }
+
     let customConfig: Partial<SecurityEnvironmentConfig> = {};
 
     switch (useCase) {

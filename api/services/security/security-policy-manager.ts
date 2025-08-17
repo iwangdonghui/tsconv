@@ -5,10 +5,10 @@
 
 export type SecurityPolicyLevel = 'minimal' | 'standard' | 'strict' | 'maximum' | 'custom';
 export type ThreatSeverity = 'low' | 'medium' | 'high' | 'critical';
-export type SecurityEventType = 
-  | 'suspicious_request' 
-  | 'rate_limit_exceeded' 
-  | 'invalid_input' 
+export type SecurityEventType =
+  | 'suspicious_request'
+  | 'rate_limit_exceeded'
+  | 'invalid_input'
   | 'unauthorized_access'
   | 'malicious_payload'
   | 'bot_detected'
@@ -51,7 +51,7 @@ export interface SecurityPolicy {
   description: string;
   enabled: boolean;
   priority: number;
-  
+
   // Request filtering
   requestFiltering: {
     enabled: boolean;
@@ -62,7 +62,7 @@ export interface SecurityPolicy {
     allowedCountries?: string[];
     blockedCountries?: string[];
   };
-  
+
   // Input validation
   inputValidation: {
     enabled: boolean;
@@ -72,7 +72,7 @@ export interface SecurityPolicy {
     maxFieldCount: number;
     blockedPatterns: string[];
   };
-  
+
   // Rate limiting integration
   rateLimiting: {
     enabled: boolean;
@@ -80,7 +80,7 @@ export interface SecurityPolicy {
     adaptiveThrottling: boolean;
     penaltyMultiplier: number;
   };
-  
+
   // Bot detection
   botDetection: {
     enabled: boolean;
@@ -89,7 +89,7 @@ export interface SecurityPolicy {
     behaviorAnalysis: boolean;
     fingerprintTracking: boolean;
   };
-  
+
   // Threat detection
   threatDetection: {
     enabled: boolean;
@@ -99,7 +99,7 @@ export interface SecurityPolicy {
     mlBasedDetection: boolean;
     confidenceThreshold: number;
   };
-  
+
   // Response security
   responseSecurity: {
     hideServerInfo: boolean;
@@ -107,7 +107,7 @@ export interface SecurityPolicy {
     preventInfoLeakage: boolean;
     addSecurityHeaders: boolean;
   };
-  
+
   // Logging and monitoring
   logging: {
     enabled: boolean;
@@ -180,7 +180,7 @@ export const SECURITY_POLICY_PRESETS: Record<SecurityPolicyLevel, Partial<Securi
       retentionDays: 7,
     },
   },
-  
+
   standard: {
     level: 'standard',
     name: 'Standard Security',
@@ -238,7 +238,7 @@ export const SECURITY_POLICY_PRESETS: Record<SecurityPolicyLevel, Partial<Securi
       retentionDays: 30,
     },
   },
-  
+
   strict: {
     level: 'strict',
     name: 'Strict Security',
@@ -260,8 +260,17 @@ export const SECURITY_POLICY_PRESETS: Record<SecurityPolicyLevel, Partial<Securi
       maxFieldLength: 1000,
       maxFieldCount: 20,
       blockedPatterns: [
-        '<script', 'javascript:', 'data:text/html', 'vbscript:', 'onload=', 'onerror=',
-        'eval(', 'setTimeout(', 'setInterval(', 'Function(', 'constructor'
+        '<script',
+        'javascript:',
+        'data:text/html',
+        'vbscript:',
+        'onload=',
+        'onerror=',
+        'eval(',
+        'setTimeout(',
+        'setInterval(',
+        'Function(',
+        'constructor',
       ],
     },
     rateLimiting: {
@@ -300,7 +309,7 @@ export const SECURITY_POLICY_PRESETS: Record<SecurityPolicyLevel, Partial<Securi
       retentionDays: 90,
     },
   },
-  
+
   maximum: {
     level: 'maximum',
     name: 'Maximum Security',
@@ -322,9 +331,26 @@ export const SECURITY_POLICY_PRESETS: Record<SecurityPolicyLevel, Partial<Securi
       maxFieldLength: 500,
       maxFieldCount: 10,
       blockedPatterns: [
-        '<script', 'javascript:', 'data:text/html', 'vbscript:', 'onload=', 'onerror=',
-        'eval(', 'setTimeout(', 'setInterval(', 'Function(', 'constructor', 'prototype',
-        'union', 'select', 'insert', 'update', 'delete', 'drop', 'create', 'alter'
+        '<script',
+        'javascript:',
+        'data:text/html',
+        'vbscript:',
+        'onload=',
+        'onerror=',
+        'eval(',
+        'setTimeout(',
+        'setInterval(',
+        'Function(',
+        'constructor',
+        'prototype',
+        'union',
+        'select',
+        'insert',
+        'update',
+        'delete',
+        'drop',
+        'create',
+        'alter',
       ],
     },
     rateLimiting: {
@@ -363,7 +389,7 @@ export const SECURITY_POLICY_PRESETS: Record<SecurityPolicyLevel, Partial<Securi
       retentionDays: 365,
     },
   },
-  
+
   custom: {
     level: 'custom',
     name: 'Custom Security',
@@ -414,12 +440,12 @@ export class SecurityPolicyManager {
   updatePolicy(level: SecurityPolicyLevel, reason: string = 'Manual update'): void {
     const oldPolicy = this.currentPolicy;
     this.currentPolicy = this.createPolicyFromPreset(level);
-    
+
     // Record policy change
     this.policyHistory.push({
       policy: oldPolicy,
       timestamp: Date.now(),
-      reason
+      reason,
     });
 
     // Keep only last 100 policy changes
@@ -431,18 +457,21 @@ export class SecurityPolicyManager {
   /**
    * Apply custom policy configuration
    */
-  applyCustomPolicy(customConfig: Partial<SecurityPolicy>, reason: string = 'Custom configuration'): void {
+  applyCustomPolicy(
+    customConfig: Partial<SecurityPolicy>,
+    reason: string = 'Custom configuration'
+  ): void {
     const oldPolicy = this.currentPolicy;
     this.currentPolicy = {
       ...this.currentPolicy,
       ...customConfig,
-      level: 'custom'
+      level: 'custom',
     };
 
     this.policyHistory.push({
       policy: oldPolicy,
       timestamp: Date.now(),
-      reason
+      reason,
     });
   }
 
@@ -486,21 +515,28 @@ export class SecurityPolicyManager {
     }
 
     // Check blocked user agents
-    if (request.userAgent && policy.requestFiltering.blockedUserAgents.some(ua => 
-      request.userAgent!.toLowerCase().includes(ua.toLowerCase())
-    )) {
+    if (
+      request.userAgent &&
+      policy.requestFiltering.blockedUserAgents.some(ua =>
+        request.userAgent!.toLowerCase().includes(ua.toLowerCase())
+      )
+    ) {
       return { blocked: true, reason: 'User agent blocked' };
     }
 
     // Check country restrictions
     if (request.country) {
-      if (policy.requestFiltering.allowedCountries && 
-          !policy.requestFiltering.allowedCountries.includes(request.country)) {
+      if (
+        policy.requestFiltering.allowedCountries &&
+        !policy.requestFiltering.allowedCountries.includes(request.country)
+      ) {
         return { blocked: true, reason: 'Country not allowed' };
       }
 
-      if (policy.requestFiltering.blockedCountries && 
-          policy.requestFiltering.blockedCountries.includes(request.country)) {
+      if (
+        policy.requestFiltering.blockedCountries &&
+        policy.requestFiltering.blockedCountries.includes(request.country)
+      ) {
         return { blocked: true, reason: 'Country blocked' };
       }
     }
@@ -532,7 +568,9 @@ export class SecurityPolicyManager {
 
       // Check field length
       if (input.length > policy.inputValidation.maxFieldLength) {
-        violations.push(`Field length exceeds limit: ${input.length} > ${policy.inputValidation.maxFieldLength}`);
+        violations.push(
+          `Field length exceeds limit: ${input.length} > ${policy.inputValidation.maxFieldLength}`
+        );
       }
 
       // Sanitize input if enabled
@@ -548,14 +586,16 @@ export class SecurityPolicyManager {
     if (typeof input === 'object' && input !== null) {
       const fieldCount = Object.keys(input).length;
       if (fieldCount > policy.inputValidation.maxFieldCount) {
-        violations.push(`Field count exceeds limit: ${fieldCount} > ${policy.inputValidation.maxFieldCount}`);
+        violations.push(
+          `Field count exceeds limit: ${fieldCount} > ${policy.inputValidation.maxFieldCount}`
+        );
       }
     }
 
     return {
       valid: violations.length === 0,
       sanitized,
-      violations
+      violations,
     };
   }
 
@@ -564,7 +604,7 @@ export class SecurityPolicyManager {
    */
   getPolicySummary(): Record<string, unknown> {
     const policy = this.currentPolicy;
-    
+
     return {
       level: policy.level,
       name: policy.name,
@@ -577,8 +617,11 @@ export class SecurityPolicyManager {
         botDetection: policy.botDetection?.enabled || false,
         threatDetection: policy.threatDetection?.enabled || false,
       },
-      lastUpdated: this.policyHistory.length > 0 ? this.policyHistory[this.policyHistory.length - 1].timestamp : Date.now(),
-      historyCount: this.policyHistory.length
+      lastUpdated:
+        this.policyHistory.length > 0
+          ? this.policyHistory[this.policyHistory.length - 1]?.timestamp || Date.now()
+          : Date.now(),
+      historyCount: this.policyHistory.length,
     };
   }
 
@@ -586,11 +629,15 @@ export class SecurityPolicyManager {
    * Export policy configuration
    */
   exportPolicy(): string {
-    return JSON.stringify({
-      currentPolicy: this.currentPolicy,
-      customPolicies: Object.fromEntries(this.customPolicies),
-      policyHistory: this.policyHistory.slice(-10) // Last 10 changes
-    }, null, 2);
+    return JSON.stringify(
+      {
+        currentPolicy: this.currentPolicy,
+        customPolicies: Object.fromEntries(this.customPolicies),
+        policyHistory: this.policyHistory.slice(-10), // Last 10 changes
+      },
+      null,
+      2
+    );
   }
 
   /**
@@ -599,15 +646,15 @@ export class SecurityPolicyManager {
   importPolicy(configJson: string): void {
     try {
       const config = JSON.parse(configJson);
-      
+
       if (config.currentPolicy) {
         this.currentPolicy = config.currentPolicy;
       }
-      
+
       if (config.customPolicies) {
         this.customPolicies = new Map(Object.entries(config.customPolicies));
       }
-      
+
       if (config.policyHistory) {
         this.policyHistory = config.policyHistory;
       }

@@ -180,7 +180,7 @@ export const THREAT_PATTERNS: ThreatPattern[] = [
 export class ThreatDetectionEngine {
   private patterns: Map<string, ThreatPattern> = new Map();
   private fingerprints = new Map<string, RequestFingerprint>();
-  private anomalyBaseline = new Map<string, AnomalyScore>();
+  // private _anomalyBaseline = new Map<string, AnomalyScore>(); // TODO: Implement anomaly detection
   private detectionHistory: SecurityThreat[] = [];
   private cleanupInterval: ReturnType<typeof setInterval>;
 
@@ -507,7 +507,7 @@ export class ThreatDetectionEngine {
       url: string;
       headers: Record<string, string>;
     },
-    fingerprint: RequestFingerprint
+    _fingerprint: RequestFingerprint
   ): number {
     let score = 0;
 
