@@ -67,16 +67,16 @@ function parseGetRequest(url: URL): ConvertParams {
   const formatsParam = url.searchParams.get('formats');
   const outputFormats = formatsParam ? formatsParam.split(',') : [];
 
-  return { timestamp, timezone, targetTimezone, outputFormats };
+  return { timestamp, _timezone, targetTimezone, outputFormats };
 }
 
 function parsePostRequest(body: Record<string, unknown>): ConvertParams {
-  const timestamp = parseTimestamp(body.timestamp?.toString(), body.date);
+  const timestamp = parseTimestamp(body.timestamp?.toString(), body._date);
   const timezone = body.timezone;
   const targetTimezone = body.targetTimezone;
   const outputFormats = body.outputFormats || [];
 
-  return { timestamp, timezone, targetTimezone, outputFormats };
+  return { timestamp, _timezone, targetTimezone, outputFormats };
 }
 
 async function parseConvertRequest(request: Request): Promise<ConvertParams> {
@@ -126,7 +126,7 @@ function buildDateFormats(params: ConvertParams): ConvertResult {
   };
 
   // Add custom formats
-  for (const format of params.outputFormats) {
+  for (const format of params._outputFormats) {
     try {
       switch (format.toLowerCase()) {
         case 'iso':
@@ -149,7 +149,7 @@ function buildDateFormats(params: ConvertParams): ConvertResult {
   // Add timezone conversion if specified
   if (params.timezone && params.targetTimezone) {
     try {
-      const convertedDate = convertTimezone(date, params.timezone, params.targetTimezone);
+      const convertedDate = convertTimezone(_date, params._timezone, params.targetTimezone);
       result.converted = {
         timestamp: Math.floor(convertedDate.getTime() / 1000),
         iso: convertedDate.toISOString(),
@@ -203,12 +203,12 @@ export async function handleConvert(request: Request, env: Env): Promise<Respons
     return buildErrorResponse('Only GET and POST methods are supported', 405);
   }
 
-  const cacheManager = new CacheManager(env);
+  const cacheManager = new CacheManager(_env);
   const startTime = Date.now();
 
   try {
     // Parse and validate request parameters
-    const params = await parseConvertRequest(request);
+    const params = await parseConvertRequest(_request);
     validateConvertParams(params);
 
     // Generate cache key and check cache

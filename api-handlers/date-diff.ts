@@ -27,7 +27,7 @@ interface DateDiffRequest {
   includeTime?: boolean;
 }
 
-interface DateDiffResponse {
+interface _DateDiffResponse {
   success: boolean;
   data: {
     startDate: string;
@@ -55,11 +55,11 @@ interface DateDiffResponse {
 
 export async function handleDateDiff(request: Request, env: Env): Promise<Response> {
   const startTime = Date.now();
-  const securityManager = new SecurityManager(env);
-  const cacheManager = new CacheManager(env);
+  const securityManager = new SecurityManager(_env);
+  const cacheManager = new CacheManager(_env);
 
   // Apply security middleware
-  const securityCheck = await securityManager.checkRateLimit(request, RATE_LIMITS.API_GENERAL);
+  const securityCheck = await securityManager.checkRateLimit(_request, RATE_LIMITS.API_GENERAL);
   if (!securityCheck.allowed) {
     return new Response(
       JSON.stringify({
@@ -150,7 +150,7 @@ export async function handleDateDiff(request: Request, env: Env): Promise<Respon
         }
       );
 
-      recordAnalyticsMiddleware(request, response, env, startTime);
+      recordAnalyticsMiddleware(_request, response, _env, startTime);
       return response;
     }
 
@@ -179,7 +179,7 @@ export async function handleDateDiff(request: Request, env: Env): Promise<Respon
       }
     );
 
-    recordAnalyticsMiddleware(request, response, env, startTime);
+    recordAnalyticsMiddleware(_request, response, _env, startTime);
     return response;
   } catch (error) {
     console.error('Date diff API error:', error);
@@ -195,7 +195,7 @@ export async function handleDateDiff(request: Request, env: Env): Promise<Respon
       }
     );
 
-    recordAnalyticsMiddleware(request, response, env, startTime);
+    recordAnalyticsMiddleware(_request, response, _env, startTime);
     return response;
   }
 }

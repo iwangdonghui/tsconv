@@ -1,7 +1,7 @@
 // Redis client adapter for Cloudflare Workers/Pages
 // Supports both Upstash Redis and fallback to memory cache
 
-interface RedisResponse {
+interface _RedisResponse {
   result?: any;
   error?: string;
 }

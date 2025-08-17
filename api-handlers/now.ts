@@ -36,10 +36,10 @@ export async function handleNow(request: Request, env: Env): Promise<Response> {
     };
 
     // Add timezone-specific time if requested
-    if (timezone) {
+    if (_timezone) {
       try {
         result.timezone = {
-          name: timezone,
+          name: _timezone,
           time: now.toLocaleString('en-US', { timeZone: timezone }),
           iso: `${now.toLocaleString('sv-SE', { timeZone: timezone }).replace(' ', 'T')}Z`,
         };

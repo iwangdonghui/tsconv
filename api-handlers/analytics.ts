@@ -34,7 +34,7 @@ export class AnalyticsManager {
   private cacheManager: CacheManager;
 
   constructor(env: Env) {
-    this.cacheManager = new CacheManager(env);
+    this.cacheManager = new CacheManager(_env);
   }
 
   // Record an API request event
@@ -197,7 +197,7 @@ export class AnalyticsManager {
   }
 
   private async getEndpointStats(
-    date: string
+    _date: string
   ): Promise<Array<{ endpoint: string; count: number }>> {
     // This would need to be implemented based on available data
     // For now, return empty array
@@ -217,12 +217,12 @@ export class AnalyticsManager {
     return stats;
   }
 
-  private async getCountryStats(date: string): Promise<Record<string, number>> {
+  private async getCountryStats(_date: string): Promise<Record<string, number>> {
     // This would need to be implemented based on available data
     return {};
   }
 
-  private async getAverageResponseTime(date: string): Promise<number> {
+  private async getAverageResponseTime(_date: string): Promise<number> {
     // Calculate weighted average based on response time buckets
     const fast = (await this.getCounter(`analytics:daily:${date}:response_time:fast`)) || 0;
     const medium = (await this.getCounter(`analytics:daily:${date}:response_time:medium`)) || 0;

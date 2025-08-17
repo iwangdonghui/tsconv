@@ -14,8 +14,8 @@ export async function handleAnalytics(
   env: Env,
   path: string[]
 ): Promise<Response> {
-  const securityManager = new SecurityManager(env);
-  const analyticsManager = new AnalyticsManager(env);
+  const securityManager = new SecurityManager(_env);
+  const analyticsManager = new AnalyticsManager(_env);
 
   // Basic auth check
   const authHeader = request.headers.get('Authorization');
@@ -50,7 +50,7 @@ export async function handleAnalytics(
 
     switch (action) {
       case 'stats':
-        return await handleAnalyticsStats(analyticsManager, request, responseHeaders);
+        return await handleAnalyticsStats(analyticsManager, _request, responseHeaders);
 
       case 'realtime':
         return await handleRealTimeStats(analyticsManager, responseHeaders);
@@ -225,7 +225,7 @@ export async function recordAnalyticsMiddleware(
   startTime: number
 ): Promise<void> {
   try {
-    const analyticsManager = new AnalyticsManager(env);
+    const analyticsManager = new AnalyticsManager(_env);
     const url = new URL(request.url);
 
     const event = {
@@ -254,7 +254,7 @@ export async function securityMiddleware(
   env: Env
 ): Promise<{ allowed: boolean; response?: Response }> {
   try {
-    const securityManager = new SecurityManager(env);
+    const securityManager = new SecurityManager(_env);
     const url = new URL(request.url);
 
     // Determine rate limit config based on endpoint
@@ -280,7 +280,7 @@ export async function securityMiddleware(
     }
 
     // Check rate limit
-    const rateLimitResult = await securityManager.checkRateLimit(request, rateLimitConfig);
+    const rateLimitResult = await securityManager.checkRateLimit(_request, rateLimitConfig);
 
     if (!rateLimitResult.allowed) {
       // Log security event
@@ -321,7 +321,7 @@ export async function securityMiddleware(
     }
 
     // Check for suspicious activity
-    const suspiciousCheck = await securityManager.checkSuspiciousActivity(request);
+    const suspiciousCheck = await securityManager.checkSuspiciousActivity(_request);
 
     if (suspiciousCheck.suspicious) {
       // Log security event

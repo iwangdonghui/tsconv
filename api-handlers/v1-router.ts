@@ -14,15 +14,15 @@ export async function handleV1Routes(
 
   switch (endpoint) {
     case 'convert':
-      return handleV1Convert(request, env);
+      return handleV1Convert(_request, _env);
     case 'batch':
-      return handleV1Batch(request, env);
+      return handleV1Batch(_request, _env);
     case 'formats':
-      return handleV1Formats(request, env);
+      return handleV1Formats(_request, _env);
     case 'timezones':
-      return handleV1Timezones(request, env);
+      return handleV1Timezones(_request, _env);
     case 'health':
-      return handleV1Health(request, env);
+      return handleV1Health(_request, _env);
     default:
       return new Response(
         JSON.stringify({
@@ -58,7 +58,7 @@ async function handleV1Convert(request: Request, env: Env): Promise<Response> {
     const {
       timestamp,
       outputFormats = [],
-      timezone,
+      _timezone,
       targetTimezone,
       includeMetadata = false,
     } = body;
@@ -79,7 +79,7 @@ async function handleV1Convert(request: Request, env: Env): Promise<Response> {
     const date = new Date(timestamp * 1000);
 
     const result: any = {
-      input: { timestamp, timezone, targetTimezone },
+      input: { timestamp, _timezone, targetTimezone },
       output: {
         timestamp,
         iso: date.toISOString(),
@@ -93,7 +93,7 @@ async function handleV1Convert(request: Request, env: Env): Promise<Response> {
     // Add custom formats
     if (outputFormats.length > 0) {
       result.output.formats = {};
-      for (const format of outputFormats) {
+      for (const format of _outputFormats) {
         try {
           result.output.formats[format] = date.toLocaleString('en-US', { timeZone: format });
         } catch (error) {

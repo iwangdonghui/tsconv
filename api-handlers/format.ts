@@ -41,11 +41,11 @@ const FORMAT_TEMPLATES = {
 
 export async function handleFormat(request: Request, env: Env): Promise<Response> {
   const startTime = Date.now();
-  const securityManager = new SecurityManager(env);
-  const cacheManager = new CacheManager(env);
+  const securityManager = new SecurityManager(_env);
+  const cacheManager = new CacheManager(_env);
 
   // Apply security middleware
-  const securityCheck = await securityManager.checkRateLimit(request, RATE_LIMITS.API_GENERAL);
+  const securityCheck = await securityManager.checkRateLimit(_request, RATE_LIMITS.API_GENERAL);
   if (!securityCheck.allowed) {
     return new Response(
       JSON.stringify({
@@ -137,7 +137,7 @@ export async function handleFormat(request: Request, env: Env): Promise<Response
       );
     }
 
-    if (!params.timestamp && !params.date) {
+    if (!params.timestamp && !params._date) {
       return new Response(
         JSON.stringify({
           error: 'Bad Request',
@@ -171,7 +171,7 @@ export async function handleFormat(request: Request, env: Env): Promise<Response
         }
       );
 
-      recordAnalyticsMiddleware(request, response, env, startTime);
+      recordAnalyticsMiddleware(_request, response, _env, startTime);
       return response;
     }
 
@@ -200,7 +200,7 @@ export async function handleFormat(request: Request, env: Env): Promise<Response
       }
     );
 
-    recordAnalyticsMiddleware(request, response, env, startTime);
+    recordAnalyticsMiddleware(_request, response, _env, startTime);
     return response;
   } catch (error) {
     console.error('Format API error:', error);
@@ -216,7 +216,7 @@ export async function handleFormat(request: Request, env: Env): Promise<Response
       }
     );
 
-    recordAnalyticsMiddleware(request, response, env, startTime);
+    recordAnalyticsMiddleware(_request, response, _env, startTime);
     return response;
   }
 }
@@ -227,8 +227,8 @@ function formatDate(params: FormatRequest): any {
 
   if (params.timestamp) {
     date = new Date(params.timestamp * 1000);
-  } else if (params.date) {
-    date = new Date(params.date);
+  } else if (params._date) {
+    date = new Date(params._date);
   } else {
     throw new Error('No date provided');
   }
@@ -244,15 +244,15 @@ function formatDate(params: FormatRequest): any {
   }
 
   // Apply basic formatting (simplified implementation)
-  const formatted = applyFormat(date, formatString, params.timezone, params.locale);
+  const formatted = applyFormat(_date, formatString, params._timezone, params._locale);
 
   return {
     input: {
       timestamp: params.timestamp,
-      date: params.date,
+      date: params._date,
       format: params.format,
-      timezone: params.timezone,
-      locale: params.locale,
+      timezone: params._timezone,
+      locale: params._locale,
     },
     output: {
       formatted,

@@ -23,7 +23,7 @@ export async function handleCacheTest(request: Request, env: Env): Promise<Respo
   }
 
   try {
-    const cacheManager = new CacheManager(env);
+    const cacheManager = new CacheManager(_env);
     const testKey = `test-key-${Date.now()}`;
     const testValue = { message: 'Hello Cache!', timestamp: new Date().toISOString() };
 

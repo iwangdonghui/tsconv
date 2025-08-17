@@ -1,9 +1,9 @@
 // Cloudflare Pages adapter for admin API routes
 
-import { handleCacheAdmin } from './cache-admin';
-import { handleEnvDebug } from './env-debug';
-import { handleCacheTest } from './cache-test';
 import { handleAnalytics } from './analytics-api';
+import { handleCacheAdmin } from './cache-admin';
+import { handleCacheTest } from './cache-test';
+import { handleEnvDebug } from './env-debug';
 
 interface Env {
   UPSTASH_REDIS_REST_URL?: string;
@@ -34,19 +34,19 @@ export async function handleAdminRoutes(
 
   switch (endpoint) {
     case 'stats':
-      return handleAdminStats(request, env);
+      return handleAdminStats(_request, _env);
     case 'cache':
       // Handle cache admin with sub-paths
-      return handleCacheAdmin(request, env, path.slice(1));
+      return handleCacheAdmin(_request, _env, path.slice(1));
     case 'health':
-      return handleAdminHealth(request, env);
+      return handleAdminHealth(_request, _env);
     case 'env-debug':
-      return handleEnvDebug(request, env);
+      return handleEnvDebug(_request, _env);
     case 'cache-test':
-      return handleCacheTest(request, env);
+      return handleCacheTest(_request, _env);
     case 'analytics':
       // Handle analytics with sub-paths
-      return handleAnalytics(request, env, path.slice(1));
+      return handleAnalytics(_request, _env, path.slice(1));
     default:
       return new Response(
         JSON.stringify({
@@ -62,7 +62,7 @@ export async function handleAdminRoutes(
   }
 }
 
-async function handleAdminStats(request: Request, env: Env): Promise<Response> {
+async function handleAdminStats(_request: Request, _env: Env): Promise<Response> {
   try {
     // Mock stats for now (you can implement real metrics collection)
     const stats = {
@@ -112,7 +112,7 @@ async function handleAdminStats(request: Request, env: Env): Promise<Response> {
   }
 }
 
-async function handleAdminCache(request: Request, env: Env): Promise<Response> {
+export async function handleAdminCache(request: Request, env: Env): Promise<Response> {
   if (request.method === 'DELETE') {
     // Clear cache
     try {

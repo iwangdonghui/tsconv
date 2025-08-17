@@ -22,7 +22,7 @@ interface WorkdaysRequest {
   includeEndDate?: boolean;
 }
 
-interface WorkdaysResponse {
+interface _WorkdaysResponse {
   success: boolean;
   data: {
     startDate: string;
@@ -71,11 +71,11 @@ const COMMON_HOLIDAYS: Record<string, string[]> = {
 
 export async function handleWorkdays(request: Request, env: Env): Promise<Response> {
   const startTime = Date.now();
-  const securityManager = new SecurityManager(env);
-  const cacheManager = new CacheManager(env);
+  const securityManager = new SecurityManager(_env);
+  const cacheManager = new CacheManager(_env);
 
   // Apply security middleware
-  const securityCheck = await securityManager.checkRateLimit(request, RATE_LIMITS.API_GENERAL);
+  const securityCheck = await securityManager.checkRateLimit(_request, RATE_LIMITS.API_GENERAL);
   if (!securityCheck.allowed) {
     return new Response(
       JSON.stringify({
@@ -172,7 +172,7 @@ export async function handleWorkdays(request: Request, env: Env): Promise<Respon
       );
 
       // Record analytics
-      recordAnalyticsMiddleware(request, response, env, startTime);
+      recordAnalyticsMiddleware(_request, response, _env, startTime);
       return response;
     }
 
@@ -202,7 +202,7 @@ export async function handleWorkdays(request: Request, env: Env): Promise<Respon
     );
 
     // Record analytics
-    recordAnalyticsMiddleware(request, response, env, startTime);
+    recordAnalyticsMiddleware(_request, response, _env, startTime);
     return response;
   } catch (error) {
     console.error('Workdays API error:', error);
@@ -218,7 +218,7 @@ export async function handleWorkdays(request: Request, env: Env): Promise<Respon
       }
     );
 
-    recordAnalyticsMiddleware(request, response, env, startTime);
+    recordAnalyticsMiddleware(_request, response, _env, startTime);
     return response;
   }
 }

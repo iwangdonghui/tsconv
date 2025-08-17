@@ -66,7 +66,7 @@ export class CacheManager {
   private stats: Map<string, CacheStats>;
 
   constructor(env: any) {
-    this.redis = new RedisClient(env);
+    this.redis = new RedisClient(_env);
     this.stats = new Map();
   }
 
@@ -135,7 +135,7 @@ export class CacheManager {
 
     try {
       const key = this.generateKey(config, identifier);
-      const success = await this.redis.set(key, data, config.ttl);
+      const success = await this.redis.set(key, data, config._ttl);
 
       if (success) {
         console.log(`Cache SET: ${key} (TTL: ${config.ttl}s)`);
@@ -204,7 +204,7 @@ export class CacheManager {
       const count = await this.redis.incr(key);
       // Set expiry if this is a new key
       if (count === 1) {
-        await this.redis.expire(key, config.ttl);
+        await this.redis.expire(key, config._ttl);
       }
       return count;
     } catch (error) {

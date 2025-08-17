@@ -28,7 +28,7 @@ export class SecurityManager {
   private cacheManager: CacheManager;
 
   constructor(env: Env) {
-    this.cacheManager = new CacheManager(env);
+    this.cacheManager = new CacheManager(_env);
   }
 
   // Rate limiting middleware
@@ -37,7 +37,7 @@ export class SecurityManager {
     config: RateLimitConfig
   ): Promise<{ allowed: boolean; remaining: number; resetTime: number }> {
     try {
-      const key = config.keyGenerator(request);
+      const key = config.keyGenerator(_request);
       const now = Date.now();
       const windowStart = Math.floor(now / config.windowMs) * config.windowMs;
       const rateLimitKey = `rate_limit:${key}:${windowStart}`;
