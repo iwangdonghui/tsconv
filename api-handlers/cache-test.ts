@@ -1,6 +1,7 @@
 // Simple cache test endpoint
 
 import { CacheManager } from './cache-utils';
+import { logDebug, logError } from './utils/logger';
 
 interface Env {
   UPSTASH_REDIS_REST_URL?: string;
@@ -28,14 +29,14 @@ export async function handleCacheTest(request: Request, env: Env): Promise<Respo
     const testValue = { message: 'Hello Cache!', timestamp: new Date().toISOString() };
 
     // Test 1: Set a value
-    console.log(`Setting cache key: ${testKey}`);
+    logDebug(`Setting cache key: ${testKey}`);
     const setResult = await cacheManager.set('CONVERT_API', testKey, testValue);
-    console.log(`Set result: ${setResult}`);
+    logDebug(`Set result: ${setResult}`);
 
     // Test 2: Get the value immediately
-    console.log(`Getting cache key: ${testKey}`);
+    logDebug(`Getting cache key: ${testKey}`);
     const getResult = await cacheManager.get('CONVERT_API', testKey);
-    console.log(`Get result: ${getResult ? 'FOUND' : 'NOT FOUND'}`);
+    logDebug(`Get result: ${getResult ? 'FOUND' : 'NOT FOUND'}`);
 
     // Test 3: Redis stats
     const redisStats = cacheManager.getRedisStats();
@@ -62,7 +63,7 @@ export async function handleCacheTest(request: Request, env: Env): Promise<Respo
       }
     );
   } catch (error) {
-    console.error('Cache test error:', error);
+    logError('Cache test error', error instanceof Error ? error : new Error(String(error)));
 
     return new Response(
       JSON.stringify({

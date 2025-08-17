@@ -7,6 +7,7 @@
 
 import * as Sentry from '@sentry/react';
 import { onCLS, onFCP, onLCP, onTTFB } from 'web-vitals';
+import logger from '../utils/logger';
 
 // Import onINP separately to handle potential TypeScript issues
 let onINP: any = null;
@@ -104,11 +105,11 @@ class PerformanceMonitor {
    */
   public async initialize(): Promise<void> {
     if (this.isInitialized) {
-      console.warn('Performance monitoring already initialized');
+      logger.warn('Performance monitoring already initialized');
       return;
     }
 
-    console.log('🚀 Initializing performance monitoring...');
+    logger.info('🚀 Initializing performance monitoring...');
 
     // Initialize Web Vitals monitoring
     if (this.config.enableWebVitals) {
@@ -141,7 +142,7 @@ class PerformanceMonitor {
     }
 
     this.isInitialized = true;
-    console.log('✅ Performance monitoring initialized successfully');
+    logger.info('✅ Performance monitoring initialized successfully');
   }
 
   /**
@@ -184,9 +185,9 @@ class PerformanceMonitor {
       onLCP(reportMetric);
       onTTFB(reportMetric);
 
-      console.log('📊 Web Vitals monitoring enabled');
+      logger.info('📊 Web Vitals monitoring enabled');
     } catch (error) {
-      console.warn('Failed to initialize Web Vitals:', error);
+      logger.warn('Failed to initialize Web Vitals', { error: String(error) });
     }
   }
 
@@ -219,7 +220,7 @@ class PerformanceMonitor {
       document.addEventListener(eventType, recordFirstInteraction, { once: true, passive: true });
     });
 
-    console.log('📈 Custom metrics monitoring enabled');
+    logger.info('📈 Custom metrics monitoring enabled');
   }
 
   /**
@@ -260,9 +261,9 @@ class PerformanceMonitor {
       resourceObserver.observe({ entryTypes: ['resource'] });
       this.observers.push(resourceObserver);
 
-      console.log('🔗 Resource timing monitoring enabled');
+      logger.info('🔗 Resource timing monitoring enabled');
     } catch (error) {
-      console.warn('Resource timing monitoring not supported:', error);
+      logger.warn('Resource timing monitoring not supported', { error: String(error) });
     }
   }
 
@@ -312,9 +313,9 @@ class PerformanceMonitor {
       navigationObserver.observe({ entryTypes: ['navigation'] });
       this.observers.push(navigationObserver);
 
-      console.log('🧭 Navigation timing monitoring enabled');
+      logger.info('🧭 Navigation timing monitoring enabled');
     } catch (error) {
-      console.warn('Navigation timing monitoring not supported:', error);
+      logger.warn('Navigation timing monitoring not supported', { error: String(error) });
     }
   }
 
@@ -349,7 +350,7 @@ class PerformanceMonitor {
     setInterval(checkMemoryUsage, 30000);
     checkMemoryUsage(); // Initial check
 
-    console.log('💾 Memory monitoring enabled');
+    logger.info('💾 Memory monitoring enabled');
   }
 
   /**
@@ -383,9 +384,9 @@ class PerformanceMonitor {
       userTimingObserver.observe({ entryTypes: ['measure'] });
       this.observers.push(userTimingObserver);
 
-      console.log('⏱️ User timing monitoring enabled');
+      logger.info('⏱️ User timing monitoring enabled');
     } catch (error) {
-      console.warn('User timing monitoring not supported:', error);
+      logger.warn('User timing monitoring not supported', { error: String(error) });
     }
   }
 
@@ -401,7 +402,7 @@ class PerformanceMonitor {
 
     // Report to console in development
     if (this.config.reportToConsole) {
-      console.log(`📊 Performance Metric: ${metric.name}`, {
+      logger.debug(`📊 Performance Metric: ${metric.name}`, {
         value: metric.value,
         rating: metric.rating,
         url: metric.url,
@@ -452,7 +453,7 @@ class PerformanceMonitor {
         });
       }
     } catch (error) {
-      console.warn('Failed to report metric to Sentry:', error);
+      logger.warn('Failed to report metric to Sentry', { error: String(error) });
     }
   }
 
@@ -462,7 +463,7 @@ class PerformanceMonitor {
   private reportToAnalytics(metric: PerformanceMetric): void {
     // Placeholder for analytics integration
     // Could integrate with Google Analytics, Mixpanel, etc.
-    console.log('📈 Analytics report:', metric);
+    logger.info('📈 Analytics report:', metric as unknown as Record<string, unknown>);
   }
 
   /**

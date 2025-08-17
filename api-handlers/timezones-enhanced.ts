@@ -1,8 +1,9 @@
 // Enhanced timezones API with search and detailed information
 
-import { CacheManager } from './cache-utils';
-import { SecurityManager, RATE_LIMITS } from './security';
 import { recordAnalyticsMiddleware } from './analytics-api';
+import { CacheManager } from './cache-utils';
+import { RATE_LIMITS, SecurityManager } from './security';
+import { logError } from './utils/logger';
 
 interface Env {
   UPSTASH_REDIS_REST_URL?: string;
@@ -21,6 +22,22 @@ interface TimezoneInfo {
   city: string;
   isDST: boolean;
   utcOffset: string;
+}
+
+interface ConversionResult {
+  originalTimestamp: number;
+  convertedTimestamp: number;
+  fromTimezone: TimezoneInfo;
+  toTimezone: TimezoneInfo;
+  offsetDifference: number;
+  originalDate: string;
+  convertedDate: string;
+}
+
+interface ConversionResponse {
+  success: boolean;
+  result?: ConversionResult;
+  error?: string;
 }
 
 // Comprehensive timezone data (subset for demo)
@@ -260,7 +277,10 @@ export async function handleTimezonesEnhanced(request: Request, env: Env): Promi
     try {
       await cacheManager.set('TIMEZONES', cacheKey, result);
     } catch (error) {
-      console.error('Failed to cache timezones result:', error);
+      logError(
+        'Failed to cache timezones result',
+        error instanceof Error ? error : new Error(String(error))
+      );
     }
 
     const response = new Response(
@@ -281,7 +301,7 @@ export async function handleTimezonesEnhanced(request: Request, env: Env): Promi
     recordAnalyticsMiddleware(request, response, env, startTime);
     return response;
   } catch (error) {
-    console.error('Timezones API error:', error);
+    logError('Timezones API error', error instanceof Error ? error : new Error(String(error)));
 
     const response = new Response(
       JSON.stringify({
@@ -321,7 +341,7 @@ export function convertBetweenTimezones(
   timestamp: number,
   fromTimezone: string,
   toTimezone: string
-): { success: boolean; result?: any; error?: string } {
+): ConversionResponse {
   try {
     const fromTz = getTimezoneById(fromTimezone);
     const toTz = getTimezoneById(toTimezone);

@@ -2,6 +2,22 @@
  * Utility functions for timestamp and timezone conversions
  */
 
+import { ConversionData } from '../types/api';
+
+// Interface for conversion result - extends ConversionData for compatibility
+interface ConversionResult extends ConversionData {
+  iso?: string;
+  utc?: string;
+  local?: string;
+  conversionError?: string;
+  converted?: {
+    timestamp: number;
+    iso: string;
+    utc: string;
+    local: string;
+  };
+}
+
 export function convertTimezone(date: Date, fromTimezone: string, toTimezone: string): Date {
   try {
     // Use Intl.DateTimeFormat for timezone conversion
@@ -202,15 +218,17 @@ export async function convertTimestamp(
   outputFormats: string[] = [],
   timezone?: string,
   targetTimezone?: string
-): Promise<any> {
+): Promise<ConversionResult> {
   const date = new Date(timestamp * 1000);
 
   // Basic conversion data
-  const data: any = {
+  const data: ConversionResult = {
+    input: timestamp,
     timestamp,
     iso: date.toISOString(),
     utc: date.toUTCString(),
     local: date.toLocaleString(),
+    formats: {},
   };
 
   // Add timezone conversion if specified
@@ -224,6 +242,7 @@ export async function convertTimestamp(
         data.converted = {
           timestamp: Math.floor(convertedDate.getTime() / 1000),
           iso: convertedDate.toISOString(),
+          utc: convertedDate.toISOString(),
           local: convertedDate.toLocaleString(),
         };
       }
@@ -248,10 +267,10 @@ export async function convertTimestamp(
             data.formats.local = date.toLocaleString();
             break;
           case 'unix':
-            data.formats.unix = timestamp;
+            data.formats.unix = timestamp.toString();
             break;
           case 'milliseconds':
-            data.formats.milliseconds = timestamp * 1000;
+            data.formats.milliseconds = (timestamp * 1000).toString();
             break;
           default:
             // Try to use as locale string format

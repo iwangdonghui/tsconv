@@ -1,6 +1,6 @@
 import { BatchConversionResult, ValidationError, ValidationResult } from '../types/api';
 
-export function validateBatchRequest(body: any): ValidationResult {
+export function validateBatchRequest(body: unknown): ValidationResult {
   const errors: ValidationError[] = [];
   const warnings: ValidationError[] = [];
 
@@ -13,15 +13,18 @@ export function validateBatchRequest(body: any): ValidationResult {
     return { valid: false, errors };
   }
 
+  // Type guard for body structure
+  const bodyObj = body as Record<string, unknown>;
+
   // Validate items array
-  if (!body.items || !Array.isArray(body.items)) {
+  if (!bodyObj.items || !Array.isArray(bodyObj.items)) {
     errors.push({
       field: 'items',
       message: 'Items must be an array',
       code: 'INVALID_ITEMS_TYPE',
     });
   } else {
-    if (body.items.length === 0) {
+    if (bodyObj.items.length === 0) {
       errors.push({
         field: 'items',
         message: 'Items array cannot be empty',
@@ -29,7 +32,7 @@ export function validateBatchRequest(body: any): ValidationResult {
       });
     }
 
-    if (body.items.length > 100) {
+    if (bodyObj.items.length > 100) {
       errors.push({
         field: 'items',
         message: 'Maximum 100 items allowed per batch request',
@@ -38,7 +41,7 @@ export function validateBatchRequest(body: any): ValidationResult {
     }
 
     // Validate individual items
-    body.items.forEach((item: any, index: number) => {
+    bodyObj.items.forEach((item: unknown, index: number) => {
       if (item === null || item === undefined) {
         errors.push({
           field: `items[${index}]`,
@@ -65,15 +68,15 @@ export function validateBatchRequest(body: any): ValidationResult {
   }
 
   // Validate outputFormat if provided
-  if (body.outputFormat !== undefined) {
-    if (!Array.isArray(body.outputFormat)) {
+  if (bodyObj.outputFormat !== undefined) {
+    if (!Array.isArray(bodyObj.outputFormat)) {
       errors.push({
         field: 'outputFormat',
         message: 'outputFormat must be an array of strings',
         code: 'INVALID_OUTPUT_FORMAT_TYPE',
       });
     } else {
-      body.outputFormat.forEach((format: string, index: number) => {
+      (bodyObj.outputFormat as unknown[]).forEach((format: unknown, index: number) => {
         if (typeof format !== 'string') {
           errors.push({
             field: `outputFormat[${index}]`,
@@ -92,48 +95,48 @@ export function validateBatchRequest(body: any): ValidationResult {
   }
 
   // Validate timezone parameters
-  if (body.timezone !== undefined) {
-    if (typeof body.timezone !== 'string') {
+  if (bodyObj.timezone !== undefined) {
+    if (typeof bodyObj.timezone !== 'string') {
       errors.push({
         field: 'timezone',
         message: 'timezone must be a string',
         code: 'INVALID_TIMEZONE_TYPE',
       });
-    } else if (!isValidTimezone(body.timezone)) {
+    } else if (!isValidTimezone(bodyObj.timezone)) {
       errors.push({
         field: 'timezone',
-        message: `Invalid timezone: ${body.timezone}`,
+        message: `Invalid timezone: ${bodyObj.timezone}`,
         code: 'INVALID_TIMEZONE_VALUE',
       });
     }
   }
 
-  if (body.targetTimezone !== undefined) {
-    if (typeof body.targetTimezone !== 'string') {
+  if (bodyObj.targetTimezone !== undefined) {
+    if (typeof bodyObj.targetTimezone !== 'string') {
       errors.push({
         field: 'targetTimezone',
         message: 'targetTimezone must be a string',
         code: 'INVALID_TARGET_TIMEZONE_TYPE',
       });
-    } else if (!isValidTimezone(body.targetTimezone)) {
+    } else if (!isValidTimezone(bodyObj.targetTimezone)) {
       errors.push({
         field: 'targetTimezone',
-        message: `Invalid target timezone: ${body.targetTimezone}`,
+        message: `Invalid target timezone: ${bodyObj.targetTimezone}`,
         code: 'INVALID_TARGET_TIMEZONE_VALUE',
       });
     }
   }
 
   // Validate options object
-  if (body.options !== undefined) {
-    if (typeof body.options !== 'object' || body.options === null) {
+  if (bodyObj.options !== undefined) {
+    if (typeof bodyObj.options !== 'object' || bodyObj.options === null) {
       errors.push({
         field: 'options',
         message: 'options must be an object',
         code: 'INVALID_OPTIONS_TYPE',
       });
     } else {
-      const options = body.options;
+      const options = bodyObj.options as Record<string, unknown>;
       if (options.continueOnError !== undefined && typeof options.continueOnError !== 'boolean') {
         errors.push({
           field: 'options.continueOnError',
@@ -160,9 +163,9 @@ export function validateBatchRequest(body: any): ValidationResult {
   }
 
   // Validate cacheControl if provided
-  if (body.cacheControl !== undefined) {
+  if (bodyObj.cacheControl !== undefined) {
     const validCacheControls = ['no-cache', 'force-refresh'];
-    if (!validCacheControls.includes(body.cacheControl)) {
+    if (!validCacheControls.includes(bodyObj.cacheControl as string)) {
       errors.push({
         field: 'cacheControl',
         message: 'cacheControl must be one of: no-cache, force-refresh',

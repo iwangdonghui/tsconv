@@ -5,7 +5,7 @@
  * to help identify security vulnerabilities and compliance issues.
  */
 
-import { VercelResponse } from '@vercel/node';
+import { VercelRequest, VercelResponse } from '@vercel/node';
 
 // ============================================================================
 // Security Audit Types
@@ -399,7 +399,7 @@ function generateRecommendations(results: SecurityAuditResult[]): string[] {
 /**
  * Checks if the current request is over HTTPS
  */
-export function isSecureConnection(req: any): boolean {
+export function isSecureConnection(req: VercelRequest): boolean {
   return (
     req.headers['x-forwarded-proto'] === 'https' ||
     req.headers['x-forwarded-ssl'] === 'on' ||

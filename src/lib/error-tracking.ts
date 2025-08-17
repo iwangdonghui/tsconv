@@ -1,6 +1,6 @@
 /**
  * Global Error Tracking and Monitoring
- * 
+ *
  * This module provides comprehensive error tracking for the application,
  * including unhandled errors, promise rejections, and custom error reporting.
  */
@@ -30,7 +30,7 @@ let isInitialized = false;
  */
 export function initializeErrorTracking(customConfig?: Partial<ErrorTrackingConfig>): void {
   if (isInitialized) {
-    console.warn('Error tracking already initialized');
+    logger.warn('Error tracking already initialized');
     return;
   }
 
@@ -39,15 +39,15 @@ export function initializeErrorTracking(customConfig?: Partial<ErrorTrackingConf
 
   // Set up global error handlers
   setupGlobalErrorHandlers();
-  
+
   // Set up performance monitoring
   setupPerformanceMonitoring();
-  
+
   // Set up user interaction tracking
   setupUserInteractionTracking();
 
   isInitialized = true;
-  console.log('Global error tracking initialized');
+  logger.info('Global error tracking initialized');
 }
 
 /**
@@ -55,9 +55,9 @@ export function initializeErrorTracking(customConfig?: Partial<ErrorTrackingConf
  */
 function setupGlobalErrorHandlers(): void {
   // Handle unhandled JavaScript errors
-  window.addEventListener('error', (event) => {
+  window.addEventListener('error', event => {
     const error = event.error || new Error(event.message);
-    
+
     reportError(error, {
       type: 'unhandled_error',
       filename: event.filename,
@@ -71,11 +71,9 @@ function setupGlobalErrorHandlers(): void {
   });
 
   // Handle unhandled promise rejections
-  window.addEventListener('unhandledrejection', (event) => {
-    const error = event.reason instanceof Error 
-      ? event.reason 
-      : new Error(String(event.reason));
-    
+  window.addEventListener('unhandledrejection', event => {
+    const error = event.reason instanceof Error ? event.reason : new Error(String(event.reason));
+
     reportError(error, {
       type: 'unhandled_promise_rejection',
       reason: event.reason,
@@ -86,19 +84,23 @@ function setupGlobalErrorHandlers(): void {
   });
 
   // Handle resource loading errors
-  window.addEventListener('error', (event) => {
-    if (event.target && event.target !== window) {
-      const target = event.target as HTMLElement;
-      
-      reportError(new Error(`Resource loading failed: ${target.tagName}`), {
-        type: 'resource_error',
-        tagName: target.tagName,
-        src: (target as any).src || (target as any).href,
-        url: window.location.href,
-        timestamp: new Date().toISOString(),
-      });
-    }
-  }, true);
+  window.addEventListener(
+    'error',
+    event => {
+      if (event.target && event.target !== window) {
+        const target = event.target as HTMLElement;
+
+        reportError(new Error(`Resource loading failed: ${target.tagName}`), {
+          type: 'resource_error',
+          tagName: target.tagName,
+          src: (target as any).src || (target as any).href,
+          url: window.location.href,
+          timestamp: new Date().toISOString(),
+        });
+      }
+    },
+    true
+  );
 }
 
 /**
@@ -108,9 +110,10 @@ function setupPerformanceMonitoring(): void {
   // Monitor long tasks
   if ('PerformanceObserver' in window) {
     try {
-      const longTaskObserver = new PerformanceObserver((list) => {
+      const longTaskObserver = new PerformanceObserver(list => {
         for (const entry of list.getEntries()) {
-          if (entry.duration > 50) { // Tasks longer than 50ms
+          if (entry.duration > 50) {
+            // Tasks longer than 50ms
             reportPerformanceIssue('Long Task Detected', {
               duration: entry.duration,
               startTime: entry.startTime,
@@ -120,7 +123,7 @@ function setupPerformanceMonitoring(): void {
           }
         }
       });
-      
+
       longTaskObserver.observe({ entryTypes: ['longtask'] });
     } catch (error) {
       console.warn('Long task monitoring not supported');
@@ -128,9 +131,10 @@ function setupPerformanceMonitoring(): void {
 
     // Monitor layout shifts
     try {
-      const clsObserver = new PerformanceObserver((list) => {
+      const clsObserver = new PerformanceObserver(list => {
         for (const entry of list.getEntries()) {
-          if ((entry as any).value > 0.1) { // CLS threshold
+          if ((entry as any).value > 0.1) {
+            // CLS threshold
             reportPerformanceIssue('Layout Shift Detected', {
               value: (entry as any).value,
               sources: (entry as any).sources,
@@ -139,7 +143,7 @@ function setupPerformanceMonitoring(): void {
           }
         }
       });
-      
+
       clsObserver.observe({ entryTypes: ['layout-shift'] });
     } catch (error) {
       console.warn('Layout shift monitoring not supported');
@@ -152,9 +156,9 @@ function setupPerformanceMonitoring(): void {
  */
 function setupUserInteractionTracking(): void {
   // Track clicks that might lead to errors
-  document.addEventListener('click', (event) => {
+  document.addEventListener('click', event => {
     const target = event.target as HTMLElement;
-    
+
     Sentry.addBreadcrumb({
       message: 'User clicked element',
       category: 'ui.click',
@@ -169,9 +173,9 @@ function setupUserInteractionTracking(): void {
   });
 
   // Track form submissions
-  document.addEventListener('submit', (event) => {
+  document.addEventListener('submit', event => {
     const target = event.target as HTMLFormElement;
-    
+
     Sentry.addBreadcrumb({
       message: 'Form submitted',
       category: 'ui.form',
@@ -210,7 +214,7 @@ export function reportError(error: Error, context?: Record<string, any>): void {
 
   // Sentry reporting
   if (config.enableSentryReporting) {
-    Sentry.withScope((scope) => {
+    Sentry.withScope(scope => {
       if (context) {
         scope.setContext('error_context', context);
       }
@@ -230,7 +234,7 @@ export function reportError(error: Error, context?: Record<string, any>): void {
  */
 export function reportPerformanceIssue(message: string, context?: Record<string, any>): void {
   if (config.enableSentryReporting) {
-    Sentry.withScope((scope) => {
+    Sentry.withScope(scope => {
       if (context) {
         scope.setContext('performance_context', context);
       }
@@ -307,11 +311,9 @@ export function getErrorStats(): {
 } {
   const errors = getStoredErrors();
   const now = Date.now();
-  const oneHourAgo = now - (60 * 60 * 1000);
+  const oneHourAgo = now - 60 * 60 * 1000;
 
-  const recentErrors = errors.filter(error => 
-    new Date(error.timestamp).getTime() > oneHourAgo
-  );
+  const recentErrors = errors.filter(error => new Date(error.timestamp).getTime() > oneHourAgo);
 
   const errorTypes: Record<string, number> = {};
   errors.forEach(error => {

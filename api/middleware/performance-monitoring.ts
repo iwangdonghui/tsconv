@@ -226,24 +226,27 @@ export const performanceMonitoringMiddleware = (options: PerformanceMonitoringOp
     let errorCode: string | undefined;
 
     // Capture response data
-    res.json = function (data: any) {
+    res.json = function (data: unknown) {
       responseSize = JSON.stringify(data).length;
 
+      // Type guard for response data
+      const responseData = data as Record<string, any>;
+
       // Check for cache hit
-      if (data.cache?.hit) {
+      if (responseData.cache?.hit) {
         cacheHit = true;
       }
 
       // Check for rate limiting
-      if (data.error?.code === 'RATE_LIMIT_EXCEEDED') {
+      if (responseData.error?.code === 'RATE_LIMIT_EXCEEDED') {
         rateLimited = true;
-        errorCode = data.error.code;
+        errorCode = responseData.error.code;
       }
 
       return originalJson.call(this, data);
     };
 
-    res.send = function (data: any) {
+    res.send = function (data: unknown) {
       if (typeof data === 'string') {
         responseSize = data.length;
       } else {
@@ -253,7 +256,7 @@ export const performanceMonitoringMiddleware = (options: PerformanceMonitoringOp
       return originalSend.call(this, data);
     };
 
-    res.end = function (chunk?: any) {
+    res.end = function (chunk?: unknown) {
       if (chunk) {
         responseSize = typeof chunk === 'string' ? chunk.length : JSON.stringify(chunk).length;
       }

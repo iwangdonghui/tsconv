@@ -171,7 +171,7 @@ function generateAnonymousUserId(): string {
 function sanitizeTransactionName(transaction: string): string {
   // Remove potential sensitive data from URLs
   return transaction
-    .replace(/\/api\/[^\/]+\/[a-f0-9-]{36}/g, '/api/*/[uuid]')
+    .replace(/\/api\/[^/]+\/[a-f0-9-]{36}/g, '/api/*/[uuid]')
     .replace(/\?.*$/, '')
     .replace(/\/\d+/g, '/[id]');
 }

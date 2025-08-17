@@ -12,7 +12,7 @@ import {
   CacheSetOptions,
 } from './interfaces';
 
-interface UpstashConfig {
+export interface UpstashConfig {
   url?: string;
   token?: string;
   fallbackToMemory?: boolean;
@@ -74,19 +74,19 @@ export class UpstashCacheService extends BaseCacheService {
     this.connected = false;
   }
 
-  private async makeUpstashRequest(command: string[], retries = 3): Promise<any> {
-    if (!this.connected) {
-      throw new Error('Upstash not connected');
-    }
+  // private async makeUpstashRequest(command: string[], retries = 3): Promise<any> {
+  //   if (!this.connected) {
+  //     throw new Error('Upstash not connected');
+  //   }
 
-    // Placeholder for Upstash REST API request
-    // In real implementation: make HTTP request to Upstash REST API
-    // const response = await fetch(`${this.upstashConfig.url}/${command.join('/')}`, {
-    //   headers: { 'Authorization': `Bearer ${this.upstashConfig.token}` }
-    // });
+  //   // Placeholder for Upstash REST API request
+  //   // In real implementation: make HTTP request to Upstash REST API
+  //   // const response = await fetch(`${this.upstashConfig.url}/${command.join('/')}`, {
+  //   //   headers: { 'Authorization': `Bearer ${this.upstashConfig.token}` }
+  //   // });
 
-    throw new Error('Upstash request not implemented');
-  }
+  //   throw new Error('Upstash request not implemented');
+  // }
 
   async get<T>(key: string, options: CacheGetOptions = {}): Promise<T | null> {
     try {
@@ -295,7 +295,7 @@ export class UpstashCacheService extends BaseCacheService {
   }
 
   // Batch operations
-  async mget<T>(keys: string[]): Promise<(T | null)[]> {
+  override async mget<T>(keys: string[]): Promise<(T | null)[]> {
     if (!this.connected && this.fallbackCache) {
       return (await this.fallbackCache.mget(keys)) as (T | null)[];
     }
@@ -305,7 +305,7 @@ export class UpstashCacheService extends BaseCacheService {
     return keys.map(() => null);
   }
 
-  async mset(operations: CacheBatchOperation[]): Promise<void> {
+  override async mset(operations: CacheBatchOperation[]): Promise<void> {
     if (!this.connected && this.fallbackCache) {
       return await this.fallbackCache.mset(operations);
     }
@@ -314,7 +314,7 @@ export class UpstashCacheService extends BaseCacheService {
     // In real implementation: use pipeline or multiple requests
   }
 
-  async mdelete(keys: string[]): Promise<number> {
+  override async mdelete(keys: string[]): Promise<number> {
     if (!this.connected && this.fallbackCache) {
       return await this.fallbackCache.mdelete(keys);
     }

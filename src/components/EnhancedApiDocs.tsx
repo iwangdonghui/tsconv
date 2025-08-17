@@ -230,14 +230,14 @@ const EnhancedApiDocs = () => {
 
                       <div className='space-y-4'>
                         <div>
-                          <h4 className='font-semibold mb-2'>Parameters</h4>
+                          <h3 className='font-semibold mb-2'>Parameters</h3>
                           <div className='bg-slate-100 dark:bg-slate-700 p-3 rounded text-sm'>
                             <code>{endpoint.example}</code>
                           </div>
                         </div>
 
                         <div>
-                          <h4 className='font-semibold mb-2'>Response Example</h4>
+                          <h3 className='font-semibold mb-2'>Response Example</h3>
                           <div className='bg-slate-100 dark:bg-slate-700 p-3 rounded text-xs font-mono sm:overflow-visible overflow-x-auto'>
                             <pre className='sm:whitespace-pre-wrap sm:break-words whitespace-pre'>
                               {JSON.stringify(

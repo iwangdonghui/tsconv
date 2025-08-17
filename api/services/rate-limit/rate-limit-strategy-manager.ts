@@ -3,16 +3,16 @@
  * Manages multiple rate limiting strategies and applies them based on context
  */
 
-import { RateLimitRule, RateLimitResult } from '../../types/api';
+import { RateLimitRule } from '../../types/api';
 import {
-  RateLimitStrategyType,
-  RateLimitStrategyConfig,
-  RateLimitContext,
-  RateLimitStrategyResult,
   BaseRateLimitStrategy,
   FixedWindowStrategy,
+  RateLimitContext,
+  RateLimitStrategyConfig,
+  RateLimitStrategyResult,
+  RateLimitStrategyType,
   SlidingWindowStrategy,
-  TokenBucketStrategy
+  TokenBucketStrategy,
 } from './rate-limit-strategy';
 
 export interface EndpointRateLimitConfig {
@@ -59,7 +59,7 @@ export const DEFAULT_STRATEGY_CONFIGS: Record<RateLimitStrategyType, RateLimitSt
     description: 'Traditional fixed time window rate limiting',
     parameters: {},
     priority: 1,
-    enabled: true
+    enabled: true,
   },
   'sliding-window': {
     type: 'sliding-window',
@@ -67,40 +67,40 @@ export const DEFAULT_STRATEGY_CONFIGS: Record<RateLimitStrategyType, RateLimitSt
     description: 'Sliding time window for smoother rate limiting',
     parameters: {},
     priority: 2,
-    enabled: true
+    enabled: true,
   },
   'token-bucket': {
     type: 'token-bucket',
     name: 'Token Bucket',
     description: 'Token bucket algorithm for burst handling',
     parameters: {
-      burstMultiplier: 2
+      burstMultiplier: 2,
     },
     priority: 3,
-    enabled: true
+    enabled: true,
   },
   'leaky-bucket': {
     type: 'leaky-bucket',
     name: 'Leaky Bucket',
     description: 'Leaky bucket for steady rate limiting',
     parameters: {
-      leakRate: 1
+      leakRate: 1,
     },
     priority: 4,
-    enabled: false
+    enabled: false,
   },
-  'adaptive': {
+  adaptive: {
     type: 'adaptive',
     name: 'Adaptive',
     description: 'Adaptive rate limiting based on system load',
     parameters: {
       baseStrategy: 'sliding-window',
-      loadFactor: 0.8
+      loadFactor: 0.8,
     },
     priority: 5,
-    enabled: false
+    enabled: false,
   },
-  'tiered': {
+  tiered: {
     type: 'tiered',
     name: 'Tiered',
     description: 'Tiered limits based on user type',
@@ -109,20 +109,20 @@ export const DEFAULT_STRATEGY_CONFIGS: Record<RateLimitStrategyType, RateLimitSt
         anonymous: { multiplier: 1 },
         authenticated: { multiplier: 2 },
         premium: { multiplier: 5 },
-        admin: { multiplier: 10 }
-      }
+        admin: { multiplier: 10 },
+      },
     },
     priority: 6,
-    enabled: false
+    enabled: false,
   },
-  'custom': {
+  custom: {
     type: 'custom',
     name: 'Custom',
     description: 'Custom strategy implementation',
     parameters: {},
     priority: 7,
-    enabled: false
-  }
+    enabled: false,
+  },
 };
 
 /**
@@ -131,12 +131,15 @@ export const DEFAULT_STRATEGY_CONFIGS: Record<RateLimitStrategyType, RateLimitSt
 export class RateLimitStrategyManager {
   private strategies = new Map<RateLimitStrategyType, BaseRateLimitStrategy>();
   private config: DynamicRateLimitConfig;
-  private performanceMetrics = new Map<string, {
-    requests: number;
-    blocked: number;
-    averageLatency: number;
-    lastUpdated: number;
-  }>();
+  private performanceMetrics = new Map<
+    string,
+    {
+      requests: number;
+      blocked: number;
+      averageLatency: number;
+      lastUpdated: number;
+    }
+  >();
 
   constructor(config?: Partial<DynamicRateLimitConfig>) {
     this.config = this.mergeWithDefaults(config || {});
@@ -156,7 +159,7 @@ export class RateLimitStrategyManager {
 
     const result = await strategyInstance.checkLimit(context, rule);
     this.updatePerformanceMetrics(context.identifier, false, 0);
-    
+
     return result;
   }
 
@@ -174,9 +177,9 @@ export class RateLimitStrategyManager {
 
     const result = await strategyInstance.increment(context, rule);
     const latency = Date.now() - startTime;
-    
+
     this.updatePerformanceMetrics(context.identifier, !result.allowed, latency);
-    
+
     return result;
   }
 
@@ -184,10 +187,10 @@ export class RateLimitStrategyManager {
    * Reset rate limit for identifier
    */
   async reset(identifier: string): Promise<void> {
-    const promises = Array.from(this.strategies.values()).map(strategy => 
+    const promises = Array.from(this.strategies.values()).map(strategy =>
       strategy.reset(identifier)
     );
-    
+
     await Promise.all(promises);
     this.performanceMetrics.delete(identifier);
   }
@@ -202,26 +205,32 @@ export class RateLimitStrategyManager {
     // Find matching endpoint configuration
     const endpointConfig = this.config.endpointConfigs.find(config => {
       if (!config.enabled) return false;
-      
+
       // Check endpoint match
       const endpointMatch = this.matchesPattern(context.endpoint, config.endpoint);
       if (!endpointMatch) return false;
-      
+
       // Check method match
       if (config.method && context.method !== config.method) return false;
-      
+
       // Check conditions
       if (config.conditions) {
-        if (config.conditions.userTypes && context.userType && 
-            !config.conditions.userTypes.includes(context.userType)) {
+        if (
+          config.conditions.userTypes &&
+          context.userType &&
+          !config.conditions.userTypes.includes(context.userType)
+        ) {
           return false;
         }
-        
-        if (config.conditions.countries && context.country && 
-            !config.conditions.countries.includes(context.country)) {
+
+        if (
+          config.conditions.countries &&
+          context.country &&
+          !config.conditions.countries.includes(context.country)
+        ) {
           return false;
         }
-        
+
         if (config.conditions.userAgents && context.userAgent) {
           const userAgentMatch = config.conditions.userAgents.some(pattern =>
             this.matchesPattern(context.userAgent!, pattern)
@@ -229,21 +238,21 @@ export class RateLimitStrategyManager {
           if (!userAgentMatch) return false;
         }
       }
-      
+
       return true;
     });
 
     if (endpointConfig) {
       return {
         strategy: endpointConfig.strategy,
-        rule: this.adjustRuleForUserType(endpointConfig.rule, context.userType)
+        rule: this.adjustRuleForUserType(endpointConfig.rule, context.userType),
       };
     }
 
     // Fall back to global strategy
     return {
       strategy: this.config.globalStrategy,
-      rule: this.getDefaultRule(context.userType)
+      rule: this.getDefaultRule(context.userType),
     };
   }
 
@@ -258,7 +267,7 @@ export class RateLimitStrategyManager {
 
     return {
       ...rule,
-      limit: Math.floor(rule.limit * tierMultiplier)
+      limit: Math.floor(rule.limit * tierMultiplier),
     };
   }
 
@@ -270,7 +279,7 @@ export class RateLimitStrategyManager {
       identifier: 'default',
       limit: 100,
       window: 60000, // 1 minute
-      type: 'ip'
+      type: 'ip',
     };
 
     return this.adjustRuleForUserType(baseRule, userType);
@@ -314,7 +323,7 @@ export class RateLimitStrategyManager {
         // Fall back to fixed window for unsupported strategies
         return new FixedWindowStrategy({
           ...config,
-          type: 'fixed-window'
+          type: 'fixed-window',
         });
     }
   }
@@ -328,19 +337,24 @@ export class RateLimitStrategyManager {
     );
 
     if (existingIndex >= 0) {
+      const current = this.config.endpointConfigs[existingIndex];
+      if (!current) return;
       this.config.endpointConfigs[existingIndex] = {
-        ...this.config.endpointConfigs[existingIndex],
-        ...updates
-      };
+        ...current,
+        endpoint: current.endpoint,
+        strategy: updates?.strategy ?? current.strategy,
+        ...updates,
+      } as EndpointRateLimitConfig;
     } else {
-      this.config.endpointConfigs.push({
+      const newConfig: EndpointRateLimitConfig = {
         endpoint,
-        strategy: 'fixed-window',
+        strategy: updates?.strategy ?? 'fixed-window',
         rule: this.getDefaultRule(),
         enabled: true,
         priority: 1,
-        ...updates
-      } as EndpointRateLimitConfig);
+        ...(updates ?? {}),
+      };
+      this.config.endpointConfigs.push(newConfig);
     }
   }
 
@@ -356,7 +370,7 @@ export class RateLimitStrategyManager {
    */
   updateGlobalStrategy(strategy: RateLimitStrategyType): void {
     this.config.globalStrategy = strategy;
-    
+
     // Ensure strategy is initialized
     if (!this.strategies.has(strategy)) {
       const config = DEFAULT_STRATEGY_CONFIGS[strategy];
@@ -373,7 +387,7 @@ export class RateLimitStrategyManager {
       totalRequests: 0,
       totalBlocked: 0,
       averageLatency: 0,
-      blockedPercentage: 0
+      blockedPercentage: 0,
     };
 
     for (const metrics of this.performanceMetrics.values()) {
@@ -401,7 +415,7 @@ export class RateLimitStrategyManager {
       requests: 0,
       blocked: 0,
       averageLatency: 0,
-      lastUpdated: Date.now()
+      lastUpdated: Date.now(),
     };
 
     existing.requests++;
@@ -423,7 +437,7 @@ export class RateLimitStrategyManager {
         enabled: config.adaptiveSettings?.enabled ?? false,
         loadThreshold: config.adaptiveSettings?.loadThreshold ?? 0.8,
         adjustmentFactor: config.adaptiveSettings?.adjustmentFactor ?? 0.5,
-        monitoringInterval: config.adaptiveSettings?.monitoringInterval ?? 60000
+        monitoringInterval: config.adaptiveSettings?.monitoringInterval ?? 60000,
       },
       monitoring: {
         enabled: config.monitoring?.enabled ?? true,
@@ -431,9 +445,9 @@ export class RateLimitStrategyManager {
         alertThresholds: {
           blockedPercentage: config.monitoring?.alertThresholds?.blockedPercentage ?? 10,
           errorRate: config.monitoring?.alertThresholds?.errorRate ?? 5,
-          responseTime: config.monitoring?.alertThresholds?.responseTime ?? 1000
-        }
-      }
+          responseTime: config.monitoring?.alertThresholds?.responseTime ?? 1000,
+        },
+      },
     };
   }
 

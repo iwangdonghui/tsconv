@@ -1,5 +1,29 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
 
+interface TimeSeriesDataPoint {
+  timestamp: number;
+  utc: string;
+  local: string;
+  hour: number;
+  dayOfWeek: number;
+  isWeekend: boolean;
+}
+
+interface TimezoneOffset {
+  timezone: string;
+  offset: string;
+  offsetMinutes: number;
+  currentTime: string;
+}
+
+interface CalendarDataPoint {
+  date: string;
+  dayOfWeek: number;
+  isWeekend: boolean;
+  isToday: boolean;
+  timestamp: number;
+}
+
 /**
  * Visualization API Endpoint
  *
@@ -151,7 +175,7 @@ function generateTimeSeries(start?: number, end?: number, interval?: number, tim
   const step = interval || 3600; // 1 hour
   const tz = timezone || 'UTC';
 
-  const data: any[] = [];
+  const data: TimeSeriesDataPoint[] = [];
   for (let ts = startTime; ts <= endTime; ts += step) {
     const date = new Date(ts * 1000);
     const localTime = date.toLocaleString('en-US', { timeZone: tz });
@@ -185,7 +209,7 @@ function generateTimeSeries(start?: number, end?: number, interval?: number, tim
 }
 
 function generateOffsetMap() {
-  const offsets: any[] = [];
+  const offsets: TimezoneOffset[] = [];
 
   // Generate data for UTC-12 to UTC+14
   for (let offset = -12; offset <= 14; offset++) {
@@ -217,11 +241,11 @@ function generateOffsetMap() {
 function generateDSTCalendar(timezone?: string) {
   const tz = timezone || 'America/New_York';
   const year = new Date().getFullYear();
-  const months: any[] = [];
+  const months: Array<{ month: number; name: string; days: CalendarDataPoint[] }> = [];
 
   for (let month = 0; month < 12; month++) {
     const daysInMonth = new Date(year, month + 1, 0).getDate();
-    const days: any[] = [];
+    const days: CalendarDataPoint[] = [];
 
     for (let day = 1; day <= daysInMonth; day++) {
       const date = new Date(year, month, day);

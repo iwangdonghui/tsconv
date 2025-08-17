@@ -1,36 +1,37 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import DebugApp from './DebugApp';
+import { logger } from './utils/logger';
 
-console.log('Debug main.tsx is loading');
-console.log('React version:', React.version);
-console.log('ReactDOM loaded successfully');
+logger.debug('Debug main.tsx is loading');
+logger.debug('React version:', React.version);
+logger.debug('ReactDOM loaded successfully');
 
 // 检查环境
-console.log('Environment:', {
+logger.debug('Environment:', {
   NODE_ENV: process.env.NODE_ENV,
   userAgent: navigator.userAgent,
   location: window.location.href,
 });
 
 const rootElement = document.getElementById('root');
-console.log('Root element:', rootElement);
+logger.debug('Root element:', rootElement);
 
 if (rootElement) {
-  console.log('Creating React root');
+  logger.debug('Creating React root');
 
   try {
     const root = ReactDOM.createRoot(rootElement);
 
-    console.log('Rendering DebugApp');
+    logger.debug('Rendering DebugApp');
     root.render(
       <React.StrictMode>
         <DebugApp />
       </React.StrictMode>
     );
-    console.log('DebugApp rendered successfully');
+    logger.debug('DebugApp rendered successfully');
   } catch (error) {
-    console.error('Error creating or rendering React app:', error);
+    logger.error('Error creating or rendering React app:', error);
 
     // 回退到简单的HTML
     rootElement.innerHTML = `
@@ -42,7 +43,7 @@ if (rootElement) {
     `;
   }
 } else {
-  console.error('Root element not found!');
+  logger.error('Root element not found!');
   document.body.innerHTML = `
     <div style="padding: 20px; font-family: Arial, sans-serif;">
       <h1>Root Element Not Found</h1>

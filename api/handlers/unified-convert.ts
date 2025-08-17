@@ -1,6 +1,6 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
-import { BaseHandler, HandlerContext } from './base-handler';
 import { convertTimestamp } from '../utils/conversion-utils';
+import { BaseHandler, HandlerContext } from './base-handler';
 // import { validateRequest } from '../utils/response'; // Currently unused
 
 export interface ConvertRequest {
@@ -181,7 +181,7 @@ export class UnifiedConvertHandler extends BaseHandler {
     }
 
     // Build metadata based on mode
-    let metadata: any = undefined;
+    let metadata: Record<string, unknown> | undefined = undefined;
     if (_includeMetadata) {
       metadata = {
         originalTimezone: _timezone,

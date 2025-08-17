@@ -3,9 +3,9 @@
  * Unified rate limiting service with strategy support and monitoring
  */
 
-import { RateLimiter, RateLimitRule, RateLimitResult, RateLimitStats } from '../../types/api';
-import { RateLimitStrategyManager, DynamicRateLimitConfig } from './rate-limit-strategy-manager';
+import { RateLimiter, RateLimitResult, RateLimitRule, RateLimitStats } from '../../types/api';
 import { RateLimitContext, RateLimitStrategyResult } from './rate-limit-strategy';
+import { DynamicRateLimitConfig, RateLimitStrategyManager } from './rate-limit-strategy-manager';
 
 export interface EnhancedRateLimiterConfig {
   strategyConfig?: Partial<DynamicRateLimitConfig>;
@@ -40,7 +40,7 @@ export class EnhancedRateLimiter implements RateLimiter {
       fallbackToMemory: true,
       enableMonitoring: true,
       enableAdaptive: false,
-      ...config
+      ...config,
     };
 
     this.strategyManager = new RateLimitStrategyManager(config.strategyConfig);
@@ -57,7 +57,7 @@ export class EnhancedRateLimiter implements RateLimiter {
     try {
       const context = this.createContext(identifier, rule);
       const result = await this.strategyManager.checkLimit(context);
-      
+
       return this.convertToRateLimitResult(result);
     } catch (error) {
       if (this.config.fallbackToMemory) {
@@ -72,11 +72,11 @@ export class EnhancedRateLimiter implements RateLimiter {
    */
   async increment(identifier: string, rule: RateLimitRule): Promise<RateLimitResult> {
     const startTime = Date.now();
-    
+
     try {
       const context = this.createContext(identifier, rule);
       const result = await this.strategyManager.increment(context);
-      
+
       // Record monitoring data
       if (this.config.enableMonitoring) {
         this.recordMonitoringData({
@@ -88,10 +88,10 @@ export class EnhancedRateLimiter implements RateLimiter {
           latency: Date.now() - startTime,
           timestamp: Date.now(),
           userType: context.userType,
-          metadata: context.metadata
+          metadata: context.metadata,
         });
       }
-      
+
       return this.convertToRateLimitResult(result);
     } catch (error) {
       if (this.config.fallbackToMemory) {
@@ -104,7 +104,7 @@ export class EnhancedRateLimiter implements RateLimiter {
   /**
    * Reset rate limit for identifier
    */
-  async reset(identifier: string, rule: RateLimitRule): Promise<void> {
+  async reset(identifier: string, _rule: RateLimitRule): Promise<void> {
     try {
       await this.strategyManager.reset(identifier);
     } catch (error) {
@@ -119,14 +119,14 @@ export class EnhancedRateLimiter implements RateLimiter {
   async getStats(identifier: string): Promise<RateLimitStats> {
     try {
       // Get metrics from strategy manager
-      const metrics = this.strategyManager.getPerformanceMetrics();
-      
+      // const metrics = this.strategyManager.getPerformanceMetrics(); // Currently not used
+
       return {
         identifier,
         currentCount: 0, // Would need to be implemented per strategy
         limit: 100, // Default limit
         window: 60000, // Default window
-        resetTime: Date.now() + 60000
+        resetTime: Date.now() + 60000,
       };
     } catch (error) {
       return {
@@ -134,7 +134,7 @@ export class EnhancedRateLimiter implements RateLimiter {
         currentCount: 0,
         limit: 0,
         window: 0,
-        resetTime: Date.now()
+        resetTime: Date.now(),
       };
     }
   }
@@ -144,9 +144,9 @@ export class EnhancedRateLimiter implements RateLimiter {
    */
   private createContext(identifier: string, rule: RateLimitRule): RateLimitContext {
     // Extract information from identifier if it contains structured data
-    const parts = identifier.split(':');
+    // const parts = identifier.split(':'); // Currently not used
     const userType = this.determineUserType(identifier, rule);
-    
+
     return {
       identifier,
       userType,
@@ -155,28 +155,31 @@ export class EnhancedRateLimiter implements RateLimiter {
       timestamp: Date.now(),
       metadata: {
         ruleType: rule.type,
-        originalRule: rule
-      }
+        originalRule: rule,
+      },
     };
   }
 
   /**
    * Determine user type from identifier and rule
    */
-  private determineUserType(identifier: string, rule: RateLimitRule): 'anonymous' | 'authenticated' | 'premium' | 'admin' {
+  private determineUserType(
+    identifier: string,
+    _rule: RateLimitRule
+  ): 'anonymous' | 'authenticated' | 'premium' | 'admin' {
     // Check if identifier suggests authentication
     if (identifier.includes('auth:') || identifier.includes('user:')) {
       return 'authenticated';
     }
-    
+
     if (identifier.includes('admin:')) {
       return 'admin';
     }
-    
+
     if (identifier.includes('premium:')) {
       return 'premium';
     }
-    
+
     return 'anonymous';
   }
 
@@ -188,33 +191,33 @@ export class EnhancedRateLimiter implements RateLimiter {
       allowed: result.allowed,
       remaining: result.remaining,
       resetTime: result.resetTime,
-      totalLimit: result.totalLimit
+      totalLimit: result.totalLimit,
     };
   }
 
   /**
    * Fallback check using simple in-memory rate limiting
    */
-  private fallbackCheck(identifier: string, rule: RateLimitRule): RateLimitResult {
+  private fallbackCheck(_identifier: string, rule: RateLimitRule): RateLimitResult {
     // Simple fallback implementation
     return {
       allowed: true,
       remaining: rule.limit - 1,
       resetTime: Date.now() + rule.window,
-      totalLimit: rule.limit
+      totalLimit: rule.limit,
     };
   }
 
   /**
    * Fallback increment using simple in-memory rate limiting
    */
-  private fallbackIncrement(identifier: string, rule: RateLimitRule): RateLimitResult {
+  private fallbackIncrement(_identifier: string, rule: RateLimitRule): RateLimitResult {
     // Simple fallback implementation
     return {
       allowed: true,
       remaining: rule.limit - 1,
       resetTime: Date.now() + rule.window,
-      totalLimit: rule.limit
+      totalLimit: rule.limit,
     };
   }
 
@@ -223,7 +226,7 @@ export class EnhancedRateLimiter implements RateLimiter {
    */
   private recordMonitoringData(data: RateLimitMonitoringData): void {
     this.monitoringData.push(data);
-    
+
     // Keep only recent data (last hour by default)
     const cutoff = Date.now() - 3600000; // 1 hour
     this.monitoringData = this.monitoringData.filter(item => item.timestamp > cutoff);
@@ -262,7 +265,9 @@ export class EnhancedRateLimiter implements RateLimiter {
     }
 
     // Log metrics for monitoring
-    console.log(`Rate Limit Metrics: ${totalRequests} requests, ${blockedPercentage.toFixed(1)}% blocked, ${averageLatency.toFixed(1)}ms avg latency`);
+    console.log(
+      `Rate Limit Metrics: ${totalRequests} requests, ${blockedPercentage.toFixed(1)}% blocked, ${averageLatency.toFixed(1)}ms avg latency`
+    );
   }
 
   /**
@@ -270,13 +275,13 @@ export class EnhancedRateLimiter implements RateLimiter {
    */
   private performAdaptiveAdjustment(blockedPercentage: number, averageLatency: number): void {
     const config = this.strategyManager.getCurrentConfig();
-    
+
     // If too many requests are being blocked, consider loosening limits
     if (blockedPercentage > config.monitoring.alertThresholds.blockedPercentage) {
       console.log('High block rate detected, consider adjusting rate limits');
       // Could implement automatic adjustment here
     }
-    
+
     // If latency is too high, consider tightening limits
     if (averageLatency > config.monitoring.alertThresholds.responseTime) {
       console.log('High latency detected, consider tightening rate limits');
@@ -315,7 +320,7 @@ export class EnhancedRateLimiter implements RateLimiter {
       uniqueIdentifiers,
       averageLatency: recentData.reduce((sum, item) => sum + item.latency, 0) / totalRequests,
       endpointStats: Object.fromEntries(endpointStats),
-      strategyMetrics: this.strategyManager.getPerformanceMetrics()
+      strategyMetrics: this.strategyManager.getPerformanceMetrics(),
     };
   }
 
@@ -337,7 +342,7 @@ export class EnhancedRateLimiter implements RateLimiter {
   } {
     return {
       enhancedConfig: this.config,
-      strategyConfig: this.strategyManager.getCurrentConfig()
+      strategyConfig: this.strategyManager.getCurrentConfig(),
     };
   }
 
@@ -356,10 +361,11 @@ export class EnhancedRateLimiter implements RateLimiter {
     );
 
     const blockedRequests = recentData.filter(item => !item.allowed).length;
-    const blockedPercentage = recentData.length > 0 ? (blockedRequests / recentData.length) * 100 : 0;
+    const blockedPercentage =
+      recentData.length > 0 ? (blockedRequests / recentData.length) * 100 : 0;
 
     let status: 'healthy' | 'degraded' | 'unhealthy' = 'healthy';
-    
+
     if (blockedPercentage > 50) {
       status = 'unhealthy';
     } else if (blockedPercentage > 20) {
@@ -371,7 +377,7 @@ export class EnhancedRateLimiter implements RateLimiter {
       strategies: this.strategyManager.getCurrentConfig().endpointConfigs.length,
       monitoring: this.config.enableMonitoring || false,
       recentRequests: recentData.length,
-      blockedPercentage
+      blockedPercentage,
     };
   }
 
@@ -383,7 +389,7 @@ export class EnhancedRateLimiter implements RateLimiter {
       clearInterval(this.monitoringInterval);
       this.monitoringInterval = null;
     }
-    
+
     this.monitoringData = [];
   }
 }

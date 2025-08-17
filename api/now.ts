@@ -1,5 +1,14 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
 
+interface TimezoneInfo {
+  timezone: string;
+  offset: number;
+  offsetHours: number;
+  offsetString: string;
+  localTime: string;
+  error?: string;
+}
+
 /**
  * Current Time API Endpoint
  *
@@ -41,7 +50,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // Get time in specified timezone
     const tz = (timezone as string) || 'UTC';
     let localTime: string;
-    let timezoneInfo: any = {};
+    let timezoneInfo: TimezoneInfo;
 
     try {
       localTime = now.toLocaleString('en-US', {

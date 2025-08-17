@@ -1,8 +1,9 @@
 // Date difference calculation API
 
-import { CacheManager } from './cache-utils';
-import { SecurityManager, RATE_LIMITS } from './security';
 import { recordAnalyticsMiddleware } from './analytics-api';
+import { CacheManager } from './cache-utils';
+import { RATE_LIMITS, SecurityManager } from './security';
+import { logError } from './utils/logger';
 
 interface Env {
   UPSTASH_REDIS_REST_URL?: string;
@@ -27,30 +28,24 @@ interface DateDiffRequest {
   includeTime?: boolean;
 }
 
-interface DateDiffResponse {
-  success: boolean;
-  data: {
-    startDate: string;
-    endDate: string;
-    difference: {
-      milliseconds: number;
-      seconds: number;
-      minutes: number;
-      hours: number;
-      days: number;
-      weeks: number;
-      months: number;
-      years: number;
-    };
-    humanReadable: string;
-    direction: 'future' | 'past';
-    absolute: boolean;
-  };
-  metadata: {
-    timestamp: string;
-    processingTime: string;
-    cached: boolean;
-  };
+interface DateDifference {
+  milliseconds: number;
+  seconds: number;
+  minutes: number;
+  hours: number;
+  days: number;
+  weeks: number;
+  months: number;
+  years: number;
+}
+
+interface DateDiffResult {
+  startDate: string;
+  endDate: string;
+  difference: DateDifference;
+  humanReadable: string;
+  direction: string;
+  absolute: boolean;
 }
 
 export async function handleDateDiff(request: Request, env: Env): Promise<Response> {
@@ -161,7 +156,10 @@ export async function handleDateDiff(request: Request, env: Env): Promise<Respon
     try {
       await cacheManager.set('CONVERT_API', cacheKey, result);
     } catch (error) {
-      console.error('Failed to cache date diff result:', error);
+      logError(
+        'Failed to cache date diff result',
+        error instanceof Error ? error : new Error(String(error))
+      );
     }
 
     const response = new Response(
@@ -182,7 +180,7 @@ export async function handleDateDiff(request: Request, env: Env): Promise<Respon
     recordAnalyticsMiddleware(request, response, env, startTime);
     return response;
   } catch (error) {
-    console.error('Date diff API error:', error);
+    logError('Date diff API error', error instanceof Error ? error : new Error(String(error)));
 
     const response = new Response(
       JSON.stringify({
@@ -200,7 +198,7 @@ export async function handleDateDiff(request: Request, env: Env): Promise<Respon
   }
 }
 
-function calculateDateDifference(params: DateDiffRequest): any {
+function calculateDateDifference(params: DateDiffRequest): DateDiffResult {
   // Parse dates
   let startDate: Date;
   let endDate: Date;

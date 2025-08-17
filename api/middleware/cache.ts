@@ -1,6 +1,6 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
-import { CacheService, CacheableRequest, APIResponse } from '../types/api';
 import config, { getCacheTTL } from '../config/config';
+import { APIResponse, CacheService, CacheableRequest } from '../types/api';
 
 // Cache middleware factory
 export interface CacheMiddlewareOptions {
@@ -8,7 +8,7 @@ export interface CacheMiddlewareOptions {
   ttl?: number;
   keyGenerator?: (req: VercelRequest) => string;
   shouldCache?: (req: VercelRequest, res: VercelResponse) => boolean;
-  onCacheHit?: (key: string, data: any) => void;
+  onCacheHit?: (key: string, data: unknown) => void;
   onCacheMiss?: (key: string) => void;
   cacheControlHeader?: string;
   skipCache?: (req: VercelRequest) => boolean;
@@ -124,16 +124,16 @@ export const cacheMiddleware = (options: CacheMiddlewareOptions) => {
       // Intercept the response to cache it
       const originalJson = res.json;
       const originalSend = res.send;
-      let responseData: any = null;
+      let responseData: unknown = null;
 
       // Override res.json to capture response data
-      res.json = function (data: any) {
+      res.json = function (data: unknown) {
         responseData = data;
         return originalJson.call(this, data);
       };
 
       // Override res.send to capture response data
-      res.send = function (data: any) {
+      res.send = function (data: unknown) {
         if (typeof data === 'string') {
           try {
             responseData = JSON.parse(data);
@@ -154,7 +154,8 @@ export const cacheMiddleware = (options: CacheMiddlewareOptions) => {
         try {
           // Add cache info to response before caching
           const responseToCache: CacheableResponse = {
-            ...responseData,
+            ...(responseData as Record<string, unknown>),
+            success: true, // Default to true for successful responses
             cache: {
               key: cacheKey,
               ttl: cacheTTL,
@@ -227,7 +228,7 @@ export const invalidateCache = async (
 // Cache warming utilities
 export const warmCache = async (
   cacheService: CacheService,
-  requests: Array<{ key: string; data: any; ttl?: number }>
+  requests: Array<{ key: string; data: unknown; ttl?: number }>
 ): Promise<void> => {
   try {
     await Promise.all(

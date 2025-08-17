@@ -1,11 +1,11 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
-import { APIErrorHandler, createCorsHeaders, validateRequest } from '../utils/response';
-import { convertTimestamp } from '../utils/conversion-utils';
 import {
   BatchConversionRequest,
   BatchConversionResponse,
   BatchConversionResult,
 } from '../types/api';
+import { convertTimestamp } from '../utils/conversion-utils';
+import { APIErrorHandler, createCorsHeaders, validateRequest } from '../utils/response';
 
 const MAX_BATCH_SIZE = 100;
 const DEFAULT_OUTPUT_FORMATS = ['iso', 'unix', 'human'];
@@ -153,7 +153,7 @@ async function processBatchConversion(
 }
 
 // Helper function to validate timestamp input (currently unused but kept for future use)
-// function isValidTimestamp(input: any): boolean {
+// function isValidTimestamp(input: unknown): boolean {
 //   if (typeof input === 'number') {
 //     return !isNaN(input) && isFinite(input);
 //   }

@@ -1,7 +1,7 @@
 import { Redis } from '@upstash/redis';
-import config from '../config/config';
 import { CacheService, CacheStats, CacheableRequest } from '../types/api';
 import { MemoryCacheService } from './cache-service';
+import config from './config/config'; // re-exported bridge to ../../config/config for tests/require
 
 class UpstashCacheService implements CacheService {
   private redis: Redis;

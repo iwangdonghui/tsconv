@@ -148,7 +148,7 @@ export const rateLimitMiddleware = (options: RateLimitMiddlewareOptions) => {
         let shouldIncrement = true;
 
         // Override response methods to check status
-        res.json = function (data: any) {
+        res.json = function (data: unknown) {
           const statusCode = res.statusCode || 200;
 
           if (skipSuccessfulRequests && statusCode >= 200 && statusCode < 400) {
@@ -168,7 +168,7 @@ export const rateLimitMiddleware = (options: RateLimitMiddlewareOptions) => {
           return originalJson.call(this, data);
         };
 
-        res.send = function (data: any) {
+        res.send = function (data: unknown) {
           const statusCode = res.statusCode || 200;
 
           if (skipSuccessfulRequests && statusCode >= 200 && statusCode < 400) {

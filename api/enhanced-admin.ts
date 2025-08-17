@@ -12,9 +12,20 @@ import { APIErrorHandler, withCors } from './utils/response';
 interface AdminRequest extends VercelRequest {
   auth?: {
     authenticated: boolean;
-    session?: any;
-    user?: any;
+    session?: Record<string, unknown>;
+    user?: Record<string, unknown>;
   };
+}
+
+interface AdminResponse {
+  success: boolean;
+  metadata: {
+    action: string;
+    correlationId: string;
+    timestamp: string;
+  };
+  data?: unknown;
+  error?: string;
 }
 
 // Initialize admin services
@@ -79,15 +90,19 @@ async function enhancedAdminHandler(req: AdminRequest, res: VercelResponse) {
       return APIErrorHandler.handleUnauthorized(res, authResult.error!);
     }
 
-    req.auth = authResult.auth;
+    req.auth = authResult.auth as {
+      authenticated: boolean;
+      session?: Record<string, unknown>;
+      user?: Record<string, unknown>;
+    };
 
     // Route to appropriate handler
     const result = await routeAdminRequest(req, action, correlationId, startTime);
 
     // Log successful operation
     auditLogger.logEvent({
-      userId: req.auth!.user?.id || 'unknown',
-      sessionId: req.auth!.session?.id || 'none',
+      userId: (req.auth!.user?.id as string) || 'unknown',
+      sessionId: (req.auth!.session?.id as string) || 'none',
       action: `admin_${action}`,
       resource: 'admin',
       method: req.method!,
@@ -120,8 +135,8 @@ async function enhancedAdminHandler(req: AdminRequest, res: VercelResponse) {
 
     // Log error
     auditLogger.logEvent({
-      userId: req.auth?.user?.id || 'unknown',
-      sessionId: req.auth?.session?.id || 'none',
+      userId: (req.auth?.user?.id as string) || 'unknown',
+      sessionId: (req.auth?.session?.id as string) || 'none',
       action: 'admin_error',
       resource: 'admin',
       method: req.method!,
@@ -151,7 +166,7 @@ async function enhancedAdminHandler(req: AdminRequest, res: VercelResponse) {
 async function authenticateAdminRequest(
   req: AdminRequest,
   action: string
-): Promise<{ success: boolean; auth?: any; error?: string }> {
+): Promise<{ success: boolean; auth?: Record<string, unknown>; error?: string }> {
   const authHeader = req.headers.authorization;
   const apiKey = req.headers['x-api-key'] as string;
   const token = authHeader?.startsWith('Bearer ') ? authHeader.substring(7) : undefined;
@@ -233,8 +248,9 @@ async function routeAdminRequest(
   req: AdminRequest,
   action: string,
   correlationId: string,
-  startTime: number
-): Promise<any> {
+  _startTime: number
+): Promise<AdminResponse> {
+  void _startTime;
   const baseResponse = {
     success: true,
     metadata: {
@@ -285,7 +301,10 @@ async function routeAdminRequest(
 /**
  * Individual action handlers
  */
-async function handleDashboard(req: AdminRequest, baseResponse: any): Promise<any> {
+async function handleDashboard(
+  _req: AdminRequest,
+  baseResponse: Record<string, unknown>
+): Promise<Record<string, unknown>> {
   const adminStats = adminAuth.getAdminStats();
   const queryStats = queryOptimizer.getQueryStats();
   const auditAnalytics = auditLogger.generateAnalytics({
@@ -316,7 +335,10 @@ async function handleDashboard(req: AdminRequest, baseResponse: any): Promise<an
   };
 }
 
-async function handleUsers(req: AdminRequest, baseResponse: any): Promise<any> {
+async function handleUsers(
+  req: AdminRequest,
+  baseResponse: Record<string, unknown>
+): Promise<Record<string, unknown>> {
   if (req.method === 'GET') {
     const users = adminAuth.getUsers();
     return {
@@ -339,7 +361,10 @@ async function handleUsers(req: AdminRequest, baseResponse: any): Promise<any> {
   throw new Error(`Method ${req.method} not supported for users endpoint`);
 }
 
-async function handleSessions(req: AdminRequest, baseResponse: any): Promise<any> {
+async function handleSessions(
+  _req: AdminRequest,
+  baseResponse: Record<string, unknown>
+): Promise<Record<string, unknown>> {
   const sessions = adminAuth.getSessions();
   return {
     ...baseResponse,
@@ -358,7 +383,10 @@ async function handleSessions(req: AdminRequest, baseResponse: any): Promise<any
   };
 }
 
-async function handleAudit(req: AdminRequest, baseResponse: any): Promise<any> {
+async function handleAudit(
+  req: AdminRequest,
+  baseResponse: Record<string, unknown>
+): Promise<Record<string, unknown>> {
   const query = {
     userId: req.query.userId as string,
     action: req.query.action as string,
@@ -387,7 +415,10 @@ async function handleAudit(req: AdminRequest, baseResponse: any): Promise<any> {
   };
 }
 
-async function handleHealth(req: AdminRequest, baseResponse: any): Promise<any> {
+async function handleHealth(
+  _req: AdminRequest,
+  baseResponse: Record<string, unknown>
+): Promise<Record<string, unknown>> {
   // Would integrate with health monitoring system
   return {
     ...baseResponse,
@@ -407,7 +438,10 @@ async function handleHealth(req: AdminRequest, baseResponse: any): Promise<any> 
   };
 }
 
-async function handleMetrics(req: AdminRequest, baseResponse: any): Promise<any> {
+async function handleMetrics(
+  _req: AdminRequest,
+  baseResponse: Record<string, unknown>
+): Promise<Record<string, unknown>> {
   const adminStats = adminAuth.getAdminStats();
   const queryStats = queryOptimizer.getQueryStats();
   const auditAnalytics = auditLogger.generateAnalytics();
@@ -422,7 +456,10 @@ async function handleMetrics(req: AdminRequest, baseResponse: any): Promise<any>
   };
 }
 
-async function handleCache(req: AdminRequest, baseResponse: any): Promise<any> {
+async function handleCache(
+  req: AdminRequest,
+  baseResponse: Record<string, unknown>
+): Promise<Record<string, unknown>> {
   if (req.method === 'DELETE') {
     queryOptimizer.clearCache();
     adminAuth.clearPermissionCache();
@@ -440,7 +477,10 @@ async function handleCache(req: AdminRequest, baseResponse: any): Promise<any> {
   };
 }
 
-async function handleSecurity(req: AdminRequest, baseResponse: any): Promise<any> {
+async function handleSecurity(
+  _req: AdminRequest,
+  baseResponse: Record<string, unknown>
+): Promise<Record<string, unknown>> {
   const recentAuditEvents = auditLogger.queryEvents({
     limit: 100,
     timeRange: {
@@ -466,7 +506,10 @@ async function handleSecurity(req: AdminRequest, baseResponse: any): Promise<any
   };
 }
 
-async function handleAnalytics(req: AdminRequest, baseResponse: any): Promise<any> {
+async function handleAnalytics(
+  req: AdminRequest,
+  baseResponse: Record<string, unknown>
+): Promise<Record<string, unknown>> {
   const timeRange =
     req.query.startTime && req.query.endTime
       ? {
@@ -483,7 +526,10 @@ async function handleAnalytics(req: AdminRequest, baseResponse: any): Promise<an
   };
 }
 
-async function handleQuery(req: AdminRequest, baseResponse: any): Promise<any> {
+async function handleQuery(
+  req: AdminRequest,
+  baseResponse: Record<string, unknown>
+): Promise<Record<string, unknown>> {
   if (req.method !== 'POST') {
     throw new Error('Query endpoint only supports POST method');
   }
@@ -495,12 +541,6 @@ async function handleQuery(req: AdminRequest, baseResponse: any): Promise<any> {
     ...baseResponse,
     data: result,
   };
-}
-
-// Set response headers and finalize
-function finalizeResponse(baseResponse: any, startTime: number): any {
-  baseResponse.metadata.processingTime = Date.now() - startTime;
-  return baseResponse;
 }
 
 export default enhancedAdminHandler;

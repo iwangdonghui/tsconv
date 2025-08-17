@@ -102,7 +102,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
 
       switch (action) {
-        case 'get':
+        case 'get': {
           const configResponse: RedisConfigResponse = {
             current: {
               url: maskRedisUrl(config.caching.redis.url),
@@ -114,14 +114,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             status: 'disconnected',
           };
           return APIErrorHandler.sendSuccess(res, configResponse);
+        }
 
-        case 'test':
+        case 'test': {
           const testResult = await testRedisConnection(settings);
           return APIErrorHandler.sendSuccess(res, testResult);
+        }
 
-        case 'validate':
+        case 'validate': {
           const validationResult = validateRedisConfig(settings);
           return APIErrorHandler.sendSuccess(res, validationResult);
+        }
 
         default:
           return APIErrorHandler.handleBadRequest(res, `Unsupported action: ${action}`, {

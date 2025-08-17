@@ -53,7 +53,10 @@ export class HealthCheckPerformanceOptimizer {
   private static instance: HealthCheckPerformanceOptimizer;
   private config: PerformanceConfig;
   private performanceCache = new Map<string, { data: any; timestamp: number; hitCount: number }>();
-  private circuitBreakers = new Map<string, { failures: number; lastFailure: number; state: 'closed' | 'open' | 'half-open' }>();
+  private circuitBreakers = new Map<
+    string,
+    { failures: number; lastFailure: number; state: 'closed' | 'open' | 'half-open' }
+  >();
   private executionHistory: Array<{ timestamp: number; metrics: PerformanceMetrics }> = [];
   private preemptiveCheckInterval: ReturnType<typeof setInterval> | null = null;
 
@@ -67,7 +70,7 @@ export class HealthCheckPerformanceOptimizer {
       maxConcurrency: 10,
       cacheStrategy: 'adaptive',
       timeoutStrategy: 'adaptive',
-      ...config
+      ...config,
     };
 
     this.initializeOptimizer();
@@ -100,7 +103,12 @@ export class HealthCheckPerformanceOptimizer {
    * Optimize health check execution
    */
   async optimizeHealthCheck<T>(
-    checks: Array<{ name: string; executor: () => Promise<T>; priority?: string; dependencies?: string[] }>,
+    checks: Array<{
+      name: string;
+      executor: () => Promise<T>;
+      priority?: string;
+      dependencies?: string[];
+    }>,
     options: {
       timeout?: number;
       enableCaching?: boolean;
@@ -113,19 +121,19 @@ export class HealthCheckPerformanceOptimizer {
     executionPlan: CheckExecutionPlan;
   }> {
     const startTime = Date.now();
-    
+
     // Create execution plan
     const executionPlan = this.createExecutionPlan(checks, options);
-    
+
     // Execute optimized checks
     const results = await this.executeOptimizedChecks(checks, executionPlan, options);
-    
+
     // Calculate metrics
     const metrics = this.calculatePerformanceMetrics(results, startTime, executionPlan);
-    
+
     // Update performance history
     this.updatePerformanceHistory(metrics);
-    
+
     return { results, metrics, executionPlan };
   }
 
@@ -133,7 +141,12 @@ export class HealthCheckPerformanceOptimizer {
    * Create optimized execution plan
    */
   private createExecutionPlan(
-    checks: Array<{ name: string; executor: () => Promise<any>; priority?: string; dependencies?: string[] }>,
+    checks: Array<{
+      name: string;
+      executor: () => Promise<any>;
+      priority?: string;
+      dependencies?: string[];
+    }>,
     options: any
   ): CheckExecutionPlan {
     const checkPlans = checks.map(check => ({
@@ -143,12 +156,12 @@ export class HealthCheckPerformanceOptimizer {
       dependencies: check.dependencies || [],
       canRunInParallel: this.canRunInParallel(check.name, check.dependencies),
       cacheKey: this.generateCacheKey(check.name, options),
-      cacheTTL: this.getCacheTTL(check.name, options.level)
+      cacheTTL: this.getCacheTTL(check.name, options.level),
     }));
 
     // Group checks for parallel execution
     const executionGroups = this.createExecutionGroups(checkPlans);
-    
+
     // Calculate timing estimates
     const totalEstimatedTime = checkPlans.reduce((sum, check) => sum + check.estimatedTime, 0);
     const optimizedTime = this.calculateOptimizedTime(executionGroups);
@@ -157,7 +170,7 @@ export class HealthCheckPerformanceOptimizer {
       checks: checkPlans,
       executionGroups,
       totalEstimatedTime,
-      optimizedTime
+      optimizedTime,
     };
   }
 
@@ -165,7 +178,12 @@ export class HealthCheckPerformanceOptimizer {
    * Execute optimized health checks
    */
   private async executeOptimizedChecks(
-    checks: Array<{ name: string; executor: () => Promise<any>; priority?: string; dependencies?: string[] }>,
+    checks: Array<{
+      name: string;
+      executor: () => Promise<any>;
+      priority?: string;
+      dependencies?: string[];
+    }>,
     plan: CheckExecutionPlan,
     options: any
   ): Promise<Array<{ name: string; result: any; error?: Error; executionTime: number }>> {
@@ -174,12 +192,17 @@ export class HealthCheckPerformanceOptimizer {
 
     // Execute groups in sequence, checks within groups in parallel
     for (const group of plan.executionGroups) {
-      const groupPromises = group.checks.map(async (checkName) => {
+      const groupPromises = group.checks.map(async checkName => {
         const check = checkMap.get(checkName);
         const checkPlan = plan.checks.find(c => c.name === checkName);
-        
+
         if (!check || !checkPlan) {
-          return { name: checkName, result: null, error: new Error('Check not found'), executionTime: 0 };
+          return {
+            name: checkName,
+            result: null,
+            error: new Error('Check not found'),
+            executionTime: 0,
+          };
         }
 
         return await this.executeOptimizedCheck(check, checkPlan, options);
@@ -221,7 +244,7 @@ export class HealthCheckPerformanceOptimizer {
           return {
             name: check.name,
             result: cached,
-            executionTime: Date.now() - startTime
+            executionTime: Date.now() - startTime,
           };
         }
       }
@@ -243,9 +266,8 @@ export class HealthCheckPerformanceOptimizer {
       return {
         name: check.name,
         result,
-        executionTime: Date.now() - startTime
+        executionTime: Date.now() - startTime,
       };
-
     } catch (error) {
       // Update circuit breaker on failure
       if (this.config.enableCircuitBreaker) {
@@ -256,7 +278,7 @@ export class HealthCheckPerformanceOptimizer {
         name: check.name,
         result: null,
         error: error as Error,
-        executionTime: Date.now() - startTime
+        executionTime: Date.now() - startTime,
       };
     }
   }
@@ -267,7 +289,7 @@ export class HealthCheckPerformanceOptimizer {
   private async executeConcurrentlyWithLimit<T>(
     promises: Promise<T>[],
     limit: number,
-    timeout: number
+    _timeout: number
   ): Promise<T[]> {
     const results: T[] = [];
     const executing: Promise<void>[] = [];
@@ -281,7 +303,10 @@ export class HealthCheckPerformanceOptimizer {
 
       if (executing.length >= limit) {
         await Promise.race(executing);
-        executing.splice(executing.findIndex(p => p === executePromise), 1);
+        executing.splice(
+          executing.findIndex(p => p === executePromise),
+          1
+        );
       }
     }
 
@@ -293,14 +318,21 @@ export class HealthCheckPerformanceOptimizer {
   /**
    * Create execution groups for parallel execution
    */
-  private createExecutionGroups(checks: Array<{
-    name: string;
-    priority: string;
-    dependencies: string[];
-    canRunInParallel: boolean;
-    estimatedTime: number;
-  }>): Array<{ groupId: string; checks: string[]; maxConcurrency: number; timeout: number }> {
-    const groups: Array<{ groupId: string; checks: string[]; maxConcurrency: number; timeout: number }> = [];
+  private createExecutionGroups(
+    checks: Array<{
+      name: string;
+      priority: string;
+      dependencies: string[];
+      canRunInParallel: boolean;
+      estimatedTime: number;
+    }>
+  ): Array<{ groupId: string; checks: string[]; maxConcurrency: number; timeout: number }> {
+    const groups: Array<{
+      groupId: string;
+      checks: string[];
+      maxConcurrency: number;
+      timeout: number;
+    }> = [];
     const processed = new Set<string>();
 
     // Sort by priority and dependencies
@@ -312,13 +344,13 @@ export class HealthCheckPerformanceOptimizer {
     let groupIndex = 0;
     while (processed.size < checks.length) {
       const currentGroup: string[] = [];
-      
+
       for (const check of sortedChecks) {
         if (processed.has(check.name)) continue;
-        
+
         // Check if dependencies are satisfied
         const dependenciesSatisfied = check.dependencies.every(dep => processed.has(dep));
-        
+
         if (dependenciesSatisfied && (currentGroup.length === 0 || check.canRunInParallel)) {
           currentGroup.push(check.name);
           processed.add(check.name);
@@ -328,12 +360,12 @@ export class HealthCheckPerformanceOptimizer {
       if (currentGroup.length > 0) {
         const groupChecks = currentGroup.map(name => checks.find(c => c.name === name)!);
         const maxTime = Math.max(...groupChecks.map(c => c.estimatedTime));
-        
+
         groups.push({
           groupId: `group-${groupIndex++}`,
           checks: currentGroup,
           maxConcurrency: Math.min(currentGroup.length, this.config.maxConcurrency),
-          timeout: maxTime * 2 // 2x estimated time as timeout
+          timeout: maxTime * 2, // 2x estimated time as timeout
         });
       } else {
         // Break infinite loop if no progress
@@ -355,22 +387,22 @@ export class HealthCheckPerformanceOptimizer {
   private getCacheTTL(checkName: string, level?: string): number {
     // Adaptive TTL based on check type and level
     const baseTTL = {
-      basic: 60000,      // 1 minute
-      standard: 30000,   // 30 seconds
+      basic: 60000, // 1 minute
+      standard: 30000, // 30 seconds
       comprehensive: 15000, // 15 seconds
-      deep: 5000         // 5 seconds
+      deep: 5000, // 5 seconds
     };
 
     const checkMultipliers = {
-      memory: 0.5,       // Memory changes quickly
-      connectivity: 2,   // Connectivity is stable
-      cache: 1,          // Standard caching
-      'format-engine': 3 // Format engine is very stable
+      memory: 0.5, // Memory changes quickly
+      connectivity: 2, // Connectivity is stable
+      cache: 1, // Standard caching
+      'format-engine': 3, // Format engine is very stable
     };
 
     const levelTTL = (baseTTL as any)[level || 'standard'] || 30000;
     const multiplier = (checkMultipliers as any)[checkName] || 1;
-    
+
     return Math.floor(levelTTL * multiplier);
   }
 
@@ -389,15 +421,15 @@ export class HealthCheckPerformanceOptimizer {
     return cached.data;
   }
 
-  private cacheResult(cacheKey: string, result: any, ttl: number): void {
+  private cacheResult(cacheKey: string, result: any, _ttl: number): void {
     this.performanceCache.set(cacheKey, {
       data: result,
       timestamp: Date.now(),
-      hitCount: 0
+      hitCount: 0,
     });
   }
 
-  private getCacheTTLForKey(cacheKey: string): number {
+  private getCacheTTLForKey(_cacheKey: string): number {
     // Extract TTL from cache key or use default
     return 30000; // 30 seconds default
   }
@@ -411,7 +443,8 @@ export class HealthCheckPerformanceOptimizer {
 
     if (breaker.state === 'open') {
       // Check if we should try half-open
-      if (Date.now() - breaker.lastFailure > 60000) { // 1 minute
+      if (Date.now() - breaker.lastFailure > 60000) {
+        // 1 minute
         breaker.state = 'half-open';
         return false;
       }
@@ -425,13 +458,14 @@ export class HealthCheckPerformanceOptimizer {
     const breaker = this.circuitBreakers.get(checkName) || {
       failures: 0,
       lastFailure: 0,
-      state: 'closed' as const
+      state: 'closed' as const,
     };
 
     breaker.failures++;
     breaker.lastFailure = Date.now();
 
-    if (breaker.failures >= 5) { // Threshold: 5 failures
+    if (breaker.failures >= 5) {
+      // Threshold: 5 failures
       breaker.state = 'open';
     }
 
@@ -451,7 +485,7 @@ export class HealthCheckPerformanceOptimizer {
    */
   private getAdaptiveTimeout(checkName: string, baseTimeout?: number): number {
     const base = baseTimeout || 5000;
-    
+
     if (this.config.timeoutStrategy === 'fixed') {
       return base;
     }
@@ -487,7 +521,7 @@ export class HealthCheckPerformanceOptimizer {
         cache: 50,
         'format-engine': 200,
         'batch-processing': 500,
-        database: 1000
+        database: 1000,
       };
       return (defaults as any)[checkName] || 100;
     }
@@ -498,13 +532,13 @@ export class HealthCheckPerformanceOptimizer {
   private canRunInParallel(checkName: string, dependencies: string[] = []): boolean {
     // Checks with dependencies cannot run in parallel with their dependencies
     if (dependencies.length > 0) return false;
-    
+
     // Some checks are inherently sequential
     const sequentialChecks = ['database', 'external-services'];
     return !sequentialChecks.includes(checkName);
   }
 
-  private getCheckHistory(checkName: string): number[] {
+  private getCheckHistory(_checkName: string): number[] {
     // Get recent execution times for this check
     return this.executionHistory
       .slice(-20) // Last 20 executions
@@ -522,38 +556,42 @@ export class HealthCheckPerformanceOptimizer {
   ): PerformanceMetrics {
     const totalResponseTime = Date.now() - startTime;
     const executionTimes = results.map(r => r.executionTime);
-    const averageCheckTime = executionTimes.reduce((sum, time) => sum + time, 0) / executionTimes.length;
-    
-    const slowest = results.reduce((prev, curr) => 
+    const averageCheckTime =
+      executionTimes.reduce((sum, time) => sum + time, 0) / executionTimes.length;
+
+    const slowest = results.reduce((prev, curr) =>
       curr.executionTime > prev.executionTime ? curr : prev
     );
-    
-    const fastest = results.reduce((prev, curr) => 
+
+    const fastest = results.reduce((prev, curr) =>
       curr.executionTime < prev.executionTime ? curr : prev
     );
 
     // Calculate cache hit rate
-    const cacheHits = Array.from(this.performanceCache.values())
-      .reduce((sum, cache) => sum + cache.hitCount, 0);
+    const cacheHits = Array.from(this.performanceCache.values()).reduce(
+      (sum, cache) => sum + cache.hitCount,
+      0
+    );
     const totalCacheRequests = cacheHits + results.length;
     const cacheHitRate = totalCacheRequests > 0 ? (cacheHits / totalCacheRequests) * 100 : 0;
 
     // Calculate optimization savings
     const optimizationSavings = Math.max(0, plan.totalEstimatedTime - totalResponseTime);
-    const parallelExecutionGain = plan.totalEstimatedTime > 0 ? 
-      (optimizationSavings / plan.totalEstimatedTime) * 100 : 0;
+    const parallelExecutionGain =
+      plan.totalEstimatedTime > 0 ? (optimizationSavings / plan.totalEstimatedTime) * 100 : 0;
 
     return {
       totalResponseTime,
       cacheHitRate,
       parallelExecutionGain,
-      circuitBreakerActivations: Array.from(this.circuitBreakers.values())
-        .filter(cb => cb.state === 'open').length,
+      circuitBreakerActivations: Array.from(this.circuitBreakers.values()).filter(
+        cb => cb.state === 'open'
+      ).length,
       compressionRatio: 0, // Would implement response compression
       averageCheckTime,
       slowestCheck: { name: slowest.name, time: slowest.executionTime },
       fastestCheck: { name: fastest.name, time: fastest.executionTime },
-      optimizationSavings
+      optimizationSavings,
     };
   }
 
@@ -580,10 +618,10 @@ export class HealthCheckPerformanceOptimizer {
   private async runPreemptiveChecks(): Promise<void> {
     // Run basic checks that are commonly requested
     const basicChecks = ['memory', 'connectivity', 'cache'];
-    
+
     for (const checkName of basicChecks) {
       const cacheKey = this.generateCacheKey(checkName, { level: 'basic' });
-      
+
       // Only run if not in cache
       if (!this.getCachedResult(cacheKey)) {
         try {
@@ -607,7 +645,7 @@ export class HealthCheckPerformanceOptimizer {
           30000
         );
         break;
-      
+
       case 'connectivity':
         this.cacheResult(
           this.generateCacheKey('connectivity', { level: 'basic' }),
@@ -625,13 +663,13 @@ export class HealthCheckPerformanceOptimizer {
     const timeoutPromise = new Promise<never>((_, reject) => {
       setTimeout(() => reject(new Error('Timeout')), timeout);
     });
-    
+
     return Promise.race([promise, timeoutPromise]);
   }
 
   private cleanupCache(): void {
     const now = Date.now();
-    
+
     for (const [key, cached] of this.performanceCache.entries()) {
       const ttl = this.getCacheTTLForKey(key);
       if (now - cached.timestamp > ttl) {
@@ -645,9 +683,9 @@ export class HealthCheckPerformanceOptimizer {
     const metrics = {
       cacheSize: this.performanceCache.size,
       circuitBreakers: this.circuitBreakers.size,
-      timestamp: Date.now()
+      timestamp: Date.now(),
     };
-    
+
     // Store performance data
     console.log('Health check performance:', metrics);
   }
@@ -655,7 +693,7 @@ export class HealthCheckPerformanceOptimizer {
   private updatePerformanceHistory(metrics: PerformanceMetrics): void {
     this.executionHistory.push({
       timestamp: Date.now(),
-      metrics
+      metrics,
     });
 
     // Keep only last 100 entries
@@ -676,22 +714,25 @@ export class HealthCheckPerformanceOptimizer {
     circuitBreakerStats: { total: number; open: number };
     executionHistory: Array<{ timestamp: number; metrics: PerformanceMetrics }>;
   } {
-    const cacheHits = Array.from(this.performanceCache.values())
-      .reduce((sum, cache) => sum + cache.hitCount, 0);
-    
-    const openCircuitBreakers = Array.from(this.circuitBreakers.values())
-      .filter(cb => cb.state === 'open').length;
+    const cacheHits = Array.from(this.performanceCache.values()).reduce(
+      (sum, cache) => sum + cache.hitCount,
+      0
+    );
+
+    const openCircuitBreakers = Array.from(this.circuitBreakers.values()).filter(
+      cb => cb.state === 'open'
+    ).length;
 
     return {
       cacheStats: {
         size: this.performanceCache.size,
-        hitRate: cacheHits > 0 ? (cacheHits / (cacheHits + 100)) * 100 : 0 // Approximate
+        hitRate: cacheHits > 0 ? (cacheHits / (cacheHits + 100)) * 100 : 0, // Approximate
       },
       circuitBreakerStats: {
         total: this.circuitBreakers.size,
-        open: openCircuitBreakers
+        open: openCircuitBreakers,
       },
-      executionHistory: [...this.executionHistory]
+      executionHistory: [...this.executionHistory],
     };
   }
 

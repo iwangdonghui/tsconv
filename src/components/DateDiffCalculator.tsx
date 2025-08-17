@@ -213,10 +213,24 @@ Seconds: ${formatNumber(result.data.difference.seconds)}`;
       <style
         dangerouslySetInnerHTML={{
           __html: `
+          /* Calendar picker indicator styling */
           input[type="date"]::-webkit-calendar-picker-indicator,
           input[type="time"]::-webkit-calendar-picker-indicator {
             filter: ${isDark ? 'invert(1)' : 'none'};
             cursor: pointer;
+            opacity: ${isDark ? '0.8' : '0.7'};
+            width: 16px;
+            height: 16px;
+            padding: 2px;
+            border-radius: 3px;
+            transition: opacity 0.2s ease;
+          }
+
+          /* Hover effect for calendar icon */
+          input[type="date"]:hover::-webkit-calendar-picker-indicator,
+          input[type="time"]:hover::-webkit-calendar-picker-indicator {
+            opacity: 1;
+            background-color: ${isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)'};
           }
 
           /* Enhanced dark mode support */
@@ -238,7 +252,13 @@ Seconds: ${formatNumber(result.data.difference.seconds)}`;
               color: white;
             }
           `
-              : ''
+              : `
+            /* Light mode specific styles */
+            input[type="date"]::-webkit-calendar-picker-indicator,
+            input[type="time"]::-webkit-calendar-picker-indicator {
+              filter: contrast(1.2) brightness(0.8);
+            }
+          `
           }
         `,
         }}
@@ -263,11 +283,11 @@ Seconds: ${formatNumber(result.data.difference.seconds)}`;
               <TrendingUp className='h-8 w-8 text-white' />
             </div>
             <div>
-              <h2
+              <h1
                 className={`text-3xl font-bold tracking-tight ${isDark ? 'text-white' : 'text-gray-900'}`}
               >
                 Date Difference Calculator
-              </h2>
+              </h1>
               <p className={`text-sm mt-1 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
                 Calculate precise time differences between any two dates
               </p>
@@ -290,9 +310,9 @@ Seconds: ${formatNumber(result.data.difference.seconds)}`;
               >
                 <Calendar className='h-5 w-5' />
               </div>
-              <h3 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+              <h2 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
                 Precise Time Difference Calculations
-              </h3>
+              </h2>
             </div>
             <p className={`mb-6 leading-relaxed ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
               Calculate the exact difference between two dates and times with our advanced date
@@ -312,9 +332,9 @@ Seconds: ${formatNumber(result.data.difference.seconds)}`;
                   <CheckCircle
                     className={`h-5 w-5 ${isDark ? 'text-green-400' : 'text-green-600'}`}
                   />
-                  <h4 className={`font-semibold ${isDark ? 'text-blue-400' : 'text-blue-600'}`}>
+                  <h3 className={`font-semibold ${isDark ? 'text-blue-400' : 'text-blue-600'}`}>
                     Calculation Options
-                  </h4>
+                  </h3>
                 </div>
                 <ul className={`space-y-2 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
                   <li className='flex items-center gap-2 text-sm'>
@@ -346,9 +366,9 @@ Seconds: ${formatNumber(result.data.difference.seconds)}`;
                   <TrendingUp
                     className={`h-5 w-5 ${isDark ? 'text-purple-400' : 'text-purple-600'}`}
                   />
-                  <h4 className={`font-semibold ${isDark ? 'text-purple-400' : 'text-purple-600'}`}>
+                  <h3 className={`font-semibold ${isDark ? 'text-purple-400' : 'text-purple-600'}`}>
                     Use Cases
-                  </h4>
+                  </h3>
                 </div>
                 <ul className={`space-y-2 ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
                   <li className='flex items-center gap-2 text-sm'>
@@ -391,9 +411,9 @@ Seconds: ${formatNumber(result.data.difference.seconds)}`;
                   >
                     <Calendar className='h-5 w-5' />
                   </div>
-                  <h3 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                  <h2 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
                     Date Selection
-                  </h3>
+                  </h2>
                 </div>
 
                 {/* Quick Presets */}
@@ -402,11 +422,11 @@ Seconds: ${formatNumber(result.data.difference.seconds)}`;
                     isDark ? 'border-slate-600 bg-slate-700/30' : 'border-gray-200 bg-gray-50/50'
                   }`}
                 >
-                  <h4
+                  <h3
                     className={`text-sm font-medium mb-3 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}
                   >
                     ⚡ Quick Presets
-                  </h4>
+                  </h3>
                   <div className='grid grid-cols-2 gap-2'>
                     <button
                       onClick={() => {
@@ -484,15 +504,12 @@ Seconds: ${formatNumber(result.data.difference.seconds)}`;
                       Start Date
                     </label>
                     <div className='relative'>
-                      <Calendar
-                        className={`absolute left-3 top-3 h-4 w-4 ${isDark ? 'text-gray-500' : 'text-gray-400'}`}
-                      />
                       <input
                         type='date'
                         aria-label='Select date'
                         value={startDate}
                         onChange={e => setStartDate(e.target.value)}
-                        className={`w-full pl-10 pr-4 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent ${isDark ? 'bg-slate-700 border-slate-600 text-white placeholder-slate-400' : 'bg-white border-gray-300 text-gray-900'}`}
+                        className={`w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent ${isDark ? 'bg-slate-700 border-slate-600 text-white placeholder-slate-400' : 'bg-white border-gray-300 text-gray-900'}`}
                       />
                     </div>
                     <button
@@ -540,15 +557,12 @@ Seconds: ${formatNumber(result.data.difference.seconds)}`;
                       End Date
                     </label>
                     <div className='relative'>
-                      <Calendar
-                        className={`absolute left-3 top-3 h-4 w-4 ${isDark ? 'text-gray-500' : 'text-gray-400'}`}
-                      />
                       <input
                         type='date'
                         aria-label='Select date'
                         value={endDate}
                         onChange={e => setEndDate(e.target.value)}
-                        className={`w-full pl-10 pr-4 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent ${isDark ? 'bg-slate-700 border-slate-600 text-white placeholder-slate-400' : 'bg-white border-gray-300 text-gray-900'}`}
+                        className={`w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent ${isDark ? 'bg-slate-700 border-slate-600 text-white placeholder-slate-400' : 'bg-white border-gray-300 text-gray-900'}`}
                       />
                     </div>
                   </div>
@@ -668,11 +682,11 @@ Seconds: ${formatNumber(result.data.difference.seconds)}`;
                     <div className='flex items-center justify-between mb-4'>
                       <div className='flex items-center gap-2'>
                         <CheckCircle className='h-5 w-5 text-green-500' />
-                        <h3
+                        <h2
                           className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}
                         >
                           Results
-                        </h3>
+                        </h2>
                         {result.metadata.cached && (
                           <span className='text-xs bg-green-100 text-green-800 px-2 py-1 rounded'>
                             Cached
@@ -876,11 +890,11 @@ Seconds: ${formatNumber(result.data.difference.seconds)}`;
                       >
                         <TrendingUp className='h-12 w-12' />
                       </div>
-                      <h3
+                      <h2
                         className={`text-xl font-semibold mb-3 ${isDark ? 'text-white' : 'text-gray-900'}`}
                       >
                         Ready to Calculate
-                      </h3>
+                      </h2>
                       <p className={`text-sm mb-6 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
                         Enter your start and end dates to see precise time differences
                       </p>

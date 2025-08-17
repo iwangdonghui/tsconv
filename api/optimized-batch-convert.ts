@@ -6,11 +6,15 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
 import { createCacheMiddleware } from './middleware/cache';
 import { createRateLimitMiddleware } from './middleware/rate-limit';
-import { createSecurityMiddleware } from './services/security/unified-security-middleware';
-import { createUnifiedErrorMiddleware } from './services/error-handling/unified-error-middleware';
-import { OptimizedBatchProcessor, BatchItem, BatchProcessingOptions } from './services/batch-processing/optimized-batch-processor';
 import { BatchPerformanceMonitor } from './services/batch-processing/batch-performance-monitor';
-import { APIErrorHandler, ResponseBuilder, withCors } from './utils/response';
+import {
+  BatchItem,
+  BatchProcessingOptions,
+  OptimizedBatchProcessor,
+} from './services/batch-processing/optimized-batch-processor';
+import { createUnifiedErrorMiddleware } from './services/error-handling/unified-error-middleware';
+import { createSecurityMiddleware } from './services/security/unified-security-middleware';
+import { APIErrorHandler, withCors } from './utils/response';
 
 interface OptimizedBatchRequest {
   items: Array<{
@@ -49,11 +53,11 @@ interface OptimizedBatchResponse {
     results: Array<{
       id?: string;
       success: boolean;
-      data?: any;
+      data?: unknown;
       error?: {
         code: string;
         message: string;
-        details?: any;
+        details?: unknown;
       };
       processingTime: number;
       index: number;
@@ -123,16 +127,16 @@ const performanceMonitor = BatchPerformanceMonitor.getInstance({
   minThroughputPerSecond: 50,
   maxErrorRatePercent: 3,
   maxLatencyMs: 10000,
-  minCacheHitRatePercent: 80
+  minCacheHitRatePercent: 80,
 });
 
 // Start performance monitoring
 performanceMonitor.startMonitoring(3000); // Monitor every 3 seconds
 
 // Set up performance alerts
-performanceMonitor.onAlert((alert) => {
+performanceMonitor.onAlert(alert => {
   console.warn(`🚨 Batch Performance Alert [${alert.severity}]: ${alert.message}`);
-  
+
   if (alert.severity === 'critical') {
     // Could integrate with alerting systems here
     console.error('CRITICAL PERFORMANCE ISSUE:', alert);
@@ -154,23 +158,25 @@ async function optimizedBatchConvertHandler(req: VercelRequest, res: VercelRespo
   }
 
   const startTime = Date.now();
-  const requestId = req.headers['x-request-id'] as string || `batch-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+  const requestId =
+    (req.headers['x-request-id'] as string) ||
+    `batch-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
   try {
     // Validate request body
     const batchRequest: OptimizedBatchRequest = req.body;
-    
+
     if (!batchRequest.items || !Array.isArray(batchRequest.items)) {
       return APIErrorHandler.handleBadRequest(res, 'Items array is required', {
         expected: 'Array of batch items',
-        received: typeof batchRequest.items
+        received: typeof batchRequest.items,
       });
     }
 
     if (batchRequest.items.length === 0) {
       return APIErrorHandler.handleBadRequest(res, 'Items array cannot be empty', {
         minItems: 1,
-        maxItems: 1000
+        maxItems: 1000,
       });
     }
 
@@ -178,7 +184,7 @@ async function optimizedBatchConvertHandler(req: VercelRequest, res: VercelRespo
       return APIErrorHandler.handleBadRequest(res, 'Batch size exceeds maximum limit', {
         maxItems: 1000,
         receivedItems: batchRequest.items.length,
-        suggestion: 'Split your request into smaller batches'
+        suggestion: 'Split your request into smaller batches',
       });
     }
 
@@ -192,8 +198,8 @@ async function optimizedBatchConvertHandler(req: VercelRequest, res: VercelRespo
       priority: item.priority || 'normal',
       metadata: {
         originalIndex: index,
-        requestId
-      }
+        requestId,
+      },
     }));
 
     // Configure processing options
@@ -209,13 +215,15 @@ async function optimizedBatchConvertHandler(req: VercelRequest, res: VercelRespo
       enableAnalytics: batchRequest.options?.enableAnalytics ?? true,
       retryFailedItems: batchRequest.options?.retryFailedItems ?? true,
       maxRetries: Math.min(batchRequest.options?.maxRetries || 3, 5),
-      retryDelay: Math.min(batchRequest.options?.retryDelay || 1000, 5000)
+      retryDelay: Math.min(batchRequest.options?.retryDelay || 1000, 5000),
     };
 
     // Set up progress tracking if enabled
     if (processingOptions.enableProgressTracking) {
-      batchProcessor.onProgress((progress) => {
-        console.log(`Batch ${requestId} progress: ${progress.percentage.toFixed(1)}% (${progress.completed}/${progress.total})`);
+      batchProcessor.onProgress(progress => {
+        console.log(
+          `Batch ${requestId} progress: ${progress.percentage.toFixed(1)}% (${progress.completed}/${progress.total})`
+        );
       });
     }
 
@@ -225,13 +233,13 @@ async function optimizedBatchConvertHandler(req: VercelRequest, res: VercelRespo
     });
 
     const processingPromise = batchProcessor.processBatch(batchItems, processingOptions);
-    
-    const { results, stats } = await Promise.race([processingPromise, timeoutPromise]) as any;
+
+    const { results, stats } = (await Promise.race([processingPromise, timeoutPromise])) as any;
 
     // Record performance metrics
     const batchId = `batch-${requestId}`;
     const cacheStats = batchProcessor.getCacheStats();
-    
+
     performanceMonitor.recordBatchMetrics(
       batchId,
       batchItems.length,
@@ -241,7 +249,7 @@ async function optimizedBatchConvertHandler(req: VercelRequest, res: VercelRespo
       {
         hitRate: cacheStats.hitRate,
         size: cacheStats.size,
-        evictions: 0
+        evictions: 0,
       },
       stats.concurrencyStats
     );
@@ -262,34 +270,34 @@ async function optimizedBatchConvertHandler(req: VercelRequest, res: VercelRespo
           duplicatesSkipped: stats.duplicatesSkipped,
           totalProcessingTime: stats.totalProcessingTime,
           averageItemTime: stats.averageItemTime,
-          throughputPerSecond: stats.throughputPerSecond
+          throughputPerSecond: stats.throughputPerSecond,
         },
         performance: {
           memoryUsage: {
             heapUsed: stats.memoryUsage.heapUsed,
             heapTotal: stats.memoryUsage.heapTotal,
-            external: stats.memoryUsage.external
+            external: stats.memoryUsage.external,
           },
           concurrencyStats: stats.concurrencyStats,
           cacheStats: {
             hitRate: cacheStats.hitRate,
             size: cacheStats.size,
-            memoryUsage: cacheStats.memoryUsage
-          }
+            memoryUsage: cacheStats.memoryUsage,
+          },
         },
         optimization: {
           recommendations: performanceAnalytics.recommendations.map(rec => ({
             type: rec.type,
             priority: rec.priority,
             description: rec.description,
-            expectedImprovement: rec.expectedImprovement
+            expectedImprovement: rec.expectedImprovement,
           })),
           alerts: performanceAnalytics.alerts.slice(-5).map(alert => ({
             severity: alert.severity,
             message: alert.message,
-            recommendations: alert.recommendations
-          }))
-        }
+            recommendations: alert.recommendations,
+          })),
+        },
       },
       metadata: {
         processingTime: Date.now() - startTime,
@@ -299,11 +307,11 @@ async function optimizedBatchConvertHandler(req: VercelRequest, res: VercelRespo
           limit: 100,
           remaining: 99,
           resetTime: Date.now() + 60000,
-          window: 60000
+          window: 60000,
         },
         requestId,
-        version: '2.0.0'
-      }
+        version: '2.0.0',
+      },
     };
 
     // Set performance headers
@@ -314,7 +322,6 @@ async function optimizedBatchConvertHandler(req: VercelRequest, res: VercelRespo
     res.setHeader('X-Memory-Usage', (stats.memoryUsage.heapUsed / 1024 / 1024).toFixed(2));
 
     return res.status(200).json(response);
-
   } catch (error) {
     console.error('Optimized batch conversion error:', error);
 
@@ -325,10 +332,10 @@ async function optimizedBatchConvertHandler(req: VercelRequest, res: VercelRespo
           'TIMEOUT_ERROR',
           'Batch processing exceeded timeout limit',
           408,
-          { 
+          {
             timeout: req.body?.options?.timeout || 30000,
             requestId,
-            suggestion: 'Try reducing batch size or increasing timeout'
+            suggestion: 'Try reducing batch size or increasing timeout',
           }
         ),
         408
@@ -338,7 +345,7 @@ async function optimizedBatchConvertHandler(req: VercelRequest, res: VercelRespo
     return APIErrorHandler.handleServerError(res, error as Error, {
       endpoint: 'optimized-batch-convert',
       requestId,
-      batchSize: req.body?.items?.length || 0
+      batchSize: req.body?.items?.length || 0,
     });
   }
 }
@@ -389,7 +396,7 @@ const enhancedOptimizedBatchHandler = async (req: VercelRequest, res: VercelResp
       securityMiddleware(req, res, () => {
         // Then apply rate limiting with higher limits for batch operations
         createRateLimitMiddleware({
-          ruleSelector: req => ({
+          ruleSelector: () => ({
             identifier: '/api/optimized-batch-convert',
             limit: 20, // 20 batch requests per minute
             window: 60000,
@@ -400,12 +407,12 @@ const enhancedOptimizedBatchHandler = async (req: VercelRequest, res: VercelResp
           createCacheMiddleware({
             ttl: 10 * 60 * 1000, // 10 minutes
             cacheControlHeader: 'public, max-age=600, stale-while-revalidate=1200',
-            keyGenerator: (req) => {
+            keyGenerator: req => {
               // Create cache key based on batch content hash
               const batchContent = JSON.stringify(req.body?.items || []);
               const hash = Buffer.from(batchContent).toString('base64').slice(0, 32);
               return `batch:${hash}`;
-            }
+            },
           })(async (req: VercelRequest, res: VercelResponse) => {
             try {
               await optimizedBatchConvertHandler(req, res);

@@ -4,9 +4,34 @@
  */
 
 import { VercelRequest, VercelResponse } from '@vercel/node';
-import { SecurityPolicyLevel } from '../services/security/security-policy-manager';
+import { SecurityPolicy, SecurityPolicyLevel } from '../services/security/security-policy-manager';
 import { ThreatPattern } from '../services/security/threat-detection-engine';
 import { UnifiedSecurityMiddleware } from '../services/security/unified-security-middleware';
+
+interface LogFilter {
+  level?: string[];
+  event?: string[];
+  blocked?: boolean;
+  limit: number;
+  offset: number;
+  ip?: string;
+  endpoint?: string;
+}
+
+// Deep partial type for flexible configuration
+type DeepPartial<T> = {
+  [P in keyof T]?: T[P] extends object ? DeepPartial<T[P]> : T[P];
+};
+
+interface LogFilter {
+  level?: string[];
+  event?: string[];
+  blocked?: boolean;
+  limit: number;
+  offset: number;
+  ip?: string;
+  endpoint?: string;
+}
 
 // Global security middleware instance for management
 let securityMiddleware: UnifiedSecurityMiddleware;
@@ -35,15 +60,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const action = req.query.action as string;
 
       switch (action) {
-        case 'stats':
+        case 'stats': {
           const stats = securityMiddleware.getSecurityStats();
           return res.status(200).json({
             success: true,
             data: stats,
           });
+        }
 
-        case 'logs':
-          const filter: any = {
+        case 'logs': {
+          const filter: LogFilter = {
             level: req.query.level ? (req.query.level as string).split(',') : undefined,
             event: req.query.event ? (req.query.event as string).split(',') : undefined,
             blocked: req.query.blocked ? req.query.blocked === 'true' : undefined,
@@ -55,10 +81,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
           if (req.query.timeRange) {
             const [start, end] = (req.query.timeRange as string).split(',');
-            filter.timeRange = {
-              start: parseInt(start),
-              end: parseInt(end),
-            };
+            if (start && end) {
+              filter.timeRange = {
+                start: parseInt(start),
+                end: parseInt(end),
+              };
+            }
           }
 
           const logs = securityMiddleware.getSecurityLogs(filter);
@@ -70,8 +98,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
               total: logs.length,
             },
           });
+        }
 
-        case 'threats':
+        case 'threats': {
           const threatStats = securityMiddleware.getSecurityStats();
           return res.status(200).json({
             success: true,
@@ -83,8 +112,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
               }),
             },
           });
+        }
 
-        case 'blocked-ips':
+        case 'blocked-ips': {
           const securityStats = securityMiddleware.getSecurityStats();
           return res.status(200).json({
             success: true,
@@ -96,8 +126,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
               }),
             },
           });
+        }
 
-        case 'policy':
+        case 'policy': {
           const policyStats = securityMiddleware.getSecurityStats();
           return res.status(200).json({
             success: true,
@@ -105,8 +136,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
               policy: policyStats.policy,
             },
           });
+        }
 
-        default:
+        default: {
           // Return comprehensive security overview
           const overview = securityMiddleware.getSecurityStats();
           const recentLogs = securityMiddleware.getSecurityLogs({ limit: 20 });
@@ -119,15 +151,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
               timestamp: Date.now(),
             },
           });
+        }
       }
     } else if (req.method === 'POST') {
       const { action, ...data } = req.body;
 
       switch (action) {
-        case 'updatePolicy':
+        case 'updatePolicy': {
           const { level, customConfig, reason } = data as {
             level?: SecurityPolicyLevel;
-            customConfig?: any;
+            customConfig?: DeepPartial<SecurityPolicy>;
             reason?: string;
           };
 
@@ -148,16 +181,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
               reason,
             },
           });
+        }
 
-        case 'clearBlocked':
+        case 'clearBlocked': {
           securityMiddleware.clearBlockedIPs();
 
           return res.status(200).json({
             success: true,
             message: 'Blocked IPs cleared successfully',
           });
+        }
 
-        case 'addThreatPattern':
+        case 'addThreatPattern': {
           const { pattern } = data as { pattern: ThreatPattern };
 
           // This would require exposing the threat detection engine
@@ -167,12 +202,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             message: 'Threat pattern management not yet implemented',
             data: { pattern },
           });
+        }
 
-        default:
+        default: {
           return res.status(400).json({
             success: false,
             error: `Unknown action: ${action}`,
           });
+        }
       }
     } else if (req.method === 'DELETE') {
       const action = req.query.action as string;

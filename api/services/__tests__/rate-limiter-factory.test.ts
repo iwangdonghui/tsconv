@@ -1,16 +1,15 @@
-import { describe, it, expect, beforeEach, afterEach, vi, Mock } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { MemoryRateLimiter } from '../rate-limiter';
 import {
   RateLimiterFactory,
-  getClientIdentifier,
-  getRateLimitRule,
   applyRateLimit,
   createRateLimitHeaders,
+  getClientIdentifier,
+  getRateLimitRule,
 } from '../rate-limiter-factory';
-import { MemoryRateLimiter } from '../rate-limiter';
-import config from '../config/config';
 
 // Mock the config module with mutable structure
-vi.mock('../config/config', () => {
+vi.mock('../../config/config', () => {
   const mockConfig = {
     rateLimiting: {
       enabled: true,

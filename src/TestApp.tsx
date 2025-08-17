@@ -8,7 +8,7 @@ export default function TestApp() {
       <h1>React Test App</h1>
       <p>If you can see this, React is working!</p>
       <p>Current time: {new Date().toLocaleString()}</p>
-      <button onClick={() => alert('Button clicked!')}>Test Button</button>
+      <button onClick={() => console.log('Button clicked!')}>Test Button</button>
     </div>
   );
 }

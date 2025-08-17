@@ -234,7 +234,7 @@ export class ResponseBuilder<T> {
   }
 
   // Add additional metadata fields
-  addMetadata(key: string, value: any): this {
+  addMetadata(key: string, value: unknown): this {
     this.additionalMetadata[key] = value;
     return this;
   }

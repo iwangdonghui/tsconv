@@ -13,8 +13,8 @@ import {
   CacheSetOptions,
   ICacheService,
 } from './interfaces';
-import { RedisCacheService } from './redis-cache-service';
-import { UpstashCacheService } from './upstash-cache-service';
+import { RedisCacheService, RedisConfig } from './redis-cache-service';
+import { UpstashCacheService, UpstashConfig } from './upstash-cache-service';
 
 export class HybridCacheService extends BaseCacheService {
   private l1Cache!: ICacheService; // Memory cache
@@ -52,9 +52,15 @@ export class HybridCacheService extends BaseCacheService {
 
       // Initialize L2 cache (Redis/Upstash)
       if (this.hybridConfig.l2Provider === 'redis') {
-        this.l2Cache = new RedisCacheService(this.config, this.hybridConfig.l2Config);
+        this.l2Cache = new RedisCacheService(
+          this.config,
+          this.hybridConfig.l2Config as RedisConfig
+        );
       } else {
-        this.l2Cache = new UpstashCacheService(this.config, this.hybridConfig.l2Config);
+        this.l2Cache = new UpstashCacheService(
+          this.config,
+          this.hybridConfig.l2Config as UpstashConfig
+        );
       }
 
       // Start sync process for write-back strategy

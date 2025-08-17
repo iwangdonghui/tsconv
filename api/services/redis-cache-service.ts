@@ -1,10 +1,12 @@
 /**
+import { logError, logWarn, logInfo } from '../../api-handlers/utils/logger';
+
  * Redis-based cache service implementation
  * This service uses Redis for caching instead of in-memory storage
  */
 
-import { CacheService, CacheStats, CacheableRequest } from '../types/api';
 import config from '../config/config';
+import { CacheService, CacheStats, CacheableRequest } from '../types/api';
 import { createRedisClient } from './redis-client';
 
 class RedisCacheService implements CacheService {
@@ -22,9 +24,12 @@ class RedisCacheService implements CacheService {
       this.redis = createRedisClient('cache');
       await this.redis.connect();
       this.connected = true;
-      console.log('Redis cache service initialized');
+      logInfo('Redis cache service initialized');
     } catch (error) {
-      console.error('Failed to initialize Redis cache service:', error);
+      logError(
+        'Failed to initialize Redis cache service',
+        error instanceof Error ? error : new Error(String(error))
+      );
       this.connected = false;
     }
   }
@@ -43,7 +48,7 @@ class RedisCacheService implements CacheService {
         return null;
       }
     } catch (error) {
-      console.warn('Redis cache get error:', error);
+      logWarn('Redis cache get error', { error: String(error) });
       this.cacheStats.misses++;
       return null;
     }
@@ -56,7 +61,7 @@ class RedisCacheService implements CacheService {
       const serialized = JSON.stringify(value);
       await this.redis.setex(this.prefixKey(key), Math.ceil(ttl / 1000), serialized);
     } catch (error) {
-      console.warn('Redis cache set error:', error);
+      logWarn('Redis cache set error', { error: String(error) });
     }
   }
 
@@ -66,7 +71,7 @@ class RedisCacheService implements CacheService {
     try {
       await this.redis.del(this.prefixKey(key));
     } catch (error) {
-      console.warn('Redis cache del error:', error);
+      logWarn('Redis cache del error', { error: String(error) });
     }
   }
 

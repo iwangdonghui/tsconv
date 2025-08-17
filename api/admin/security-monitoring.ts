@@ -82,13 +82,21 @@ interface ThreatAnalysis {
   userAgent: string;
   endpoint: string;
   timestamp: string;
-  fingerprint?: any;
+  fingerprint?: unknown;
   context: {
     similarThreats: number;
     ipReputation: 'clean' | 'suspicious' | 'malicious';
     geoLocation?: string;
     isKnownAttacker: boolean;
   };
+}
+
+interface RecommendationData {
+  criticalEvents: number;
+  highEvents: number;
+  threatTypes: Record<string, number>;
+  topAttackers: Array<{ ip: string; threats: number }>;
+  vulnerableEndpoints: Array<{ endpoint: string; threats: number }>;
 }
 
 // ============================================================================
@@ -344,7 +352,7 @@ export class SecurityAnalytics {
 
     // Count similar threats from same IP
     const similarThreats = allLogs.filter(
-      (l: any) =>
+      (l: SecurityLogEntry) =>
         l.ip === log.ip &&
         l.threat?.type === log.threat?.type &&
         Math.abs(l.timestamp - log.timestamp) < 3600000 // Within 1 hour
@@ -354,14 +362,18 @@ export class SecurityAnalytics {
     const ipReputation = log.ip ? this.checkIPReputation(log.ip, allLogs) : 'unknown';
 
     // Check if this is a known attacker
-    const isKnownAttacker = allLogs.filter((l: any) => l.ip === log.ip && l.threat).length > 5;
+    const isKnownAttacker =
+      allLogs.filter((l: SecurityLogEntry) => l.ip === log.ip && l.threat).length > 5;
 
     return {
       threatId: `threat_${log.timestamp}_${log.ip?.replace(/\./g, '_') || 'unknown'}`,
       type: log.threat.type || 'unknown',
       severity: log.threat.severity || 'unknown',
       description: log.threat.description || 'unknown',
-      payload: log.threat.payload || 'unknown',
+      payload:
+        typeof log.threat.payload === 'string'
+          ? log.threat.payload
+          : JSON.stringify(log.threat.payload) || 'unknown',
       pattern: log.threat.pattern || 'unknown',
       ip: log.ip || 'unknown',
       userAgent: log.userAgent || 'unknown',
@@ -418,7 +430,7 @@ export class SecurityAnalytics {
   /**
    * Generates security recommendations
    */
-  private static generateRecommendations(data: any): string[] {
+  private static generateRecommendations(data: RecommendationData): string[] {
     const recommendations: string[] = [];
 
     if (data.criticalEvents > 0) {
@@ -441,7 +453,7 @@ export class SecurityAnalytics {
       recommendations.push(
         `Consider blocking IPs with repeated attacks: ${data.topAttackers
           .slice(0, 3)
-          .map((a: any) => a.ip)
+          .map((a: { ip: string; threats: number }) => a.ip)
           .join(', ')}`
       );
     }
@@ -450,7 +462,7 @@ export class SecurityAnalytics {
       recommendations.push(
         `Review security for frequently targeted endpoints: ${data.vulnerableEndpoints
           .slice(0, 3)
-          .map((e: any) => e.endpoint)
+          .map((e: { endpoint: string; threats: number }) => e.endpoint)
           .join(', ')}`
       );
     }
@@ -542,11 +554,11 @@ async function getSecurityLogs(req: VercelRequest, res: VercelResponse) {
 
     // Apply filters
     if (level) {
-      logs = logs.filter((log: any) => log.level === level);
+      logs = logs.filter((log: SecurityLogEntry) => log.level === level);
     }
 
     if (ip) {
-      logs = logs.filter((log: any) => log.ip === ip);
+      logs = logs.filter((log: SecurityLogEntry) => log.ip === ip);
     }
 
     // Limit results
