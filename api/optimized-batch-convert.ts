@@ -149,12 +149,15 @@ performanceMonitor.onAlert(alert => {
 async function optimizedBatchConvertHandler(req: VercelRequest, res: VercelResponse) {
   withCors(res);
 
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
-
-  if (req.method !== 'POST') {
-    return APIErrorHandler.handleMethodNotAllowed(res, 'Only POST method is allowed');
+  // Validate HTTP request
+  const httpValidation = validateHttpRequest(req);
+  if (!httpValidation.isValid) {
+    if (httpValidation.response?.end) {
+      return res.status(200).end();
+    }
+    if (httpValidation.response?.error) {
+      return APIErrorHandler.handleMethodNotAllowed(res, httpValidation.response.message);
+    }
   }
 
   const startTime = Date.now();
@@ -163,60 +166,21 @@ async function optimizedBatchConvertHandler(req: VercelRequest, res: VercelRespo
     `batch-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
   try {
-    // Validate request body
+    // Validate batch request
     const batchRequest: OptimizedBatchRequest = req.body;
+    const batchValidation = validateBatchRequest(batchRequest);
 
-    if (!batchRequest.items || !Array.isArray(batchRequest.items)) {
-      return APIErrorHandler.handleBadRequest(res, 'Items array is required', {
-        expected: 'Array of batch items',
-        received: typeof batchRequest.items,
-      });
+    if (!batchValidation.isValid) {
+      return APIErrorHandler.handleBadRequest(
+        res,
+        batchValidation.error!.message,
+        batchValidation.error!.details
+      );
     }
 
-    if (batchRequest.items.length === 0) {
-      return APIErrorHandler.handleBadRequest(res, 'Items array cannot be empty', {
-        minItems: 1,
-        maxItems: 1000,
-      });
-    }
-
-    if (batchRequest.items.length > 1000) {
-      return APIErrorHandler.handleBadRequest(res, 'Batch size exceeds maximum limit', {
-        maxItems: 1000,
-        receivedItems: batchRequest.items.length,
-        suggestion: 'Split your request into smaller batches',
-      });
-    }
-
-    // Prepare batch items
-    const batchItems: BatchItem[] = batchRequest.items.map((item, index) => ({
-      id: item.id || `item-${index}`,
-      timestamp: item.timestamp,
-      outputFormats: item.outputFormats || ['iso', 'unix', 'human'],
-      timezone: item.timezone,
-      targetTimezone: item.targetTimezone,
-      priority: item.priority || 'normal',
-      metadata: {
-        originalIndex: index,
-        requestId,
-      },
-    }));
-
-    // Configure processing options
-    const processingOptions: BatchProcessingOptions = {
-      maxConcurrency: Math.min(batchRequest.options?.maxConcurrency || 20, 50),
-      chunkSize: Math.min(batchRequest.options?.chunkSize || 25, 100),
-      timeout: Math.min(batchRequest.options?.timeout || 30000, 120000),
-      continueOnError: batchRequest.options?.continueOnError ?? true,
-      enableCaching: batchRequest.options?.enableCaching ?? true,
-      enableDeduplication: batchRequest.options?.enableDeduplication ?? true,
-      enablePrioritization: batchRequest.options?.enablePrioritization ?? true,
-      enableProgressTracking: batchRequest.options?.enableProgressTracking ?? false,
-      enableAnalytics: batchRequest.options?.enableAnalytics ?? true,
-      retryFailedItems: batchRequest.options?.retryFailedItems ?? true,
-      maxRetries: Math.min(batchRequest.options?.maxRetries || 3, 5),
-      retryDelay: Math.min(batchRequest.options?.retryDelay || 1000, 5000),
-    };
+    // Prepare batch items and processing options
+    const batchItems = prepareBatchItems(batchRequest.items, requestId);
+    const processingOptions = createProcessingOptions(batchRequest.options);
 
     // Set up progress tracking if enabled
     if (processingOptions.enableProgressTracking) {
@@ -254,99 +218,44 @@ async function optimizedBatchConvertHandler(req: VercelRequest, res: VercelRespo
       stats.concurrencyStats
     );
 
-    // Get performance analytics
+    // Get performance analytics and build response
     const performanceAnalytics = performanceMonitor.getPerformanceAnalytics();
-
-    // Build response
-    const response: OptimizedBatchResponse = {
-      success: true,
-      data: {
-        results,
-        summary: {
-          totalItems: stats.totalItems,
-          successfulItems: stats.successfulItems,
-          failedItems: stats.failedItems,
-          cacheHits: stats.cacheHits,
-          duplicatesSkipped: stats.duplicatesSkipped,
-          totalProcessingTime: stats.totalProcessingTime,
-          averageItemTime: stats.averageItemTime,
-          throughputPerSecond: stats.throughputPerSecond,
-        },
-        performance: {
-          memoryUsage: {
-            heapUsed: stats.memoryUsage.heapUsed,
-            heapTotal: stats.memoryUsage.heapTotal,
-            external: stats.memoryUsage.external,
-          },
-          concurrencyStats: stats.concurrencyStats,
-          cacheStats: {
-            hitRate: cacheStats.hitRate,
-            size: cacheStats.size,
-            memoryUsage: cacheStats.memoryUsage,
-          },
-        },
-        optimization: {
-          recommendations: performanceAnalytics.recommendations.map(rec => ({
-            type: rec.type,
-            priority: rec.priority,
-            description: rec.description,
-            expectedImprovement: rec.expectedImprovement,
-          })),
-          alerts: performanceAnalytics.alerts.slice(-5).map(alert => ({
-            severity: alert.severity,
-            message: alert.message,
-            recommendations: alert.recommendations,
-          })),
-        },
-      },
-      metadata: {
-        processingTime: Date.now() - startTime,
-        itemCount: results.length,
-        cacheHit: stats.cacheHits > 0,
-        rateLimit: {
-          limit: 100,
-          remaining: 99,
-          resetTime: Date.now() + 60000,
-          window: 60000,
-        },
-        requestId,
-        version: '2.0.0',
-      },
-    };
+    const response = buildBatchResponse(
+      results,
+      stats,
+      performanceAnalytics,
+      startTime,
+      requestId,
+      cacheStats
+    );
 
     // Set performance headers
-    res.setHeader('X-Batch-ID', batchId);
-    res.setHeader('X-Processing-Time', stats.totalProcessingTime.toString());
-    res.setHeader('X-Throughput', stats.throughputPerSecond.toFixed(2));
-    res.setHeader('X-Cache-Hit-Rate', cacheStats.hitRate.toFixed(2));
-    res.setHeader('X-Memory-Usage', (stats.memoryUsage.heapUsed / 1024 / 1024).toFixed(2));
+    setPerformanceHeaders(res, batchId, stats, cacheStats);
 
     return res.status(200).json(response);
   } catch (error) {
     console.error('Optimized batch conversion error:', error);
 
-    if ((error as Error).message === 'Batch processing timeout') {
+    const errorInfo = handleBatchError(error as Error, req, requestId);
+
+    if (errorInfo.type === 'timeout') {
       return APIErrorHandler.sendError(
         res,
         APIErrorHandler.createError(
-          'TIMEOUT_ERROR',
-          'Batch processing exceeded timeout limit',
-          408,
-          {
-            timeout: req.body?.options?.timeout || 30000,
-            requestId,
-            suggestion: 'Try reducing batch size or increasing timeout',
-          }
+          errorInfo.response.code,
+          errorInfo.response.message,
+          errorInfo.response.status,
+          errorInfo.response.details
         ),
-        408
+        errorInfo.response.status
       );
     }
 
-    return APIErrorHandler.handleServerError(res, error as Error, {
-      endpoint: 'optimized-batch-convert',
-      requestId,
-      batchSize: req.body?.items?.length || 0,
-    });
+    return APIErrorHandler.handleServerError(
+      res,
+      errorInfo.response.error,
+      errorInfo.response.context
+    );
   }
 }
 
@@ -429,5 +338,238 @@ const enhancedOptimizedBatchHandler = async (req: VercelRequest, res: VercelResp
     await errorMiddleware(error as Error, req, res);
   }
 };
+
+// ============================================================================
+// EXTRACTED HELPER FUNCTIONS FOR COMPLEXITY REDUCTION
+// ============================================================================
+
+/**
+ * Validate HTTP request method and basic structure
+ */
+function validateHttpRequest(req: VercelRequest): { isValid: boolean; response?: any } {
+  if (req.method === 'OPTIONS') {
+    return { isValid: false, response: { status: 200, end: true } };
+  }
+
+  if (req.method !== 'POST') {
+    return {
+      isValid: false,
+      response: {
+        error: 'METHOD_NOT_ALLOWED',
+        message: 'Only POST method is allowed',
+        status: 405,
+      },
+    };
+  }
+
+  return { isValid: true };
+}
+
+/**
+ * Validate batch request structure and constraints
+ */
+function validateBatchRequest(batchRequest: OptimizedBatchRequest): {
+  isValid: boolean;
+  error?: any;
+} {
+  if (!batchRequest.items || !Array.isArray(batchRequest.items)) {
+    return {
+      isValid: false,
+      error: {
+        message: 'Items array is required',
+        details: {
+          expected: 'Array of batch items',
+          received: typeof batchRequest.items,
+        },
+      },
+    };
+  }
+
+  if (batchRequest.items.length === 0) {
+    return {
+      isValid: false,
+      error: {
+        message: 'Items array cannot be empty',
+        details: {
+          minItems: 1,
+          maxItems: 1000,
+        },
+      },
+    };
+  }
+
+  if (batchRequest.items.length > 1000) {
+    return {
+      isValid: false,
+      error: {
+        message: 'Batch size exceeds maximum limit',
+        details: {
+          maxItems: 1000,
+          receivedItems: batchRequest.items.length,
+          suggestion: 'Split your request into smaller batches',
+        },
+      },
+    };
+  }
+
+  return { isValid: true };
+}
+
+/**
+ * Prepare batch items from request input
+ */
+function prepareBatchItems(items: OptimizedBatchRequest['items'], requestId: string): BatchItem[] {
+  return items.map((item, index) => ({
+    id: item.id || `item-${index}`,
+    timestamp: item.timestamp,
+    outputFormats: item.outputFormats || ['iso', 'unix', 'human'],
+    timezone: item.timezone,
+    targetTimezone: item.targetTimezone,
+    priority: item.priority || 'normal',
+    metadata: {
+      originalIndex: index,
+      requestId,
+    },
+  }));
+}
+
+/**
+ * Create processing options with defaults and limits
+ */
+function createProcessingOptions(
+  options?: OptimizedBatchRequest['options']
+): BatchProcessingOptions {
+  return {
+    maxConcurrency: Math.min(options?.maxConcurrency || 20, 50),
+    chunkSize: Math.min(options?.chunkSize || 25, 100),
+    timeout: Math.min(options?.timeout || 30000, 120000),
+    continueOnError: options?.continueOnError ?? true,
+    enableCaching: options?.enableCaching ?? true,
+    enableDeduplication: options?.enableDeduplication ?? true,
+    enablePrioritization: options?.enablePrioritization ?? true,
+    enableProgressTracking: options?.enableProgressTracking ?? false,
+    enableAnalytics: options?.enableAnalytics ?? true,
+    retryFailedItems: options?.retryFailedItems ?? true,
+    maxRetries: Math.min(options?.maxRetries || 3, 5),
+    retryDelay: Math.min(options?.retryDelay || 1000, 5000),
+  };
+}
+
+/**
+ * Build optimized batch response object
+ */
+function buildBatchResponse(
+  results: any,
+  stats: any,
+  performanceAnalytics: any,
+  startTime: number,
+  requestId: string,
+  cacheStats: any
+): OptimizedBatchResponse {
+  return {
+    success: true,
+    data: {
+      results,
+      summary: {
+        totalItems: stats.totalItems,
+        successfulItems: stats.successfulItems,
+        failedItems: stats.failedItems,
+        cacheHits: stats.cacheHits,
+        duplicatesSkipped: stats.duplicatesSkipped,
+        totalProcessingTime: stats.totalProcessingTime,
+        averageItemTime: stats.averageItemTime,
+        throughputPerSecond: stats.throughputPerSecond,
+      },
+      performance: {
+        memoryUsage: {
+          heapUsed: stats.memoryUsage.heapUsed,
+          heapTotal: stats.memoryUsage.heapTotal,
+          external: stats.memoryUsage.external,
+        },
+        concurrencyStats: stats.concurrencyStats,
+        cacheStats: {
+          hitRate: cacheStats.hitRate,
+          size: cacheStats.size,
+          memoryUsage: cacheStats.memoryUsage,
+        },
+      },
+      optimization: {
+        recommendations: performanceAnalytics.recommendations.map((rec: any) => ({
+          type: rec.type,
+          priority: rec.priority,
+          description: rec.description,
+          expectedImprovement: rec.expectedImprovement,
+        })),
+        alerts: performanceAnalytics.alerts.slice(-5).map((alert: any) => ({
+          severity: alert.severity,
+          message: alert.message,
+          recommendations: alert.recommendations,
+        })),
+      },
+    },
+    metadata: {
+      processingTime: Date.now() - startTime,
+      itemCount: results.length,
+      cacheHit: stats.cacheHits > 0,
+      rateLimit: {
+        limit: 100,
+        remaining: 99,
+        resetTime: Date.now() + 60000,
+        window: 60000,
+      },
+      requestId,
+      version: '2.0.0',
+    },
+  };
+}
+
+/**
+ * Set performance-related HTTP headers
+ */
+function setPerformanceHeaders(
+  res: VercelResponse,
+  batchId: string,
+  stats: any,
+  cacheStats: any
+): void {
+  res.setHeader('X-Batch-ID', batchId);
+  res.setHeader('X-Processing-Time', stats.totalProcessingTime.toString());
+  res.setHeader('X-Throughput', stats.throughputPerSecond.toFixed(2));
+  res.setHeader('X-Cache-Hit-Rate', cacheStats.hitRate.toFixed(2));
+  res.setHeader('X-Memory-Usage', (stats.memoryUsage.heapUsed / 1024 / 1024).toFixed(2));
+}
+
+/**
+ * Handle batch processing errors with appropriate responses
+ */
+function handleBatchError(error: Error, req: VercelRequest, requestId: string): any {
+  if (error.message === 'Batch processing timeout') {
+    return {
+      type: 'timeout',
+      response: {
+        code: 'TIMEOUT_ERROR',
+        message: 'Batch processing exceeded timeout limit',
+        status: 408,
+        details: {
+          timeout: req.body?.options?.timeout || 30000,
+          requestId,
+          suggestion: 'Try reducing batch size or increasing timeout',
+        },
+      },
+    };
+  }
+
+  return {
+    type: 'server_error',
+    response: {
+      error,
+      context: {
+        endpoint: 'optimized-batch-convert',
+        requestId,
+        batchSize: req.body?.items?.length || 0,
+      },
+    },
+  };
+}
 
 export default enhancedOptimizedBatchHandler;
