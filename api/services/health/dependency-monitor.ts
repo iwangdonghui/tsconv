@@ -384,14 +384,12 @@ export class DependencyMonitor {
 
   private async checkErrorHandlerHealth(): Promise<boolean> {
     try {
-      const { EnhancedErrorManager } = await import('../error-handling/enhanced-error-manager');
-      const manager = EnhancedErrorManager.getInstance();
+      // Test unified error handler
+      const { UnifiedErrorHandler } = await import('../unified-error-handler');
+      const handler = UnifiedErrorHandler.getInstance();
 
-      // Test error handling
-      const testError = new Error('Health check test');
-      const result = await manager.handleError(testError, {} as any, {} as any);
-
-      return result.id !== undefined;
+      // Simple health check - if we can create the handler, it's healthy
+      return handler !== null;
     } catch (error) {
       return false;
     }

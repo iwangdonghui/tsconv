@@ -6,11 +6,11 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
 import { createCacheMiddleware } from './middleware/cache';
 import { createRateLimitMiddleware } from './middleware/rate-limit';
-import { createUnifiedErrorMiddleware } from './services/error-handling/unified-error-middleware';
 import { EnhancedFormatEngine } from './services/format-engine/enhanced-format-engine';
 import { IntelligentFormatDetector } from './services/format-engine/intelligent-format-detector';
 import { createSecurityMiddleware } from './services/security/unified-security-middleware';
-import { APIErrorHandler, withCors } from './utils/response';
+import { createError, ErrorType, handleError } from './services/unified-error-handler';
+import { withCors } from './utils/response';
 
 interface EnhancedFormatRequest {
   input: string | number;
@@ -120,7 +120,12 @@ async function enhancedFormatConvertHandler(req: VercelRequest, res: VercelRespo
   }
 
   if (req.method !== 'POST') {
-    return APIErrorHandler.handleMethodNotAllowed(res, 'Only POST method is allowed');
+    const error = createError({
+      type: ErrorType.BAD_REQUEST_ERROR,
+      message: 'Only POST method is allowed',
+      statusCode: 405,
+    });
+    return handleError(error, req, res);
   }
 
   const startTime = Date.now();

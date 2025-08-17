@@ -12,9 +12,9 @@ import {
   BatchProcessingOptions,
   OptimizedBatchProcessor,
 } from './services/batch-processing/optimized-batch-processor';
-import { createUnifiedErrorMiddleware } from './services/error-handling/unified-error-middleware';
 import { createSecurityMiddleware } from './services/security/unified-security-middleware';
-import { APIErrorHandler, withCors } from './utils/response';
+import { createError, ErrorType, handleError } from './services/unified-error-handler';
+import { withCors } from './utils/response';
 
 interface OptimizedBatchRequest {
   items: Array<{

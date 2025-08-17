@@ -4,7 +4,6 @@
  */
 
 import { VercelRequest, VercelResponse } from '@vercel/node';
-import { createUnifiedErrorMiddleware } from './services/error-handling/unified-error-middleware';
 import { DependencyMonitor } from './services/health/dependency-monitor';
 import {
   CheckLevel,
@@ -12,7 +11,8 @@ import {
   HealthCheckConfig,
 } from './services/health/enhanced-health-monitor';
 import { createSecurityMiddleware } from './services/security/unified-security-middleware';
-import { APIErrorHandler, withCors } from './utils/response';
+import { createError, ErrorType, handleError } from './services/unified-error-handler';
+import { withCors } from './utils/response';
 
 interface HealthCheckRequest {
   level?: CheckLevel;
