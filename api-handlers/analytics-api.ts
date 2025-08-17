@@ -254,7 +254,7 @@ export async function securityMiddleware(
   env: Env
 ): Promise<{ allowed: boolean; response?: Response }> {
   try {
-    const securityManager = new SecurityManager(_env);
+    const securityManager = new SecurityManager(env);
     const url = new URL(request.url);
 
     // Determine rate limit config based on endpoint

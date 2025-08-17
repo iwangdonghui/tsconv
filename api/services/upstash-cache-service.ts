@@ -1,5 +1,4 @@
 import { Redis } from '@upstash/redis';
-import config from '../config/config';
 import { CacheService, CacheStats, CacheableRequest } from '../types/api';
 import { MemoryCacheService } from './cache-service';
 
@@ -14,8 +13,8 @@ class UpstashCacheService implements CacheService {
   constructor() {
     // Initialize Upstash Redis client
     this.redis = new Redis({
-      url: process.env.UPSTASH_REDIS_REST_URL || config.caching.redis.url,
-      token: process.env.UPSTASH_REDIS_REST_TOKEN || config.caching.redis.password,
+      url: process.env.UPSTASH_REDIS_REST_URL || '',
+      token: process.env.UPSTASH_REDIS_REST_TOKEN || '',
     });
 
     // Initialize fallback memory cache
@@ -71,7 +70,8 @@ class UpstashCacheService implements CacheService {
     return this.fallbackCache.get<T>(key);
   }
 
-  async set<T>(key: string, value: T, ttl: number = config.caching.defaultTTL): Promise<void> {
+  async set<T>(key: string, value: T, ttl: number = 300000): Promise<void> {
+    // 5 minutes default
     try {
       if (this.isConnected) {
         // Convert TTL from milliseconds to seconds for Redis
@@ -299,7 +299,8 @@ class UpstashCacheService implements CacheService {
         // Use pipeline for better performance
         const pipeline = this.redis.pipeline();
 
-        for (const { key, value, ttl = config.caching.defaultTTL } of keyValuePairs) {
+        for (const { key, value, ttl = 300000 } of keyValuePairs) {
+          // 5 minutes default
           const ttlSeconds = Math.ceil(ttl / 1000);
           pipeline.setex(key, ttlSeconds, JSON.stringify(value));
         }

@@ -2,11 +2,11 @@ import { VercelRequest, VercelResponse } from '@vercel/node';
 import { createCacheMiddleware } from './middleware/cache';
 import { createRateLimitMiddleware } from './middleware/rate-limit';
 import { getStrategicCacheService } from './services/cache/cache-config-init';
-import { createUnifiedErrorMiddleware } from './services/error-handling/unified-error-middleware';
 import formatService from './services/format-service';
 import { createSecurityMiddleware } from './services/security/unified-security-middleware';
+import { createError, ErrorType, handleError } from './services/unified-error-handler';
 import { convertTimezone } from './utils/conversion-utils';
-import { APIErrorHandler, ResponseBuilder, withCors } from './utils/response';
+import { ResponseBuilder, withCors } from './utils/response';
 
 async function convertHandler(req: VercelRequest, res: VercelResponse) {
   withCors(res);
@@ -17,7 +17,12 @@ async function convertHandler(req: VercelRequest, res: VercelResponse) {
   }
 
   if (req.method !== 'GET' && req.method !== 'POST') {
-    return APIErrorHandler.handleMethodNotAllowed(res, 'Only GET and POST methods are allowed');
+    const error = createError({
+      type: ErrorType.BAD_REQUEST_ERROR,
+      message: 'Only GET and POST methods are allowed',
+      statusCode: 405,
+    });
+    return handleError(error, req, res);
   }
 
   try {
@@ -25,17 +30,19 @@ async function convertHandler(req: VercelRequest, res: VercelResponse) {
     const { timestamp, date, format, timezone, targetTimezone, includeFormats = false } = params;
 
     if (!timestamp && !date) {
-      return APIErrorHandler.handleBadRequest(
-        res,
-        'Please provide either timestamp or date parameter'
-      );
+      const error = createError({
+        type: ErrorType.VALIDATION_ERROR,
+        message: 'Please provide either timestamp or date parameter',
+      });
+      return handleError(error, req, res);
     }
 
     if (timestamp && date) {
-      return APIErrorHandler.handleBadRequest(
-        res,
-        'Please provide either timestamp or date, not both'
-      );
+      const error = createError({
+        type: ErrorType.VALIDATION_ERROR,
+        message: 'Please provide either timestamp or date, not both',
+      });
+      return handleError(error, req, res);
     }
 
     // Process conversion logic with strategic caching
@@ -95,12 +102,7 @@ async function convertHandler(req: VercelRequest, res: VercelResponse) {
       .addMetadata('cacheKey', cacheKey);
     builder.send(res);
   } catch (error) {
-    console.error('API Error:', error);
-    if (error instanceof Error) {
-      APIErrorHandler.handleServerError(res, error);
-    } else {
-      APIErrorHandler.handleServerError(res, new Error('Unknown error'));
-    }
+    return handleError(error as Error, req, res);
   }
 }
 
@@ -205,34 +207,7 @@ const securityMiddleware = createSecurityMiddleware({
   },
 });
 
-const errorMiddleware = createUnifiedErrorMiddleware({
-  enableRecovery: process.env.NODE_ENV === 'production',
-  enableFormatting: true,
-  enableMonitoring: true,
-  enableLogging: true,
-  responseFormat: {
-    format: process.env.NODE_ENV === 'development' ? 'debug' : 'standard',
-    locale: 'en',
-    includeStack: process.env.NODE_ENV === 'development',
-    includeContext: process.env.NODE_ENV === 'development',
-    sanitizeDetails: process.env.NODE_ENV === 'production',
-  },
-  recovery: {
-    retry: {
-      maxAttempts: 3,
-      baseDelayMs: 1000,
-      exponentialBackoff: true,
-    },
-    circuitBreaker: {
-      failureThreshold: 5,
-      recoveryTimeoutMs: 60000,
-    },
-    fallback: {
-      enabled: true,
-      timeoutMs: 5000,
-    },
-  },
-});
+// Error handling is now handled by the unified error handler
 
 const enhancedConvertHandler = async (req: VercelRequest, res: VercelResponse) => {
   try {
@@ -264,8 +239,8 @@ const enhancedConvertHandler = async (req: VercelRequest, res: VercelResponse) =
       });
     });
   } catch (error) {
-    // Handle errors with unified error middleware
-    await errorMiddleware(error as Error, req, res);
+    // Handle errors with unified error handler
+    return handleError(error as Error, req, res);
   }
 };
 

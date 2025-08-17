@@ -1,4 +1,5 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
+import { createError, ErrorType, handleError } from './services/unified-error-handler';
 
 /**
  * Current Time API Endpoint
@@ -23,11 +24,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   // Only allow GET requests
   if (req.method !== 'GET') {
-    return res.status(405).json({
-      success: false,
-      error: 'Method not allowed',
+    const error = createError({
+      type: ErrorType.BAD_REQUEST_ERROR,
       message: 'Only GET method is allowed',
+      statusCode: 405,
     });
+    return handleError(error, req, res);
   }
 
   try {
@@ -134,11 +136,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       },
     });
   } catch (error) {
-    console.error('Now API error:', error);
-    return res.status(500).json({
-      success: false,
-      error: 'Internal Server Error',
-      message: error instanceof Error ? error.message : 'Unknown error occurred',
-    });
+    return handleError(error as Error, req, res);
   }
 }

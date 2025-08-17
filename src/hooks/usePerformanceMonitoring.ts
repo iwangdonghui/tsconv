@@ -209,7 +209,7 @@ export function useRenderPerformanceMonitoring(componentName: string, dependenci
     // Log render information
     if (renderCount.current > 1) {
       console.log(`🔄 ${componentName} render #${renderCount.current}`, {
-        timeSinceLastRender: timeSinceLastRender.toFixed(2) + 'ms',
+        timeSinceLastRender: `${timeSinceLastRender.toFixed(2)  }ms`,
         changedDependencies: changedDeps,
         totalDependencies: dependencies.length,
       });
