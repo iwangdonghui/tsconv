@@ -1,4 +1,5 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
+import { logDebug, logError } from '../../api-handlers/utils/logger';
 import config from '../config/config';
 import { ServerErrorReporting } from '../lib/sentry-server';
 import { APIError, APIResponse, ErrorContext } from '../types/api';
@@ -193,17 +194,17 @@ const logError = (error: Error, context: ErrorContext, level: string = 'error') 
 
   switch (level) {
     case 'debug':
-      console.debug('API Error:', JSON.stringify(logData, null, 2));
+      logDebug('API Error', { logData });
       break;
     case 'info':
-      console.info('API Error:', JSON.stringify(logData, null, 2));
+      logInfo('API Error', { logData });
       break;
     case 'warn':
-      console.warn('API Error:', JSON.stringify(logData, null, 2));
+      logWarn('API Error', { logData });
       break;
     case 'error':
     default:
-      console.error('API Error:', JSON.stringify(logData, null, 2));
+      logError('API Error', undefined, { logData });
       break;
   }
 };
@@ -238,7 +239,10 @@ export const errorHandlerMiddleware = (options: ErrorHandlerOptions = {}) => {
       try {
         onError(error, context);
       } catch (handlerError) {
-        console.error('Error in custom error handler:', handlerError);
+        logError(
+          'Error in custom error handler',
+          handlerError instanceof Error ? handlerError : new Error(String(handlerError))
+        );
       }
     }
 

@@ -1,6 +1,8 @@
+import { VercelRequest, VercelResponse } from '@vercel/node';
+
 // Placeholder for API security middleware
 export const apiSecurityMiddleware = () => {
-  return (_req: any, _res: any, next: any) => {
+  return (_req: VercelRequest, _res: VercelResponse, next: () => void) => {
     next();
   };
 };
@@ -11,7 +13,7 @@ export interface SecurityThreat {
   type: string;
   severity: string;
   description: string;
-  payload?: any;
+  payload?: unknown;
   pattern?: string;
 }
 
