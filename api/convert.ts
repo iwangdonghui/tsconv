@@ -1,4 +1,5 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
+import { logError } from '../api-handlers/utils/logger';
 import { createCacheMiddleware } from './middleware/cache';
 import { createRateLimitMiddleware } from './middleware/rate-limit';
 import { getStrategicCacheService } from './services/cache/cache-config-init';
@@ -7,6 +8,31 @@ import formatService from './services/format-service';
 import { createSecurityMiddleware } from './services/security/unified-security-middleware';
 import { convertTimezone } from './utils/conversion-utils';
 import { APIErrorHandler, ResponseBuilder, withCors } from './utils/response';
+
+interface DateFormats {
+  iso8601: string;
+  utc: string;
+  timestamp: number;
+  local: string;
+  relative: string;
+  custom?: string;
+  rfc2822?: string;
+  unix?: number;
+  short?: string;
+  time?: string;
+}
+
+interface TimezoneInfo {
+  original: string;
+  target: string;
+}
+
+interface ConvertResult {
+  input: unknown;
+  timestamp: number;
+  formats: DateFormats;
+  timezone?: TimezoneInfo;
+}
 
 async function convertHandler(req: VercelRequest, res: VercelResponse) {
   withCors(res);
@@ -95,7 +121,7 @@ async function convertHandler(req: VercelRequest, res: VercelResponse) {
       .addMetadata('cacheKey', cacheKey);
     builder.send(res);
   } catch (error) {
-    console.error('API Error:', error);
+    logError('API Error', error instanceof Error ? error : new Error(String(error)));
     if (error instanceof Error) {
       APIErrorHandler.handleServerError(res, error);
     } else {
@@ -138,21 +164,20 @@ async function processConversion(
     }
   }
 
-  const formats: any = {};
-
-  // Standard formats
-  formats.iso8601 = date.toISOString();
-  formats.utc = date.toUTCString();
-  formats.timestamp = Math.floor(date.getTime() / 1000);
-  formats.local = date.toLocaleString();
-  formats.relative = getRelativeTime(date);
+  const formats: DateFormats = {
+    iso8601: date.toISOString(),
+    utc: date.toUTCString(),
+    timestamp: Math.floor(date.getTime() / 1000),
+    local: date.toLocaleString(),
+    relative: getRelativeTime(date),
+  };
 
   // Custom format if specified
   if (format) {
     try {
       formats.custom = formatService.formatDate(date, format, targetTimezone || timezone);
     } catch (error) {
-      console.warn('Custom format error:', error);
+      logWarn('Custom format error', { error: String(error) });
     }
   }
 
@@ -164,7 +189,7 @@ async function processConversion(
     formats.time = date.toLocaleTimeString();
   }
 
-  const result: any = {
+  const result: ConvertResult = {
     input,
     timestamp: Math.floor(date.getTime() / 1000),
     formats,

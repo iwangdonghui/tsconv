@@ -1,4 +1,5 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
+import { logError } from '../api-handlers/utils/logger';
 
 interface BatchConvertRequest {
   timestamps?: number[];
@@ -6,6 +7,39 @@ interface BatchConvertRequest {
   timezone?: string;
   targetTimezone?: string;
   format?: string;
+}
+
+interface ConversionResult {
+  index: number;
+  input: number | string;
+  output: unknown;
+}
+
+interface ConversionError {
+  index: number;
+  item: unknown;
+  error: string;
+}
+
+interface TimezoneConversion {
+  source: {
+    timezone: string;
+    time: string;
+  };
+  target: {
+    timezone: string;
+    time: string;
+  };
+}
+
+interface TimestampConversionResult {
+  timestamp: number;
+  utc: string;
+  iso8601: string;
+  local: string;
+  timezone?: TimezoneConversion;
+  timezoneError?: string;
+  formatted?: unknown;
 }
 
 /**
@@ -84,8 +118,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     // Process batch conversion
-    const results: any[] = [];
-    const errors: any[] = [];
+    const results: ConversionResult[] = [];
+    const errors: ConversionError[] = [];
 
     for (let i = 0; i < items.length; i++) {
       try {
@@ -162,7 +196,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       },
     });
   } catch (error) {
-    console.error('Batch convert error:', error);
+    logError('Batch convert error', error instanceof Error ? error : new Error(String(error)));
     return res.status(500).json({
       success: false,
       error: 'Internal Server Error',
@@ -182,7 +216,7 @@ function convertTimestamp(
   // Default format
   const fmt = format || 'iso';
 
-  const result: any = {
+  const result: TimestampConversionResult = {
     timestamp,
     utc: date.toUTCString(),
     iso8601: date.toISOString(),

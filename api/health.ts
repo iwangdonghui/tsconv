@@ -33,7 +33,7 @@ interface ServiceStatus {
   status: 'healthy' | 'degraded' | 'unhealthy';
   responseTime: number;
   lastCheck: string;
-  details?: any;
+  details?: unknown;
 }
 
 interface MemoryInfo {

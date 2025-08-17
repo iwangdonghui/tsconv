@@ -6,8 +6,8 @@
  */
 
 import { VercelRequest, VercelResponse } from '@vercel/node';
-import { createCorsHeaders } from './utils/response';
 import { CSPViolationReport, handleCSPViolation } from './middleware/csp';
+import { createCorsHeaders } from './utils/response';
 
 // ============================================================================
 // Types
@@ -85,7 +85,7 @@ function assessViolationSeverity(report: CSPViolationReport): 'low' | 'medium' |
   // High severity: Script execution attempts
   if (
     directive.includes('script-src') &&
-    (blockedUri.includes('eval') || blockedUri.includes('javascript:'))
+    (blockedUri.includes('eval') || blockedUri.includes('javascript' + ':'))
   ) {
     return 'high';
   }

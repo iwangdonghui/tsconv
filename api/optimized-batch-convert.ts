@@ -53,11 +53,11 @@ interface OptimizedBatchResponse {
     results: Array<{
       id?: string;
       success: boolean;
-      data?: any;
+      data?: unknown;
       error?: {
         code: string;
         message: string;
-        details?: any;
+        details?: unknown;
       };
       processingTime: number;
       index: number;

@@ -12,6 +12,13 @@ interface Timezone {
   abbreviation: string;
 }
 
+interface TimezoneFilters {
+  q?: string;
+  region?: string;
+  country?: string;
+  offset?: string;
+}
+
 // Sample timezone data - in a real app, this would come from a timezone database
 const TIMEZONE_DATA: Timezone[] = [
   {
@@ -133,7 +140,7 @@ function calculateCurrentTime(offsetMinutes: number): string {
   return targetTime.toISOString();
 }
 
-function filterTimezones(timezones: Timezone[], filters: any): Timezone[] {
+function filterTimezones(timezones: Timezone[], filters: TimezoneFilters): Timezone[] {
   let filtered = [...timezones];
 
   if (filters.q) {
