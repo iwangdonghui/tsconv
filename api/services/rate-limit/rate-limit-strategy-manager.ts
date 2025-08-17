@@ -337,10 +337,17 @@ export class RateLimitStrategyManager {
     );
 
     if (existingIndex >= 0) {
-      this.config.endpointConfigs[existingIndex] = {
-        ...this.config.endpointConfigs[existingIndex],
-        ...updates,
-      };
+      const existing = this.config.endpointConfigs[existingIndex];
+      if (existing) {
+        this.config.endpointConfigs[existingIndex] = {
+          endpoint,
+          strategy: existing.strategy,
+          rule: existing.rule,
+          enabled: existing.enabled,
+          priority: existing.priority,
+          ...updates,
+        };
+      }
     } else {
       const newConfig: EndpointRateLimitConfig = {
         endpoint,

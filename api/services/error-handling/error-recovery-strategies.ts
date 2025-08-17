@@ -37,6 +37,15 @@ export interface BulkheadConfig {
 
 export type CircuitState = 'CLOSED' | 'OPEN' | 'HALF_OPEN';
 
+export interface CircuitBreakerMetrics {
+  totalRequests: number;
+  successfulRequests: number;
+  failedRequests: number;
+  rejectedRequests: number;
+  averageResponseTime: number;
+  lastRequestTime: number;
+}
+
 export interface CircuitBreakerState {
   state: CircuitState;
   failureCount: number;
@@ -168,11 +177,13 @@ export class RetryStrategy {
 export class CircuitBreaker {
   private config: CircuitBreakerConfig;
   private state: CircuitBreakerState;
-  private metrics = {
+  private metrics: CircuitBreakerMetrics = {
     totalRequests: 0,
     failedRequests: 0,
     successfulRequests: 0,
     rejectedRequests: 0,
+    averageResponseTime: 0,
+    lastRequestTime: 0,
   };
 
   constructor(config: Partial<CircuitBreakerConfig> = {}) {
@@ -313,6 +324,8 @@ export class CircuitBreaker {
       failedRequests: 0,
       successfulRequests: 0,
       rejectedRequests: 0,
+      averageResponseTime: 0,
+      lastRequestTime: 0,
     };
   }
 }
