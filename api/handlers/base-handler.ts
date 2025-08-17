@@ -13,8 +13,8 @@ export interface HandlerContext {
   startTime: number;
   requestId: string;
   method: string;
-  query: any;
-  body: any;
+  query: Record<string, unknown>;
+  body: unknown;
 }
 
 export abstract class BaseHandler {
@@ -63,7 +63,7 @@ export abstract class BaseHandler {
       };
 
       // Set timeout if specified
-      let timeoutHandle: NodeJS.Timeout | undefined;
+      let timeoutHandle: ReturnType<typeof setTimeout> | undefined;
       if (this.options.timeout) {
         timeoutHandle = setTimeout(() => {
           throw new Error('Request timeout');
@@ -106,12 +106,15 @@ export abstract class BaseHandler {
     return `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   }
 
-  protected getItemCount(result: any): number {
+  protected getItemCount(result: unknown): number {
     if (Array.isArray(result)) {
       return result.length;
     }
-    if (result && typeof result === 'object' && result.data) {
-      return Array.isArray(result.data) ? result.data.length : 1;
+    if (result && typeof result === 'object') {
+      const resultObj = result as Record<string, unknown>;
+      if (resultObj.data) {
+        return Array.isArray(resultObj.data) ? resultObj.data.length : 1;
+      }
     }
     return 1;
   }

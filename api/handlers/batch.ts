@@ -1,6 +1,6 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
-import { APIErrorHandler, createCorsHeaders, validateRequest } from '../utils/response';
 import { convertTimestamp } from '../utils/conversion-utils';
+import { APIErrorHandler, createCorsHeaders, validateRequest } from '../utils/response';
 
 interface BatchRequest {
   items: Array<{
@@ -381,7 +381,6 @@ async function processBatchItem(
       id: item.id,
       success: true,
       data: {
-        input: item.timestamp,
         ...conversionResult,
         metadata: {
           ...conversionResult.metadata,
