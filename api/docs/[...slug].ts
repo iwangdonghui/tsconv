@@ -1,29 +1,37 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
 import { APIErrorHandler, withCors } from '../utils/response';
 
+type HandlerFunction = (req: VercelRequest, res: VercelResponse) => Promise<unknown>;
+
 // Import documentation handlers
 async function docsHandler(req: VercelRequest, res: VercelResponse) {
-  const { default: handler } = (await import('../handlers/docs')) as { default: any };
+  const { default: handler } = (await import('../handlers/docs')) as { default: HandlerFunction };
   return handler(req, res);
 }
 
 async function swaggerHandler(req: VercelRequest, res: VercelResponse) {
-  const { default: handler } = (await import('../handlers/swagger')) as { default: any };
+  const { default: handler } = (await import('../handlers/swagger')) as {
+    default: HandlerFunction;
+  };
   return handler(req, res);
 }
 
 async function openApiHandler(req: VercelRequest, res: VercelResponse) {
-  const { default: handler } = (await import('../handlers/openapi')) as { default: any };
+  const { default: handler } = (await import('../handlers/openapi')) as {
+    default: HandlerFunction;
+  };
   return handler(req, res);
 }
 
 async function simpleApiHandler(req: VercelRequest, res: VercelResponse) {
-  const { default: handler } = (await import('../handlers/simple-api')) as { default: any };
+  const { default: handler } = (await import('../handlers/simple-api')) as {
+    default: HandlerFunction;
+  };
   return handler(req, res);
 }
 
 // Route mapping
-const routes: Record<string, (req: VercelRequest, res: VercelResponse) => Promise<any>> = {
+const routes: Record<string, HandlerFunction> = {
   docs: docsHandler,
   swagger: swaggerHandler,
   openapi: openApiHandler,

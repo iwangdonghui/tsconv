@@ -85,7 +85,7 @@ function assessViolationSeverity(report: CSPViolationReport): 'low' | 'medium' |
   // High severity: Script execution attempts
   if (
     directive.includes('script-src') &&
-    (blockedUri.includes('eval') || blockedUri.includes('javascript' + ':'))
+    (blockedUri.includes('eval') || blockedUri.includes('javascript:'))
   ) {
     return 'high';
   }

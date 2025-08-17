@@ -27,7 +27,22 @@ interface CreateAPIKeyRequest {
   expiresIn?: string; // e.g., "30d", "1y", "never"
 }
 
-// UpdateAPIKeyRequest interface removed (unused)
+interface FormattedAPIKey {
+  id: string;
+  name: string;
+  key: string;
+  userId?: string;
+  roles: string[];
+  permissions: string[];
+  rateLimit?: {
+    requests: number;
+    window: number;
+  };
+  enabled: boolean;
+  createdAt: string;
+  lastUsed: string | null;
+  expiresAt: string | null;
+}
 
 interface APIKeyListResponse {
   keys: Omit<APIKeyInfo, 'key' | 'hashedKey'>[];
@@ -73,7 +88,7 @@ const createAPIKeySchema = {
 };
 
 // Reserved placeholder for future partial update schema (intentionally unused to satisfy lint)
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
+
 const _updateAPIKeySchema: Record<string, unknown> | undefined = undefined;
 void _updateAPIKeySchema; // mark as intentionally unused
 
@@ -115,7 +130,7 @@ function parseExpiration(expiresIn: string): number | undefined {
 /**
  * Formats API key for response (masks the key)
  */
-function formatAPIKeyForResponse(keyInfo: APIKeyInfo, showKey: boolean = false): any {
+function formatAPIKeyForResponse(keyInfo: APIKeyInfo, showKey: boolean = false): FormattedAPIKey {
   const { key, hashedKey, ...safeKeyInfo } = keyInfo;
   void hashedKey; // mark as intentionally unused
 

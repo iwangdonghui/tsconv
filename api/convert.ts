@@ -1,5 +1,5 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
-import { logError } from '../api-handlers/utils/logger';
+import { logError, logWarn } from '../api-handlers/utils/logger';
 import { createCacheMiddleware } from './middleware/cache';
 import { createRateLimitMiddleware } from './middleware/rate-limit';
 import { getStrategicCacheService } from './services/cache/cache-config-init';
@@ -266,7 +266,7 @@ const enhancedConvertHandler = async (req: VercelRequest, res: VercelResponse) =
       securityMiddleware(req, res, () => {
         // Then apply rate limiting
         createRateLimitMiddleware({
-          ruleSelector: _req => ({
+          ruleSelector: () => ({
             identifier: '/api/convert',
             limit: 120, // Will be overridden by strategy-based limits
             window: 60000, // 1 minute

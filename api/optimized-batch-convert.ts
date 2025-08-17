@@ -396,7 +396,7 @@ const enhancedOptimizedBatchHandler = async (req: VercelRequest, res: VercelResp
       securityMiddleware(req, res, () => {
         // Then apply rate limiting with higher limits for batch operations
         createRateLimitMiddleware({
-          ruleSelector: _req => ({
+          ruleSelector: () => ({
             identifier: '/api/optimized-batch-convert',
             limit: 20, // 20 batch requests per minute
             window: 60000,

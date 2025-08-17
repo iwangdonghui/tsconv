@@ -1,29 +1,41 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
 import { APIErrorHandler, withCors } from '../utils/response';
 
+// Type for handler functions
+type HandlerFunction = (
+  req: VercelRequest,
+  res: VercelResponse
+) => Promise<void | VercelResponse> | void | VercelResponse;
+
 // Import admin handlers
 async function redisAdminHandler(req: VercelRequest, res: VercelResponse) {
-  const { default: handler } = (await import('../handlers/redis-admin')) as { default: any };
+  const { default: handler } = (await import('../handlers/redis-admin')) as {
+    default: HandlerFunction;
+  };
   return handler(req, res);
 }
 
 async function redisConfigHandler(req: VercelRequest, res: VercelResponse) {
-  const { default: handler } = (await import('../handlers/redis-config')) as { default: any };
+  const { default: handler } = (await import('../handlers/redis-config')) as {
+    default: HandlerFunction;
+  };
   return handler(req, res);
 }
 
 async function metricsHandler(req: VercelRequest, res: VercelResponse) {
-  const { default: handler } = (await import('../handlers/metrics')) as { default: any };
+  const { default: handler } = (await import('../handlers/metrics')) as {
+    default: HandlerFunction;
+  };
   return handler(req, res);
 }
 
 async function testHandler(req: VercelRequest, res: VercelResponse) {
-  const { default: handler } = (await import('../handlers/test')) as { default: any };
+  const { default: handler } = (await import('../handlers/test')) as { default: HandlerFunction };
   return handler(req, res);
 }
 
 // Route mapping
-const routes: Record<string, (req: VercelRequest, res: VercelResponse) => Promise<any>> = {
+const routes: Record<string, HandlerFunction> = {
   'redis-admin': redisAdminHandler,
   'redis-config': redisConfigHandler,
   metrics: metricsHandler,

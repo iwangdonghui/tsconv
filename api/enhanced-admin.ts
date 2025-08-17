@@ -17,6 +17,17 @@ interface AdminRequest extends VercelRequest {
   };
 }
 
+interface AdminResponse {
+  success: boolean;
+  metadata: {
+    action: string;
+    correlationId: string;
+    timestamp: string;
+  };
+  data?: unknown;
+  error?: string;
+}
+
 // Initialize admin services
 const adminAuth = EnhancedAdminAuth.getInstance();
 const queryOptimizer = AdminQueryOptimizer.getInstance();
@@ -238,7 +249,8 @@ async function routeAdminRequest(
   action: string,
   correlationId: string,
   _startTime: number
-): Promise<any> {
+): Promise<AdminResponse> {
+  void _startTime;
   const baseResponse = {
     success: true,
     metadata: {
