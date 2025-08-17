@@ -293,8 +293,8 @@ export class EnhancedErrorManager {
    */
   private async attemptRetry(
     error: EnhancedError,
-    req: VercelRequest,
-    res: VercelResponse
+    _req: VercelRequest,
+    _res: VercelResponse
   ): Promise<void> {
     if (error.recovery.retryCount >= error.recovery.maxRetries) {
       return;
@@ -324,8 +324,8 @@ export class EnhancedErrorManager {
    */
   private async attemptFallback(
     error: EnhancedError,
-    req: VercelRequest,
-    res: VercelResponse
+    _req: VercelRequest,
+    _res: VercelResponse
   ): Promise<void> {
     if (!this.config.fallbackEnabled) {
       return;
@@ -362,8 +362,8 @@ export class EnhancedErrorManager {
    */
   private async handleCircuitBreaker(
     error: EnhancedError,
-    req: VercelRequest,
-    res: VercelResponse
+    _req: VercelRequest,
+    _res: VercelResponse
   ): Promise<void> {
     const circuitKey = `${error.context.endpoint}:${error.category}`;
     const circuit = this.circuitBreakers.get(circuitKey) || {
@@ -400,8 +400,8 @@ export class EnhancedErrorManager {
    */
   private async attemptGracefulDegradation(
     error: EnhancedError,
-    req: VercelRequest,
-    res: VercelResponse
+    _req: VercelRequest,
+    _res: VercelResponse
   ): Promise<void> {
     if (!this.config.gracefulDegradationEnabled) {
       return;
@@ -492,7 +492,7 @@ export class EnhancedErrorManager {
   /**
    * Determine error severity
    */
-  private determineSeverity(error: Error, category: ErrorCategory): ErrorSeverity {
+  private determineSeverity(_error: Error, category: ErrorCategory): ErrorSeverity {
     // Critical errors
     if (category === 'security' || category === 'system') {
       return 'critical';
@@ -515,7 +515,7 @@ export class EnhancedErrorManager {
   /**
    * Get HTTP status code for error
    */
-  private getStatusCode(error: Error, category: ErrorCategory): number {
+  private getStatusCode(_error: Error, category: ErrorCategory): number {
     switch (category) {
       case 'validation':
         return 400;
@@ -576,7 +576,7 @@ export class EnhancedErrorManager {
   /**
    * Generate user-friendly message
    */
-  private generateUserMessage(error: Error, category: ErrorCategory): string {
+  private generateUserMessage(_error: Error, category: ErrorCategory): string {
     switch (category) {
       case 'validation':
         return 'The request contains invalid data. Please check your input and try again.';
@@ -604,7 +604,7 @@ export class EnhancedErrorManager {
   /**
    * Generate helpful suggestions
    */
-  private generateSuggestions(error: Error, category: ErrorCategory): string[] {
+  private generateSuggestions(_error: Error, category: ErrorCategory): string[] {
     const baseSuggestions = ['Try again in a few moments', 'Contact support if the issue persists'];
 
     switch (category) {
@@ -790,14 +790,13 @@ export class EnhancedErrorManager {
   }
 
   private extractClientIP(req: VercelRequest): string {
-    return (
+    const ip = String(
       (req.headers['x-forwarded-for'] as string) ||
-      (req.headers['x-real-ip'] as string) ||
-      (req.connection?.remoteAddress as string) ||
-      '127.0.0.1'
-    )
-      .split(',')[0]
-      .trim();
+        (req.headers['x-real-ip'] as string) ||
+        (req.connection?.remoteAddress as string) ||
+        '127.0.0.1'
+    );
+    return (ip.split(',')[0] ?? '').trim();
   }
 
   /**

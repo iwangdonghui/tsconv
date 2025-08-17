@@ -283,7 +283,12 @@ export class CircuitBreaker {
   getStatus(): {
     state: CircuitState;
     failureCount: number;
-    metrics: CircuitBreakerMetrics;
+    metrics: {
+      totalRequests: number;
+      failedRequests: number;
+      successfulRequests: number;
+      rejectedRequests: number;
+    };
     nextAttemptTime?: number;
   } {
     this.updateState();

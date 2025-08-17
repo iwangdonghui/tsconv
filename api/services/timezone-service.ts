@@ -2,12 +2,12 @@ import { CommonTimezone, DSTTransition, TimezoneInfo } from '../types/api';
 
 class TimezoneService {
   // Maps are initialized but may be lazily populated; keep declarations for clarity
-  /* eslint-disable @typescript-eslint/no-unused-vars */
+   
   // Using built-ins for resolution now; keep map placeholder for future expansion
   private timezones: Map<string, TimezoneInfo> = new Map();
   private commonTimezones: CommonTimezone[] = [];
   private shortcuts: Map<string, string> = new Map();
-  /* eslint-enable @typescript-eslint/no-unused-vars */
+   
 
   constructor() {
     this.initialize();

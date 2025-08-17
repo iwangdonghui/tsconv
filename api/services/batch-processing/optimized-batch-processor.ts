@@ -354,7 +354,6 @@ export class OptimizedBatchProcessor {
         id: item.id,
         success: true,
         data: {
-          input: item.timestamp,
           ...conversionResult,
           metadata: {
             ...conversionResult.metadata,

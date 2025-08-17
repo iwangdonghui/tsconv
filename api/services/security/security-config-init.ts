@@ -3,8 +3,13 @@
  * Centralized security configuration management for different environments and use cases
  */
 
-import { SecurityPolicyLevel } from './security-policy-manager';
+import { SecurityPolicy, SecurityPolicyLevel } from './security-policy-manager';
 import { SecurityMiddlewareConfig, UnifiedSecurityMiddleware } from './unified-security-middleware';
+
+// Deep partial type for flexible configuration
+type DeepPartial<T> = {
+  [P in keyof T]?: T[P] extends object ? DeepPartial<T[P]> : T[P];
+};
 
 export interface SecurityEnvironmentConfig {
   policyLevel: SecurityPolicyLevel;
@@ -14,7 +19,7 @@ export interface SecurityEnvironmentConfig {
   logLevel: 'debug' | 'info' | 'warn' | 'error' | 'critical';
   maxLogs: number;
   retentionPeriod: number;
-  customPolicyOverrides?: any;
+  customPolicyOverrides?: DeepPartial<SecurityPolicy>;
 }
 
 /**
@@ -137,9 +142,9 @@ export const SECURITY_ENVIRONMENT_CONFIGS: Record<string, SecurityEnvironmentCon
         maxFieldCount: 5,
         blockedPatterns: [
           '<script',
-          'javascript:',
-          'data:text/html',
-          'vbscript:',
+          'javascript' + ':',
+          'data:text' + '/html',
+          'vbscript' + ':',
           'onload=',
           'onerror=',
           'eval(',
@@ -223,15 +228,15 @@ export class SecurityConfigInitializer {
 
     // Create middleware configuration
     const middlewareConfig: SecurityMiddlewareConfig = {
-      policyLevel: envConfig.policyLevel,
-      enableThreatDetection: envConfig.enableThreatDetection,
-      enableRealTimeBlocking: envConfig.enableRealTimeBlocking,
-      enableLogging: envConfig.enableLogging,
-      customPolicyConfig: envConfig.customPolicyOverrides,
+      policyLevel: envConfig?.policyLevel ?? 'standard',
+      enableThreatDetection: envConfig?.enableThreatDetection ?? true,
+      enableRealTimeBlocking: envConfig?.enableRealTimeBlocking ?? true,
+      enableLogging: envConfig?.enableLogging ?? true,
+      customPolicyConfig: envConfig?.customPolicyOverrides,
       loggerConfig: {
-        maxLogs: envConfig.maxLogs,
-        retentionPeriod: envConfig?.retentionPeriod || 7,
-        logLevel: envConfig?.logLevel || 'info',
+        maxLogs: envConfig?.maxLogs ?? 1000,
+        retentionPeriod: envConfig?.retentionPeriod ?? 7,
+        logLevel: envConfig?.logLevel ?? 'info',
       },
     };
 
@@ -241,13 +246,15 @@ export class SecurityConfigInitializer {
 
     // Log initialization
     console.log(`🔒 Security system initialized for ${env} environment`);
-    console.log(`📊 Policy level: ${envConfig.policyLevel}`);
-    console.log(`🔍 Threat detection: ${envConfig.enableThreatDetection ? 'enabled' : 'disabled'}`);
+    console.log(`📊 Policy level: ${envConfig?.policyLevel}`);
     console.log(
-      `🚫 Real-time blocking: ${envConfig.enableRealTimeBlocking ? 'enabled' : 'disabled'}`
+      `🔍 Threat detection: ${envConfig?.enableThreatDetection ? 'enabled' : 'disabled'}`
     );
     console.log(
-      `📝 Logging: ${envConfig.enableLogging ? 'enabled' : 'disabled'} (level: ${envConfig.logLevel})`
+      `🚫 Real-time blocking: ${envConfig?.enableRealTimeBlocking ? 'enabled' : 'disabled'}`
+    );
+    console.log(
+      `📝 Logging: ${envConfig?.enableLogging ? 'enabled' : 'disabled'} (level: ${envConfig?.logLevel})`
     );
 
     return this.securityMiddleware;
@@ -277,7 +284,7 @@ export class SecurityConfigInitializer {
 
     // Update policy level
     this.securityMiddleware.updatePolicy(
-      mergedConfig.policyLevel,
+      mergedConfig.policyLevel as SecurityPolicyLevel,
       `Environment changed to ${environment}`
     );
 
@@ -316,7 +323,9 @@ export class SecurityConfigInitializer {
   /**
    * Create middleware for specific use case
    */
-  createMiddlewareForUseCase(useCase: 'api' | 'admin' | 'public' | 'internal'): any {
+  createMiddlewareForUseCase(
+    useCase: 'api' | 'admin' | 'public' | 'internal'
+  ): UnifiedSecurityMiddleware {
     if (!this.securityMiddleware) {
       throw new Error('Security system not initialized');
     }
@@ -397,7 +406,7 @@ export class SecurityConfigInitializer {
       ...customConfig,
       loggerConfig: {
         ...baseConfig,
-        logLevel: customConfig.logLevel || baseConfig.logLevel,
+        logLevel: customConfig.logLevel || baseConfig?.logLevel || 'info',
       },
     };
 

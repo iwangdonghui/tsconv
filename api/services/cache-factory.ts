@@ -82,17 +82,16 @@ export class CacheFactory {
    */
   private static createUpstashCache(): CacheService {
     try {
-      // Dynamic import to avoid loading Upstash dependencies if not needed
-      // In Vitest, ESM/CJS interop can differ; support both default and named exports
-      // Try both ESM and CJS paths to satisfy vitest resolver
-      let UpstashCacheServiceModule: any;
-      try {
-        UpstashCacheServiceModule = require('./upstash-cache-service');
-      } catch (e) {
-        UpstashCacheServiceModule = require('./upstash-cache-service.ts');
-      }
+      // Load legacy path to cooperate with tests' vi.mock('../upstash-cache-service')
+      const UpstashCacheServiceModule: {
+        UpstashCacheService?: new () => CacheService;
+        default?: new () => CacheService;
+      } = require('./cache/upstash-cache-service');
       const UpstashCacheService =
         UpstashCacheServiceModule?.UpstashCacheService ?? UpstashCacheServiceModule?.default;
+      if (!UpstashCacheService) {
+        throw new Error('UpstashCacheService not found in module');
+      }
       return new UpstashCacheService();
     } catch (error) {
       console.warn('Failed to load Upstash cache service:', error);
@@ -239,7 +238,7 @@ export async function getCacheServiceHealth(): Promise<{
   provider: string;
   latency?: number;
   error?: string;
-  stats?: any;
+  stats?: import('../types/api').CacheStats;
 }> {
   try {
     const startTime = Date.now();

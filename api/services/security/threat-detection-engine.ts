@@ -67,7 +67,7 @@ export const THREAT_PATTERNS: ThreatPattern[] = [
     id: 'xss-javascript-protocol',
     name: 'JavaScript Protocol',
     description: 'Detects javascript: protocol usage',
-    pattern: /javascript\s*:/gi,
+    pattern: new RegExp('javascript\\s*:', 'gi'),
     type: 'malicious_payload',
     severity: 'medium',
     confidence: 80,
@@ -78,7 +78,7 @@ export const THREAT_PATTERNS: ThreatPattern[] = [
     id: 'xss-event-handlers',
     name: 'Event Handler Injection',
     description: 'Detects HTML event handler injection',
-    pattern: /on\w+\s*=\s*["\']?[^"\'>\s]+/gi,
+    pattern: /on\w+\s*=\s*["']?[^"'>\s]+/gi,
     type: 'malicious_payload',
     severity: 'medium',
     confidence: 75,
@@ -180,7 +180,7 @@ export const THREAT_PATTERNS: ThreatPattern[] = [
 export class ThreatDetectionEngine {
   private patterns: Map<string, ThreatPattern> = new Map();
   private fingerprints = new Map<string, RequestFingerprint>();
-  private anomalyBaseline = new Map<string, AnomalyScore>();
+  // private anomalyBaseline = new Map<string, AnomalyScore>(); // currently unused
   private detectionHistory: SecurityThreat[] = [];
   private cleanupInterval: ReturnType<typeof setInterval>;
 
@@ -467,17 +467,17 @@ export class ThreatDetectionEngine {
       headers: Record<string, string>;
       timestamp: number;
     },
-    fingerprint: RequestFingerprint
+    _fingerprint: RequestFingerprint
   ): AnomalyScore {
     const now = request.timestamp;
-    const timeSinceFirst = now - fingerprint.timing.requestTime;
-    const requestRate = fingerprint.behavior.requestCount / (timeSinceFirst / 1000);
+    const timeSinceFirst = now - _fingerprint.timing.requestTime;
+    const requestRate = _fingerprint.behavior.requestCount / (timeSinceFirst / 1000);
 
     // Calculate individual scores
     const frequencyScore = Math.min(requestRate * 10, 100); // High frequency = high score
-    const patternScore = this.calculatePatternScore(request, fingerprint);
-    const behaviorScore = this.calculateBehaviorScore(fingerprint);
-    const timingScore = this.calculateTimingScore(request, fingerprint);
+    const patternScore = this.calculatePatternScore(request, _fingerprint);
+    const behaviorScore = this.calculateBehaviorScore(_fingerprint);
+    const timingScore = this.calculateTimingScore(request, _fingerprint);
 
     // Weighted overall score
     const overall =
@@ -491,9 +491,9 @@ export class ThreatDetectionEngine {
       timing: timingScore,
       details: {
         requestRate,
-        requestCount: fingerprint.behavior.requestCount,
-        errorCount: fingerprint.behavior.errorCount,
-        suspiciousCount: fingerprint.behavior.suspiciousCount,
+        requestCount: _fingerprint.behavior.requestCount,
+        errorCount: _fingerprint.behavior.errorCount,
+        suspiciousCount: _fingerprint.behavior.suspiciousCount,
       },
     };
   }
@@ -507,7 +507,7 @@ export class ThreatDetectionEngine {
       url: string;
       headers: Record<string, string>;
     },
-    fingerprint: RequestFingerprint
+    _fingerprint: RequestFingerprint
   ): number {
     let score = 0;
 
@@ -535,11 +535,11 @@ export class ThreatDetectionEngine {
   /**
    * Calculate behavior-based anomaly score
    */
-  private calculateBehaviorScore(fingerprint: RequestFingerprint): number {
+  private calculateBehaviorScore(_fingerprint: RequestFingerprint): number {
     let score = 0;
 
     // High error rate
-    const errorRate = fingerprint.behavior.errorCount / fingerprint.behavior.requestCount;
+    const errorRate = _fingerprint.behavior.errorCount / _fingerprint.behavior.requestCount;
     if (errorRate > 0.5) {
       score += 50;
     } else if (errorRate > 0.2) {
@@ -547,7 +547,8 @@ export class ThreatDetectionEngine {
     }
 
     // High suspicious activity rate
-    const suspiciousRate = fingerprint.behavior.suspiciousCount / fingerprint.behavior.requestCount;
+    const suspiciousRate =
+      _fingerprint.behavior.suspiciousCount / _fingerprint.behavior.requestCount;
     if (suspiciousRate > 0.3) {
       score += 40;
     } else if (suspiciousRate > 0.1) {
@@ -564,9 +565,9 @@ export class ThreatDetectionEngine {
     request: {
       timestamp: number;
     },
-    fingerprint: RequestFingerprint
+    _fingerprint: RequestFingerprint
   ): number {
-    const timeSinceLastRequest = request.timestamp - fingerprint.behavior.lastSeen;
+    const timeSinceLastRequest = request.timestamp - _fingerprint.behavior.lastSeen;
 
     // Very rapid requests
     if (timeSinceLastRequest < 50) {

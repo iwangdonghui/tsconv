@@ -4,9 +4,21 @@
  */
 
 import { VercelRequest, VercelResponse } from '@vercel/node';
-import { EnhancedErrorManager, ErrorSeverity, RecoveryStrategy } from './enhanced-error-manager';
+import {
+  EnhancedError,
+  EnhancedErrorManager,
+  ErrorSeverity,
+  RecoveryStrategy,
+} from './enhanced-error-manager';
 import { ErrorRecoveryManager } from './error-recovery-strategies';
 import { ErrorResponseConfig, UnifiedErrorFormatter } from './unified-error-formatter';
+
+interface RecoveryStats {
+  totalAttempts: number;
+  successfulRecoveries: number;
+  failedRecoveries: number;
+  strategiesUsed: Record<string, number>;
+}
 
 export interface ErrorMiddlewareConfig {
   enableRecovery: boolean;
@@ -236,7 +248,10 @@ export class UnifiedErrorMiddleware {
   /**
    * Attempt error recovery
    */
-  private async attemptRecovery(enhancedError: any, context: ErrorContext): Promise<void> {
+  private async attemptRecovery(
+    enhancedError: EnhancedError,
+    context: ErrorContext
+  ): Promise<void> {
     const recoveryContext = {
       requestId: context.requestId,
       endpoint: context.endpoint,
@@ -261,7 +276,7 @@ export class UnifiedErrorMiddleware {
       enhancedError.recovery.successful = true;
 
       // Call recovery callback if provided
-      if (this.config.onRecovery) {
+      if (this.config.onRecovery && enhancedError.details.originalError) {
         this.config.onRecovery(
           enhancedError.details.originalError,
           enhancedError.recovery.strategy,
@@ -272,7 +287,7 @@ export class UnifiedErrorMiddleware {
       enhancedError.recovery.successful = false;
 
       // Call recovery callback if provided
-      if (this.config.onRecovery) {
+      if (this.config.onRecovery && enhancedError.details.originalError) {
         this.config.onRecovery(
           enhancedError.details.originalError,
           enhancedError.recovery.strategy,
@@ -309,7 +324,7 @@ export class UnifiedErrorMiddleware {
   /**
    * Log error with context
    */
-  private logError(enhancedError: any, context: ErrorContext): void {
+  private logError(enhancedError: EnhancedError, context: ErrorContext): void {
     const logData = {
       errorId: enhancedError.id,
       code: enhancedError.code,
@@ -354,7 +369,7 @@ export class UnifiedErrorMiddleware {
   /**
    * Update error metrics
    */
-  private updateMetrics(enhancedError: any, context: ErrorContext): void {
+  private updateMetrics(enhancedError: EnhancedError, context: ErrorContext): void {
     const metricKey = `${enhancedError.category}:${enhancedError.code}`;
     const existing = this.errorMetrics.get(metricKey) || {
       count: 0,
@@ -373,7 +388,7 @@ export class UnifiedErrorMiddleware {
   /**
    * Check and trigger alerts
    */
-  private checkAndTriggerAlerts(enhancedError: any, context: ErrorContext): void {
+  private checkAndTriggerAlerts(enhancedError: EnhancedError, context: ErrorContext): void {
     // Trigger alerts for critical errors
     if (enhancedError.severity === 'critical') {
       this.triggerAlert(enhancedError, context, 'Critical error detected');
@@ -402,7 +417,7 @@ export class UnifiedErrorMiddleware {
   /**
    * Trigger alert
    */
-  private triggerAlert(enhancedError: any, context: ErrorContext, reason: string): void {
+  private triggerAlert(enhancedError: EnhancedError, context: ErrorContext, reason: string): void {
     const alertData = {
       reason,
       error: {
@@ -423,7 +438,7 @@ export class UnifiedErrorMiddleware {
     console.error('🚨 ERROR ALERT:', JSON.stringify(alertData, null, 2));
 
     // Call custom alert handler if provided
-    if (this.config.onAlert) {
+    if (this.config.onAlert && enhancedError.details.originalError) {
       try {
         this.config.onAlert(enhancedError.details.originalError, enhancedError.severity);
       } catch (alertError) {
@@ -440,7 +455,7 @@ export class UnifiedErrorMiddleware {
     errorsByCategory: Record<string, number>;
     errorsBySeverity: Record<string, number>;
     topErrors: Array<{ key: string; count: number; lastOccurred: number }>;
-    recoveryStats: any;
+    recoveryStats: RecoveryStats | Record<string, unknown>;
   } {
     const errorsByCategory: Record<string, number> = {};
     const errorsBySeverity: Record<string, number> = {};
@@ -557,14 +572,13 @@ export class UnifiedErrorMiddleware {
   }
 
   private extractClientIP(req: VercelRequest): string {
-    return (
+    const ip = String(
       (req.headers['x-forwarded-for'] as string) ||
-      (req.headers['x-real-ip'] as string) ||
-      (req.connection?.remoteAddress as string) ||
-      '127.0.0.1'
-    )
-      .split(',')[0]
-      .trim();
+        (req.headers['x-real-ip'] as string) ||
+        (req.connection?.remoteAddress as string) ||
+        '127.0.0.1'
+    );
+    return (ip.split(',')[0] ?? '').trim();
   }
 }
 

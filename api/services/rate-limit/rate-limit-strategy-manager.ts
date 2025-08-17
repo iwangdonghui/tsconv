@@ -337,18 +337,22 @@ export class RateLimitStrategyManager {
     );
 
     if (existingIndex >= 0) {
+      const current = this.config.endpointConfigs[existingIndex];
+      if (!current) return;
       this.config.endpointConfigs[existingIndex] = {
-        ...this.config.endpointConfigs[existingIndex],
+        ...current,
+        endpoint: current.endpoint,
+        strategy: updates?.strategy ?? current.strategy,
         ...updates,
-      };
+      } as EndpointRateLimitConfig;
     } else {
       const newConfig: EndpointRateLimitConfig = {
         endpoint,
-        strategy: 'fixed-window',
+        strategy: updates?.strategy ?? 'fixed-window',
         rule: this.getDefaultRule(),
         enabled: true,
         priority: 1,
-        ...updates,
+        ...(updates ?? {}),
       };
       this.config.endpointConfigs.push(newConfig);
     }

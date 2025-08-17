@@ -3,6 +3,8 @@
  * Comprehensive audit logging with compliance, security monitoring, and forensic capabilities
  */
 
+import { logError } from '../../api-handlers/utils/logger';
+
 export interface AuditEvent {
   id: string;
   timestamp: number;
@@ -632,7 +634,10 @@ export class EnhancedAuditLogger {
         const detected = detector(events);
         anomalies.push(...detected.map(anomaly => ({ ...anomaly, detector: name })));
       } catch (error) {
-        console.error(`Anomaly detector ${name} failed:`, error);
+        logError(
+          `Anomaly detector ${name} failed`,
+          error instanceof Error ? error : new Error(String(error))
+        );
       }
     }
 
@@ -746,7 +751,7 @@ export class EnhancedAuditLogger {
   private outputToConsole(event: AuditEvent): void {
     const severity = event.severity.toUpperCase();
     const riskScore = event.context.riskScore;
-    console.log(
+    logInfo(
       `[AUDIT:${severity}] ${event.action} on ${event.resource} by ${event.userId} (Risk: ${riskScore})`
     );
   }

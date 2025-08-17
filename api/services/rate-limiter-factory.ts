@@ -1,6 +1,16 @@
-import { RateLimiter } from '../types/api';
+import type { VercelRequest } from '@vercel/node';
 import config from '../config/config';
+import { RateLimiter } from '../types/api';
 import { MemoryRateLimiter } from './rate-limiter';
+
+interface HealthCheckDetails {
+  provider: string;
+  testResult?: boolean | import('../types/api').RateLimitResult;
+  error?: string;
+  rules?: number;
+  enabled?: boolean;
+  metadata?: Record<string, unknown>;
+}
 
 /**
  * Rate Limiter Factory - Creates appropriate rate limiter service based on environment configuration
@@ -19,6 +29,7 @@ export class RateLimiterFactory {
     }
 
     // Check if rate limiting is enabled
+
     if (!config.rateLimiting.enabled) {
       console.log('🚫 Rate limiting disabled by configuration');
       this.instance = new DisabledRateLimiter();
@@ -41,7 +52,7 @@ export class RateLimiterFactory {
         windowMs: 60000, // 1 minute
         maxRequests: 100,
       });
-      return this.instance;
+      return this.instance!;
     }
   }
 
@@ -50,6 +61,7 @@ export class RateLimiterFactory {
    */
   private static determineRateLimiterProvider(): 'upstash' | 'redis' | 'memory' {
     // Check for Upstash Redis configuration
+
     if (config.caching.redis.useUpstash && process.env.UPSTASH_REDIS_REST_URL) {
       return 'upstash';
     }
@@ -112,9 +124,12 @@ export class RateLimiterFactory {
    * Creates memory rate limiter service
    */
   private static createMemoryRateLimiter(): RateLimiter {
+    const { MemoryRateLimiter } = require('./rate-limiter');
+
+    const { anonymous } = config.rateLimiting.defaultLimits;
     return new MemoryRateLimiter({
-      windowMs: 60000, // 1 minute
-      maxRequests: 100,
+      windowMs: anonymous.window,
+      maxRequests: anonymous.limit,
     });
   }
 
@@ -246,7 +261,7 @@ export class RateLimiterFactory {
     status: 'healthy' | 'degraded' | 'unhealthy';
     provider: string;
     responseTime: number;
-    details: any;
+    details: HealthCheckDetails;
   }> {
     const startTime = Date.now();
     const rateLimiter = this.create();
@@ -269,6 +284,7 @@ export class RateLimiterFactory {
         provider: this.determineRateLimiterProvider(),
         responseTime,
         details: {
+          provider: this.determineRateLimiterProvider(),
           testResult: result,
           rules: config.rateLimiting.rules.length,
           enabled: config.rateLimiting.enabled,
@@ -280,6 +296,7 @@ export class RateLimiterFactory {
         provider: this.determineRateLimiterProvider(),
         responseTime: Date.now() - startTime,
         details: {
+          provider: this.determineRateLimiterProvider(),
           error: error instanceof Error ? error.message : 'Unknown error',
           rules: config.rateLimiting.rules.length,
           enabled: config.rateLimiting.enabled,
@@ -342,7 +359,7 @@ export async function getRateLimiterHealth(): Promise<{
   provider: string;
   responseTime?: number;
   error?: string;
-  details?: any;
+  details?: HealthCheckDetails;
 }> {
   try {
     const healthResult = await RateLimiterFactory.healthCheck();
@@ -368,10 +385,10 @@ export default RateLimiterFactory;
 export { MemoryRateLimiter } from './rate-limiter';
 
 // Re-export types for convenience
-export type { RateLimiter, RateLimitRule, RateLimitResult, RateLimitStats } from '../types/api';
+export type { RateLimiter, RateLimitResult, RateLimitRule, RateLimitStats } from '../types/api';
 
 // Utility functions for rate limiting
-export function getClientIdentifier(req: any): string {
+export function getClientIdentifier(req: VercelRequest): string {
   // Try to get identifier from headers (for authenticated requests)
   const authHeader = req.headers.authorization;
   if (authHeader) {
@@ -392,10 +409,11 @@ export function getClientIdentifier(req: any): string {
     req.socket?.remoteAddress ||
     'unknown';
 
-  return `ip:${ip.toString().split(',')[0].trim()}`;
+  const ipString = typeof ip === 'string' ? ip : ip?.toString() || 'unknown';
+  return `ip:${ipString.split(',')[0]?.trim() || 'unknown'}`;
 }
 
-export function getRateLimitRule(req: any): import('../types/api').RateLimitRule {
+export function getRateLimitRule(req: VercelRequest): import('../types/api').RateLimitRule {
   const authHeader = req.headers.authorization;
   const apiKey = req.headers['x-api-key'];
 
@@ -410,7 +428,7 @@ export function getRateLimitRule(req: any): import('../types/api').RateLimitRule
  * Middleware helper for applying rate limiting to requests
  */
 export async function applyRateLimit(
-  req: any,
+  req: VercelRequest,
   identifier?: string,
   rule?: import('../types/api').RateLimitRule
 ): Promise<{

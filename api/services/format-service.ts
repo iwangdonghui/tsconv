@@ -742,13 +742,13 @@ class FormatServiceImpl implements FormatService {
       let regexPattern = pattern;
 
       // Escape special regex characters in the pattern except for the placeholders
-      regexPattern = regexPattern.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // eslint-disable-line no-useless-escape
+      regexPattern = regexPattern.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');  
 
       // Replace placeholders with their regex patterns (longest first to avoid conflicts)
       const sortedKeys = Object.keys(namedGroups).sort((a, b) => b.length - a.length);
       for (const key of sortedKeys) {
         const value = namedGroups[key] ?? '';
-        const escapedKey = key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // eslint-disable-line no-useless-escape
+        const escapedKey = key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');  
         regexPattern = regexPattern.replace(new RegExp(escapedKey, 'g'), value);
       }
 
