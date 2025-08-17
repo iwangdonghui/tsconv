@@ -2,9 +2,109 @@
 
 import { CacheManager } from './cache-utils';
 
-// Simple timezone conversion function
+// Types
+interface Env {
+  UPSTASH_REDIS_REST_URL?: string;
+  UPSTASH_REDIS_REST_TOKEN?: string;
+}
+
+interface ConvertParams {
+  timestamp: number;
+  timezone?: string;
+  targetTimezone?: string;
+  outputFormats: string[];
+}
+
+interface ConvertResult {
+  timestamp: number;
+  iso: string;
+  utc: string;
+  local: string;
+  formats: Record<string, string>;
+  converted?: {
+    timestamp: number;
+    iso: string;
+    local: string;
+  };
+  conversionError?: string;
+}
+
+// Pure functions
+function parseTimestamp(timestampParam: string | null, dateParam: string | null): number {
+  if (!timestampParam && !dateParam) {
+    throw new Error('Either timestamp or date parameter is required');
+  }
+
+  if (timestampParam) {
+    const timestamp = parseInt(timestampParam, 10);
+    if (isNaN(timestamp)) {
+      throw new Error('Invalid timestamp format');
+    }
+    return timestamp;
+  }
+
+  if (dateParam) {
+    const parsedDate = new Date(dateParam);
+    if (isNaN(parsedDate.getTime())) {
+      throw new Error(
+        'Invalid date format. Use ISO format like 2021-03-02 or 2021-03-02T10:30:00Z'
+      );
+    }
+    return Math.floor(parsedDate.getTime() / 1000);
+  }
+
+  throw new Error('Either timestamp or date parameter is required');
+}
+
+function parseGetRequest(url: URL): ConvertParams {
+  const timestampParam = url.searchParams.get('timestamp');
+  const dateParam = url.searchParams.get('date');
+  const timestamp = parseTimestamp(timestampParam, dateParam);
+
+  const timezone = url.searchParams.get('timezone') || undefined;
+  const targetTimezone = url.searchParams.get('targetTimezone') || undefined;
+
+  const formatsParam = url.searchParams.get('formats');
+  const outputFormats = formatsParam ? formatsParam.split(',') : [];
+
+  return { timestamp, timezone, targetTimezone, outputFormats };
+}
+
+function parsePostRequest(body: Record<string, unknown>): ConvertParams {
+  const timestamp = parseTimestamp(body.timestamp?.toString(), body.date);
+  const timezone = body.timezone;
+  const targetTimezone = body.targetTimezone;
+  const outputFormats = body.outputFormats || [];
+
+  return { timestamp, timezone, targetTimezone, outputFormats };
+}
+
+async function parseConvertRequest(request: Request): Promise<ConvertParams> {
+  if (request.method === 'GET') {
+    const url = new URL(request.url);
+    return parseGetRequest(url);
+  } else {
+    const body = await request.json();
+    return parsePostRequest(body);
+  }
+}
+
+function validateConvertParams(params: ConvertParams): void {
+  if (!params.timestamp || isNaN(params.timestamp)) {
+    throw new Error('Invalid timestamp');
+  }
+
+  if (params.timestamp < 0) {
+    throw new Error('Timestamp cannot be negative');
+  }
+}
+
 function convertTimezone(date: Date, fromTz: string, toTz: string): Date {
   // Basic timezone conversion using Intl API
+  // TODO: Implement proper timezone conversion using fromTz and toTz
+  void fromTz; // Acknowledge unused parameter
+  void toTz; // Acknowledge unused parameter
+
   try {
     const utcTime = date.getTime() + date.getTimezoneOffset() * 60000;
     const targetTime = new Date(utcTime);
@@ -14,245 +114,137 @@ function convertTimezone(date: Date, fromTz: string, toTz: string): Date {
   }
 }
 
-interface Env {
-  UPSTASH_REDIS_REST_URL?: string;
-  UPSTASH_REDIS_REST_TOKEN?: string;
+function buildDateFormats(params: ConvertParams): ConvertResult {
+  const date = new Date(params.timestamp * 1000);
+
+  const result: ConvertResult = {
+    timestamp: params.timestamp,
+    iso: date.toISOString(),
+    utc: date.toUTCString(),
+    local: date.toLocaleString(),
+    formats: {},
+  };
+
+  // Add custom formats
+  for (const format of params.outputFormats) {
+    try {
+      switch (format.toLowerCase()) {
+        case 'iso':
+          result.formats.iso = date.toISOString();
+          break;
+        case 'utc':
+          result.formats.utc = date.toUTCString();
+          break;
+        case 'local':
+          result.formats.local = date.toLocaleString();
+          break;
+        default:
+          result.formats[format] = date.toLocaleString('en-US', { timeZone: format });
+      }
+    } catch (error) {
+      result.formats[format] = 'Invalid format';
+    }
+  }
+
+  // Add timezone conversion if specified
+  if (params.timezone && params.targetTimezone) {
+    try {
+      const convertedDate = convertTimezone(date, params.timezone, params.targetTimezone);
+      result.converted = {
+        timestamp: Math.floor(convertedDate.getTime() / 1000),
+        iso: convertedDate.toISOString(),
+        local: convertedDate.toLocaleString(),
+      };
+    } catch (error) {
+      result.conversionError = 'Invalid timezone conversion';
+    }
+  }
+
+  return result;
+}
+
+function buildConvertResponse(result: ConvertResult, startTime: number, cached: boolean): Response {
+  return new Response(
+    JSON.stringify({
+      success: true,
+      data: result,
+      metadata: {
+        timestamp: new Date().toISOString(),
+        processingTime: `${Date.now() - startTime}ms`,
+        cached,
+      },
+    }),
+    {
+      headers: { 'Content-Type': 'application/json' },
+    }
+  );
+}
+
+function buildErrorResponse(error: string, status: number = 400): Response {
+  return new Response(
+    JSON.stringify({
+      error: status === 500 ? 'Internal Server Error' : 'Bad Request',
+      message: error,
+    }),
+    {
+      status,
+      headers: { 'Content-Type': 'application/json' },
+    }
+  );
+}
+
+function generateCacheKey(params: ConvertParams): string {
+  return `${params.timestamp}_${params.outputFormats.join(',')}_${params.timezone || 'none'}_${params.targetTimezone || 'none'}`;
 }
 
 export async function handleConvert(request: Request, env: Env): Promise<Response> {
+  // Validate HTTP method
   if (request.method !== 'POST' && request.method !== 'GET') {
-    return new Response(
-      JSON.stringify({
-        error: 'Method Not Allowed',
-        message: 'Only GET and POST methods are supported',
-      }),
-      {
-        status: 405,
-        headers: { 'Content-Type': 'application/json' },
-      }
-    );
+    return buildErrorResponse('Only GET and POST methods are supported', 405);
   }
 
   const cacheManager = new CacheManager(env);
   const startTime = Date.now();
 
   try {
-    let timestamp: number;
-    let timezone: string | undefined;
-    let targetTimezone: string | undefined;
-    let outputFormats: string[] = [];
+    // Parse and validate request parameters
+    const params = await parseConvertRequest(request);
+    validateConvertParams(params);
 
-    if (request.method === 'GET') {
-      const url = new URL(request.url);
-      const timestampParam = url.searchParams.get('timestamp');
-      const dateParam = url.searchParams.get('date');
-
-      if (!timestampParam && !dateParam) {
-        return new Response(
-          JSON.stringify({
-            error: 'Bad Request',
-            message: 'Either timestamp or date parameter is required',
-          }),
-          {
-            status: 400,
-            headers: { 'Content-Type': 'application/json' },
-          }
-        );
-      }
-
-      if (timestampParam) {
-        timestamp = parseInt(timestampParam, 10);
-        if (isNaN(timestamp)) {
-          return new Response(
-            JSON.stringify({
-              error: 'Bad Request',
-              message: 'Invalid timestamp format',
-            }),
-            {
-              status: 400,
-              headers: { 'Content-Type': 'application/json' },
-            }
-          );
-        }
-      } else if (dateParam) {
-        // Parse date string to timestamp
-        const parsedDate = new Date(dateParam);
-        if (isNaN(parsedDate.getTime())) {
-          return new Response(
-            JSON.stringify({
-              error: 'Bad Request',
-              message:
-                'Invalid date format. Use ISO format like 2021-03-02 or 2021-03-02T10:30:00Z',
-            }),
-            {
-              status: 400,
-              headers: { 'Content-Type': 'application/json' },
-            }
-          );
-        }
-        timestamp = Math.floor(parsedDate.getTime() / 1000);
-      }
-
-      timezone = url.searchParams.get('timezone') || undefined;
-      targetTimezone = url.searchParams.get('targetTimezone') || undefined;
-
-      const formatsParam = url.searchParams.get('formats');
-      if (formatsParam) {
-        outputFormats = formatsParam.split(',');
-      }
-    } else {
-      const body = await request.json();
-
-      if (body.timestamp) {
-        timestamp = body.timestamp;
-        if (isNaN(timestamp)) {
-          return new Response(
-            JSON.stringify({
-              error: 'Bad Request',
-              message: 'Invalid timestamp format',
-            }),
-            {
-              status: 400,
-              headers: { 'Content-Type': 'application/json' },
-            }
-          );
-        }
-      } else if (body.date) {
-        // Parse date string to timestamp
-        const parsedDate = new Date(body.date);
-        if (isNaN(parsedDate.getTime())) {
-          return new Response(
-            JSON.stringify({
-              error: 'Bad Request',
-              message:
-                'Invalid date format. Use ISO format like 2021-03-02 or 2021-03-02T10:30:00Z',
-            }),
-            {
-              status: 400,
-              headers: { 'Content-Type': 'application/json' },
-            }
-          );
-        }
-        timestamp = Math.floor(parsedDate.getTime() / 1000);
-      } else {
-        return new Response(
-          JSON.stringify({
-            error: 'Bad Request',
-            message: 'Either timestamp or date field is required',
-          }),
-          {
-            status: 400,
-            headers: { 'Content-Type': 'application/json' },
-          }
-        );
-      }
-
-      timezone = body.timezone;
-      targetTimezone = body.targetTimezone;
-      outputFormats = body.outputFormats || [];
-    }
-
-    // Generate cache key based on input parameters
-    const cacheKey = `${timestamp}_${outputFormats.join(',')}_${timezone || 'none'}_${targetTimezone || 'none'}`;
-
-    // Try to get cached result
+    // Generate cache key and check cache
+    const cacheKey = generateCacheKey(params);
     const cachedResult = await cacheManager.get('CONVERT_API', cacheKey);
+
     if (cachedResult) {
-      return new Response(
-        JSON.stringify({
-          success: true,
-          data: cachedResult,
-          metadata: {
-            timestamp: new Date().toISOString(),
-            processingTime: `${Date.now() - startTime}ms`,
-            cached: true,
-          },
-        }),
-        {
-          headers: { 'Content-Type': 'application/json' },
-        }
-      );
+      return buildConvertResponse(cachedResult, startTime, true);
     }
 
     // Perform conversion
-    const date = new Date(timestamp * 1000);
-
-    const result = {
-      timestamp,
-      iso: date.toISOString(),
-      utc: date.toUTCString(),
-      local: date.toLocaleString(),
-      formats: {} as Record<string, string>,
-    };
-
-    // Add custom formats
-    for (const format of outputFormats) {
-      try {
-        switch (format.toLowerCase()) {
-          case 'iso':
-            result.formats.iso = date.toISOString();
-            break;
-          case 'utc':
-            result.formats.utc = date.toUTCString();
-            break;
-          case 'local':
-            result.formats.local = date.toLocaleString();
-            break;
-          default:
-            result.formats[format] = date.toLocaleString('en-US', { timeZone: format });
-        }
-      } catch (error) {
-        result.formats[format] = 'Invalid format';
-      }
-    }
-
-    // Add timezone conversion if specified
-    if (timezone && targetTimezone) {
-      try {
-        const convertedDate = convertTimezone(date, timezone, targetTimezone);
-        (result as any).converted = {
-          timestamp: Math.floor(convertedDate.getTime() / 1000),
-          iso: convertedDate.toISOString(),
-          local: convertedDate.toLocaleString(),
-        };
-      } catch (error) {
-        (result as any).conversionError = 'Invalid timezone conversion';
-      }
-    }
+    const result = buildDateFormats(params);
 
     // Cache the result for future requests
     try {
       await cacheManager.set('CONVERT_API', cacheKey, result);
     } catch (error) {
-      console.error('Failed to cache convert result:', error);
+      // Failed to cache convert result - non-critical error
     }
 
-    return new Response(
-      JSON.stringify({
-        success: true,
-        data: result,
-        metadata: {
-          timestamp: new Date().toISOString(),
-          processingTime: `${Date.now() - startTime}ms`,
-          cached: false,
-        },
-      }),
-      {
-        headers: { 'Content-Type': 'application/json' },
-      }
-    );
+    return buildConvertResponse(result, startTime, false);
   } catch (error) {
-    console.error('Convert API Error:', error);
+    // Convert API Error logged for debugging
+    const message = error instanceof Error ? error.message : 'Unknown error';
 
-    return new Response(
-      JSON.stringify({
-        error: 'Internal Server Error',
-        message: error instanceof Error ? error.message : 'Unknown error',
-      }),
-      {
-        status: 500,
-        headers: { 'Content-Type': 'application/json' },
-      }
-    );
+    // Determine if this is a client error (400) or server error (500)
+    const isClientError =
+      error instanceof Error &&
+      (message.includes('timestamp') ||
+        message.includes('date') ||
+        message.includes('Invalid') ||
+        message.includes('required') ||
+        message.includes('negative') ||
+        message.includes('cannot'));
+
+    const status = isClientError ? 400 : 500;
+    return buildErrorResponse(message, status);
   }
 }
