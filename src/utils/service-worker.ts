@@ -5,6 +5,7 @@
  */
 
 import React from 'react';
+import logger from './logger';
 
 interface ServiceWorkerState {
   isSupported: boolean;
@@ -26,7 +27,7 @@ class ServiceWorkerManager {
     isRegistered: false,
     isOnline: navigator.onLine,
     updateAvailable: false,
-    registration: null
+    registration: null,
   };
 
   private listeners: Array<(state: ServiceWorkerState) => void> = [];
@@ -41,19 +42,22 @@ class ServiceWorkerManager {
    */
   async register(): Promise<boolean> {
     if (!this.state.isSupported) {
-      console.warn('Service Worker not supported');
+      logger.warn('Service Worker not supported');
       return false;
     }
 
     try {
       const registration = await navigator.serviceWorker.register('/sw.js', {
-        scope: '/'
+        scope: '/',
       });
 
       this.state.registration = registration;
       this.state.isRegistered = true;
 
-      console.log('Service Worker registered successfully:', registration);
+      logger.info(
+        'Service Worker registered successfully',
+        registration as unknown as Record<string, unknown>
+      );
 
       // Listen for updates
       registration.addEventListener('updatefound', () => {
@@ -68,9 +72,8 @@ class ServiceWorkerManager {
 
       this.notifyListeners();
       return true;
-
     } catch (error) {
-      console.error('Service Worker registration failed:', error);
+      logger.error('Service Worker registration failed', error as Error);
       return false;
     }
   }
@@ -93,7 +96,7 @@ class ServiceWorkerManager {
       }
       return result;
     } catch (error) {
-      console.error('Service Worker unregistration failed:', error);
+      logger.error('Service Worker unregistration failed', error as Error);
       return false;
     }
   }
@@ -108,9 +111,9 @@ class ServiceWorkerManager {
 
     try {
       await this.state.registration.update();
-      console.log('Service Worker update check completed');
+      logger.info('Service Worker update check completed');
     } catch (error) {
-      console.error('Service Worker update failed:', error);
+      logger.error('Service Worker update failed', error as Error);
       throw error;
     }
   }
@@ -127,7 +130,7 @@ class ServiceWorkerManager {
     this.state.registration.waiting.postMessage({ type: 'SKIP_WAITING' });
 
     // Listen for controlling change
-    return new Promise((resolve) => {
+    return new Promise(resolve => {
       navigator.serviceWorker.addEventListener('controllerchange', () => {
         this.state.updateAvailable = false;
         this.notifyListeners();
@@ -151,7 +154,7 @@ class ServiceWorkerManager {
       for (const cacheName of cacheNames) {
         const cache = await caches.open(cacheName);
         const keys = await cache.keys();
-        
+
         let totalSize = 0;
         for (const request of keys) {
           const response = await cache.match(request);
@@ -164,13 +167,13 @@ class ServiceWorkerManager {
         cacheInfos.push({
           name: cacheName,
           size: totalSize,
-          entries: keys.length
+          entries: keys.length,
         });
       }
 
       return cacheInfos;
     } catch (error) {
-      console.error('Failed to get cache info:', error);
+      logger.error('Failed to get cache info', error as Error);
       return [];
     }
   }
@@ -186,10 +189,10 @@ class ServiceWorkerManager {
     try {
       const cacheNames = await caches.keys();
       await Promise.all(cacheNames.map(name => caches.delete(name)));
-      console.log('All caches cleared');
+      logger.info('All caches cleared');
       return true;
     } catch (error) {
-      console.error('Failed to clear caches:', error);
+      logger.error('Failed to clear caches', error as Error);
       return false;
     }
   }
@@ -204,10 +207,10 @@ class ServiceWorkerManager {
 
     try {
       const result = await caches.delete(cacheName);
-      console.log(`Cache ${cacheName} cleared:`, result);
+      logger.info(`Cache ${cacheName} cleared`, result as unknown as Record<string, unknown>);
       return result;
     } catch (error) {
-      console.error(`Failed to clear cache ${cacheName}:`, error);
+      logger.error(`Failed to clear cache ${cacheName}`, error as Error);
       return false;
     }
   }
@@ -222,17 +225,17 @@ class ServiceWorkerManager {
 
     try {
       const cache = await caches.open('tsconv-preload');
-      
+
       await Promise.all(
-        urls.map(async (url) => {
+        urls.map(async url => {
           try {
             const response = await fetch(url);
             if (response.ok) {
               await cache.put(url, response);
-              console.log('Preloaded:', url);
+              logger.info('Preloaded', { url });
             }
           } catch (error) {
-            console.warn('Failed to preload:', url, error);
+            logger.warn('Failed to preload', { url, error: String(error) });
           }
         })
       );
@@ -253,7 +256,7 @@ class ServiceWorkerManager {
    */
   addListener(listener: (state: ServiceWorkerState) => void): () => void {
     this.listeners.push(listener);
-    
+
     // Return unsubscribe function
     return () => {
       const index = this.listeners.indexOf(listener);
@@ -275,7 +278,7 @@ class ServiceWorkerManager {
         // New service worker is available
         this.state.updateAvailable = true;
         this.notifyListeners();
-        console.log('New service worker available');
+        logger.info('New service worker available');
       }
     });
   }
@@ -303,7 +306,7 @@ class ServiceWorkerManager {
       try {
         listener(this.getState());
       } catch (error) {
-        console.error('Service worker listener error:', error);
+        logger.error('Service worker listener error', error as Error);
       }
     });
   }
@@ -332,7 +335,8 @@ export function useServiceWorker() {
     getCacheInfo: () => serviceWorkerManager.getCacheInfo(),
     clearCaches: () => serviceWorkerManager.clearCaches(),
     clearCache: (name: string) => serviceWorkerManager.clearCache(name),
-    preloadCriticalResources: (urls: string[]) => serviceWorkerManager.preloadCriticalResources(urls)
+    preloadCriticalResources: (urls: string[]) =>
+      serviceWorkerManager.preloadCriticalResources(urls),
   };
 }
 
@@ -341,36 +345,41 @@ export function useServiceWorker() {
  */
 export function formatCacheSize(bytes: number): string {
   if (bytes === 0) return '0 B';
-  
+
   const k = 1024;
   const sizes = ['B', 'KB', 'MB', 'GB'];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
-  
-  return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))  } ${  sizes[i]}`;
+
+  return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`;
 }
 
 /**
  * Checks if the app is running in standalone mode (PWA)
  */
 export function isStandalone(): boolean {
-  return window.matchMedia('(display-mode: standalone)').matches ||
-         (window.navigator as any).standalone === true;
+  return (
+    window.matchMedia('(display-mode: standalone)').matches ||
+    (window.navigator as any).standalone === true
+  );
 }
 
 /**
  * Gets network information (if available)
  */
 export function getNetworkInfo(): { effectiveType?: string; downlink?: number; rtt?: number } {
-  const connection = (navigator as any).connection || (navigator as any).mozConnection || (navigator as any).webkitConnection;
-  
+  const connection =
+    (navigator as any).connection ||
+    (navigator as any).mozConnection ||
+    (navigator as any).webkitConnection;
+
   if (!connection) {
     return {};
   }
-  
+
   return {
     effectiveType: connection.effectiveType,
     downlink: connection.downlink,
-    rtt: connection.rtt
+    rtt: connection.rtt,
   };
 }
 
@@ -379,7 +388,7 @@ if (process.env.NODE_ENV === 'production') {
   window.addEventListener('load', () => {
     serviceWorkerManager.register().then(success => {
       if (success) {
-        console.log('Service Worker registered successfully');
+        logger.info('Service Worker registered successfully');
       }
     });
   });

@@ -1,9 +1,10 @@
 import ReactDOM from 'react-dom/client';
 import MinimalApp from './SimpleApp.minimal';
 import './index.css';
+import { logger } from './utils/logger';
 
 // 简化的入口文件，移除所有可能有问题的依赖
-console.log('✅ 简化版本启动中...');
+logger.debug('✅ 简化版本启动中...');
 
 // 基本的错误处理
 window.addEventListener('error', event => {

@@ -81,7 +81,11 @@ export function CacheManager({
 
   // Handle clear all caches
   const handleClearAll = async () => {
-    if (!confirm('Are you sure you want to clear all caches? This will remove all offline data.')) {
+    if (
+      !window.confirm(
+        'Are you sure you want to clear all caches? This will remove all offline data.'
+      )
+    ) {
       return;
     }
 
@@ -98,7 +102,7 @@ export function CacheManager({
 
   // Handle clear specific cache
   const handleClearCache = async (cacheName: string) => {
-    if (!confirm(`Are you sure you want to clear the "${cacheName}" cache?`)) {
+    if (!window.confirm(`Are you sure you want to clear the "${cacheName}" cache?`)) {
       return;
     }
 

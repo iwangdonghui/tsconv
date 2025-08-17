@@ -1,6 +1,6 @@
 /**
  * Storage Manager - Optimized Local Storage with Compression and TTL
- * 
+ *
  * This module provides an enhanced localStorage interface with:
  * - Automatic compression for large data
  * - TTL (Time To Live) support
@@ -48,7 +48,7 @@ class StorageManager {
     try {
       const fullKey = this.getFullKey(key);
       const now = Date.now();
-      
+
       let dataToStore: T | string = value;
       let compressed = false;
 
@@ -61,7 +61,7 @@ class StorageManager {
           dataToStore = this.compress(serialized) as T;
           compressed = true;
         } catch (error) {
-          console.warn('Compression failed, storing uncompressed:', error);
+          logger.warn('Compression failed, storing uncompressed', { error: String(error) });
         }
       }
 
@@ -69,15 +69,14 @@ class StorageManager {
         data: dataToStore,
         timestamp: now,
         ttl: options.ttl,
-        compressed
+        compressed,
       };
 
       localStorage.setItem(fullKey, JSON.stringify(storageItem));
       return true;
-
     } catch (error) {
-      console.error('Failed to set storage item:', error);
-      
+      logger.error('Failed to set storage item', error as Error);
+
       // Try to free up space and retry
       if (this.isQuotaExceeded(error)) {
         this.cleanup();
@@ -86,15 +85,15 @@ class StorageManager {
           const storageItem: StorageItem<T> = {
             data: value,
             timestamp: Date.now(),
-            ttl: options.ttl
+            ttl: options.ttl,
           };
           localStorage.setItem(fullKey, JSON.stringify(storageItem));
           return true;
         } catch (retryError) {
-          console.error('Retry failed:', retryError);
+          logger.error('Retry failed', retryError as Error);
         }
       }
-      
+
       return false;
     }
   }
@@ -106,7 +105,7 @@ class StorageManager {
     try {
       const fullKey = this.getFullKey(key);
       const stored = localStorage.getItem(fullKey);
-      
+
       if (!stored) {
         return defaultValue;
       }
@@ -115,7 +114,7 @@ class StorageManager {
       const now = Date.now();
 
       // Check if item has expired
-      if (storageItem.ttl && (now - storageItem.timestamp) > storageItem.ttl) {
+      if (storageItem.ttl && now - storageItem.timestamp > storageItem.ttl) {
         this.removeItem(key);
         return defaultValue;
       }
@@ -126,16 +125,15 @@ class StorageManager {
           const decompressed = this.decompress(storageItem.data as string);
           return JSON.parse(decompressed);
         } catch (error) {
-          console.error('Decompression failed:', error);
+          logger.error('Decompression failed', error as Error);
           this.removeItem(key);
           return defaultValue;
         }
       }
 
       return storageItem.data;
-
     } catch (error) {
-      console.error('Failed to get storage item:', error);
+      logger.error('Failed to get storage item', error as Error);
       return defaultValue;
     }
   }
@@ -149,7 +147,7 @@ class StorageManager {
       localStorage.removeItem(fullKey);
       return true;
     } catch (error) {
-      console.error('Failed to remove storage item:', error);
+      logger.error('Failed to remove storage item', error as Error);
       return false;
     }
   }
@@ -160,7 +158,7 @@ class StorageManager {
   hasItem(key: string): boolean {
     const fullKey = this.getFullKey(key);
     const stored = localStorage.getItem(fullKey);
-    
+
     if (!stored) {
       return false;
     }
@@ -170,7 +168,7 @@ class StorageManager {
       const now = Date.now();
 
       // Check if expired
-      if (storageItem.ttl && (now - storageItem.timestamp) > storageItem.ttl) {
+      if (storageItem.ttl && now - storageItem.timestamp > storageItem.ttl) {
         this.removeItem(key);
         return false;
       }
@@ -187,14 +185,14 @@ class StorageManager {
   getKeys(): string[] {
     const keys: string[] = [];
     const prefix = `${this.namespace}:`;
-    
+
     for (let i = 0; i < localStorage.length; i++) {
       const key = localStorage.key(i);
       if (key && key.startsWith(prefix)) {
         keys.push(key.substring(prefix.length));
       }
     }
-    
+
     return keys;
   }
 
@@ -207,7 +205,7 @@ class StorageManager {
       keys.forEach(key => this.removeItem(key));
       return true;
     } catch (error) {
-      console.error('Failed to clear storage:', error);
+      logger.error('Failed to clear storage', error as Error);
       return false;
     }
   }
@@ -220,7 +218,7 @@ class StorageManager {
       used: 0,
       available: 0,
       quota: 0,
-      items: []
+      items: [],
     };
 
     // Get storage quota (if available)
@@ -231,7 +229,7 @@ class StorageManager {
         info.used = estimate.usage || 0;
         info.available = info.quota - info.used;
       } catch (error) {
-        console.warn('Storage estimate not available:', error);
+        logger.warn('Storage estimate not available', { error: String(error) });
       }
     }
 
@@ -253,11 +251,11 @@ class StorageManager {
             key,
             size,
             age,
-            hasExpired
+            hasExpired,
           });
         }
       } catch (error) {
-        console.warn(`Failed to analyze storage item ${key}:`, error);
+        logger.warn(`Failed to analyze storage item ${key}`, { error: String(error) });
       }
     });
 
@@ -281,7 +279,7 @@ class StorageManager {
           const storageItem: StorageItem = JSON.parse(stored);
           const now = Date.now();
 
-          if (storageItem.ttl && (now - storageItem.timestamp) > storageItem.ttl) {
+          if (storageItem.ttl && now - storageItem.timestamp > storageItem.ttl) {
             const size = new Blob([stored]).size;
             this.removeItem(key);
             freedSpace += size;
@@ -298,34 +296,36 @@ class StorageManager {
     // If we need to free more space, remove oldest items
     if (freeSpaceKB && freedSpace < freeSpaceKB * 1024) {
       const remainingKeys = this.getKeys();
-      const itemsWithAge = remainingKeys.map(key => {
-        const fullKey = this.getFullKey(key);
-        const stored = localStorage.getItem(fullKey);
-        if (stored) {
-          try {
-            const storageItem: StorageItem = JSON.parse(stored);
-            return {
-              key,
-              age: Date.now() - storageItem.timestamp,
-              size: new Blob([stored]).size
-            };
-          } catch (error) {
-            return { key, age: 0, size: 0 };
+      const itemsWithAge = remainingKeys
+        .map(key => {
+          const fullKey = this.getFullKey(key);
+          const stored = localStorage.getItem(fullKey);
+          if (stored) {
+            try {
+              const storageItem: StorageItem = JSON.parse(stored);
+              return {
+                key,
+                age: Date.now() - storageItem.timestamp,
+                size: new Blob([stored]).size,
+              };
+            } catch (error) {
+              return { key, age: 0, size: 0 };
+            }
           }
-        }
-        return { key, age: 0, size: 0 };
-      }).sort((a, b) => b.age - a.age); // Sort by age (oldest first)
+          return { key, age: 0, size: 0 };
+        })
+        .sort((a, b) => b.age - a.age); // Sort by age (oldest first)
 
       for (const item of itemsWithAge) {
         if (freedSpace >= freeSpaceKB * 1024) break;
-        
+
         this.removeItem(item.key);
         freedSpace += item.size;
         removedCount++;
       }
     }
 
-    console.log(`Cleanup completed: ${removedCount} items removed, ${freedSpace} bytes freed`);
+    logger.info(`Cleanup completed: ${removedCount} items removed, ${freedSpace} bytes freed`);
     return removedCount;
   }
 
@@ -356,11 +356,12 @@ class StorageManager {
    * Checks if error is due to quota exceeded
    */
   private isQuotaExceeded(error: any): boolean {
-    return error instanceof DOMException && (
-      error.code === 22 ||
-      error.code === 1014 ||
-      error.name === 'QuotaExceededError' ||
-      error.name === 'NS_ERROR_DOM_QUOTA_REACHED'
+    return (
+      error instanceof DOMException &&
+      (error.code === 22 ||
+        error.code === 1014 ||
+        error.name === 'QuotaExceededError' ||
+        error.name === 'NS_ERROR_DOM_QUOTA_REACHED')
     );
   }
 }
@@ -373,21 +374,24 @@ export const tempStorageManager = new StorageManager('tsconv-temp');
  * React hook for using storage manager
  */
 export function useStorage<T>(
-  key: string, 
-  defaultValue?: T, 
+  key: string,
+  defaultValue?: T,
   options: StorageOptions = {}
 ): [T | undefined, (value: T) => boolean, () => boolean] {
-  const [value, setValue] = React.useState<T | undefined>(() => 
+  const [value, setValue] = React.useState<T | undefined>(() =>
     storageManager.getItem(key, defaultValue)
   );
 
-  const setStoredValue = React.useCallback((newValue: T): boolean => {
-    const success = storageManager.setItem(key, newValue, options);
-    if (success) {
-      setValue(newValue);
-    }
-    return success;
-  }, [key, options]);
+  const setStoredValue = React.useCallback(
+    (newValue: T): boolean => {
+      const success = storageManager.setItem(key, newValue, options);
+      if (success) {
+        setValue(newValue);
+      }
+      return success;
+    },
+    [key, options]
+  );
 
   const removeStoredValue = React.useCallback((): boolean => {
     const success = storageManager.removeItem(key);
@@ -405,12 +409,12 @@ export function useStorage<T>(
  */
 export function formatStorageSize(bytes: number): string {
   if (bytes === 0) return '0 B';
-  
+
   const k = 1024;
   const sizes = ['B', 'KB', 'MB', 'GB'];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
-  
-  return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))  } ${  sizes[i]}`;
+
+  return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`;
 }
 
 // Import React for the hook
