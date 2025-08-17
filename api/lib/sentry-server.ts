@@ -197,7 +197,7 @@ export const ServerErrorReporting = {
       method?: string;
       userId?: string;
       requestId?: string;
-      [key: string]: any;
+      [key: string]: unknown;
     }
   ): void {
     Sentry.withScope(scope => {
@@ -217,7 +217,7 @@ export const ServerErrorReporting = {
       operation?: string;
       table?: string;
       query?: string;
-      [key: string]: any;
+      [key: string]: unknown;
     }
   ): void {
     Sentry.withScope(scope => {
@@ -241,7 +241,7 @@ export const ServerErrorReporting = {
       service?: string;
       endpoint?: string;
       statusCode?: number;
-      [key: string]: any;
+      [key: string]: unknown;
     }
   ): void {
     Sentry.withScope(scope => {
@@ -261,7 +261,7 @@ export const ServerErrorReporting = {
       operation?: string;
       duration?: number;
       threshold?: number;
-      [key: string]: any;
+      [key: string]: unknown;
     }
   ): void {
     Sentry.withScope(scope => {
