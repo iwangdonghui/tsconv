@@ -991,14 +991,13 @@ export default function TimezoneExplorer() {
                     aria-label='Timezone list'
                   >
                     {timezones.map(timezone => {
-                      const regionColors = getRegionColors(timezone.region);
                       return (
                         <div
                           key={timezone.id}
-                          className={`border rounded-xl p-6 transition-all duration-200 hover:shadow-lg cursor-pointer bg-gradient-to-br ${regionColors.bg} ${regionColors.border} hover:shadow-lg ${
+                          className={`border rounded-xl p-6 transition-all duration-200 hover:shadow-lg cursor-pointer ${
                             isDark
-                              ? 'shadow-slate-900/20 hover:shadow-slate-900/30'
-                              : 'shadow-gray-900/5 hover:shadow-gray-900/10'
+                              ? 'bg-slate-800 border-slate-700 hover:border-slate-600 shadow-slate-900/20 hover:shadow-slate-900/30'
+                              : 'bg-white border-gray-200 hover:border-gray-300 shadow-gray-900/5 hover:shadow-gray-900/10'
                           }`}
                           role='listitem'
                           aria-label={`${timezone.name} timezone information`}
@@ -1009,22 +1008,17 @@ export default function TimezoneExplorer() {
                           }}
                         >
                           <div className='flex items-start justify-between mb-4'>
-                            <div className='flex items-center gap-3'>
-                              <div className={`p-2 rounded-lg ${regionColors.icon}`}>
-                                <span className='text-lg'>{getRegionIcon(timezone.region)}</span>
-                              </div>
-                              <div>
-                                <h3
-                                  className={`font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}
-                                >
-                                  {timezone.city || timezone.name}
-                                </h3>
-                                <p
-                                  className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}
-                                >
-                                  {timezone.id}
-                                </p>
-                              </div>
+                            <div>
+                              <h3
+                                className={`font-semibold ${isDark ? 'text-blue-400' : 'text-blue-600'}`}
+                              >
+                                {timezone.city || timezone.name}
+                              </h3>
+                              <p
+                                className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}
+                              >
+                                {timezone.id}
+                              </p>
                             </div>
                             <div
                               className={`px-2 py-1 rounded-md text-xs font-mono ${
@@ -1044,7 +1038,9 @@ export default function TimezoneExplorer() {
                               }`}
                             >
                               <div className='flex items-center gap-2 mb-1'>
-                                <Clock className={`h-4 w-4 ${regionColors.accent}`} />
+                                <Clock
+                                  className={`h-4 w-4 ${isDark ? 'text-blue-400' : 'text-blue-600'}`}
+                                />
                                 <span
                                   className={`text-xs font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`}
                                 >
@@ -1061,7 +1057,9 @@ export default function TimezoneExplorer() {
                             {format === 'detailed' && (
                               <div className='space-y-2'>
                                 <div className='flex items-center gap-2'>
-                                  <MapPin className={`h-4 w-4 ${regionColors.accent}`} />
+                                  <MapPin
+                                    className={`h-4 w-4 ${isDark ? 'text-blue-400' : 'text-blue-600'}`}
+                                  />
                                   <span
                                     className={`text-sm ${isDark ? 'text-gray-300' : 'text-gray-700'}`}
                                   >
