@@ -184,8 +184,8 @@ ${Object.entries(result.conversions)
             <div
               className={`p-3 rounded-xl transition-all duration-300 ${
                 isDark
-                  ? 'bg-gradient-to-br from-purple-500 to-purple-600 shadow-lg shadow-purple-500/25'
-                  : 'bg-gradient-to-br from-purple-500 to-purple-600 shadow-lg shadow-purple-500/25'
+                  ? 'bg-gradient-to-br from-blue-500 to-blue-600 shadow-lg shadow-blue-500/25'
+                  : 'bg-gradient-to-br from-blue-500 to-blue-600 shadow-lg shadow-blue-500/25'
               }`}
             >
               <Clock className='h-8 w-8 text-white' />
@@ -207,13 +207,13 @@ ${Object.entries(result.conversions)
             className={`mb-8 p-6 rounded-xl border transition-all duration-300 ${
               isDark
                 ? 'bg-gradient-to-br from-slate-800/50 to-slate-700/30 border-slate-600 shadow-lg shadow-slate-900/20'
-                : 'bg-gradient-to-br from-purple-50/80 to-indigo-50/60 border-purple-200/50 shadow-lg shadow-purple-900/5'
+                : 'bg-gradient-to-br from-blue-50/80 to-indigo-50/60 border-blue-200/50 shadow-lg shadow-blue-900/5'
             }`}
           >
             <div className='flex items-center gap-3 mb-4'>
               <div
                 className={`p-2 rounded-lg ${
-                  isDark ? 'bg-purple-500/20 text-purple-400' : 'bg-purple-100 text-purple-600'
+                  isDark ? 'bg-blue-500/20 text-blue-400' : 'bg-blue-100 text-blue-600'
                 }`}
               >
                 <TrendingUp className='h-5 w-5' />
@@ -243,7 +243,7 @@ ${Object.entries(result.conversions)
                 <div className='flex items-center gap-3 mb-6'>
                   <div
                     className={`p-2 rounded-lg transition-all duration-300 ${
-                      isDark ? 'bg-purple-500/20 text-purple-400' : 'bg-purple-100 text-purple-600'
+                      isDark ? 'bg-blue-500/20 text-blue-400' : 'bg-blue-100 text-blue-600'
                     }`}
                   >
                     <Calculator className='h-5 w-5' />
@@ -271,7 +271,7 @@ ${Object.entries(result.conversions)
                       placeholder='e.g., 3600'
                       min='0'
                       step='any'
-                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200 shadow-sm hover:shadow-md ${isDark ? 'bg-slate-700 border-slate-600 text-white placeholder-slate-400 hover:border-slate-500' : 'bg-white border-gray-300 text-gray-900 hover:border-gray-400'}`}
+                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 shadow-sm hover:shadow-md ${isDark ? 'bg-slate-700 border-slate-600 text-white placeholder-slate-400 hover:border-slate-500' : 'bg-white border-gray-300 text-gray-900 hover:border-gray-400'}`}
                     />
                   </div>
 
@@ -287,7 +287,7 @@ ${Object.entries(result.conversions)
                         value={inputUnit}
                         aria-label='Select input time unit'
                         onChange={e => setInputUnit(e.target.value as TimeUnit)}
-                        className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200 appearance-none cursor-pointer shadow-sm hover:shadow-md ${isDark ? 'bg-slate-700 border-slate-600 text-white hover:border-slate-500' : 'bg-white border-gray-300 text-gray-900 hover:border-gray-400'}`}
+                        className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 appearance-none cursor-pointer shadow-sm hover:shadow-md ${isDark ? 'bg-slate-700 border-slate-600 text-white hover:border-slate-500' : 'bg-white border-gray-300 text-gray-900 hover:border-gray-400'}`}
                       >
                         {Object.entries(TIME_UNITS).map(([unit, config]) => (
                           <option key={unit} value={unit}>
@@ -418,16 +418,16 @@ ${Object.entries(result.conversions)
 
                     {/* Input Summary */}
                     <div
-                      className={`p-4 rounded-xl border mb-6 ${isDark ? 'border-purple-500 bg-purple-900/20' : 'border-purple-500 bg-purple-50'}`}
+                      className={`p-4 rounded-xl border mb-6 ${isDark ? 'border-blue-500 bg-blue-900/20' : 'border-blue-500 bg-blue-50'}`}
                     >
                       <div className='text-center'>
                         <div
-                          className={`text-3xl font-bold mb-2 ${isDark ? 'text-purple-400' : 'text-purple-600'}`}
+                          className={`text-3xl font-bold mb-2 ${isDark ? 'text-blue-400' : 'text-blue-600'}`}
                         >
                           {result.inputValue.toLocaleString()}
                         </div>
                         <div
-                          className={`text-lg font-semibold ${isDark ? 'text-purple-300' : 'text-purple-800'}`}
+                          className={`text-lg font-semibold ${isDark ? 'text-blue-300' : 'text-blue-800'}`}
                         >
                           {TIME_UNITS[result.inputUnit].label}
                         </div>
@@ -439,7 +439,7 @@ ${Object.entries(result.conversions)
                       <h3
                         className={`text-lg font-semibold flex items-center gap-2 ${isDark ? 'text-white' : 'text-gray-900'}`}
                       >
-                        <Clock className='h-5 w-5 text-purple-500' />
+                        <Clock className='h-5 w-5 text-blue-500' />
                         All Conversions
                       </h3>
 
@@ -454,8 +454,8 @@ ${Object.entries(result.conversions)
                               className={`p-4 rounded-lg border transition-all duration-200 hover:shadow-md ${
                                 isInputUnit
                                   ? isDark
-                                    ? 'border-purple-500 bg-purple-900/20'
-                                    : 'border-purple-500 bg-purple-50'
+                                    ? 'border-blue-500 bg-blue-900/20'
+                                    : 'border-blue-500 bg-blue-50'
                                   : isDark
                                     ? 'border-slate-600 bg-slate-700/50 hover:border-slate-500'
                                     : 'border-gray-200 bg-gray-50 hover:border-gray-300'
@@ -467,8 +467,8 @@ ${Object.entries(result.conversions)
                                     className={`text-lg font-bold ${
                                       isInputUnit
                                         ? isDark
-                                          ? 'text-purple-400'
-                                          : 'text-purple-600'
+                                          ? 'text-blue-400'
+                                          : 'text-blue-600'
                                         : isDark
                                           ? 'text-gray-200'
                                           : 'text-gray-800'
@@ -480,8 +480,8 @@ ${Object.entries(result.conversions)
                                     className={`text-sm font-medium ${
                                       isInputUnit
                                         ? isDark
-                                          ? 'text-purple-300'
-                                          : 'text-purple-700'
+                                          ? 'text-blue-300'
+                                          : 'text-blue-700'
                                         : isDark
                                           ? 'text-gray-400'
                                           : 'text-gray-600'
@@ -494,8 +494,8 @@ ${Object.entries(result.conversions)
                                   className={`text-xs px-2 py-1 rounded-full font-mono ${
                                     isInputUnit
                                       ? isDark
-                                        ? 'bg-purple-900/50 text-purple-300'
-                                        : 'bg-purple-100 text-purple-700'
+                                        ? 'bg-blue-900/50 text-blue-300'
+                                        : 'bg-blue-100 text-blue-700'
                                       : isDark
                                         ? 'bg-slate-600 text-gray-300'
                                         : 'bg-gray-200 text-gray-600'
