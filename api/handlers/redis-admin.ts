@@ -161,4 +161,4 @@ function extractInfoValue(lines: string[], key: string): string | null {
   const line = lines.find(l => l.startsWith(`${key}:`));
   return line ? line.split(':')[1]?.trim() || null : null;
 }
-void _extractInfoValue; // mark as intentionally unused
+void extractInfoValue; // mark as intentionally unused
