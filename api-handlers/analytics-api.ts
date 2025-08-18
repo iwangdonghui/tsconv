@@ -75,7 +75,7 @@ export async function handleAnalytics(
         );
     }
   } catch (error) {
-    console.error('Analytics API error:', error);
+    if (process.env.NODE_ENV === 'development') console.error('Analytics API error:', error);
 
     return new Response(
       JSON.stringify({
@@ -241,10 +241,11 @@ export async function recordAnalyticsMiddleware(
 
     // Record asynchronously to not block response
     analyticsManager.recordEvent(event).catch(error => {
-      console.error('Failed to record analytics event:', error);
+      if (process.env.NODE_ENV === 'development')
+        console.error('Failed to record analytics event:', error);
     });
   } catch (error) {
-    console.error('Analytics middleware error:', error);
+    if (process.env.NODE_ENV === 'development') console.error('Analytics middleware error:', error);
   }
 }
 
@@ -338,7 +339,7 @@ export async function securityMiddleware(
 
     return { allowed: true };
   } catch (error) {
-    console.error('Security middleware error:', error);
+    if (process.env.NODE_ENV === 'development') console.error('Security middleware error:', error);
     // Fail open - allow request if security check fails
     return { allowed: true };
   }

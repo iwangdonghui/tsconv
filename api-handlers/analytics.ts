@@ -142,7 +142,8 @@ export class AnalyticsManager {
         timestamp: now.toISOString(),
       };
     } catch (error) {
-      console.error('Failed to get real-time stats:', error);
+      if (process.env.NODE_ENV === 'development')
+        console.error('Failed to get real-time stats:', error);
       return {
         currentHourRequests: 0,
         last5MinRequests: 0,
@@ -157,7 +158,8 @@ export class AnalyticsManager {
     try {
       await this.cacheManager.increment('STATS', key);
     } catch (error) {
-      console.error(`Failed to increment counter ${key}:`, error);
+      if (process.env.NODE_ENV === 'development')
+        console.error(`Failed to increment counter ${key}:`, error);
     }
   }
 
@@ -166,7 +168,8 @@ export class AnalyticsManager {
       const value = await this.cacheManager.get('STATS', key);
       return typeof value === 'number' ? value : 0;
     } catch (error) {
-      console.error(`Failed to get counter ${key}:`, error);
+      if (process.env.NODE_ENV === 'development')
+        console.error(`Failed to get counter ${key}:`, error);
       return 0;
     }
   }
@@ -184,7 +187,8 @@ export class AnalyticsManager {
       recentEvents.unshift(event);
       await this.cacheManager.set('STATS', 'recent_events', recentEvents.slice(0, 1000));
     } catch (error) {
-      console.error('Failed to add recent event:', error);
+      if (process.env.NODE_ENV === 'development')
+        console.error('Failed to add recent event:', error);
     }
   }
 
