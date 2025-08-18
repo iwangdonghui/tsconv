@@ -511,8 +511,8 @@ export default function TimezoneExplorer() {
                       }}
                       className={`px-3 py-2 text-xs rounded-md transition-all duration-200 ${
                         isDark
-                          ? 'bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 border border-blue-500/20'
-                          : 'bg-blue-50 text-blue-600 hover:bg-blue-100 border border-blue-200'
+                          ? 'bg-slate-700 text-blue-400 hover:bg-slate-600 border border-slate-600'
+                          : 'bg-white text-blue-600 hover:bg-gray-50 border border-gray-200'
                       }`}
                     >
                       🌍 All Timezones
@@ -526,8 +526,8 @@ export default function TimezoneExplorer() {
                       }}
                       className={`px-3 py-2 text-xs rounded-md transition-all duration-200 ${
                         isDark
-                          ? 'bg-green-500/10 text-green-400 hover:bg-green-500/20 border border-green-500/20'
-                          : 'bg-green-50 text-green-600 hover:bg-green-100 border border-green-200'
+                          ? 'bg-slate-700 text-blue-400 hover:bg-slate-600 border border-slate-600'
+                          : 'bg-white text-blue-600 hover:bg-gray-50 border border-gray-200'
                       }`}
                     >
                       🇺🇸 US Timezones
@@ -541,8 +541,8 @@ export default function TimezoneExplorer() {
                       }}
                       className={`px-3 py-2 text-xs rounded-md transition-all duration-200 ${
                         isDark
-                          ? 'bg-purple-500/10 text-purple-400 hover:bg-purple-500/20 border border-purple-500/20'
-                          : 'bg-purple-50 text-purple-600 hover:bg-purple-100 border border-purple-200'
+                          ? 'bg-slate-700 text-blue-400 hover:bg-slate-600 border border-slate-600'
+                          : 'bg-white text-blue-600 hover:bg-gray-50 border border-gray-200'
                       }`}
                     >
                       🇪🇺 European Zones
@@ -556,8 +556,8 @@ export default function TimezoneExplorer() {
                       }}
                       className={`px-3 py-2 text-xs rounded-md transition-all duration-200 ${
                         isDark
-                          ? 'bg-orange-500/10 text-orange-400 hover:bg-orange-500/20 border border-orange-500/20'
-                          : 'bg-orange-50 text-orange-600 hover:bg-orange-100 border border-orange-200'
+                          ? 'bg-slate-700 text-blue-400 hover:bg-slate-600 border border-slate-600'
+                          : 'bg-white text-blue-600 hover:bg-gray-50 border border-gray-200'
                       }`}
                     >
                       🌏 Asian Zones
@@ -586,8 +586,8 @@ export default function TimezoneExplorer() {
                       }}
                       className={`px-3 py-2 text-xs rounded-md transition-all duration-200 ${
                         isDark
-                          ? 'bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 border border-blue-500/20'
-                          : 'bg-blue-50 text-blue-600 hover:bg-blue-100 border border-blue-200'
+                          ? 'bg-slate-700 text-blue-400 hover:bg-slate-600 border border-slate-600'
+                          : 'bg-white text-blue-600 hover:bg-gray-50 border border-gray-200'
                       }`}
                     >
                       🗽 New York
@@ -601,8 +601,8 @@ export default function TimezoneExplorer() {
                       }}
                       className={`px-3 py-2 text-xs rounded-md transition-all duration-200 ${
                         isDark
-                          ? 'bg-purple-500/10 text-purple-400 hover:bg-purple-500/20 border border-purple-500/20'
-                          : 'bg-purple-50 text-purple-600 hover:bg-purple-100 border border-purple-200'
+                          ? 'bg-slate-700 text-blue-400 hover:bg-slate-600 border border-slate-600'
+                          : 'bg-white text-blue-600 hover:bg-gray-50 border border-gray-200'
                       }`}
                     >
                       🌴 Los Angeles
@@ -616,8 +616,8 @@ export default function TimezoneExplorer() {
                       }}
                       className={`px-3 py-2 text-xs rounded-md transition-all duration-200 ${
                         isDark
-                          ? 'bg-green-500/10 text-green-400 hover:bg-green-500/20 border border-green-500/20'
-                          : 'bg-green-50 text-green-600 hover:bg-green-100 border border-green-200'
+                          ? 'bg-slate-700 text-blue-400 hover:bg-slate-600 border border-slate-600'
+                          : 'bg-white text-blue-600 hover:bg-gray-50 border border-gray-200'
                       }`}
                     >
                       🏙️ Chicago
@@ -631,8 +631,8 @@ export default function TimezoneExplorer() {
                       }}
                       className={`px-3 py-2 text-xs rounded-md transition-all duration-200 ${
                         isDark
-                          ? 'bg-red-500/10 text-red-400 hover:bg-red-500/20 border border-red-500/20'
-                          : 'bg-red-50 text-red-600 hover:bg-red-100 border border-red-200'
+                          ? 'bg-slate-700 text-blue-400 hover:bg-slate-600 border border-slate-600'
+                          : 'bg-white text-blue-600 hover:bg-gray-50 border border-gray-200'
                       }`}
                     >
                       🇬🇧 London
@@ -646,8 +646,8 @@ export default function TimezoneExplorer() {
                       }}
                       className={`px-3 py-2 text-xs rounded-md transition-all duration-200 ${
                         isDark
-                          ? 'bg-orange-500/10 text-orange-400 hover:bg-orange-500/20 border border-orange-500/20'
-                          : 'bg-orange-50 text-orange-600 hover:bg-orange-100 border border-orange-200'
+                          ? 'bg-slate-700 text-blue-400 hover:bg-slate-600 border border-slate-600'
+                          : 'bg-white text-blue-600 hover:bg-gray-50 border border-gray-200'
                       }`}
                     >
                       🗾 Tokyo
@@ -661,8 +661,8 @@ export default function TimezoneExplorer() {
                       }}
                       className={`px-3 py-2 text-xs rounded-md transition-all duration-200 ${
                         isDark
-                          ? 'bg-teal-500/10 text-teal-400 hover:bg-teal-500/20 border border-teal-500/20'
-                          : 'bg-teal-50 text-teal-600 hover:bg-teal-100 border border-teal-200'
+                          ? 'bg-slate-700 text-blue-400 hover:bg-slate-600 border border-slate-600'
+                          : 'bg-white text-blue-600 hover:bg-gray-50 border border-gray-200'
                       }`}
                     >
                       🇦🇺 Sydney
@@ -691,8 +691,8 @@ export default function TimezoneExplorer() {
                       }}
                       className={`px-3 py-2 text-xs rounded-md transition-all duration-200 ${
                         isDark
-                          ? 'bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 border border-blue-500/20'
-                          : 'bg-blue-50 text-blue-600 hover:bg-blue-100 border border-blue-200'
+                          ? 'bg-slate-700 text-blue-400 hover:bg-slate-600 border border-slate-600'
+                          : 'bg-white text-blue-600 hover:bg-gray-50 border border-gray-200'
                       }`}
                     >
                       🏛️ Mississippi
@@ -706,8 +706,8 @@ export default function TimezoneExplorer() {
                       }}
                       className={`px-3 py-2 text-xs rounded-md transition-all duration-200 ${
                         isDark
-                          ? 'bg-purple-500/10 text-purple-400 hover:bg-purple-500/20 border border-purple-500/20'
-                          : 'bg-purple-50 text-purple-600 hover:bg-purple-100 border border-purple-200'
+                          ? 'bg-slate-700 text-blue-400 hover:bg-slate-600 border border-slate-600'
+                          : 'bg-white text-blue-600 hover:bg-gray-50 border border-gray-200'
                       }`}
                     >
                       🌴 California
@@ -721,8 +721,8 @@ export default function TimezoneExplorer() {
                       }}
                       className={`px-3 py-2 text-xs rounded-md transition-all duration-200 ${
                         isDark
-                          ? 'bg-green-500/10 text-green-400 hover:bg-green-500/20 border border-green-500/20'
-                          : 'bg-green-50 text-green-600 hover:bg-green-100 border border-green-200'
+                          ? 'bg-slate-700 text-blue-400 hover:bg-slate-600 border border-slate-600'
+                          : 'bg-white text-blue-600 hover:bg-gray-50 border border-gray-200'
                       }`}
                     >
                       🤠 Texas
@@ -736,8 +736,8 @@ export default function TimezoneExplorer() {
                       }}
                       className={`px-3 py-2 text-xs rounded-md transition-all duration-200 ${
                         isDark
-                          ? 'bg-orange-500/10 text-orange-400 hover:bg-orange-500/20 border border-orange-500/20'
-                          : 'bg-orange-50 text-orange-600 hover:bg-orange-100 border border-orange-200'
+                          ? 'bg-slate-700 text-blue-400 hover:bg-slate-600 border border-slate-600'
+                          : 'bg-white text-blue-600 hover:bg-gray-50 border border-gray-200'
                       }`}
                     >
                       🏖️ Florida
