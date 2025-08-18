@@ -156,7 +156,15 @@ async function optimizedBatchConvertHandler(req: VercelRequest, res: VercelRespo
       return res.status(200).end();
     }
     if (httpValidation.response?.error) {
-      return APIErrorHandler.handleMethodNotAllowed(res, httpValidation.response.message);
+      return handleError(
+        createError({
+          type: ErrorType.BAD_REQUEST_ERROR,
+          message: httpValidation.response.message,
+          statusCode: 405,
+        }),
+        req,
+        res
+      );
     }
   }
 
@@ -171,10 +179,10 @@ async function optimizedBatchConvertHandler(req: VercelRequest, res: VercelRespo
     const batchValidation = validateBatchRequest(batchRequest);
 
     if (!batchValidation.isValid) {
-      return APIErrorHandler.handleBadRequest(
-        res,
-        batchValidation.error!.message,
-        batchValidation.error!.details
+      return handleError(
+        createError({ type: ErrorType.VALIDATION_ERROR, message: batchValidation.error!.message }),
+        req,
+        res
       );
     }
 
@@ -239,23 +247,15 @@ async function optimizedBatchConvertHandler(req: VercelRequest, res: VercelRespo
     const errorInfo = handleBatchError(error as Error, req, requestId);
 
     if (errorInfo.type === 'timeout') {
-      return APIErrorHandler.sendError(
-        res,
-        APIErrorHandler.createError(
-          errorInfo.response.code,
-          errorInfo.response.message,
-          errorInfo.response.status,
-          errorInfo.response.details
-        ),
-        errorInfo.response.status
-      );
+      const error = createError({
+        type: ErrorType.TIMEOUT_ERROR,
+        message: errorInfo.response.message,
+        statusCode: errorInfo.response.status,
+      });
+      return handleError(error, req, res);
     }
 
-    return APIErrorHandler.handleServerError(
-      res,
-      errorInfo.response.error,
-      errorInfo.response.context
-    );
+    return handleError(errorInfo.response.error, req, res);
   }
 }
 
@@ -266,35 +266,6 @@ const securityMiddleware = createSecurityMiddleware({
   enableRealTimeBlocking: process.env.NODE_ENV === 'production',
   loggerConfig: {
     logLevel: process.env.NODE_ENV === 'development' ? 'debug' : 'warn',
-  },
-});
-
-const errorMiddleware = createUnifiedErrorMiddleware({
-  enableRecovery: process.env.NODE_ENV === 'production',
-  enableFormatting: true,
-  enableMonitoring: true,
-  enableLogging: true,
-  responseFormat: {
-    format: process.env.NODE_ENV === 'development' ? 'debug' : 'standard',
-    locale: 'en',
-    includeStack: process.env.NODE_ENV === 'development',
-    includeContext: process.env.NODE_ENV === 'development',
-    sanitizeDetails: process.env.NODE_ENV === 'production',
-  },
-  recovery: {
-    retry: {
-      maxAttempts: 2,
-      baseDelayMs: 500,
-      exponentialBackoff: true,
-    },
-    circuitBreaker: {
-      failureThreshold: 10,
-      recoveryTimeoutMs: 30000,
-    },
-    fallback: {
-      enabled: true,
-      timeoutMs: 3000,
-    },
   },
 });
 
@@ -335,7 +306,7 @@ const enhancedOptimizedBatchHandler = async (req: VercelRequest, res: VercelResp
     });
   } catch (error) {
     // Handle errors with unified error middleware
-    await errorMiddleware(error as Error, req, res);
+    return handleError(error as Error, req, res);
   }
 };
 

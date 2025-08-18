@@ -138,31 +138,44 @@ async function enhancedFormatConvertHandler(req: VercelRequest, res: VercelRespo
     const formatRequest: EnhancedFormatRequest = req.body;
 
     if (!formatRequest.input) {
-      return APIErrorHandler.handleBadRequest(res, 'Input is required', {
-        expected: 'string or number',
-        received: typeof formatRequest.input,
-      });
+      return handleError(
+        createError({ type: ErrorType.VALIDATION_ERROR, message: 'Input is required' }),
+        req,
+        res
+      );
     }
 
     if (!formatRequest.outputFormats || !Array.isArray(formatRequest.outputFormats)) {
-      return APIErrorHandler.handleBadRequest(res, 'Output formats array is required', {
-        expected: 'Array of format strings',
-        received: typeof formatRequest.outputFormats,
-      });
+      return handleError(
+        createError({
+          type: ErrorType.VALIDATION_ERROR,
+          message: 'Output formats array is required',
+        }),
+        req,
+        res
+      );
     }
 
     if (formatRequest.outputFormats.length === 0) {
-      return APIErrorHandler.handleBadRequest(res, 'At least one output format is required', {
-        minFormats: 1,
-        maxFormats: 20,
-      });
+      return handleError(
+        createError({
+          type: ErrorType.VALIDATION_ERROR,
+          message: 'At least one output format is required',
+        }),
+        req,
+        res
+      );
     }
 
     if (formatRequest.outputFormats.length > 20) {
-      return APIErrorHandler.handleBadRequest(res, 'Too many output formats requested', {
-        maxFormats: 20,
-        receivedFormats: formatRequest.outputFormats.length,
-      });
+      return handleError(
+        createError({
+          type: ErrorType.VALIDATION_ERROR,
+          message: 'Too many output formats requested',
+        }),
+        req,
+        res
+      );
     }
 
     // Set default options
@@ -188,15 +201,13 @@ async function enhancedFormatConvertHandler(req: VercelRequest, res: VercelRespo
       detectionResult = formatDetector.detectFormat(inputString);
 
       if (detectionResult.confidence < 0.3 && options.strictMode) {
-        return APIErrorHandler.handleBadRequest(
-          res,
-          'Unable to detect input format with sufficient confidence',
-          {
-            detected_format: detectionResult.detected_format,
-            confidence: detectionResult.confidence,
-            suggestions: detectionResult.suggestions,
-            strict_mode: true,
-          }
+        return handleError(
+          createError({
+            type: ErrorType.VALIDATION_ERROR,
+            message: 'Unable to detect input format with sufficient confidence',
+          }),
+          req,
+          res
         );
       }
     }
@@ -220,13 +231,11 @@ async function enhancedFormatConvertHandler(req: VercelRequest, res: VercelRespo
       // Use specified input format
       const format = formatEngine.getFormat(formatRequest.inputFormat);
       if (!format) {
-        return APIErrorHandler.handleBadRequest(
-          res,
-          `Unsupported input format: ${formatRequest.inputFormat}`,
-          {
-            supported_formats: formatEngine.getSupportedFormats().map(f => f.id),
-          }
-        );
+        const error = createError({
+          type: ErrorType.VALIDATION_ERROR,
+          message: `Unsupported input format: ${formatRequest.inputFormat}`,
+        });
+        return handleError(error, req, res);
       }
 
       parseResult = formatEngine.parseInput(inputString);
@@ -387,12 +396,7 @@ async function enhancedFormatConvertHandler(req: VercelRequest, res: VercelRespo
   } catch (error) {
     console.error('Enhanced format conversion error:', error);
 
-    return APIErrorHandler.handleServerError(res, error as Error, {
-      endpoint: 'enhanced-format-convert',
-      requestId,
-      inputValue: req.body?.input,
-      outputFormats: req.body?.outputFormats,
-    });
+    return handleError(error as Error, req, res);
   }
 }
 
@@ -537,19 +541,7 @@ const securityMiddleware = createSecurityMiddleware({
   },
 });
 
-const errorMiddleware = createUnifiedErrorMiddleware({
-  enableRecovery: process.env.NODE_ENV === 'production',
-  enableFormatting: true,
-  enableMonitoring: true,
-  enableLogging: true,
-  responseFormat: {
-    format: process.env.NODE_ENV === 'development' ? 'debug' : 'standard',
-    locale: 'en',
-    includeStack: process.env.NODE_ENV === 'development',
-    includeContext: process.env.NODE_ENV === 'development',
-    sanitizeDetails: process.env.NODE_ENV === 'production',
-  },
-});
+// Error handling is now handled by the unified error handler
 
 const enhancedFormatHandler = async (req: VercelRequest, res: VercelResponse) => {
   try {
@@ -587,7 +579,7 @@ const enhancedFormatHandler = async (req: VercelRequest, res: VercelResponse) =>
     });
   } catch (error) {
     // Handle errors with unified error middleware
-    await errorMiddleware(error as Error, req, res);
+    return handleError(error as Error, req, res);
   }
 };
 

@@ -74,7 +74,7 @@ async function enhancedHealthHandler(req: VercelRequest, res: VercelResponse) {
   }
 
   if (req.method !== 'GET') {
-    return APIErrorHandler.handleMethodNotAllowed(res, 'Only GET method is allowed');
+    return handleError(createError({ type: ErrorType.BAD_REQUEST_ERROR, message: 'Only GET method is allowed', statusCode: 405 }), req, res);
   }
 
   const startTime = Date.now();
@@ -97,17 +97,11 @@ async function enhancedHealthHandler(req: VercelRequest, res: VercelResponse) {
 
     // Validate parameters
     if (!['basic', 'standard', 'comprehensive', 'deep'].includes(healthRequest.level!)) {
-      return APIErrorHandler.handleBadRequest(res, 'Invalid health check level', {
-        validLevels: ['basic', 'standard', 'comprehensive', 'deep'],
-        received: healthRequest.level,
-      });
+      return handleError(createError({ type: ErrorType.VALIDATION_ERROR, message: 'Invalid health check level' }), req, res);
     }
 
     if (healthRequest.timeout! < 1000 || healthRequest.timeout! > 60000) {
-      return APIErrorHandler.handleBadRequest(res, 'Invalid timeout value', {
-        validRange: '1000-60000ms',
-        received: healthRequest.timeout,
-      });
+      return handleError(createError({ type: ErrorType.VALIDATION_ERROR, message: 'Invalid timeout value' }), req, res);
     }
 
     // Configure health check
@@ -173,12 +167,7 @@ async function enhancedHealthHandler(req: VercelRequest, res: VercelResponse) {
   } catch (error) {
     console.error('Enhanced health check error:', error);
 
-    return APIErrorHandler.handleServerError(res, error as Error, {
-      endpoint: 'enhanced-health',
-      requestId,
-      level: req.query.level,
-      timeout: req.query.timeout,
-    });
+    return handleError(error as Error, req, res);
   }
 }
 
@@ -330,19 +319,6 @@ const securityMiddleware = createSecurityMiddleware({
   },
 });
 
-const errorMiddleware = createUnifiedErrorMiddleware({
-  enableRecovery: false, // Don't retry health checks
-  enableFormatting: true,
-  enableMonitoring: false, // Avoid circular monitoring
-  enableLogging: true,
-  responseFormat: {
-    format: 'standard',
-    locale: 'en',
-    includeStack: false,
-    includeContext: false,
-    sanitizeDetails: true,
-  },
-});
 
 const enhancedHealthEndpoint = async (req: VercelRequest, res: VercelResponse) => {
   try {
@@ -358,7 +334,7 @@ const enhancedHealthEndpoint = async (req: VercelRequest, res: VercelResponse) =
     });
   } catch (error) {
     // Handle errors with unified error middleware
-    await errorMiddleware(error as Error, req, res);
+    return handleError(error as Error, req, res);
   }
 };
 

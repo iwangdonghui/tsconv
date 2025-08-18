@@ -8,7 +8,7 @@ interface Env {
   REDIS_ENABLED?: string;
 }
 
-export async function handleCacheTest(request: Request, env: Env): Promise<Response> {
+export async function handleCacheTest(request: Request, _env: Env): Promise<Response> {
   if (request.method !== 'GET') {
     return new Response(
       JSON.stringify({

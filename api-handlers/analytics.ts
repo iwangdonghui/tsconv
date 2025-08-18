@@ -33,7 +33,7 @@ interface AnalyticsStats {
 export class AnalyticsManager {
   private cacheManager: CacheManager;
 
-  constructor(env: Env) {
+  constructor(_env: Env) {
     this.cacheManager = new CacheManager(_env);
   }
 
