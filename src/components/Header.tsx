@@ -150,6 +150,12 @@ export default function Header() {
                   >
                     ⏱️ Time Units Converter
                   </Link>
+                  <Link
+                    to='/discord'
+                    className='block px-4 py-2 text-sm hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors'
+                  >
+                    💬 Discord Timestamps
+                  </Link>
                 </div>
               </div>
             </div>
@@ -360,6 +366,17 @@ export default function Header() {
                   }`}
                 >
                   ⏱️ Time Units Converter
+                </Link>
+                <Link
+                  to='/discord'
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className={`block px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                    isActive('/discord')
+                      ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300'
+                      : 'hover:bg-slate-100 dark:hover:bg-slate-700'
+                  }`}
+                >
+                  💬 Discord Timestamps
                 </Link>
               </div>
             </div>
