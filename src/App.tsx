@@ -14,6 +14,7 @@ const FormatTool = lazy(() => import('./components/FormatTool'));
 const WorkdaysCalculator = lazy(() => import('./components/WorkdaysCalculator'));
 const DateDiffCalculator = lazy(() => import('./components/DateDiffCalculator'));
 const TimezoneExplorer = lazy(() => import('./components/TimezoneExplorer'));
+const TimeUnitsCalculator = lazy(() => import('./components/TimeUnitsCalculator'));
 
 // 懒加载组件 - 文档和指南
 const ApiDocs = lazy(() => import('./components/ApiDocs'));
@@ -143,6 +144,15 @@ function App() {
                 element={
                   <LazyWrapper name='Timezone Explorer' fullPage>
                     <TimezoneExplorer />
+                  </LazyWrapper>
+                }
+              />
+
+              <Route
+                path='/time-units'
+                element={
+                  <LazyWrapper name='Time Units Converter' fullPage>
+                    <TimeUnitsCalculator />
                   </LazyWrapper>
                 }
               />
