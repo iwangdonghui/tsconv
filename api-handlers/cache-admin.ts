@@ -71,7 +71,7 @@ export async function handleCacheAdmin(
         );
     }
   } catch (error) {
-    console.error('Cache admin error:', error);
+    if (process.env.NODE_ENV === 'development') console.error('Cache admin error:', error);
 
     return new Response(
       JSON.stringify({

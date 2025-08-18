@@ -157,8 +157,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 }
 
 // @ts-ignore - helper retained for future Redis versions
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-function _extractInfoValue(lines: string[], key: string): string | null {
+function extractInfoValue(lines: string[], key: string): string | null {
   const line = lines.find(l => l.startsWith(`${key}:`));
   return line ? line.split(':')[1]?.trim() || null : null;
 }

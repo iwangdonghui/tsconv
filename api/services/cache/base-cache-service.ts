@@ -162,7 +162,6 @@ export abstract class BaseCacheService implements ICacheService {
     return true;
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars, no-unused-vars
   async ttl(_key: string): Promise<number> {
     // Default implementation returns -1 (no TTL support)
     // Subclasses should override if they support TTL queries

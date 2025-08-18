@@ -289,8 +289,7 @@ async function getRedisMetrics() {
 
 // Helper function for extracting Redis info values (kept for potential future use)
 // @ts-ignore - not currently used in Upstash env but kept for parity
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-function _extractInfoValue(lines: string[], key: string): string | null {
+function extractInfoValue(lines: string[], key: string): string | null {
   const line = lines.find(l => l.startsWith(`${key}:`));
   return line ? line.split(':')[1]?.trim() || null : null;
 }

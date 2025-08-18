@@ -28,14 +28,14 @@ export async function handleCacheTest(request: Request, _env: Env): Promise<Resp
     const testValue = { message: 'Hello Cache!', timestamp: new Date().toISOString() };
 
     // Test 1: Set a value
-    console.log(`Setting cache key: ${testKey}`);
+    // Setting cache key
     const setResult = await cacheManager.set('CONVERT_API', testKey, testValue);
-    console.log(`Set result: ${setResult}`);
+    // Set operation completed
 
     // Test 2: Get the value immediately
-    console.log(`Getting cache key: ${testKey}`);
+    // Getting cache key
     const getResult = await cacheManager.get('CONVERT_API', testKey);
-    console.log(`Get result: ${getResult ? 'FOUND' : 'NOT FOUND'}`);
+    // Get operation completed
 
     // Test 3: Redis stats
     const redisStats = cacheManager.getRedisStats();

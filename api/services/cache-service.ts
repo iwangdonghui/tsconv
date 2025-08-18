@@ -280,8 +280,7 @@ class MemoryCacheService implements CacheService {
     }
   }
 
-  // NOTE: reserved for future diagnostics; suppress unused warning intentionally
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  // NOTE: reserved for future diagnostics
   private estimateCacheSize(): number {
     let size = 0;
     const entries = Array.from(this.cache.entries());

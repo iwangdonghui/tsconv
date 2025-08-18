@@ -72,10 +72,8 @@ const createAPIKeySchema = {
   },
 };
 
-// Reserved placeholder for future partial update schema (intentionally unused to satisfy lint)
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const _updateAPIKeySchema: Record<string, unknown> | undefined = undefined;
-void _updateAPIKeySchema; // mark as intentionally unused
+// Reserved placeholder for future partial update schema
+// const updateAPIKeySchema: Record<string, unknown> | undefined = undefined;
 
 // ============================================================================
 // Helper Functions
