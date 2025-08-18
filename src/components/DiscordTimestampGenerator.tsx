@@ -270,8 +270,8 @@ export default function DiscordTimestampGenerator() {
             <div
               className={`p-3 rounded-xl transition-all duration-300 ${
                 isDark
-                  ? 'bg-gradient-to-br from-purple-500 to-purple-600 shadow-lg shadow-purple-500/25'
-                  : 'bg-gradient-to-br from-purple-500 to-purple-600 shadow-lg shadow-purple-500/25'
+                  ? 'bg-gradient-to-br from-blue-500 to-blue-600 shadow-lg shadow-blue-500/25'
+                  : 'bg-gradient-to-br from-blue-500 to-blue-600 shadow-lg shadow-blue-500/25'
               }`}
             >
               <MessageSquare className='h-8 w-8 text-white' />
@@ -293,13 +293,13 @@ export default function DiscordTimestampGenerator() {
             className={`mb-8 p-6 rounded-xl border transition-all duration-300 ${
               isDark
                 ? 'bg-gradient-to-br from-slate-800/50 to-slate-700/30 border-slate-600 shadow-lg shadow-slate-900/20'
-                : 'bg-gradient-to-br from-purple-50/80 to-indigo-50/60 border-purple-200/50 shadow-lg shadow-purple-900/5'
+                : 'bg-gradient-to-br from-blue-50/80 to-indigo-50/60 border-blue-200/50 shadow-lg shadow-blue-900/5'
             }`}
           >
             <div className='flex items-center gap-3 mb-4'>
               <div
                 className={`p-2 rounded-lg ${
-                  isDark ? 'bg-purple-500/20 text-purple-400' : 'bg-purple-100 text-purple-600'
+                  isDark ? 'bg-blue-500/20 text-blue-400' : 'bg-blue-100 text-blue-600'
                 }`}
               >
                 <TrendingUp className='h-5 w-5' />
@@ -329,7 +329,7 @@ export default function DiscordTimestampGenerator() {
                 <div className='flex items-center gap-3 mb-6'>
                   <div
                     className={`p-2 rounded-lg transition-all duration-300 ${
-                      isDark ? 'bg-purple-500/20 text-purple-400' : 'bg-purple-100 text-purple-600'
+                      isDark ? 'bg-blue-500/20 text-blue-400' : 'bg-blue-100 text-blue-600'
                     }`}
                   >
                     <Clock className='h-5 w-5' />
@@ -354,7 +354,7 @@ export default function DiscordTimestampGenerator() {
                       aria-label='Select date for timestamp'
                       value={date}
                       onChange={e => setDate(e.target.value)}
-                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200 shadow-sm hover:shadow-md ${isDark ? 'bg-slate-700 border-slate-600 text-white hover:border-slate-500' : 'bg-white border-gray-300 text-gray-900 hover:border-gray-400'}`}
+                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 shadow-sm hover:shadow-md ${isDark ? 'bg-slate-700 border-slate-600 text-white hover:border-slate-500' : 'bg-white border-gray-300 text-gray-900 hover:border-gray-400'}`}
                     />
                   </div>
 
@@ -370,7 +370,7 @@ export default function DiscordTimestampGenerator() {
                       aria-label='Select time for timestamp'
                       value={time}
                       onChange={e => setTime(e.target.value)}
-                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200 shadow-sm hover:shadow-md ${isDark ? 'bg-slate-700 border-slate-600 text-white hover:border-slate-500' : 'bg-white border-gray-300 text-gray-900 hover:border-gray-400'}`}
+                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 shadow-sm hover:shadow-md ${isDark ? 'bg-slate-700 border-slate-600 text-white hover:border-slate-500' : 'bg-white border-gray-300 text-gray-900 hover:border-gray-400'}`}
                     />
                   </div>
 
@@ -515,8 +515,8 @@ export default function DiscordTimestampGenerator() {
                                   <span
                                     className={`px-2 py-1 rounded text-xs font-mono font-bold ${
                                       isDark
-                                        ? 'bg-purple-500/20 text-purple-400'
-                                        : 'bg-purple-100 text-purple-700'
+                                        ? 'bg-blue-500/20 text-blue-400'
+                                        : 'bg-blue-100 text-blue-700'
                                     }`}
                                   >
                                     {format}
