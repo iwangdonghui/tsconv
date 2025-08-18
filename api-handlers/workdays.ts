@@ -69,7 +69,7 @@ const COMMON_HOLIDAYS: Record<string, string[]> = {
   ],
 };
 
-export async function handleWorkdays(request: Request, env: Env): Promise<Response> {
+export async function handleWorkdays(request: Request, _env: Env): Promise<Response> {
   const startTime = Date.now();
   const securityManager = new SecurityManager(_env);
   const cacheManager = new CacheManager(_env);

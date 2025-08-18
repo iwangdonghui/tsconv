@@ -123,7 +123,7 @@ const TIMEZONE_DATA: TimezoneInfo[] = [
   },
 ];
 
-export async function handleTimezonesEnhanced(request: Request, env: Env): Promise<Response> {
+export async function handleTimezonesEnhanced(request: Request, _env: Env): Promise<Response> {
   const startTime = Date.now();
   const securityManager = new SecurityManager(_env);
   const cacheManager = new CacheManager(_env);

@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach, vi, Mock } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi, _Mock } from 'vitest';
 import { CacheFactory } from '../cache-factory';
 import { MemoryCacheService } from '../cache-service';
 import config from '../../config/config';

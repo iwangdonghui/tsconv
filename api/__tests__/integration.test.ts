@@ -1,10 +1,9 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { VercelRequest, VercelResponse } from '@vercel/node';
-import cacheService from '../services/cache-service';
-import timezoneService from '../services/timezone-service';
-import formatService from '../services/format-service';
-import { ErrorHandler } from '../middleware/error-handler';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { monitoringService } from '../health';
+import cacheService from '../services/cache-service';
+import formatService from '../services/format-service';
+import timezoneService from '../services/timezone-service';
 
 describe('API Integration Tests', () => {
   let mockReq: Partial<VercelRequest>;

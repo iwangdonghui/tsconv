@@ -7,7 +7,7 @@ import {
   performanceHealthCheck,
   clearMetrics,
   getMetricsStore,
-  PerformanceMetrics,
+  _PerformanceMetrics,
 } from '../performance-monitoring';
 
 // Mock config

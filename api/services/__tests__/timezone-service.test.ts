@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, _beforeEach } from 'vitest';
 import { timezoneService } from '../timezone-service';
 
 describe('Timezone Service', () => {
@@ -215,10 +215,10 @@ describe('Timezone Service', () => {
 
     it('should handle extreme timezone offsets', () => {
       // Kiritimati (Christmas Island) has UTC+14, the most extreme positive offset
-      const kiritimatiInfo = timezoneService.getTimezoneInfo('Pacific/Kiritimati');
+      const _kiritimatiInfo = timezoneService.getTimezoneInfo('Pacific/Kiritimati');
 
       // Baker Island has UTC-12, the most extreme negative offset
-      const bakerInfo = timezoneService.getTimezoneInfo('Etc/GMT+12'); // Note: Etc/GMT+12 is actually UTC-12
+      const _bakerInfo = timezoneService.getTimezoneInfo('Etc/GMT+12'); // Note: Etc/GMT+12 is actually UTC-12
 
       // The difference between the most extreme timezones should be 26 hours
       const offsetDiff = timezoneService.getTimezoneDifference('Pacific/Kiritimati', 'Etc/GMT+12');

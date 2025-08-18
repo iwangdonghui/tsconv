@@ -5,7 +5,7 @@ interface Env {
   UPSTASH_REDIS_REST_TOKEN?: string;
 }
 
-export async function handleNow(request: Request, env: Env): Promise<Response> {
+export async function handleNow(request: Request, _env: Env): Promise<Response> {
   if (request.method !== 'GET') {
     return new Response(
       JSON.stringify({

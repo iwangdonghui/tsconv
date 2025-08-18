@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { VercelRequest, VercelResponse } from '@vercel/node';
 import {
   rateLimitMiddleware,
-  createRateLimitMiddleware,
+  _createRateLimitMiddleware,
   bypassRateLimit,
   resetRateLimit,
   getRateLimitStats,

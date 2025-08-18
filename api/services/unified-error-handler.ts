@@ -176,7 +176,7 @@ export class UnifiedError extends Error {
 
   private sanitizeContext(context: ErrorContext): Partial<ErrorContext> {
     // Remove sensitive information from context
-    const { additionalData, ...safeContext } = context;
+    const { additionalData: _additionalData, ...safeContext } = context;
     return safeContext;
   }
 }

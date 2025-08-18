@@ -13,7 +13,7 @@ const rateLimitMiddlewareFactory = createRateLimitMiddleware();
 // Create wrapper functions that match the expected signature
 const cacheMiddleware = async (req: VercelRequest, res: VercelResponse, next: Function) => {
   try {
-    const handler = (req: VercelRequest, res: VercelResponse) => {
+    const handler = (_req: VercelRequest, _res: VercelResponse) => {
       next();
       return Promise.resolve();
     };
@@ -28,7 +28,7 @@ const cacheMiddleware = async (req: VercelRequest, res: VercelResponse, next: Fu
 
 const rateLimitMiddleware = async (req: VercelRequest, res: VercelResponse, next: Function) => {
   try {
-    const handler = (req: VercelRequest, res: VercelResponse) => {
+    const handler = (_req: VercelRequest, _res: VercelResponse) => {
       next();
       return Promise.resolve();
     };
@@ -131,7 +131,7 @@ describe('Middleware Integration Tests', () => {
 
       // Exhaust rate limit with a specific IP
       const testIp = '192.168.1.101';
-      const requests = Array.from({ length: 105 }, (_, i) => ({
+      const requests = Array.from({ length: 105 }, (_, _i) => ({
         ...mockReq,
         headers: { 'x-forwarded-for': testIp },
       }));
@@ -183,7 +183,7 @@ describe('Middleware Integration Tests', () => {
         res: VercelResponse,
         next: Function
       ) => {
-        const handler = (req: VercelRequest, res: VercelResponse) => {
+        const handler = (_req: VercelRequest, _res: VercelResponse) => {
           next();
           return Promise.resolve();
         };
@@ -224,7 +224,7 @@ describe('Middleware Integration Tests', () => {
         res: VercelResponse,
         next: Function
       ) => {
-        const handler = (req: VercelRequest, res: VercelResponse) => {
+        const handler = (_req: VercelRequest, _res: VercelResponse) => {
           next();
           return Promise.resolve();
         };
@@ -457,7 +457,7 @@ describe('Middleware Integration Tests', () => {
       });
 
       const rateLimitTest = async (req: VercelRequest, res: VercelResponse, next: Function) => {
-        const handler = (req: VercelRequest, res: VercelResponse) => {
+        const handler = (_req: VercelRequest, _res: VercelResponse) => {
           next();
           return Promise.resolve();
         };
@@ -564,7 +564,7 @@ describe('Middleware Integration Tests', () => {
       const start = performance.now();
 
       // Process all requests concurrently
-      const promises = requests.map(async (req, index) => {
+      const promises = requests.map(async (req, _index) => {
         const res = {
           ...mockRes,
           status: vi.fn().mockReturnThis(),

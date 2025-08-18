@@ -39,7 +39,7 @@ const FORMAT_TEMPLATES = {
   log: 'YYYY-MM-DD HH:mm:ss.SSS',
 };
 
-export async function handleFormat(request: Request, env: Env): Promise<Response> {
+export async function handleFormat(request: Request, _env: Env): Promise<Response> {
   const startTime = Date.now();
   const securityManager = new SecurityManager(_env);
   const cacheManager = new CacheManager(_env);
@@ -268,7 +268,7 @@ function formatDate(params: FormatRequest): any {
   };
 }
 
-function applyFormat(date: Date, format: string, timezone?: string, locale?: string): string {
+function applyFormat(date: Date, format: string, _timezone?: string, _locale?: string): string {
   // Enhanced implementation with proper month names and ordinals
 
   const year = date.getFullYear();

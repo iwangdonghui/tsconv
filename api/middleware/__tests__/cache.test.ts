@@ -225,9 +225,9 @@ describe('Cache Middleware', () => {
 
   describe('createCacheMiddleware', () => {
     it('should create middleware with default cache service', async () => {
-      const req = createMockReq();
-      const res = createMockRes();
-      const next = vi.fn();
+      const _req = createMockReq();
+      const _res = createMockRes();
+      const _next = vi.fn();
 
       const middleware = await createCacheMiddleware();
 

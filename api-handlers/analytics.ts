@@ -68,7 +68,8 @@ export class AnalyticsManager {
       // Store recent events for real-time monitoring (keep last 1000)
       await this.addToRecentEvents(event);
     } catch (error) {
-      console.error('Failed to record analytics event:', error);
+      if (process.env.NODE_ENV === 'development')
+        console.error('Failed to record analytics event:', error);
     }
   }
 
@@ -111,7 +112,8 @@ export class AnalyticsManager {
         countries,
       };
     } catch (error) {
-      console.error('Failed to get analytics stats:', error);
+      if (process.env.NODE_ENV === 'development')
+        console.error('Failed to get analytics stats:', error);
       return this.getEmptyStats();
     }
   }

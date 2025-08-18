@@ -38,7 +38,7 @@ export async function handleV1Routes(
   }
 }
 
-async function handleV1Convert(request: Request, env: Env): Promise<Response> {
+async function handleV1Convert(request: Request, _env: Env): Promise<Response> {
   // Enhanced convert with more features
   if (request.method !== 'POST') {
     return new Response(
@@ -133,7 +133,7 @@ async function handleV1Convert(request: Request, env: Env): Promise<Response> {
   }
 }
 
-async function handleV1Batch(request: Request, env: Env): Promise<Response> {
+async function handleV1Batch(request: Request, _env: Env): Promise<Response> {
   if (request.method !== 'POST') {
     return new Response(
       JSON.stringify({
@@ -149,7 +149,7 @@ async function handleV1Batch(request: Request, env: Env): Promise<Response> {
 
   try {
     const body = await request.json();
-    const { timestamps, outputFormats = [] } = body;
+    const { timestamps, _outputFormats = [] } = body;
 
     if (!Array.isArray(timestamps) || timestamps.length === 0) {
       return new Response(
@@ -219,7 +219,7 @@ async function handleV1Batch(request: Request, env: Env): Promise<Response> {
   }
 }
 
-async function handleV1Formats(request: Request, env: Env): Promise<Response> {
+async function handleV1Formats(_request: Request, _env: Env): Promise<Response> {
   const formats = {
     timestamp: 'Unix timestamp (seconds since epoch)',
     milliseconds: 'Milliseconds since epoch',
@@ -240,7 +240,7 @@ async function handleV1Formats(request: Request, env: Env): Promise<Response> {
   );
 }
 
-async function handleV1Timezones(request: Request, env: Env): Promise<Response> {
+async function handleV1Timezones(_request: Request, _env: Env): Promise<Response> {
   // Basic timezone list (you can expand this)
   const timezones = [
     'UTC',
@@ -264,7 +264,7 @@ async function handleV1Timezones(request: Request, env: Env): Promise<Response> 
   );
 }
 
-async function handleV1Health(request: Request, env: Env): Promise<Response> {
+async function handleV1Health(_request: Request, _env: Env): Promise<Response> {
   return new Response(
     JSON.stringify({
       status: 'healthy',

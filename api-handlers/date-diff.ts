@@ -53,7 +53,7 @@ interface _DateDiffResponse {
   };
 }
 
-export async function handleDateDiff(request: Request, env: Env): Promise<Response> {
+export async function handleDateDiff(request: Request, _env: Env): Promise<Response> {
   const startTime = Date.now();
   const securityManager = new SecurityManager(_env);
   const cacheManager = new CacheManager(_env);

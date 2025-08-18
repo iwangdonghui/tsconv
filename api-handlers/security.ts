@@ -27,7 +27,7 @@ interface SecurityHeaders {
 export class SecurityManager {
   private cacheManager: CacheManager;
 
-  constructor(env: Env) {
+  constructor(_env: Env) {
     this.cacheManager = new CacheManager(_env);
   }
 
@@ -57,7 +57,7 @@ export class SecurityManager {
       await this.cacheManager.increment('STATS', rateLimitKey);
 
       // Set expiry for the key (cleanup)
-      const ttl = Math.ceil((windowStart + config.windowMs - now) / 1000);
+      const _ttl = Math.ceil((windowStart + config.windowMs - now) / 1000);
       // Note: We should set TTL here, but our current cache implementation doesn't support it easily
 
       return {
@@ -237,7 +237,7 @@ export class SecurityManager {
   private async getRecentRequestCount(ip: string): Promise<number> {
     try {
       const now = Date.now();
-      const oneMinuteAgo = now - 60000; // 1 minute ago
+      const _oneMinuteAgo = now - 60000; // 1 minute ago
       const key = `ip_requests:${ip}:${Math.floor(now / 60000)}`; // Per minute bucket
 
       return (await this.cacheManager.get('STATS', key)) || 0;

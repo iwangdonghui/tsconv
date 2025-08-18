@@ -61,7 +61,7 @@ function parseGetRequest(url: URL): ConvertParams {
   const dateParam = url.searchParams.get('date');
   const timestamp = parseTimestamp(timestampParam, dateParam);
 
-  const timezone = url.searchParams.get('timezone') || undefined;
+  const _timezone = url.searchParams.get('_timezone') || undefined;
   const targetTimezone = url.searchParams.get('targetTimezone') || undefined;
 
   const formatsParam = url.searchParams.get('formats');
@@ -72,7 +72,7 @@ function parseGetRequest(url: URL): ConvertParams {
 
 function parsePostRequest(body: Record<string, unknown>): ConvertParams {
   const timestamp = parseTimestamp(body.timestamp?.toString(), body._date);
-  const timezone = body.timezone;
+  const _timezone = body._timezone;
   const targetTimezone = body.targetTimezone;
   const outputFormats = body.outputFormats || [];
 
@@ -197,7 +197,7 @@ function generateCacheKey(params: ConvertParams): string {
   return `${params.timestamp}_${params.outputFormats.join(',')}_${params.timezone || 'none'}_${params.targetTimezone || 'none'}`;
 }
 
-export async function handleConvert(request: Request, env: Env): Promise<Response> {
+export async function handleConvert(request: Request, _env: Env): Promise<Response> {
   // Validate HTTP method
   if (request.method !== 'POST' && request.method !== 'GET') {
     return buildErrorResponse('Only GET and POST methods are supported', 405);
