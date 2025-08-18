@@ -43,6 +43,66 @@ interface TimezoneResponse {
   };
 }
 
+// US State to timezone mapping for better search experience
+const US_STATE_TIMEZONES: { [key: string]: string[] } = {
+  alabama: ['America/Chicago'],
+  alaska: ['America/Anchorage', 'America/Adak'],
+  arizona: ['America/Phoenix', 'America/Denver'], // Most of AZ doesn't observe DST
+  arkansas: ['America/Chicago'],
+  california: ['America/Los_Angeles'],
+  colorado: ['America/Denver'],
+  connecticut: ['America/New_York'],
+  delaware: ['America/New_York'],
+  florida: ['America/New_York', 'America/Chicago'], // Eastern and Central
+  georgia: ['America/New_York'],
+  hawaii: ['Pacific/Honolulu'],
+  idaho: ['America/Denver', 'America/Los_Angeles'], // Mountain and Pacific
+  illinois: ['America/Chicago'],
+  indiana: ['America/New_York', 'America/Chicago'], // Eastern and Central
+  iowa: ['America/Chicago'],
+  kansas: ['America/Chicago', 'America/Denver'], // Central and Mountain
+  kentucky: ['America/New_York', 'America/Chicago'], // Eastern and Central
+  louisiana: ['America/Chicago'],
+  maine: ['America/New_York'],
+  maryland: ['America/New_York'],
+  massachusetts: ['America/New_York'],
+  michigan: ['America/New_York', 'America/Chicago'], // Eastern and Central
+  minnesota: ['America/Chicago'],
+  mississippi: ['America/Chicago'],
+  missouri: ['America/Chicago'],
+  montana: ['America/Denver'],
+  nebraska: ['America/Chicago', 'America/Denver'], // Central and Mountain
+  nevada: ['America/Los_Angeles', 'America/Denver'], // Pacific and Mountain
+  'new hampshire': ['America/New_York'],
+  'new jersey': ['America/New_York'],
+  'new mexico': ['America/Denver'],
+  'new york': ['America/New_York'],
+  'north carolina': ['America/New_York'],
+  'north dakota': ['America/Chicago', 'America/Denver'], // Central and Mountain
+  ohio: ['America/New_York'],
+  oklahoma: ['America/Chicago'],
+  oregon: ['America/Los_Angeles', 'America/Denver'], // Pacific and Mountain
+  pennsylvania: ['America/New_York'],
+  'rhode island': ['America/New_York'],
+  'south carolina': ['America/New_York'],
+  'south dakota': ['America/Chicago', 'America/Denver'], // Central and Mountain
+  tennessee: ['America/New_York', 'America/Chicago'], // Eastern and Central
+  texas: ['America/Chicago', 'America/Denver'], // Central and Mountain
+  utah: ['America/Denver'],
+  vermont: ['America/New_York'],
+  virginia: ['America/New_York'],
+  washington: ['America/Los_Angeles'],
+  'west virginia': ['America/New_York'],
+  wisconsin: ['America/Chicago'],
+  wyoming: ['America/Denver'],
+  // Common abbreviations
+  ms: ['America/Chicago'], // Mississippi
+  ny: ['America/New_York'], // New York
+  ca: ['America/Los_Angeles'], // California
+  tx: ['America/Chicago'], // Texas
+  fl: ['America/New_York'], // Florida
+};
+
 export default function TimezoneExplorer() {
   const [timezones, setTimezones] = useState<TimezoneInfo[]>([]);
   const [regions, setRegions] = useState<string[]>([]);
@@ -102,10 +162,22 @@ export default function TimezoneExplorer() {
     setError('');
 
     try {
+      // Check if search query matches a US state
+      let enhancedSearchQuery = searchQuery;
+      if (searchQuery && !selectedRegion && !selectedCountry) {
+        const lowerQuery = searchQuery.toLowerCase().trim();
+        const stateTimezones = US_STATE_TIMEZONES[lowerQuery];
+
+        if (stateTimezones) {
+          // If it's a US state, search for its primary timezone
+          enhancedSearchQuery = stateTimezones[0].split('/')[1]; // e.g., "Chicago" from "America/Chicago"
+        }
+      }
+
       const params = new URLSearchParams({
         format,
         limit: '50',
-        ...(searchQuery && { q: searchQuery }),
+        ...(enhancedSearchQuery && { q: enhancedSearchQuery }),
         ...(selectedRegion && { region: selectedRegion }),
         ...(selectedCountry && { country: selectedCountry }),
         ...(selectedOffset && { offset: selectedOffset }),
@@ -234,11 +306,11 @@ export default function TimezoneExplorer() {
     >
       <SEO
         title='Timezone Explorer - World Time Zones | tsconv.com'
-        description='Explore world timezones with search and filtering. View current time in different timezones and get detailed timezone information. Real-time world clock with IANA timezone support.'
+        description='Explore world timezones with search and filtering. Find current time in any city or US state. View time in Mississippi, New York, California and more. Real-time world clock with IANA timezone support.'
         canonical='https://www.tsconv.com/timezones'
         ogTitle='Timezone Explorer - World Time Zones'
-        ogDescription='Explore world timezones with search and filtering. View current time in different timezones and get detailed timezone information. Real-time world clock with IANA timezone support.'
-        keywords='timezone explorer, world timezones, time zones, world clock, timezone search, timezone converter, IANA timezones, UTC offset, GMT'
+        ogDescription='Explore world timezones with search and filtering. Find current time in any city or US state. View time in Mississippi, New York, California and more. Real-time world clock with IANA timezone support.'
+        keywords='timezone explorer, world timezones, time zones, world clock, timezone search, what time is it in mississippi, what time zone is ms, current time in states, US state timezones, timezone converter, IANA timezones, UTC offset, GMT'
       />
       <Header />
 
@@ -493,6 +565,186 @@ export default function TimezoneExplorer() {
                   </div>
                 </div>
 
+                {/* Popular Cities */}
+                <div
+                  className={`p-4 rounded-lg border ${
+                    isDark ? 'border-slate-600 bg-slate-700/30' : 'border-gray-200 bg-gray-50/50'
+                  }`}
+                >
+                  <h3
+                    className={`text-sm font-medium mb-3 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}
+                  >
+                    🏙️ Popular Cities
+                  </h3>
+                  <div className='grid grid-cols-2 gap-2'>
+                    <button
+                      onClick={() => {
+                        setSearchQuery('New York');
+                        setSelectedRegion('');
+                        setSelectedCountry('');
+                        setSelectedOffset('');
+                      }}
+                      className={`px-3 py-2 text-xs rounded-md transition-all duration-200 ${
+                        isDark
+                          ? 'bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 border border-blue-500/20'
+                          : 'bg-blue-50 text-blue-600 hover:bg-blue-100 border border-blue-200'
+                      }`}
+                    >
+                      🗽 New York
+                    </button>
+                    <button
+                      onClick={() => {
+                        setSearchQuery('Los Angeles');
+                        setSelectedRegion('');
+                        setSelectedCountry('');
+                        setSelectedOffset('');
+                      }}
+                      className={`px-3 py-2 text-xs rounded-md transition-all duration-200 ${
+                        isDark
+                          ? 'bg-purple-500/10 text-purple-400 hover:bg-purple-500/20 border border-purple-500/20'
+                          : 'bg-purple-50 text-purple-600 hover:bg-purple-100 border border-purple-200'
+                      }`}
+                    >
+                      🌴 Los Angeles
+                    </button>
+                    <button
+                      onClick={() => {
+                        setSearchQuery('Chicago');
+                        setSelectedRegion('');
+                        setSelectedCountry('');
+                        setSelectedOffset('');
+                      }}
+                      className={`px-3 py-2 text-xs rounded-md transition-all duration-200 ${
+                        isDark
+                          ? 'bg-green-500/10 text-green-400 hover:bg-green-500/20 border border-green-500/20'
+                          : 'bg-green-50 text-green-600 hover:bg-green-100 border border-green-200'
+                      }`}
+                    >
+                      🏙️ Chicago
+                    </button>
+                    <button
+                      onClick={() => {
+                        setSearchQuery('London');
+                        setSelectedRegion('');
+                        setSelectedCountry('');
+                        setSelectedOffset('');
+                      }}
+                      className={`px-3 py-2 text-xs rounded-md transition-all duration-200 ${
+                        isDark
+                          ? 'bg-red-500/10 text-red-400 hover:bg-red-500/20 border border-red-500/20'
+                          : 'bg-red-50 text-red-600 hover:bg-red-100 border border-red-200'
+                      }`}
+                    >
+                      🇬🇧 London
+                    </button>
+                    <button
+                      onClick={() => {
+                        setSearchQuery('Tokyo');
+                        setSelectedRegion('');
+                        setSelectedCountry('');
+                        setSelectedOffset('');
+                      }}
+                      className={`px-3 py-2 text-xs rounded-md transition-all duration-200 ${
+                        isDark
+                          ? 'bg-orange-500/10 text-orange-400 hover:bg-orange-500/20 border border-orange-500/20'
+                          : 'bg-orange-50 text-orange-600 hover:bg-orange-100 border border-orange-200'
+                      }`}
+                    >
+                      🗾 Tokyo
+                    </button>
+                    <button
+                      onClick={() => {
+                        setSearchQuery('Sydney');
+                        setSelectedRegion('');
+                        setSelectedCountry('');
+                        setSelectedOffset('');
+                      }}
+                      className={`px-3 py-2 text-xs rounded-md transition-all duration-200 ${
+                        isDark
+                          ? 'bg-teal-500/10 text-teal-400 hover:bg-teal-500/20 border border-teal-500/20'
+                          : 'bg-teal-50 text-teal-600 hover:bg-teal-100 border border-teal-200'
+                      }`}
+                    >
+                      🇦🇺 Sydney
+                    </button>
+                  </div>
+                </div>
+
+                {/* US States Quick Access */}
+                <div
+                  className={`p-4 rounded-lg border ${
+                    isDark ? 'border-slate-600 bg-slate-700/30' : 'border-gray-200 bg-gray-50/50'
+                  }`}
+                >
+                  <h3
+                    className={`text-sm font-medium mb-3 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}
+                  >
+                    🇺🇸 US States
+                  </h3>
+                  <div className='grid grid-cols-2 gap-2'>
+                    <button
+                      onClick={() => {
+                        setSearchQuery('Mississippi');
+                        setSelectedRegion('');
+                        setSelectedCountry('');
+                        setSelectedOffset('');
+                      }}
+                      className={`px-3 py-2 text-xs rounded-md transition-all duration-200 ${
+                        isDark
+                          ? 'bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 border border-blue-500/20'
+                          : 'bg-blue-50 text-blue-600 hover:bg-blue-100 border border-blue-200'
+                      }`}
+                    >
+                      🏛️ Mississippi
+                    </button>
+                    <button
+                      onClick={() => {
+                        setSearchQuery('California');
+                        setSelectedRegion('');
+                        setSelectedCountry('');
+                        setSelectedOffset('');
+                      }}
+                      className={`px-3 py-2 text-xs rounded-md transition-all duration-200 ${
+                        isDark
+                          ? 'bg-purple-500/10 text-purple-400 hover:bg-purple-500/20 border border-purple-500/20'
+                          : 'bg-purple-50 text-purple-600 hover:bg-purple-100 border border-purple-200'
+                      }`}
+                    >
+                      🌴 California
+                    </button>
+                    <button
+                      onClick={() => {
+                        setSearchQuery('Texas');
+                        setSelectedRegion('');
+                        setSelectedCountry('');
+                        setSelectedOffset('');
+                      }}
+                      className={`px-3 py-2 text-xs rounded-md transition-all duration-200 ${
+                        isDark
+                          ? 'bg-green-500/10 text-green-400 hover:bg-green-500/20 border border-green-500/20'
+                          : 'bg-green-50 text-green-600 hover:bg-green-100 border border-green-200'
+                      }`}
+                    >
+                      🤠 Texas
+                    </button>
+                    <button
+                      onClick={() => {
+                        setSearchQuery('Florida');
+                        setSelectedRegion('');
+                        setSelectedCountry('');
+                        setSelectedOffset('');
+                      }}
+                      className={`px-3 py-2 text-xs rounded-md transition-all duration-200 ${
+                        isDark
+                          ? 'bg-orange-500/10 text-orange-400 hover:bg-orange-500/20 border border-orange-500/20'
+                          : 'bg-orange-50 text-orange-600 hover:bg-orange-100 border border-orange-200'
+                      }`}
+                    >
+                      🏖️ Florida
+                    </button>
+                  </div>
+                </div>
+
                 <div className='space-y-4'>
                   {/* Search */}
                   <div>
@@ -509,10 +761,13 @@ export default function TimezoneExplorer() {
                         type='text'
                         value={searchQuery}
                         onChange={e => setSearchQuery(e.target.value)}
-                        placeholder='Search by name, city, or country...'
+                        placeholder='Search by name, city, or US state...'
                         aria-label='Search timezones by name or region'
                         className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 ${isDark ? 'bg-slate-700 border-slate-600 text-white placeholder-slate-400' : 'bg-white border-gray-300 text-gray-900'}`}
                       />
+                    </div>
+                    <div className={`mt-2 text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                      💡 Try searching: "Mississippi", "New York", "California", or "MS"
                     </div>
                   </div>
 
