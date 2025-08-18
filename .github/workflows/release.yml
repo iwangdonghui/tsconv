@@ -126,7 +126,7 @@ jobs:
           zip -r tsconv-${{ needs.validate.outputs.version }}.zip dist/
       
       - name: 📤 Upload build artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: release-${{ needs.validate.outputs.version }}
           path: |
@@ -182,7 +182,7 @@ jobs:
           fi
       
       - name: 📤 Upload security report
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: always()
         with:
           name: security-report-${{ needs.validate.outputs.version }}

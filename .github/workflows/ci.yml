@@ -153,7 +153,7 @@ jobs:
           echo "Bundle size: $BUNDLE_SIZE bytes"
       
       - name: 📦 Upload build artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: build-${{ github.sha }}
           path: dist/
