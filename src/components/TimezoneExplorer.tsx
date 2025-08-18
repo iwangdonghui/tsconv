@@ -515,7 +515,7 @@ export default function TimezoneExplorer() {
                           : 'bg-white text-blue-600 hover:bg-gray-50 border border-gray-200'
                       }`}
                     >
-                      🌍 All Timezones
+                      All Timezones
                     </button>
                     <button
                       onClick={() => {
@@ -530,7 +530,7 @@ export default function TimezoneExplorer() {
                           : 'bg-white text-blue-600 hover:bg-gray-50 border border-gray-200'
                       }`}
                     >
-                      🇺🇸 US Timezones
+                      US Timezones
                     </button>
                     <button
                       onClick={() => {
@@ -545,7 +545,7 @@ export default function TimezoneExplorer() {
                           : 'bg-white text-blue-600 hover:bg-gray-50 border border-gray-200'
                       }`}
                     >
-                      🇪🇺 European Zones
+                      European Zones
                     </button>
                     <button
                       onClick={() => {
@@ -560,7 +560,7 @@ export default function TimezoneExplorer() {
                           : 'bg-white text-blue-600 hover:bg-gray-50 border border-gray-200'
                       }`}
                     >
-                      🌏 Asian Zones
+                      Asian Zones
                     </button>
                   </div>
                 </div>
@@ -590,7 +590,7 @@ export default function TimezoneExplorer() {
                           : 'bg-white text-blue-600 hover:bg-gray-50 border border-gray-200'
                       }`}
                     >
-                      🗽 New York
+                      New York
                     </button>
                     <button
                       onClick={() => {
@@ -605,7 +605,7 @@ export default function TimezoneExplorer() {
                           : 'bg-white text-blue-600 hover:bg-gray-50 border border-gray-200'
                       }`}
                     >
-                      🌴 Los Angeles
+                      Los Angeles
                     </button>
                     <button
                       onClick={() => {
@@ -620,7 +620,7 @@ export default function TimezoneExplorer() {
                           : 'bg-white text-blue-600 hover:bg-gray-50 border border-gray-200'
                       }`}
                     >
-                      🏙️ Chicago
+                      Chicago
                     </button>
                     <button
                       onClick={() => {
@@ -635,7 +635,7 @@ export default function TimezoneExplorer() {
                           : 'bg-white text-blue-600 hover:bg-gray-50 border border-gray-200'
                       }`}
                     >
-                      🇬🇧 London
+                      London
                     </button>
                     <button
                       onClick={() => {
@@ -650,7 +650,7 @@ export default function TimezoneExplorer() {
                           : 'bg-white text-blue-600 hover:bg-gray-50 border border-gray-200'
                       }`}
                     >
-                      🗾 Tokyo
+                      Tokyo
                     </button>
                     <button
                       onClick={() => {
@@ -665,7 +665,7 @@ export default function TimezoneExplorer() {
                           : 'bg-white text-blue-600 hover:bg-gray-50 border border-gray-200'
                       }`}
                     >
-                      🇦🇺 Sydney
+                      Sydney
                     </button>
                   </div>
                 </div>
@@ -695,7 +695,7 @@ export default function TimezoneExplorer() {
                           : 'bg-white text-blue-600 hover:bg-gray-50 border border-gray-200'
                       }`}
                     >
-                      🏛️ Mississippi
+                      Mississippi
                     </button>
                     <button
                       onClick={() => {
@@ -710,7 +710,7 @@ export default function TimezoneExplorer() {
                           : 'bg-white text-blue-600 hover:bg-gray-50 border border-gray-200'
                       }`}
                     >
-                      🌴 California
+                      California
                     </button>
                     <button
                       onClick={() => {
@@ -725,7 +725,7 @@ export default function TimezoneExplorer() {
                           : 'bg-white text-blue-600 hover:bg-gray-50 border border-gray-200'
                       }`}
                     >
-                      🤠 Texas
+                      Texas
                     </button>
                     <button
                       onClick={() => {
@@ -740,7 +740,7 @@ export default function TimezoneExplorer() {
                           : 'bg-white text-blue-600 hover:bg-gray-50 border border-gray-200'
                       }`}
                     >
-                      🏖️ Florida
+                      Florida
                     </button>
                   </div>
                 </div>
