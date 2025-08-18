@@ -168,9 +168,13 @@ export default function TimezoneExplorer() {
         const lowerQuery = searchQuery.toLowerCase().trim();
         const stateTimezones = US_STATE_TIMEZONES[lowerQuery];
 
-        if (stateTimezones) {
+        if (stateTimezones && stateTimezones.length > 0) {
           // If it's a US state, search for its primary timezone
-          enhancedSearchQuery = stateTimezones[0].split('/')[1]; // e.g., "Chicago" from "America/Chicago"
+          const primaryTimezone = stateTimezones[0];
+          const timezoneParts = primaryTimezone?.split('/');
+          if (timezoneParts && timezoneParts.length > 1 && timezoneParts[1]) {
+            enhancedSearchQuery = timezoneParts[1]; // e.g., "Chicago" from "America/Chicago"
+          }
         }
       }
 
@@ -248,54 +252,6 @@ export default function TimezoneExplorer() {
       UTC: '🌐',
     };
     return icons[region] || '🌍';
-  };
-
-  const getRegionColors = (
-    region: string
-  ): { bg: string; border: string; icon: string; accent: string } => {
-    const colors: Record<string, { bg: string; border: string; icon: string; accent: string }> = {
-      America: {
-        bg: isDark ? 'from-blue-500/10 to-blue-600/5' : 'from-blue-50 to-blue-100/50',
-        border: isDark ? 'border-blue-500/20' : 'border-blue-200',
-        icon: isDark ? 'bg-blue-500/20 text-blue-400' : 'bg-blue-100 text-blue-600',
-        accent: isDark ? 'text-blue-400' : 'text-blue-600',
-      },
-      Europe: {
-        bg: isDark ? 'from-green-500/10 to-green-600/5' : 'from-green-50 to-green-100/50',
-        border: isDark ? 'border-green-500/20' : 'border-green-200',
-        icon: isDark ? 'bg-green-500/20 text-green-400' : 'bg-green-100 text-green-600',
-        accent: isDark ? 'text-green-400' : 'text-green-600',
-      },
-      Asia: {
-        bg: isDark ? 'from-orange-500/10 to-orange-600/5' : 'from-orange-50 to-orange-100/50',
-        border: isDark ? 'border-orange-500/20' : 'border-orange-200',
-        icon: isDark ? 'bg-orange-500/20 text-orange-400' : 'bg-orange-100 text-orange-600',
-        accent: isDark ? 'text-orange-400' : 'text-orange-600',
-      },
-      Africa: {
-        bg: isDark ? 'from-purple-500/10 to-purple-600/5' : 'from-purple-50 to-purple-100/50',
-        border: isDark ? 'border-purple-500/20' : 'border-purple-200',
-        icon: isDark ? 'bg-purple-500/20 text-purple-400' : 'bg-purple-100 text-purple-600',
-        accent: isDark ? 'text-purple-400' : 'text-purple-600',
-      },
-      Australia: {
-        bg: isDark ? 'from-teal-500/10 to-teal-600/5' : 'from-teal-50 to-teal-100/50',
-        border: isDark ? 'border-teal-500/20' : 'border-teal-200',
-        icon: isDark ? 'bg-teal-500/20 text-teal-400' : 'bg-teal-100 text-teal-600',
-        accent: isDark ? 'text-teal-400' : 'text-teal-600',
-      },
-      Pacific: {
-        bg: isDark ? 'from-cyan-500/10 to-cyan-600/5' : 'from-cyan-50 to-cyan-100/50',
-        border: isDark ? 'border-cyan-500/20' : 'border-cyan-200',
-        icon: isDark ? 'bg-cyan-500/20 text-cyan-400' : 'bg-cyan-100 text-cyan-600',
-        accent: isDark ? 'text-cyan-400' : 'text-cyan-600',
-      },
-    };
-    const regionColor = colors[region];
-    if (regionColor) {
-      return regionColor;
-    }
-    return colors.America!; // America is always defined in the colors object
   };
 
   return (

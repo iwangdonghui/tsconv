@@ -123,7 +123,6 @@ export default function DiscordTimestampGenerator() {
         formats[f] = `<t:${timestamp}:${f}>`;
 
         // Generate preview text (simplified approximation)
-        const config = DISCORD_FORMATS[f];
         previews[f] = generatePreview(dateTime, f);
       });
 
@@ -226,8 +225,10 @@ export default function DiscordTimestampGenerator() {
 
   const useCurrentDateTime = () => {
     const now = new Date();
-    setDate(now.toISOString().split('T')[0]);
-    setTime(now.toTimeString().slice(0, 5));
+    const dateStr = now.toISOString().split('T')[0];
+    const timeStr = now.toTimeString().slice(0, 5);
+    if (dateStr) setDate(dateStr);
+    if (timeStr) setTime(timeStr);
   };
 
   const copyFormat = async (format: DiscordFormat) => {
