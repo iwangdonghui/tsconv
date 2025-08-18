@@ -15,6 +15,7 @@ const WorkdaysCalculator = lazy(() => import('./components/WorkdaysCalculator'))
 const DateDiffCalculator = lazy(() => import('./components/DateDiffCalculator'));
 const TimezoneExplorer = lazy(() => import('./components/TimezoneExplorer'));
 const TimeUnitsCalculator = lazy(() => import('./components/TimeUnitsCalculator'));
+const DiscordTimestampGenerator = lazy(() => import('./components/DiscordTimestampGenerator'));
 
 // 懒加载组件 - 文档和指南
 const ApiDocs = lazy(() => import('./components/ApiDocs'));
@@ -144,6 +145,15 @@ function App() {
                 element={
                   <LazyWrapper name='Timezone Explorer' fullPage>
                     <TimezoneExplorer />
+                  </LazyWrapper>
+                }
+              />
+
+              <Route
+                path='/discord'
+                element={
+                  <LazyWrapper name='Discord Timestamp Generator' fullPage>
+                    <DiscordTimestampGenerator />
                   </LazyWrapper>
                 }
               />
