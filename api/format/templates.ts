@@ -16,7 +16,20 @@ const FORMAT_TEMPLATES = {
   unix: 'X',
   'unix-ms': 'x',
   rfc2822: 'ddd, DD MMM YYYY HH:mm:ss ZZ',
-  sql: 'YYYY-MM-DD HH:mm:ss',
+
+  // Enhanced SQL formats for different databases and use cases
+  sql: 'YYYY-MM-DD HH:mm:ss', // Standard SQL DATETIME
+  'sql-date': 'YYYY-MM-DD', // SQL DATE format
+  'sql-time': 'HH:mm:ss', // SQL TIME format
+  'sql-timestamp': 'YYYY-MM-DD HH:mm:ss.SSS', // SQL TIMESTAMP with milliseconds
+  'sql-mysql': 'YYYY-MM-DD HH:mm:ss', // MySQL DATETIME format
+  'sql-postgresql': 'YYYY-MM-DD HH:mm:ss.SSS', // PostgreSQL TIMESTAMP format
+  'sql-sqlserver': 'YYYY-MM-DD HH:mm:ss.SSS', // SQL Server DATETIME2 format
+  'sql-oracle': 'DD-MMM-YYYY HH:mm:ss', // Oracle DATE format
+  'sql-sqlite': 'YYYY-MM-DD HH:mm:ss', // SQLite DATETIME format
+  'sql-iso': 'YYYY-MM-DDTHH:mm:ss', // SQL ISO format (without timezone)
+  'sql-utc': 'YYYY-MM-DD HH:mm:ss [UTC]', // SQL with UTC indicator
+
   filename: 'YYYY-MM-DD_HH-mm-ss',
   log: 'YYYY-MM-DD HH:mm:ss.SSS',
 };

@@ -226,7 +226,20 @@ export default function FormatTool() {
       unix: 'Unix timestamp (seconds)',
       'unix-ms': 'Unix timestamp (milliseconds)',
       rfc2822: 'RFC 2822 format',
-      sql: 'SQL datetime format',
+
+      // Enhanced SQL format descriptions
+      sql: 'Standard SQL DATETIME format',
+      'sql-date': 'SQL DATE format (date only)',
+      'sql-time': 'SQL TIME format (time only)',
+      'sql-timestamp': 'SQL TIMESTAMP with milliseconds',
+      'sql-mysql': 'MySQL DATETIME format',
+      'sql-postgresql': 'PostgreSQL TIMESTAMP format',
+      'sql-sqlserver': 'SQL Server DATETIME2 format',
+      'sql-oracle': 'Oracle DATE format',
+      'sql-sqlite': 'SQLite DATETIME format',
+      'sql-iso': 'SQL ISO format (no timezone)',
+      'sql-utc': 'SQL format with UTC indicator',
+
       filename: 'Filename-safe format',
       log: 'Log format with milliseconds',
     };
@@ -241,11 +254,11 @@ export default function FormatTool() {
     >
       <SEO
         title='Date Format Tool - Custom Date Formatting | tsconv.com'
-        description='Format dates and timestamps with custom patterns. Choose from 17 predefined templates or create your own date format patterns. Support for ISO, US, EU, and custom formats.'
+        description='Format dates and timestamps with custom patterns. Choose from 25+ predefined templates including SQL formats for MySQL, PostgreSQL, Oracle, SQL Server. Support for ISO, US, EU, and database-specific formats.'
         canonical='https://www.tsconv.com/format'
         ogTitle='Date Format Tool - Custom Date Formatting'
-        ogDescription='Format dates and timestamps with custom patterns. Choose from 17 predefined templates or create your own date format patterns. Support for ISO, US, EU, and custom formats.'
-        keywords='date format, timestamp format, date formatting, custom date format, date patterns, ISO format, date template, time formatting'
+        ogDescription='Format dates and timestamps with custom patterns. Choose from 25+ predefined templates including SQL formats for MySQL, PostgreSQL, Oracle, SQL Server. Support for ISO, US, EU, and database-specific formats.'
+        keywords='date format, timestamp format, date formatting, custom date format, date patterns, ISO format, SQL format, MySQL datetime, PostgreSQL timestamp, Oracle date, SQL Server datetime, database date format'
       />
       <Header />
 
@@ -362,9 +375,10 @@ export default function FormatTool() {
             </div>
             <p className={`mb-4 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
               Transform timestamps and dates into any format you need with our comprehensive date
-              formatting tool. Choose from 17 predefined templates or create custom patterns using
-              standard formatting tokens. Essential for developers, data analysts, and anyone
-              working with timestamp conversion.
+              formatting tool. Choose from 25+ predefined templates including specialized SQL
+              formats for different databases, or create custom patterns using standard formatting
+              tokens. Essential for developers, data analysts, and anyone working with timestamp
+              conversion.
             </p>
             <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
               <div
@@ -394,6 +408,10 @@ export default function FormatTool() {
                   <li className='flex items-center gap-2'>
                     <div className='w-1.5 h-1.5 bg-purple-500 rounded-full'></div>
                     Custom pattern support
+                  </li>
+                  <li className='flex items-center gap-2'>
+                    <div className='w-1.5 h-1.5 bg-orange-500 rounded-full'></div>
+                    SQL database formats
                   </li>
                 </ul>
               </div>
@@ -621,13 +639,38 @@ export default function FormatTool() {
                   onChange={e => setFormat(e.target.value)}
                   className={`w-full pl-4 pr-10 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent ${isDark ? 'bg-slate-700 border-slate-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
                 >
-                  {templates &&
-                    Object.keys(templates.templates).map(templateName => (
-                      <option key={templateName} value={templateName}>
-                        {templateName} - {getTemplateDescription(templateName)}
-                      </option>
-                    ))}
-                  <option value='custom'>Custom Format</option>
+                  {templates && (
+                    <>
+                      {/* Standard formats */}
+                      <optgroup label='📅 Standard Formats'>
+                        {Object.keys(templates.templates)
+                          .filter(name => !name.startsWith('sql-') && name !== 'sql')
+                          .map(templateName => (
+                            <option key={templateName} value={templateName}>
+                              {templateName} - {getTemplateDescription(templateName)}
+                            </option>
+                          ))}
+                      </optgroup>
+
+                      {/* SQL formats */}
+                      <optgroup label='🗄️ SQL Database Formats'>
+                        {Object.keys(templates.templates)
+                          .filter(name => name.startsWith('sql') || name === 'sql')
+                          .sort((a, b) => {
+                            // Put 'sql' first, then sort others alphabetically
+                            if (a === 'sql') return -1;
+                            if (b === 'sql') return 1;
+                            return a.localeCompare(b);
+                          })
+                          .map(templateName => (
+                            <option key={templateName} value={templateName}>
+                              {templateName} - {getTemplateDescription(templateName)}
+                            </option>
+                          ))}
+                      </optgroup>
+                    </>
+                  )}
+                  <option value='custom'>🎨 Custom Format</option>
                 </select>
 
                 {templates && format !== 'custom' && templates.templates[format] && (
@@ -939,7 +982,7 @@ export default function FormatTool() {
                         isDark ? 'bg-blue-500/20 text-blue-400' : 'bg-blue-100 text-blue-600'
                       }`}
                     >
-                      17 Templates
+                      25+ Templates
                     </span>
                     <span
                       className={`px-2 py-1 rounded-full ${
