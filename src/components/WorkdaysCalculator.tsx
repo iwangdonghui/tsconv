@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 
+import { API_ENDPOINTS, buildApiUrl } from '../config/api';
 import { useTheme } from '../contexts/ThemeContext';
 import Footer from './Footer';
 import Header from './Header';
@@ -136,7 +137,7 @@ export default function WorkdaysCalculator() {
         ...(calculationMode === 'dateRange' ? { endDate } : { days }),
       });
 
-      const response = await fetch(`/api/workdays?${params}`);
+      const response = await fetch(buildApiUrl(`${API_ENDPOINTS.WORKDAYS}?${params}`));
       const data = await response.json();
 
       if (data.success) {

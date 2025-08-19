@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 
+import { API_ENDPOINTS, buildApiUrl } from '../config/api';
 import { useTheme } from '../contexts/ThemeContext';
 import Footer from './Footer';
 import Header from './Header';
@@ -122,7 +123,7 @@ export default function FormatTool() {
           : { date: time ? `${date}T${time}:00` : date }),
       });
 
-      const response = await fetch(`/api/format?${params}`);
+      const response = await fetch(buildApiUrl(`${API_ENDPOINTS.FORMAT}?${params}`));
       const data = await response.json();
 
       if (data.success) {
@@ -166,7 +167,7 @@ export default function FormatTool() {
 
   const loadTemplates = async () => {
     try {
-      const response = await fetch('/api/format/templates');
+      const response = await fetch(buildApiUrl(API_ENDPOINTS.FORMAT_TEMPLATES));
       const data = await response.json();
       if (data.success) {
         setTemplates(data.data);

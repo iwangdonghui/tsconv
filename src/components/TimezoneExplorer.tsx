@@ -1,6 +1,7 @@
 import { AlertCircle, Clock, Filter, Globe, MapPin, Search } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
+import { API_ENDPOINTS, buildApiUrl } from '../config/api';
 import { useTheme } from '../contexts/ThemeContext';
 import Footer from './Footer';
 import Header from './Header';
@@ -187,7 +188,7 @@ export default function TimezoneExplorer() {
         ...(selectedOffset && { offset: selectedOffset }),
       });
 
-      const response = await fetch(`/api/timezones?${params}`);
+      const response = await fetch(buildApiUrl(`${API_ENDPOINTS.TIMEZONES}?${params}`));
       const data: TimezoneResponse = await response.json();
 
       if (data.success) {
