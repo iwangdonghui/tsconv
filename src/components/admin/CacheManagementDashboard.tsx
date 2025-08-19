@@ -15,6 +15,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { buildApiUrl } from '@/config/api';
 import {
   Activity,
   AlertTriangle,
@@ -88,9 +89,9 @@ export default function CacheManagementDashboard() {
       setLoading(true);
 
       const [statsRes, healthRes, strategiesRes] = await Promise.all([
-        fetch('/api/admin/cache-management?action=stats'),
-        fetch('/api/admin/cache-management?action=health'),
-        fetch('/api/admin/cache-management?action=strategies'),
+        fetch(buildApiUrl('api/admin/cache-management?action=stats')),
+        fetch(buildApiUrl('api/admin/cache-management?action=health')),
+        fetch(buildApiUrl('api/admin/cache-management?action=strategies')),
       ]);
 
       if (!statsRes.ok || !healthRes.ok || !strategiesRes.ok) {
@@ -117,7 +118,7 @@ export default function CacheManagementDashboard() {
   // Update strategy for endpoint
   const updateEndpointStrategy = async (endpoint: string, strategy: string) => {
     try {
-      const response = await fetch('/api/admin/cache-management', {
+      const response = await fetch(buildApiUrl('api/admin/cache-management'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -140,7 +141,7 @@ export default function CacheManagementDashboard() {
   // Clear cache
   const clearCache = async (pattern?: string) => {
     try {
-      const response = await fetch('/api/admin/cache-management', {
+      const response = await fetch(buildApiUrl('api/admin/cache-management'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
