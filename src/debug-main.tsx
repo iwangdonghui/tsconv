@@ -8,7 +8,7 @@ console.log('ReactDOM loaded successfully');
 
 // 检查环境
 console.log('Environment:', {
-  NODE_ENV: process.env.NODE_ENV,
+  NODE_ENV: (typeof process !== 'undefined' && process.env?.NODE_ENV) || import.meta.env.MODE,
   userAgent: navigator.userAgent,
   location: window.location.href,
 });

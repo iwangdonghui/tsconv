@@ -41,7 +41,10 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
 );
 
 // Register service worker in production
-if (process.env.NODE_ENV === 'production') {
+if (
+  (typeof process !== 'undefined' && process.env?.NODE_ENV === 'production') ||
+  import.meta.env.PROD
+) {
   window.addEventListener('load', () => {
     serviceWorkerManager.register().then(success => {
       if (success) {

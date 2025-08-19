@@ -26,7 +26,7 @@ class ServiceWorkerManager {
     isRegistered: false,
     isOnline: navigator.onLine,
     updateAvailable: false,
-    registration: null
+    registration: null,
   };
 
   private listeners: Array<(state: ServiceWorkerState) => void> = [];
@@ -47,7 +47,7 @@ class ServiceWorkerManager {
 
     try {
       const registration = await navigator.serviceWorker.register('/sw.js', {
-        scope: '/'
+        scope: '/',
       });
 
       this.state.registration = registration;
@@ -68,7 +68,6 @@ class ServiceWorkerManager {
 
       this.notifyListeners();
       return true;
-
     } catch (error) {
       console.error('Service Worker registration failed:', error);
       return false;
@@ -127,7 +126,7 @@ class ServiceWorkerManager {
     this.state.registration.waiting.postMessage({ type: 'SKIP_WAITING' });
 
     // Listen for controlling change
-    return new Promise((resolve) => {
+    return new Promise(resolve => {
       navigator.serviceWorker.addEventListener('controllerchange', () => {
         this.state.updateAvailable = false;
         this.notifyListeners();
@@ -151,7 +150,7 @@ class ServiceWorkerManager {
       for (const cacheName of cacheNames) {
         const cache = await caches.open(cacheName);
         const keys = await cache.keys();
-        
+
         let totalSize = 0;
         for (const request of keys) {
           const response = await cache.match(request);
@@ -164,7 +163,7 @@ class ServiceWorkerManager {
         cacheInfos.push({
           name: cacheName,
           size: totalSize,
-          entries: keys.length
+          entries: keys.length,
         });
       }
 
@@ -222,9 +221,9 @@ class ServiceWorkerManager {
 
     try {
       const cache = await caches.open('tsconv-preload');
-      
+
       await Promise.all(
-        urls.map(async (url) => {
+        urls.map(async url => {
           try {
             const response = await fetch(url);
             if (response.ok) {
@@ -253,7 +252,7 @@ class ServiceWorkerManager {
    */
   addListener(listener: (state: ServiceWorkerState) => void): () => void {
     this.listeners.push(listener);
-    
+
     // Return unsubscribe function
     return () => {
       const index = this.listeners.indexOf(listener);
@@ -332,7 +331,8 @@ export function useServiceWorker() {
     getCacheInfo: () => serviceWorkerManager.getCacheInfo(),
     clearCaches: () => serviceWorkerManager.clearCaches(),
     clearCache: (name: string) => serviceWorkerManager.clearCache(name),
-    preloadCriticalResources: (urls: string[]) => serviceWorkerManager.preloadCriticalResources(urls)
+    preloadCriticalResources: (urls: string[]) =>
+      serviceWorkerManager.preloadCriticalResources(urls),
   };
 }
 
@@ -341,41 +341,49 @@ export function useServiceWorker() {
  */
 export function formatCacheSize(bytes: number): string {
   if (bytes === 0) return '0 B';
-  
+
   const k = 1024;
   const sizes = ['B', 'KB', 'MB', 'GB'];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
-  
-  return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))  } ${  sizes[i]}`;
+
+  return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`;
 }
 
 /**
  * Checks if the app is running in standalone mode (PWA)
  */
 export function isStandalone(): boolean {
-  return window.matchMedia('(display-mode: standalone)').matches ||
-         (window.navigator as any).standalone === true;
+  return (
+    window.matchMedia('(display-mode: standalone)').matches ||
+    (window.navigator as any).standalone === true
+  );
 }
 
 /**
  * Gets network information (if available)
  */
 export function getNetworkInfo(): { effectiveType?: string; downlink?: number; rtt?: number } {
-  const connection = (navigator as any).connection || (navigator as any).mozConnection || (navigator as any).webkitConnection;
-  
+  const connection =
+    (navigator as any).connection ||
+    (navigator as any).mozConnection ||
+    (navigator as any).webkitConnection;
+
   if (!connection) {
     return {};
   }
-  
+
   return {
     effectiveType: connection.effectiveType,
     downlink: connection.downlink,
-    rtt: connection.rtt
+    rtt: connection.rtt,
   };
 }
 
 // Auto-register service worker in production
-if (process.env.NODE_ENV === 'production') {
+if (
+  (typeof process !== 'undefined' && process.env?.NODE_ENV === 'production') ||
+  import.meta.env.PROD
+) {
   window.addEventListener('load', () => {
     serviceWorkerManager.register().then(success => {
       if (success) {

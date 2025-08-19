@@ -122,15 +122,17 @@ export class ErrorBoundary extends Component<Props, State> {
               </p>
             </div>
 
-            {process.env.NODE_ENV === 'development' && this.state.error && (
-              <details className='text-left bg-gray-100 dark:bg-gray-800 p-4 rounded-lg text-sm'>
-                <summary className='cursor-pointer font-medium mb-2'>Error Details</summary>
-                <pre className='whitespace-pre-wrap text-red-600 dark:text-red-400'>
-                  {this.state.error.toString()}
-                  {this.state.errorInfo?.componentStack}
-                </pre>
-              </details>
-            )}
+            {((typeof process !== 'undefined' && process.env?.NODE_ENV === 'development') ||
+              import.meta.env.DEV) &&
+              this.state.error && (
+                <details className='text-left bg-gray-100 dark:bg-gray-800 p-4 rounded-lg text-sm'>
+                  <summary className='cursor-pointer font-medium mb-2'>Error Details</summary>
+                  <pre className='whitespace-pre-wrap text-red-600 dark:text-red-400'>
+                    {this.state.error.toString()}
+                    {this.state.errorInfo?.componentStack}
+                  </pre>
+                </details>
+              )}
 
             {this.state.feedbackSubmitted && (
               <div className='bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4'>

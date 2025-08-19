@@ -183,4 +183,10 @@ export default defineConfig({
       },
     },
   },
+  define: {
+    // Define environment variables for browser
+    'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV || 'development'),
+    'process.env.REDIS_URL': JSON.stringify(process.env.REDIS_URL || ''),
+    'process.env.KV_URL': JSON.stringify(process.env.KV_URL || ''),
+  },
 });
