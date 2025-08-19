@@ -3,7 +3,12 @@ import path from 'path';
 import { defineConfig } from 'vite';
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [
+    react({
+      // Ensure proper JSX runtime for production builds
+      jsxRuntime: 'automatic',
+    }),
+  ],
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
@@ -183,10 +188,17 @@ export default defineConfig({
       },
     },
   },
+  // Force production JSX runtime even in edge build environments
+  esbuild: {
+    jsx: 'automatic',
+    jsxDev: false,
+  },
   define: {
     // Define environment variables for browser
     'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV || 'development'),
     'process.env.REDIS_URL': JSON.stringify(process.env.REDIS_URL || ''),
     'process.env.KV_URL': JSON.stringify(process.env.KV_URL || ''),
+    // Ensure global is available for React JSX runtime
+    global: 'globalThis',
   },
 });

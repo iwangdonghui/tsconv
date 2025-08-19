@@ -1,5 +1,6 @@
 import { AlertCircle, Calendar, CheckCircle, Clock, Copy, TrendingUp } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
+import { API_ENDPOINTS, buildApiUrl } from '../config/api';
 import { useTheme } from '../contexts/ThemeContext';
 import Footer from './Footer';
 import Header from './Header';
@@ -105,7 +106,7 @@ export default function DateDiffCalculator() {
         includeTime: includeTime.toString(),
       });
 
-      const response = await fetch(`/api/date-diff?${params}`);
+      const response = await fetch(buildApiUrl(`${API_ENDPOINTS.DATE_DIFF}?${params}`));
       const data = await response.json();
 
       if (data.success) {

@@ -93,12 +93,16 @@ const PRODUCTION_CSP: CSPDirectives = {
     // API endpoints
     'https://api.tsconv.com',
     'https://tsconv.com',
+    'https://tsconv.vercel.app', // Add Vercel API endpoint
+    'https://*.upstash.io', // Redis endpoints
     // Analytics
     'https://www.google-analytics.com',
     'https://analytics.google.com',
     // Error reporting
     'https://sentry.io',
     'https://*.sentry.io',
+    'https://*.ingest.us.sentry.io', // Sentry ingest endpoints
+    'https://o4509814924640256.ingest.us.sentry.io', // Specific Sentry DSN
   ],
   'media-src': ["'self'", 'data:', 'blob:'],
   'object-src': ["'none'"],
