@@ -60,18 +60,16 @@ Visit [tsconv.com](https://tsconv.com) to use the tool directly in your browser.
 
 ## 🌐 Deployment
 
-### Vercel (Recommended - Full Stack)
+### Cloudflare Pages (Recommended - Frontend + Functions)
 
-```bash
-npm install -g vercel
-vercel
-```
+1. Functions 目录：`functions/`（已内置 /api/\* 路由）
+2. 生产 API 基址：内置为 `/api`（无需额外配置）
+3. 构建命令：`npm run build`
+4. 输出目录：`dist`
+5. 重新部署时勾选：`Clear build cache`
 
-### Cloudflare Pages (Frontend Only)
-
-1. Set environment variable: `VITE_API_BASE_URL=https://tsconv.vercel.app/api`
-2. Build command: `npm run build`
-3. Build output directory: `dist`
+提示：如果使用 Sentry，请在 `public/_headers` 的 `connect-src`
+放行你的 DSN 域名。
 
 ### Quick Fix for Cloudflare Blank Pages
 
@@ -90,8 +88,8 @@ If you encounter blank pages on Cloudflare deployment:
 - **Styling**: Tailwind CSS
 - **Icons**: Lucide React
 - **Date Handling**: Native JavaScript Date API
-- **API**: Vercel Serverless Functions
-- **Deployment**: Vercel
+- **API**: Cloudflare Pages Functions (/api)
+- **Deployment**: Cloudflare Pages
 
 ## 📖 Usage Examples
 
@@ -197,9 +195,15 @@ curl "https://api.tsconv.com/convert?date=2022-01-01"
 
 ```
 tsconv/
-├── api/                      # Vercel Serverless Functions
-│   ├── convert.ts           # Timestamp conversion API
-│   └── now.ts               # Current timestamp API
+├── functions/               # Cloudflare Pages Functions (/api/*)
+│   ├── api/
+│   │   ├── format/
+│   │   │   ├── index.ts
+│   │   │   └── templates.ts
+│   │   ├── date-diff.ts
+│   │   ├── timezones.ts
+│   │   ├── workdays.ts
+│   │   └── health.ts
 ├── public/
 │   ├── tsconv_logo.png
 │   └── favicon.ico
@@ -221,7 +225,7 @@ tsconv/
 ├── tailwind.config.js
 ├── tsconfig.json
 ├── vite.config.ts
-└── vercel.json              # Vercel configuration
+└── wrangler.toml            # Cloudflare configuration
 ```
 
 ## 🎨 Features Overview
@@ -324,8 +328,7 @@ for details.
 - Built with [React](https://reactjs.org/) and [Vite](https://vitejs.dev/)
 - Styled with [Tailwind CSS](https://tailwindcss.com/)
 - Icons by [Lucide](https://lucide.dev/)
-- API powered by
-  [Vercel Serverless Functions](https://vercel.com/docs/functions)
+- API powered by Cloudflare Pages Functions
 - Inspired by the developer community's need for simple, reliable tools
 
 ## 📞 Support
