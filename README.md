@@ -58,6 +58,31 @@ Visit [tsconv.com](https://tsconv.com) to use the tool directly in your browser.
    http://localhost:5173
    ```
 
+## 🌐 Deployment
+
+### Vercel (Recommended - Full Stack)
+
+```bash
+npm install -g vercel
+vercel
+```
+
+### Cloudflare Pages (Frontend Only)
+
+1. Set environment variable: `VITE_API_BASE_URL=https://tsconv.vercel.app/api`
+2. Build command: `npm run build`
+3. Build output directory: `dist`
+
+### Quick Fix for Cloudflare Blank Pages
+
+If you encounter blank pages on Cloudflare deployment:
+
+```bash
+./scripts/fix-cloudflare-deployment.sh
+```
+
+📖 **Detailed Instructions**: See [DEPLOYMENT_GUIDE.md](./DEPLOYMENT_GUIDE.md)
+
 ## 🛠️ Tech Stack
 
 - **Frontend**: React 18 + TypeScript
