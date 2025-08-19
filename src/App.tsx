@@ -68,7 +68,7 @@ function App() {
               />
 
               <Route
-                path='/api/health'
+                path='/health'
                 element={
                   <LazyWrapper name='Health Status' fullPage>
                     <HealthPage />

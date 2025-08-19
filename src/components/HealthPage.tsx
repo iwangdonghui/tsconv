@@ -58,7 +58,7 @@ const HealthPage = () => {
       setError(null);
 
       // 使用静态JSON文件作为fallback
-      const response = await fetch('/api/health.json');
+      const response = await fetch('/health.json');
       if (!response.ok) {
         // 如果静态文件不存在，使用模拟数据
         throw new Error('Static health data not available');
