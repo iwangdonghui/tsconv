@@ -32,7 +32,7 @@ const EnhancedApiDocs = () => {
       id: 'convert',
       name: 'Convert',
       method: 'GET',
-      path: '/api/convert',
+      path: '/api/convert', // served by Cloudflare Pages Functions ('/api')
       description: t.api.convertDescription,
       example: 'https://tsconv.com/api/convert?timestamp=1640995200',
     },
@@ -40,7 +40,7 @@ const EnhancedApiDocs = () => {
       id: 'now',
       name: 'Current Time',
       method: 'GET',
-      path: '/api/now',
+      path: '/api/now', // served by Cloudflare Pages Functions ('/api')
       description: 'Get current timestamp in multiple formats',
       example: 'https://tsconv.com/api/now?timezone=America/New_York',
     },
@@ -369,12 +369,12 @@ const EnhancedApiDocs = () => {
                         const isDev = window.location.hostname === 'localhost';
 
                         if (isDev) {
-                          // In development, use /api/now with timezone parameter
+                          // In development/production, use Cloudflare Functions under /api
                           const params = new URLSearchParams();
                           if (testingData.targetTimezone && testingData.targetTimezone !== 'UTC') {
                             params.append('timezone', testingData.targetTimezone);
                           }
-                          const url = `/api/now${params.toString() ? `?${params.toString()}` : ''}`;
+                          const url = `${buildApiUrl('api/now')}${params.toString() ? `?${params.toString()}` : ''}`;
                           window.open(url, '_blank');
                         } else {
                           // In production, use /api/convert with all parameters
@@ -403,7 +403,7 @@ const EnhancedApiDocs = () => {
                             params.append('format', testingData.format);
                           }
 
-                          const url = `/api/convert?${params.toString()}`;
+                          const url = `${buildApiUrl('api/convert')}?${params.toString()}`;
                           window.open(url, '_blank');
                         }
                       }}
@@ -453,12 +453,12 @@ const EnhancedApiDocs = () => {
                   <CardContent>
                     <div className='bg-slate-100 dark:bg-slate-700 p-3 rounded text-sm font-mono sm:overflow-visible overflow-x-auto'>
                       <pre className='sm:whitespace-pre-wrap sm:break-words whitespace-pre text-xs sm:text-sm'>{`// Basic conversion
-const response = await fetch('/api/convert?timestamp=1640995200');
+const response = await fetch('${buildApiUrl('api/convert')}?timestamp=1640995200');
 const data = await response.json();
 console.log(data.data.utc);
 
 // With timezone
-const response2 = await fetch('/api/convert?timestamp=1640995200&targetTimezone=America/New_York');
+const response2 = await fetch('${buildApiUrl('api/convert')}?timestamp=1640995200&targetTimezone=America/New_York');
 const data2 = await response2.json();
 console.log(data2.data.formats.local);`}</pre>
                     </div>
@@ -503,7 +503,7 @@ print(data['data']['formats']['local'])`}</pre>
                         size='sm'
                         onClick={() => {
                           // Use health endpoint as API root since /api is intercepted by frontend routing
-                          window.open('/api/health', '_blank');
+                          window.open(buildApiUrl('api/health'), '_blank');
                         }}
                       >
                         API Health

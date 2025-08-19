@@ -55,3 +55,7 @@
 # Manifest
 /manifest.json
   Cache-Control: public, max-age=86400
+
+# HTML (avoid caching document shell)
+/index.html
+  Cache-Control: no-store, must-revalidate
