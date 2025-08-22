@@ -36,7 +36,7 @@ export async function handleNow(request: Request, _env: Env): Promise<Response> 
     };
 
     // Add timezone-specific time if requested
-    if (_timezone) {
+    if (timezone) {
       try {
         result.timezone = {
           name: _timezone,
