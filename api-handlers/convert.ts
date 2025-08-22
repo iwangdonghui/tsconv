@@ -61,22 +61,22 @@ function parseGetRequest(url: URL): ConvertParams {
   const dateParam = url.searchParams.get('date');
   const timestamp = parseTimestamp(timestampParam, dateParam);
 
-  const _timezone = url.searchParams.get('_timezone') || undefined;
+  const timezone = url.searchParams.get('timezone') || undefined;
   const targetTimezone = url.searchParams.get('targetTimezone') || undefined;
 
   const formatsParam = url.searchParams.get('formats');
   const outputFormats = formatsParam ? formatsParam.split(',') : [];
 
-  return { timestamp, _timezone, targetTimezone, outputFormats };
+  return { timestamp, timezone, targetTimezone, outputFormats };
 }
 
 function parsePostRequest(body: Record<string, unknown>): ConvertParams {
-  const timestamp = parseTimestamp(body.timestamp?.toString(), body._date);
-  const _timezone = body._timezone;
+  const timestamp = parseTimestamp(body.timestamp?.toString(), body.date?.toString());
+  const timezone = body.timezone as string;
   const targetTimezone = body.targetTimezone;
   const outputFormats = body.outputFormats || [];
 
-  return { timestamp, _timezone, targetTimezone, outputFormats };
+  return { timestamp, timezone, targetTimezone, outputFormats };
 }
 
 async function parseConvertRequest(request: Request): Promise<ConvertParams> {
@@ -126,7 +126,7 @@ function buildDateFormats(params: ConvertParams): ConvertResult {
   };
 
   // Add custom formats
-  for (const format of params._outputFormats) {
+  for (const format of params.outputFormats) {
     try {
       switch (format.toLowerCase()) {
         case 'iso':
@@ -149,7 +149,7 @@ function buildDateFormats(params: ConvertParams): ConvertResult {
   // Add timezone conversion if specified
   if (params.timezone && params.targetTimezone) {
     try {
-      const convertedDate = convertTimezone(_date, params._timezone, params.targetTimezone);
+      const convertedDate = convertTimezone(date, params.timezone, params.targetTimezone);
       result.converted = {
         timestamp: Math.floor(convertedDate.getTime() / 1000),
         iso: convertedDate.toISOString(),
@@ -197,18 +197,18 @@ function generateCacheKey(params: ConvertParams): string {
   return `${params.timestamp}_${params.outputFormats.join(',')}_${params.timezone || 'none'}_${params.targetTimezone || 'none'}`;
 }
 
-export async function handleConvert(request: Request, _env: Env): Promise<Response> {
+export async function handleConvert(request: Request, env: Env): Promise<Response> {
   // Validate HTTP method
   if (request.method !== 'POST' && request.method !== 'GET') {
     return buildErrorResponse('Only GET and POST methods are supported', 405);
   }
 
-  const cacheManager = new CacheManager(_env);
+  const cacheManager = new CacheManager(env);
   const startTime = Date.now();
 
   try {
     // Parse and validate request parameters
-    const params = await parseConvertRequest(_request);
+    const params = await parseConvertRequest(request);
     validateConvertParams(params);
 
     // Generate cache key and check cache

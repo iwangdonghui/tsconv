@@ -26,7 +26,7 @@ export async function handleHealth(request: Request, env: Env): Promise<Response
     const detailed = url.searchParams.get('detailed') === 'true';
 
     const startTime = Date.now();
-    const cacheManager = new CacheManager(_env);
+    const cacheManager = new CacheManager(env);
 
     // Basic health check
     const health = {
