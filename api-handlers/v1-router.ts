@@ -14,15 +14,15 @@ export async function handleV1Routes(
 
   switch (endpoint) {
     case 'convert':
-      return handleV1Convert(_request, _env);
+      return handleV1Convert(request, env);
     case 'batch':
-      return handleV1Batch(_request, _env);
+      return handleV1Batch(request, env);
     case 'formats':
-      return handleV1Formats(_request, _env);
+      return handleV1Formats(request, env);
     case 'timezones':
-      return handleV1Timezones(_request, _env);
+      return handleV1Timezones(request, env);
     case 'health':
-      return handleV1Health(_request, _env);
+      return handleV1Health(request, env);
     default:
       return new Response(
         JSON.stringify({
@@ -93,7 +93,7 @@ async function handleV1Convert(request: Request, _env: Env): Promise<Response> {
     // Add custom formats
     if (outputFormats.length > 0) {
       result.output.formats = {};
-      for (const format of _outputFormats) {
+      for (const format of outputFormats) {
         try {
           result.output.formats[format] = date.toLocaleString('en-US', { timeZone: format });
         } catch (error) {
