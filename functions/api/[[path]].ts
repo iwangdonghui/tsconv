@@ -13,11 +13,7 @@ interface Env {
 // Import new API handlers
 
 // Import core handlers
-import { handleAdminRoutes } from '../../api-handlers/admin-router';
-import { handleConvert } from '../../api-handlers/convert';
 import { handleHealth } from '../../api-handlers/health';
-import { handleNow } from '../../api-handlers/now';
-import { handleV1Routes } from '../../api-handlers/v1-router';
 
 // Import new API handlers
 import { handleDateDiff } from '../../api-handlers/date-diff';
@@ -31,133 +27,23 @@ export async function onRequest(context: {
   params: { path: string[] };
 }): Promise<Response> {
   const { request, env, params } = context;
-  const url = new URL(request.url);
-  const hostname = url.hostname;
   const path = params.path || [];
 
-  // Handle api.tsconv.com subdomain - remove /api prefix from path
-  const isApiSubdomain = hostname === 'api.tsconv.com';
-  const apiPath = isApiSubdomain ? path : path;
-
-  // Add CORS headers
-  const corsHeaders = {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-  };
-
-  // Handle preflight requests
-  if (request.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+  // Route to appropriate handler based on path
+  if (path[0] === 'health') {
+    return handleHealth(request, env);
+  } else if (path[0] === 'workdays') {
+    return handleWorkdays(request, env);
+  } else if (path[0] === 'date-diff') {
+    return handleDateDiff(request, env);
+  } else if (path[0] === 'format') {
+    return handleFormat(request, env);
+  } else if (path[0] === 'timezones') {
+    return handleTimezonesEnhanced(request, env);
   }
 
-  try {
-    let response: Response;
-
-    // Route to appropriate handler based on path
-    if (apiPath.length === 0) {
-      // Root API endpoint
-      response = new Response(
-        JSON.stringify({
-          message: 'Timestamp Converter API',
-          version: '1.0.0',
-          domain: hostname,
-          endpoints: isApiSubdomain
-            ? [
-                '/convert',
-                '/now',
-                '/health',
-                '/workdays',
-                '/date-diff',
-                '/format',
-                '/timezones',
-                '/timezone-convert',
-                '/timezone-difference',
-                '/timezone-info',
-                '/batch-convert',
-                '/formats',
-                '/visualization',
-                '/v1/*',
-                '/admin/*',
-              ]
-            : [
-                '/api/convert',
-                '/api/now',
-                '/api/health',
-                '/api/workdays',
-                '/api/date-diff',
-                '/api/format',
-                '/api/timezones',
-                '/api/timezone-convert',
-                '/api/timezone-difference',
-                '/api/timezone-info',
-                '/api/batch-convert',
-                '/api/formats',
-                '/api/visualization',
-                '/api/v1/*',
-                '/api/admin/*',
-              ],
-        }),
-        {
-          headers: { 'Content-Type': 'application/json' },
-        }
-      );
-    } else if (apiPath[0] === 'convert') {
-      response = await handleConvert(request, env);
-    } else if (apiPath[0] === 'now') {
-      response = await handleNow(request, env);
-    } else if (apiPath[0] === 'health') {
-      response = await handleHealth(request, env);
-    } else if (apiPath[0] === 'v1') {
-      response = await handleV1Routes(request, env, apiPath.slice(1));
-    } else if (apiPath[0] === 'admin') {
-      response = await handleAdminRoutes(request, env, apiPath.slice(1));
-    } else if (apiPath[0] === 'workdays') {
-      response = await handleWorkdays(request, env);
-    } else if (apiPath[0] === 'date-diff') {
-      response = await handleDateDiff(request, env);
-    } else if (apiPath[0] === 'format') {
-      response = await handleFormat(request, env);
-    } else if (apiPath[0] === 'timezones') {
-      response = await handleTimezonesEnhanced(request, env);
-    } else {
-      response = new Response(
-        JSON.stringify({
-          error: 'Not Found',
-          message: `API endpoint /${apiPath.join('/')} not found`,
-          domain: hostname,
-          availableEndpoints: isApiSubdomain
-            ? ['/convert', '/now', '/health', '/v1/*', '/admin/*']
-            : ['/api/convert', '/api/now', '/api/health', '/v1/*', '/api/admin/*'],
-        }),
-        {
-          status: 404,
-          headers: { 'Content-Type': 'application/json' },
-        }
-      );
-    }
-
-    // Add CORS headers to response
-    const newHeaders = new Headers(response.headers);
-    Object.entries(corsHeaders).forEach(([key, value]) => {
-      newHeaders.set(key, value);
-    });
-
-    return new Response(response.body, { ...response, headers: newHeaders });
-  } catch (error) {
-    console.error('API Error:', error);
-
-    const errorResponse = new Response(
-      JSON.stringify({
-        error: 'Internal Server Error',
-        message: error instanceof Error ? error.message : 'Unknown error',
-      }),
-      {
-        status: 500,
-        headers: { 'Content-Type': 'application/json', ...corsHeaders },
-      }
-    );
-
-    return errorResponse;
-  }
+  return new Response(JSON.stringify({ error: 'Endpoint not enabled for debugging' }), {
+    status: 404,
+    headers: { 'Content-Type': 'application/json' },
+  });
 }
