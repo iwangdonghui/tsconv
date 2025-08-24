@@ -1,8 +1,8 @@
 // Workdays calculation API
 
-import { CacheManager } from './cache-utils';
-import { SecurityManager, RATE_LIMITS } from './security';
 import { recordAnalyticsMiddleware } from './analytics-api';
+import { CacheManager } from './cache-utils';
+import { RATE_LIMITS, SecurityManager } from './security';
 
 interface Env {
   UPSTASH_REDIS_REST_URL?: string;
@@ -69,13 +69,13 @@ const COMMON_HOLIDAYS: Record<string, string[]> = {
   ],
 };
 
-export async function handleWorkdays(request: Request, _env: Env): Promise<Response> {
+export async function handleWorkdays(request: Request, env: Env): Promise<Response> {
   const startTime = Date.now();
-  const securityManager = new SecurityManager(_env);
-  const cacheManager = new CacheManager(_env);
+  const securityManager = new SecurityManager(env);
+  const cacheManager = new CacheManager(env);
 
   // Apply security middleware
-  const securityCheck = await securityManager.checkRateLimit(_request, RATE_LIMITS.API_GENERAL);
+  const securityCheck = await securityManager.checkRateLimit(request, RATE_LIMITS.API_GENERAL);
   if (!securityCheck.allowed) {
     return new Response(
       JSON.stringify({
@@ -172,7 +172,7 @@ export async function handleWorkdays(request: Request, _env: Env): Promise<Respo
       );
 
       // Record analytics
-      recordAnalyticsMiddleware(_request, response, _env, startTime);
+      recordAnalyticsMiddleware(request, response, env, startTime);
       return response;
     }
 
@@ -202,7 +202,7 @@ export async function handleWorkdays(request: Request, _env: Env): Promise<Respo
     );
 
     // Record analytics
-    recordAnalyticsMiddleware(_request, response, _env, startTime);
+    recordAnalyticsMiddleware(request, response, env, startTime);
     return response;
   } catch (error) {
     console.error('Workdays API error:', error);
@@ -218,7 +218,7 @@ export async function handleWorkdays(request: Request, _env: Env): Promise<Respo
       }
     );
 
-    recordAnalyticsMiddleware(_request, response, _env, startTime);
+    recordAnalyticsMiddleware(request, response, env, startTime);
     return response;
   }
 }

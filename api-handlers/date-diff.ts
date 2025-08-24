@@ -1,8 +1,8 @@
 // Date difference calculation API
 
-import { CacheManager } from './cache-utils';
-import { SecurityManager, RATE_LIMITS } from './security';
 import { recordAnalyticsMiddleware } from './analytics-api';
+import { CacheManager } from './cache-utils';
+import { RATE_LIMITS, SecurityManager } from './security';
 
 interface Env {
   UPSTASH_REDIS_REST_URL?: string;
@@ -53,10 +53,10 @@ interface _DateDiffResponse {
   };
 }
 
-export async function handleDateDiff(request: Request, _env: Env): Promise<Response> {
+export async function handleDateDiff(request: Request, env: Env): Promise<Response> {
   const startTime = Date.now();
-  const securityManager = new SecurityManager(_env);
-  const cacheManager = new CacheManager(_env);
+  const securityManager = new SecurityManager(env);
+  const cacheManager = new CacheManager(env);
 
   // Apply security middleware
   const securityCheck = await securityManager.checkRateLimit(_request, RATE_LIMITS.API_GENERAL);

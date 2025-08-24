@@ -1,8 +1,8 @@
 // Enhanced timezones API with search and detailed information
 
-import { CacheManager } from './cache-utils';
-import { SecurityManager, RATE_LIMITS } from './security';
 import { recordAnalyticsMiddleware } from './analytics-api';
+import { CacheManager } from './cache-utils';
+import { RATE_LIMITS, SecurityManager } from './security';
 
 interface Env {
   UPSTASH_REDIS_REST_URL?: string;
@@ -123,13 +123,13 @@ const TIMEZONE_DATA: TimezoneInfo[] = [
   },
 ];
 
-export async function handleTimezonesEnhanced(request: Request, _env: Env): Promise<Response> {
+export async function handleTimezonesEnhanced(request: Request, env: Env): Promise<Response> {
   const startTime = Date.now();
-  const securityManager = new SecurityManager(_env);
-  const cacheManager = new CacheManager(_env);
+  const securityManager = new SecurityManager(env);
+  const cacheManager = new CacheManager(env);
 
   // Apply security middleware
-  const securityCheck = await securityManager.checkRateLimit(_request, RATE_LIMITS.API_GENERAL);
+  const securityCheck = await securityManager.checkRateLimit(request, RATE_LIMITS.API_GENERAL);
   if (!securityCheck.allowed) {
     return new Response(
       JSON.stringify({

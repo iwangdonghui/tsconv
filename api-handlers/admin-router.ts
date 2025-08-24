@@ -34,19 +34,19 @@ export async function handleAdminRoutes(
 
   switch (endpoint) {
     case 'stats':
-      return handleAdminStats(_request, _env);
+      return handleAdminStats(request, env);
     case 'cache':
       // Handle cache admin with sub-paths
-      return handleCacheAdmin(_request, _env, path.slice(1));
+      return handleCacheAdmin(request, env, path.slice(1));
     case 'health':
-      return handleAdminHealth(_request, _env);
+      return handleAdminHealth(request, env);
     case 'env-debug':
-      return handleEnvDebug(_request, _env);
+      return handleEnvDebug(request, env);
     case 'cache-test':
-      return handleCacheTest(_request, _env);
+      return handleCacheTest(request, env);
     case 'analytics':
       // Handle analytics with sub-paths
-      return handleAnalytics(_request, _env, path.slice(1));
+      return handleAnalytics(request, env, path.slice(1));
     default:
       return new Response(
         JSON.stringify({
@@ -62,7 +62,7 @@ export async function handleAdminRoutes(
   }
 }
 
-async function handleAdminStats(_request: Request, _env: Env): Promise<Response> {
+async function handleAdminStats(request: Request, env: Env): Promise<Response> {
   try {
     // Mock stats for now (you can implement real metrics collection)
     const stats = {
