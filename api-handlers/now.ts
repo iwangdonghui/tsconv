@@ -1,3 +1,4 @@
+console.log('Loading now.ts handler...');
 // Cloudflare Pages adapter for now API
 
 interface Env {

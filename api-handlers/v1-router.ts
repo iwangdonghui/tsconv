@@ -1,3 +1,4 @@
+console.log('Loading v1-router.ts handler...');
 // Cloudflare Pages adapter for v1 API routes
 
 interface Env {

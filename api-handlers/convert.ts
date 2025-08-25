@@ -1,3 +1,4 @@
+console.log('Loading convert.ts handler...');
 // Cloudflare Pages adapter for convert API
 
 import { CacheManager } from './cache-utils';
