@@ -59,7 +59,7 @@ export async function handleDateDiff(request: Request, env: Env): Promise<Respon
   const cacheManager = new CacheManager(env);
 
   // Apply security middleware
-  const securityCheck = await securityManager.checkRateLimit(_request, RATE_LIMITS.API_GENERAL);
+  const securityCheck = await securityManager.checkRateLimit(request, RATE_LIMITS.API_GENERAL);
   if (!securityCheck.allowed) {
     return new Response(
       JSON.stringify({
@@ -150,7 +150,7 @@ export async function handleDateDiff(request: Request, env: Env): Promise<Respon
         }
       );
 
-      recordAnalyticsMiddleware(_request, response, _env, startTime);
+      recordAnalyticsMiddleware(request, response, env, startTime);
       return response;
     }
 
@@ -179,7 +179,7 @@ export async function handleDateDiff(request: Request, env: Env): Promise<Respon
       }
     );
 
-    recordAnalyticsMiddleware(_request, response, _env, startTime);
+    recordAnalyticsMiddleware(request, response, env, startTime);
     return response;
   } catch (error) {
     console.error('Date diff API error:', error);
@@ -195,7 +195,7 @@ export async function handleDateDiff(request: Request, env: Env): Promise<Respon
       }
     );
 
-    recordAnalyticsMiddleware(_request, response, _env, startTime);
+    recordAnalyticsMiddleware(request, response, env, startTime);
     return response;
   }
 }

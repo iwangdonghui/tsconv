@@ -13,7 +13,7 @@ export async function handleCacheAdmin(
   env: Env,
   path: string[]
 ): Promise<Response> {
-  const cacheManager = new CacheManager(_env);
+  const cacheManager = new CacheManager(env);
   const action = path[0] || 'status';
 
   // Basic auth check (in production, implement proper authentication)

@@ -65,8 +65,8 @@ export class CacheManager {
   private redis: RedisClient;
   private stats: Map<string, CacheStats>;
 
-  constructor(_env: any) {
-    this.redis = new RedisClient(_env);
+  constructor(env: any) {
+    this.redis = new RedisClient(env);
     this.stats = new Map();
   }
 

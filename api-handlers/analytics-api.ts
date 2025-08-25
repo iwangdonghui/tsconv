@@ -14,8 +14,8 @@ export async function handleAnalytics(
   env: Env,
   path: string[]
 ): Promise<Response> {
-  const securityManager = new SecurityManager(_env);
-  const analyticsManager = new AnalyticsManager(_env);
+  const securityManager = new SecurityManager(env);
+  const analyticsManager = new AnalyticsManager(env);
 
   // Basic auth check
   const authHeader = request.headers.get('Authorization');
@@ -225,7 +225,7 @@ export async function recordAnalyticsMiddleware(
   startTime: number
 ): Promise<void> {
   try {
-    const analyticsManager = new AnalyticsManager(_env);
+    const analyticsManager = new AnalyticsManager(env);
     const url = new URL(request.url);
 
     const event = {

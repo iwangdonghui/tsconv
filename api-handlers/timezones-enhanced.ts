@@ -186,7 +186,7 @@ export async function handleTimezonesEnhanced(request: Request, env: Env): Promi
         }
       );
 
-      recordAnalyticsMiddleware(_request, response, _env, startTime);
+      recordAnalyticsMiddleware(request, response, env, startTime);
       return response;
     }
 
@@ -278,7 +278,7 @@ export async function handleTimezonesEnhanced(request: Request, env: Env): Promi
       }
     );
 
-    recordAnalyticsMiddleware(_request, response, _env, startTime);
+    recordAnalyticsMiddleware(request, response, env, startTime);
     return response;
   } catch (error) {
     console.error('Timezones API error:', error);
@@ -294,7 +294,7 @@ export async function handleTimezonesEnhanced(request: Request, env: Env): Promi
       }
     );
 
-    recordAnalyticsMiddleware(_request, response, _env, startTime);
+    recordAnalyticsMiddleware(request, response, env, startTime);
     return response;
   }
 }

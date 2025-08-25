@@ -33,8 +33,8 @@ interface AnalyticsStats {
 export class AnalyticsManager {
   private cacheManager: CacheManager;
 
-  constructor(_env: Env) {
-    this.cacheManager = new CacheManager(_env);
+  constructor(env: Env) {
+    this.cacheManager = new CacheManager(env);
   }
 
   // Record an API request event

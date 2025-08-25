@@ -8,7 +8,7 @@ interface Env {
   REDIS_ENABLED?: string;
 }
 
-export async function handleCacheTest(request: Request, _env: Env): Promise<Response> {
+export async function handleCacheTest(request: Request, env: Env): Promise<Response> {
   if (request.method !== 'GET') {
     return new Response(
       JSON.stringify({
@@ -23,7 +23,7 @@ export async function handleCacheTest(request: Request, _env: Env): Promise<Resp
   }
 
   try {
-    const cacheManager = new CacheManager(_env);
+    const cacheManager = new CacheManager(env);
     const testKey = `test-key-${Date.now()}`;
     const testValue = { message: 'Hello Cache!', timestamp: new Date().toISOString() };
 

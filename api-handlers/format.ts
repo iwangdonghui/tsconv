@@ -137,7 +137,7 @@ export async function handleFormat(request: Request, env: Env): Promise<Response
       );
     }
 
-    if (!params.timestamp && !params._date) {
+    if (!params.timestamp && !params.date) {
       return new Response(
         JSON.stringify({
           error: 'Bad Request',
@@ -171,7 +171,7 @@ export async function handleFormat(request: Request, env: Env): Promise<Response
         }
       );
 
-      recordAnalyticsMiddleware(_request, response, _env, startTime);
+      recordAnalyticsMiddleware(request, response, env, startTime);
       return response;
     }
 
@@ -200,7 +200,7 @@ export async function handleFormat(request: Request, env: Env): Promise<Response
       }
     );
 
-    recordAnalyticsMiddleware(_request, response, _env, startTime);
+    recordAnalyticsMiddleware(request, response, env, startTime);
     return response;
   } catch (error) {
     console.error('Format API error:', error);
@@ -216,7 +216,7 @@ export async function handleFormat(request: Request, env: Env): Promise<Response
       }
     );
 
-    recordAnalyticsMiddleware(_request, response, _env, startTime);
+    recordAnalyticsMiddleware(request, response, env, startTime);
     return response;
   }
 }
@@ -227,8 +227,8 @@ function formatDate(params: FormatRequest): any {
 
   if (params.timestamp) {
     date = new Date(params.timestamp * 1000);
-  } else if (params._date) {
-    date = new Date(params._date);
+  } else if (params.date) {
+    date = new Date(params.date);
   } else {
     throw new Error('No date provided');
   }
@@ -244,15 +244,15 @@ function formatDate(params: FormatRequest): any {
   }
 
   // Apply basic formatting (simplified implementation)
-  const formatted = applyFormat(_date, formatString, params._timezone, params._locale);
+  const formatted = applyFormat(date, formatString, params.timezone, params.locale);
 
   return {
     input: {
       timestamp: params.timestamp,
-      date: params._date,
+      date: params.date,
       format: params.format,
-      timezone: params._timezone,
-      locale: params._locale,
+      timezone: params.timezone,
+      locale: params.locale,
     },
     output: {
       formatted,
@@ -268,7 +268,7 @@ function formatDate(params: FormatRequest): any {
   };
 }
 
-function applyFormat(date: Date, format: string, _timezone?: string, _locale?: string): string {
+function applyFormat(date: Date, format: string, timezone?: string, locale?: string): string {
   // Enhanced implementation with proper month names and ordinals
 
   const year = date.getFullYear();
