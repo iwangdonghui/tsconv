@@ -1,4 +1,3 @@
-console.log('Loading now.ts handler...');
 // Cloudflare Pages adapter for now API
 
 interface Env {
@@ -40,7 +39,7 @@ export async function handleNow(request: Request, env: Env): Promise<Response> {
     if (timezone) {
       try {
         result.timezone = {
-          name: _timezone,
+          name: timezone,
           time: now.toLocaleString('en-US', { timeZone: timezone }),
           iso: `${now.toLocaleString('sv-SE', { timeZone: timezone }).replace(' ', 'T')}Z`,
         };
