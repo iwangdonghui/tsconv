@@ -1,4 +1,4 @@
-// Cloudflare Pages adapter for now API (Debug Version)
+// Cloudflare Pages adapter for now API (Debug Version - Forcing Cache Bust)
 
 interface Env {}
 
