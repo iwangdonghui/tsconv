@@ -1136,9 +1136,9 @@ Seconds: ${formatNumber(result.data.difference.seconds)}`;
               <div className='space-y-4' role='region' aria-label='Date difference results'>
                 {result && (
                   <>
-                    <div className='flex items-center justify-between mb-4'>
-                      <div className='flex items-center gap-2'>
-                        <CheckCircle className='h-5 w-5 text-green-500' />
+                    <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-2'>
+                      <div className='flex items-center gap-2 flex-wrap'>
+                        <CheckCircle className='h-5 w-5 text-green-500 flex-shrink-0' />
                         <h2
                           className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}
                         >
@@ -1150,7 +1150,7 @@ Seconds: ${formatNumber(result.data.difference.seconds)}`;
                           </span>
                         )}
                       </div>
-                      <div className='flex items-center gap-2 flex-wrap'>
+                      <div className='flex items-center gap-1 sm:gap-2 flex-wrap justify-end'>
                         {/* Copy Format Selector - hidden on mobile */}
                         <select
                           value={copyFormat}
@@ -1168,7 +1168,7 @@ Seconds: ${formatNumber(result.data.difference.seconds)}`;
                         </select>
                         <button
                           onClick={copyResults}
-                          className={`flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 text-xs rounded-md transition-all duration-200 ${
+                          className={`flex items-center gap-1 px-2 py-1 text-xs rounded-md transition-all duration-200 flex-shrink-0 ${
                             copied
                               ? isDark
                                 ? 'bg-green-500/20 text-green-400 border border-green-500/40'
@@ -1182,20 +1182,19 @@ Seconds: ${formatNumber(result.data.difference.seconds)}`;
                           {copied ? (
                             <>
                               <CheckCircle className='h-3 w-3' />
-                              <span className='hidden sm:inline'>Copied!</span>
-                              <span className='sm:hidden'>✓</span>
+                              <span className='hidden sm:inline ml-1'>Copied!</span>
                             </>
                           ) : (
                             <>
                               <Copy className='h-3 w-3' />
-                              <span className='hidden sm:inline'>Copy</span>
+                              <span className='hidden sm:inline ml-1'>Copy</span>
                             </>
                           )}
                         </button>
                         {shareUrl && (
                           <button
                             onClick={copyShareUrl}
-                            className={`flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 text-xs rounded-md transition-all duration-200 ${
+                            className={`flex items-center gap-1 px-2 py-1 text-xs rounded-md transition-all duration-200 flex-shrink-0 ${
                               isDark
                                 ? 'bg-purple-500/10 text-purple-400 hover:bg-purple-500/20 border border-purple-500/20 hover:border-purple-500/40'
                                 : 'bg-purple-50 text-purple-600 hover:bg-purple-100 border border-purple-200 hover:border-purple-300'
@@ -1204,7 +1203,7 @@ Seconds: ${formatNumber(result.data.difference.seconds)}`;
                             title='Copy shareable link'
                           >
                             <Link className='h-3 w-3' />
-                            <span className='hidden sm:inline'>Share</span>
+                            <span className='hidden sm:inline ml-1'>Share</span>
                           </button>
                         )}
                       </div>
