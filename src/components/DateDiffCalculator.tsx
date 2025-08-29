@@ -102,6 +102,8 @@ export default function DateDiffCalculator() {
   const [startDateInput, setStartDateInput] = useState('');
   const [endDateInput, setEndDateInput] = useState('');
   const [ageMode, setAgeMode] = useState(false);
+  const [countdownMode, setCountdownMode] = useState(false);
+  const [liveTime, setLiveTime] = useState(new Date());
 
   const startInputRef = useRef<HTMLInputElement>(null);
   const endInputRef = useRef<HTMLInputElement>(null);
@@ -123,6 +125,21 @@ export default function DateDiffCalculator() {
     if (urlIncludeTime) setIncludeTime(urlIncludeTime);
     setAbsolute(urlAbsolute);
   }, []);
+
+  // Live countdown timer
+  useEffect(() => {
+    if (!countdownMode) return;
+    
+    const timer = setInterval(() => {
+      setLiveTime(new Date());
+      // Force recalculation for countdown mode
+      if (startDate && endDate) {
+        debouncedCalculation();
+      }
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [countdownMode, startDate, endDate, debouncedCalculation]);
 
   // Auto-calculation function
   const performCalculation = useCallback(async () => {
@@ -347,6 +364,58 @@ Seconds: ${formatNumber(result.data.difference.seconds)}`;
       quartersCrossed,
       yearsCrossed,
     };
+  };
+
+  // Generate milestone events between dates
+  const getMilestoneEvents = (start: Date, end: Date) => {
+    const milestones = [];
+    const startTime = start.getTime();
+    const endTime = end.getTime();
+    const isForward = endTime > startTime;
+    
+    // Helper to add milestone
+    const addMilestone = (date: Date, label: string, type: string) => {
+      const time = date.getTime();
+      if (isForward ? (time > startTime && time < endTime) : (time < startTime && time > endTime)) {
+        milestones.push({
+          date: date.toISOString().split('T')[0],
+          label,
+          type,
+          progress: Math.abs((time - startTime) / (endTime - startTime)) * 100
+        });
+      }
+    };
+
+    // Add month boundaries
+    const current = new Date(start);
+    current.setDate(1);
+    current.setMonth(current.getMonth() + 1);
+    
+    while (isForward ? current < end : current > end) {
+      addMilestone(new Date(current), `Start of ${current.toLocaleString('default', { month: 'long', year: 'numeric' })}`, 'month');
+      current.setMonth(current.getMonth() + (isForward ? 1 : -1));
+    }
+
+    // Add year boundaries
+    const yearCurrent = new Date(start);
+    yearCurrent.setMonth(0);
+    yearCurrent.setDate(1);
+    yearCurrent.setFullYear(yearCurrent.getFullYear() + 1);
+    
+    while (isForward ? yearCurrent < end : yearCurrent > end) {
+      addMilestone(new Date(yearCurrent), `New Year ${yearCurrent.getFullYear()}`, 'year');
+      yearCurrent.setFullYear(yearCurrent.getFullYear() + (isForward ? 1 : -1));
+    }
+
+    // Add special dates
+    const today = new Date();
+    addMilestone(today, 'Today', 'today');
+
+    // Sort by progress
+    milestones.sort((a, b) => a.progress - b.progress);
+    
+    // Limit to 5 most significant milestones
+    return milestones.slice(0, 5);
   };
 
   return (
@@ -1098,6 +1167,22 @@ Seconds: ${formatNumber(result.data.difference.seconds)}`;
                       />
                       Show absolute difference (ignore direction)
                     </label>
+
+                    <label className='flex items-center'>
+                      <input
+                        type='checkbox'
+                        checked={countdownMode}
+                        aria-label='Enable live countdown mode'
+                        onChange={e => setCountdownMode(e.target.checked)}
+                        className='mr-2'
+                      />
+                      <span>Live countdown mode</span>
+                      {countdownMode && (
+                        <span className='ml-2 text-xs text-green-500'>
+                          ⚡ Auto-updating
+                        </span>
+                      )}
+                    </label>
                   </div>
 
                   {/* Error Display */}
@@ -1277,6 +1362,17 @@ Seconds: ${formatNumber(result.data.difference.seconds)}`;
                       className={`p-4 rounded-lg border ${isDark ? 'bg-gradient-to-r from-blue-900/20 to-indigo-900/20 border-slate-600' : 'bg-gradient-to-r from-blue-50 to-indigo-50 border-gray-200'}`}
                     >
                       <div className='text-center'>
+                        {countdownMode && (
+                          <div className='mb-2'>
+                            <span className='inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium bg-green-500/20 text-green-600 dark:text-green-400 border border-green-500/30'>
+                              <span className='relative flex h-2 w-2'>
+                                <span className='animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75'></span>
+                                <span className='relative inline-flex rounded-full h-2 w-2 bg-green-500'></span>
+                              </span>
+                              Live Countdown
+                            </span>
+                          </div>
+                        )}
                         <div
                           className={`text-2xl font-bold ${getDirectionColor(result.data.difference.direction)} mb-2`}
                         >
@@ -1288,8 +1384,211 @@ Seconds: ${formatNumber(result.data.difference.seconds)}`;
                             ? 'In the future'
                             : 'In the past'}
                         </div>
+                        {countdownMode && (
+                          <div className='mt-2 text-xs text-gray-500'>
+                            Last updated: {liveTime.toLocaleTimeString()}
+                          </div>
+                        )}
                       </div>
                     </div>
+
+                    {/* Visual Timeline */}
+                    <div
+                      className={`p-4 rounded-lg border ${
+                        isDark
+                          ? 'bg-gradient-to-br from-slate-800/50 to-slate-700/30 border-slate-600'
+                          : 'bg-gradient-to-br from-gray-50 to-white border-gray-200'
+                      }`}
+                    >
+                      <h3
+                        className={`text-sm font-medium mb-3 ${
+                          isDark ? 'text-gray-300' : 'text-gray-700'
+                        }`}
+                      >
+                        📍 Timeline Visualization
+                      </h3>
+                      <div className='relative'>
+                        {/* Timeline bar */}
+                        <div
+                          className={`h-2 rounded-full mb-4 ${
+                            isDark ? 'bg-slate-700' : 'bg-gray-200'
+                          }`}
+                        >
+                          <div
+                            className={`h-2 rounded-full transition-all duration-500 ${
+                              result.data.difference.direction === 'future'
+                                ? 'bg-gradient-to-r from-blue-500 to-green-500'
+                                : 'bg-gradient-to-r from-purple-500 to-blue-500'
+                            }`}
+                            style={{
+                              width: '100%',
+                            }}
+                          />
+                        </div>
+                        
+                        {/* Timeline markers */}
+                        <div className='flex justify-between relative'>
+                          {/* Start marker */}
+                          <div className='text-center'>
+                            <div
+                              className={`w-4 h-4 rounded-full border-2 ${
+                                isDark
+                                  ? 'bg-blue-500 border-blue-400'
+                                  : 'bg-blue-500 border-blue-600'
+                              }`}
+                            />
+                            <div className='mt-2'>
+                              <div className={`text-xs font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
+                                Start
+                              </div>
+                              <div className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                                {new Date(result.data.startDate).toLocaleDateString()}
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Today marker (if between dates) */}
+                          {(() => {
+                            const start = new Date(result.data.startDate).getTime();
+                            const end = new Date(result.data.endDate).getTime();
+                            const today = new Date().getTime();
+                            const isToday = today >= Math.min(start, end) && today <= Math.max(start, end);
+                            const progress = isToday
+                              ? ((today - Math.min(start, end)) / Math.abs(end - start)) * 100
+                              : 0;
+
+                            return isToday ? (
+                              <div
+                                className='absolute text-center'
+                                style={{
+                                  left: `${progress}%`,
+                                  transform: 'translateX(-50%)',
+                                }}
+                              >
+                                <div
+                                  className={`w-3 h-3 rounded-full border-2 ${
+                                    isDark
+                                      ? 'bg-yellow-500 border-yellow-400'
+                                      : 'bg-yellow-500 border-yellow-600'
+                                  }`}
+                                />
+                                <div className='mt-2'>
+                                  <div className={`text-xs font-medium ${isDark ? 'text-yellow-400' : 'text-yellow-600'}`}>
+                                    Today
+                                  </div>
+                                </div>
+                              </div>
+                            ) : null;
+                          })()}
+
+                          {/* End marker */}
+                          <div className='text-center'>
+                            <div
+                              className={`w-4 h-4 rounded-full border-2 ${
+                                result.data.difference.direction === 'future'
+                                  ? isDark
+                                    ? 'bg-green-500 border-green-400'
+                                    : 'bg-green-500 border-green-600'
+                                  : isDark
+                                    ? 'bg-purple-500 border-purple-400'
+                                    : 'bg-purple-500 border-purple-600'
+                              }`}
+                            />
+                            <div className='mt-2'>
+                              <div className={`text-xs font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
+                                End
+                              </div>
+                              <div className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                                {new Date(result.data.endDate).toLocaleDateString()}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Progress percentage (if today is between dates) */}
+                        {(() => {
+                          const start = new Date(result.data.startDate).getTime();
+                          const end = new Date(result.data.endDate).getTime();
+                          const today = new Date().getTime();
+                          const isToday = today >= Math.min(start, end) && today <= Math.max(start, end);
+                          const progress = isToday
+                            ? ((today - Math.min(start, end)) / Math.abs(end - start)) * 100
+                            : 0;
+
+                          return isToday ? (
+                            <div className='mt-4 text-center'>
+                              <div className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                                Progress: {progress.toFixed(1)}% complete
+                              </div>
+                            </div>
+                          ) : null;
+                        })()}
+                      </div>
+                    </div>
+
+                    {/* Milestone Events */}
+                    {(() => {
+                      const milestones = getMilestoneEvents(
+                        new Date(result.data.startDate),
+                        new Date(result.data.endDate)
+                      );
+                      return milestones.length > 0 ? (
+                        <div
+                          className={`p-4 rounded-lg border ${
+                            isDark
+                              ? 'bg-gradient-to-br from-indigo-900/20 to-purple-900/20 border-slate-600'
+                              : 'bg-gradient-to-br from-indigo-50 to-purple-50 border-gray-200'
+                          }`}
+                        >
+                          <h3
+                            className={`text-sm font-medium mb-3 ${
+                              isDark ? 'text-gray-300' : 'text-gray-700'
+                            }`}
+                          >
+                            🎯 Key Milestones
+                          </h3>
+                          <div className='space-y-2'>
+                            {milestones.map((milestone, index) => (
+                              <div
+                                key={index}
+                                className={`flex items-center justify-between p-2 rounded-lg ${
+                                  isDark
+                                    ? 'bg-slate-800/50 border border-slate-700'
+                                    : 'bg-white/70 border border-gray-200'
+                                }`}
+                              >
+                                <div className='flex items-center gap-3'>
+                                  <div
+                                    className={`w-2 h-2 rounded-full ${
+                                      milestone.type === 'year'
+                                        ? 'bg-purple-500'
+                                        : milestone.type === 'month'
+                                        ? 'bg-blue-500'
+                                        : milestone.type === 'today'
+                                        ? 'bg-yellow-500'
+                                        : 'bg-gray-500'
+                                    }`}
+                                  />
+                                  <div>
+                                    <div className={`text-sm font-medium ${isDark ? 'text-gray-200' : 'text-gray-800'}`}>
+                                      {milestone.label}
+                                    </div>
+                                    <div className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                                      {milestone.date}
+                                    </div>
+                                  </div>
+                                </div>
+                                <div className={`text-xs px-2 py-1 rounded-full ${
+                                  isDark ? 'bg-slate-700 text-gray-300' : 'bg-gray-100 text-gray-700'
+                                }`}>
+                                  {milestone.progress.toFixed(0)}%
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      ) : null;
+                    })()}
 
                     {/* Detailed Breakdown */}
                     <div className='grid grid-cols-2 gap-4'>
