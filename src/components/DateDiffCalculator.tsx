@@ -126,21 +126,6 @@ export default function DateDiffCalculator() {
     setAbsolute(urlAbsolute);
   }, []);
 
-  // Live countdown timer
-  useEffect(() => {
-    if (!countdownMode) return;
-    
-    const timer = setInterval(() => {
-      setLiveTime(new Date());
-      // Force recalculation for countdown mode
-      if (startDate && endDate) {
-        debouncedCalculation();
-      }
-    }, 1000);
-
-    return () => clearInterval(timer);
-  }, [countdownMode, startDate, endDate, debouncedCalculation]);
-
   // Auto-calculation function
   const performCalculation = useCallback(async () => {
     if (!startDate || !endDate) {
@@ -178,10 +163,25 @@ export default function DateDiffCalculator() {
     } finally {
       setLoading(false);
     }
-  }, [startDate, endDate, startTime, endTime, includeTime, absolute]);
+  }, [startDate, endDate, startTime, endTime, includeTime, absolute, addToHistory]);
 
   // Debounced calculation
   const debouncedCalculation = useCallback(debounce(performCalculation, 300), [performCalculation]);
+
+  // Live countdown timer
+  useEffect(() => {
+    if (!countdownMode) return;
+    
+    const timer = setInterval(() => {
+      setLiveTime(new Date());
+      // Force recalculation for countdown mode
+      if (startDate && endDate) {
+        performCalculation();
+      }
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [countdownMode, startDate, endDate, performCalculation]);
 
   // Auto-calculate when inputs change
   useEffect(() => {
@@ -368,7 +368,14 @@ Seconds: ${formatNumber(result.data.difference.seconds)}`;
 
   // Generate milestone events between dates
   const getMilestoneEvents = (start: Date, end: Date) => {
-    const milestones = [];
+    interface Milestone {
+      date: string;
+      label: string;
+      type: string;
+      progress: number;
+    }
+    
+    const milestones: Milestone[] = [];
     const startTime = start.getTime();
     const endTime = end.getTime();
     const isForward = endTime > startTime;
@@ -378,7 +385,7 @@ Seconds: ${formatNumber(result.data.difference.seconds)}`;
       const time = date.getTime();
       if (isForward ? (time > startTime && time < endTime) : (time < startTime && time > endTime)) {
         milestones.push({
-          date: date.toISOString().split('T')[0],
+          date: date.toISOString().split('T')[0] || '',
           label,
           type,
           progress: Math.abs((time - startTime) / (endTime - startTime)) * 100
