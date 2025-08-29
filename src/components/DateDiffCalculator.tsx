@@ -1,4 +1,17 @@
-import { AlertCircle, ArrowUpDown, Calendar, CheckCircle, Clock, Copy, Link, TrendingUp, History, Cake, Trash2, X } from 'lucide-react';
+import {
+  AlertCircle,
+  ArrowUpDown,
+  Calendar,
+  CheckCircle,
+  Clock,
+  Copy,
+  Link,
+  TrendingUp,
+  History,
+  Cake,
+  Trash2,
+  X,
+} from 'lucide-react';
 import { useCallback, useEffect, useState, useRef } from 'react';
 import { API_ENDPOINTS, buildApiUrl } from '../config/api';
 import { useTheme } from '../contexts/ThemeContext';
@@ -89,12 +102,13 @@ export default function DateDiffCalculator() {
   const [startDateInput, setStartDateInput] = useState('');
   const [endDateInput, setEndDateInput] = useState('');
   const [ageMode, setAgeMode] = useState(false);
-  
+
   const startInputRef = useRef<HTMLInputElement>(null);
   const endInputRef = useRef<HTMLInputElement>(null);
 
   const { isDark } = useTheme();
-  const { history, addToHistory, removeFromHistory, clearHistory, getHistoryLabel } = useDateHistory();
+  const { history, addToHistory, removeFromHistory, clearHistory, getHistoryLabel } =
+    useDateHistory();
 
   // Initialize from URL parameters
   useEffect(() => {
@@ -103,7 +117,7 @@ export default function DateDiffCalculator() {
     const urlEndDate = params.get('end');
     const urlIncludeTime = params.get('time') === 'true';
     const urlAbsolute = params.get('abs') !== 'false';
-    
+
     if (urlStartDate) setStartDate(urlStartDate);
     if (urlEndDate) setEndDate(urlEndDate);
     if (urlIncludeTime) setIncludeTime(urlIncludeTime);
@@ -161,7 +175,7 @@ export default function DateDiffCalculator() {
         start: startDate,
         end: endDate,
         time: includeTime.toString(),
-        abs: absolute.toString()
+        abs: absolute.toString(),
       });
       setShareUrl(`${window.location.origin}${window.location.pathname}?${params.toString()}`);
     } else {
@@ -216,15 +230,19 @@ export default function DateDiffCalculator() {
     if (!result) return;
 
     let copyText = '';
-    
+
     if (copyFormat === 'json') {
-      copyText = JSON.stringify({
-        startDate: result.data.startDate,
-        endDate: result.data.endDate,
-        difference: result.data.difference,
-        humanReadable: result.data.difference.humanReadable,
-        direction: result.data.difference.direction
-      }, null, 2);
+      copyText = JSON.stringify(
+        {
+          startDate: result.data.startDate,
+          endDate: result.data.endDate,
+          difference: result.data.difference,
+          humanReadable: result.data.difference.humanReadable,
+          direction: result.data.difference.direction,
+        },
+        null,
+        2
+      );
     } else if (copyFormat === 'markdown') {
       copyText = `## Date Difference Results
 
@@ -266,7 +284,7 @@ Seconds: ${formatNumber(result.data.difference.seconds)}`;
   // Copy share URL
   const copyShareUrl = async () => {
     if (!shareUrl) return;
-    
+
     try {
       await navigator.clipboard.writeText(shareUrl);
       setCopied(true);
@@ -300,7 +318,7 @@ Seconds: ${formatNumber(result.data.difference.seconds)}`;
   const getAdditionalStats = (start: Date, end: Date) => {
     const diffMs = Math.abs(end.getTime() - start.getTime());
     const totalDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-    
+
     // Calculate weekends
     let weekends = 0;
     const current = new Date(start);
@@ -310,24 +328,24 @@ Seconds: ${formatNumber(result.data.difference.seconds)}`;
       }
       current.setDate(current.getDate() + 1);
     }
-    
+
     // Calculate months and quarters crossed
     const startYear = start.getFullYear();
     const endYear = end.getFullYear();
     const startMonth = start.getMonth();
     const endMonth = end.getMonth();
-    
+
     const monthsCrossed = (endYear - startYear) * 12 + (endMonth - startMonth) + 1;
     const quartersCrossed = Math.ceil(monthsCrossed / 3);
     const yearsCrossed = endYear - startYear + 1;
-    
+
     return {
       totalDays,
       weekends,
       weekdays: totalDays - weekends,
       monthsCrossed,
       quartersCrossed,
-      yearsCrossed
+      yearsCrossed,
     };
   };
 
@@ -594,7 +612,9 @@ Seconds: ${formatNumber(result.data.difference.seconds)}`;
                     }`}
                   >
                     <div className='flex items-center justify-between mb-2'>
-                      <h4 className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
+                      <h4
+                        className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`}
+                      >
                         Recent Calculations
                       </h4>
                       <button
@@ -785,7 +805,11 @@ Seconds: ${formatNumber(result.data.difference.seconds)}`;
                     <button
                       onClick={() => {
                         const today = new Date();
-                        const quarterStart = new Date(today.getFullYear(), Math.floor(today.getMonth() / 3) * 3, 1);
+                        const quarterStart = new Date(
+                          today.getFullYear(),
+                          Math.floor(today.getMonth() / 3) * 3,
+                          1
+                        );
                         setStartDate(quarterStart.toISOString().split('T')[0] || '');
                         setEndDate(getTodayDate());
                         setSelectedPreset('thisquarter');
@@ -838,7 +862,11 @@ Seconds: ${formatNumber(result.data.difference.seconds)}`;
                         ref={startInputRef}
                         type='text'
                         aria-label='Enter date or natural language'
-                        placeholder={ageMode ? 'Enter birth date or "50 years ago"' : 'Enter date or "yesterday"'}
+                        placeholder={
+                          ageMode
+                            ? 'Enter birth date or "50 years ago"'
+                            : 'Enter date or "yesterday"'
+                        }
                         value={startDateInput || startDate}
                         onChange={e => {
                           const value = e.target.value;
@@ -1151,11 +1179,13 @@ Seconds: ${formatNumber(result.data.difference.seconds)}`;
                         )}
                       </div>
                       <div className='flex items-center gap-1 sm:gap-2 flex-wrap justify-end'>
-                        {/* Copy Format Selector - hidden on mobile */}
+                        {/* Copy Format Selector */}
                         <select
                           value={copyFormat}
-                          onChange={(e) => setCopyFormat(e.target.value as 'text' | 'markdown' | 'json')}
-                          className={`px-2 py-1 text-xs rounded-md border hidden sm:block ${
+                          onChange={e =>
+                            setCopyFormat(e.target.value as 'text' | 'markdown' | 'json')
+                          }
+                          className={`px-1 sm:px-2 py-1 text-xs rounded-md border ${
                             isDark
                               ? 'bg-slate-700 border-slate-600 text-white'
                               : 'bg-white border-gray-300 text-gray-900'
@@ -1163,7 +1193,7 @@ Seconds: ${formatNumber(result.data.difference.seconds)}`;
                           aria-label='Select copy format'
                         >
                           <option value='text'>Text</option>
-                          <option value='markdown'>Markdown</option>
+                          <option value='markdown'>MD</option>
                           <option value='json'>JSON</option>
                         </select>
                         <button
@@ -1372,9 +1402,7 @@ Seconds: ${formatNumber(result.data.difference.seconds)}`;
                       return (
                         <div
                           className={`p-4 rounded-lg border ${
-                            isDark
-                              ? 'bg-slate-800/50 border-slate-600'
-                              : 'bg-white border-gray-200'
+                            isDark ? 'bg-slate-800/50 border-slate-600' : 'bg-white border-gray-200'
                           }`}
                         >
                           <h3
@@ -1386,50 +1414,74 @@ Seconds: ${formatNumber(result.data.difference.seconds)}`;
                           </h3>
                           <div className='grid grid-cols-2 gap-3'>
                             <div className='flex justify-between'>
-                              <span className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                              <span
+                                className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}
+                              >
                                 Total Days:
                               </span>
-                              <span className={`text-sm font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                              <span
+                                className={`text-sm font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}
+                              >
                                 {formatNumber(stats.totalDays)}
                               </span>
                             </div>
                             <div className='flex justify-between'>
-                              <span className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                              <span
+                                className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}
+                              >
                                 Weekends:
                               </span>
-                              <span className={`text-sm font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                              <span
+                                className={`text-sm font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}
+                              >
                                 {formatNumber(stats.weekends)}
                               </span>
                             </div>
                             <div className='flex justify-between'>
-                              <span className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                              <span
+                                className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}
+                              >
                                 Weekdays:
                               </span>
-                              <span className={`text-sm font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                              <span
+                                className={`text-sm font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}
+                              >
                                 {formatNumber(stats.weekdays)}
                               </span>
                             </div>
                             <div className='flex justify-between'>
-                              <span className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                              <span
+                                className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}
+                              >
                                 Months Crossed:
                               </span>
-                              <span className={`text-sm font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                              <span
+                                className={`text-sm font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}
+                              >
                                 {stats.monthsCrossed}
                               </span>
                             </div>
                             <div className='flex justify-between'>
-                              <span className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                              <span
+                                className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}
+                              >
                                 Quarters Crossed:
                               </span>
-                              <span className={`text-sm font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                              <span
+                                className={`text-sm font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}
+                              >
                                 {stats.quartersCrossed}
                               </span>
                             </div>
                             <div className='flex justify-between'>
-                              <span className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                              <span
+                                className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}
+                              >
                                 Years Crossed:
                               </span>
-                              <span className={`text-sm font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                              <span
+                                className={`text-sm font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}
+                              >
                                 {stats.yearsCrossed}
                               </span>
                             </div>
