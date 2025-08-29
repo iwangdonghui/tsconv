@@ -1164,7 +1164,7 @@ Seconds: ${formatNumber(result.data.difference.seconds)}`;
               <div className='space-y-4' role='region' aria-label='Date difference results'>
                 {result && (
                   <>
-                    <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-2'>
+                    <div className='relative flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-2 overflow-visible'>
                       <div className='flex items-center gap-2 flex-wrap'>
                         <CheckCircle className='h-5 w-5 text-green-500 flex-shrink-0' />
                         <h2
@@ -1185,11 +1185,12 @@ Seconds: ${formatNumber(result.data.difference.seconds)}`;
                           onChange={e =>
                             setCopyFormat(e.target.value as 'text' | 'markdown' | 'json')
                           }
-                          className={`px-1 sm:px-2 py-1 text-xs rounded-md border ${
+                          className={`relative z-10 px-1 sm:px-2 py-1 text-xs rounded-md border appearance-none cursor-pointer ${
                             isDark
                               ? 'bg-slate-700 border-slate-600 text-white'
                               : 'bg-white border-gray-300 text-gray-900'
                           }`}
+                          style={{ minWidth: '60px' }}
                           aria-label='Select copy format'
                         >
                           <option value='text'>Text</option>
