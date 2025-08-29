@@ -867,48 +867,31 @@ Seconds: ${formatNumber(result.data.difference.seconds)}`;
                       )}
                       {/* Date input - shown when no text input */}
                       {!startDateInput && (
-                        <div className='relative'>
-                          <input
-                            type='date'
-                            aria-label='Select date'
-                            value={startDate}
-                            onChange={e => {
-                              setStartDate(e.target.value);
-                              setStartDateInput('');
-                              setSelectedPreset('');
-                              setAgeMode(false);
-                            }}
-                            onFocus={() => {
-                              // Allow typing natural language on desktop
-                              if (window.innerWidth >= 768) {
-                                setStartDateInput(' ');
-                                setTimeout(() => {
-                                  if (startInputRef.current) {
-                                    startInputRef.current.focus();
-                                    startInputRef.current.value = '';
-                                    setStartDateInput('');
-                                  }
-                                }, 10);
-                              }
-                            }}
-                            className={`w-full px-4 pr-10 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent ${isDark ? 'bg-slate-700 border-slate-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
-                          />
-                          {/* Calendar icon button for desktop */}
-                          <button
-                            type='button'
-                            onClick={() => {
-                              // Focus the date input to trigger native date picker
-                              const dateInput = (startInputRef.current?.parentElement?.querySelector('input[type="date"]') || startInputRef.current?.parentElement?.parentElement?.querySelector('input[type="date"]')) as HTMLInputElement;
-                              if (dateInput) dateInput.showPicker?.();
-                            }}
-                            className={`absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded hover:bg-gray-100 dark:hover:bg-slate-600 transition-colors hidden md:block ${
-                              isDark ? 'text-gray-400 hover:text-gray-300' : 'text-gray-500 hover:text-gray-700'
-                            }`}
-                            aria-label='Open calendar'
-                          >
-                            <Calendar className='h-4 w-4' />
-                          </button>
-                        </div>
+                        <input
+                          type='date'
+                          aria-label='Select date'
+                          value={startDate}
+                          onChange={e => {
+                            setStartDate(e.target.value);
+                            setStartDateInput('');
+                            setSelectedPreset('');
+                            setAgeMode(false);
+                          }}
+                          onFocus={() => {
+                            // Allow typing natural language on desktop
+                            if (window.innerWidth >= 768) {
+                              setStartDateInput(' ');
+                              setTimeout(() => {
+                                if (startInputRef.current) {
+                                  startInputRef.current.focus();
+                                  startInputRef.current.value = '';
+                                  setStartDateInput('');
+                                }
+                              }, 10);
+                            }
+                          }}
+                          className={`w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent ${isDark ? 'bg-slate-700 border-slate-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
+                        />
                       )}
                     </div>
                     <div className='flex gap-2 mt-1'>
@@ -1019,51 +1002,32 @@ Seconds: ${formatNumber(result.data.difference.seconds)}`;
                       )}
                       {/* Date input - shown when no text input */}
                       {!endDateInput && (
-                        <div className='relative'>
-                          <input
-                            type='date'
-                            aria-label='Select date'
-                            value={endDate}
-                            onChange={e => {
-                              setEndDate(e.target.value);
-                              setEndDateInput('');
-                              setSelectedPreset('');
-                              setAgeMode(false);
-                            }}
-                            onFocus={() => {
-                              // Allow typing natural language on desktop
-                              if (!ageMode && window.innerWidth >= 768) {
-                                setEndDateInput(' ');
-                                setTimeout(() => {
-                                  if (endInputRef.current) {
-                                    endInputRef.current.focus();
-                                    endInputRef.current.value = '';
-                                    setEndDateInput('');
-                                  }
-                                }, 10);
-                              }
-                            }}
-                            disabled={ageMode}
-                            className={`w-full px-4 pr-10 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent ${isDark ? 'bg-slate-700 border-slate-600 text-white' : 'bg-white border-gray-300 text-gray-900'} ${ageMode ? 'opacity-50 cursor-not-allowed' : ''}`}
-                          />
-                          {/* Calendar icon button for desktop */}
-                          <button
-                            type='button'
-                            onClick={() => {
-                              if (ageMode) return;
-                              // Focus the date input to trigger native date picker
-                              const dateInput = (endInputRef.current?.parentElement?.querySelector('input[type="date"]') || endInputRef.current?.parentElement?.parentElement?.querySelector('input[type="date"]')) as HTMLInputElement;
-                              if (dateInput) dateInput.showPicker?.();
-                            }}
-                            disabled={ageMode}
-                            className={`absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded hover:bg-gray-100 dark:hover:bg-slate-600 transition-colors hidden md:block ${
-                              isDark ? 'text-gray-400 hover:text-gray-300' : 'text-gray-500 hover:text-gray-700'
-                            } ${ageMode ? 'opacity-50 cursor-not-allowed' : ''}`}
-                            aria-label='Open calendar'
-                          >
-                            <Calendar className='h-4 w-4' />
-                          </button>
-                        </div>
+                        <input
+                          type='date'
+                          aria-label='Select date'
+                          value={endDate}
+                          onChange={e => {
+                            setEndDate(e.target.value);
+                            setEndDateInput('');
+                            setSelectedPreset('');
+                            setAgeMode(false);
+                          }}
+                          onFocus={() => {
+                            // Allow typing natural language on desktop
+                            if (!ageMode && window.innerWidth >= 768) {
+                              setEndDateInput(' ');
+                              setTimeout(() => {
+                                if (endInputRef.current) {
+                                  endInputRef.current.focus();
+                                  endInputRef.current.value = '';
+                                  setEndDateInput('');
+                                }
+                              }, 10);
+                            }
+                          }}
+                          disabled={ageMode}
+                          className={`w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent ${isDark ? 'bg-slate-700 border-slate-600 text-white' : 'bg-white border-gray-300 text-gray-900'} ${ageMode ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        />
                       )}
                     </div>
                     <div className='flex gap-2 mt-1'>
