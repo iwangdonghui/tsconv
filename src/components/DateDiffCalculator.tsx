@@ -1436,7 +1436,7 @@ Seconds: ${formatNumber(result.data.difference.seconds)}`;
                         {/* Timeline markers */}
                         <div className='flex justify-between relative'>
                           {/* Start marker */}
-                          <div className='text-center'>
+                          <div className='flex flex-col items-center'>
                             <div
                               className={`w-4 h-4 rounded-full border-2 ${
                                 isDark
@@ -1444,7 +1444,7 @@ Seconds: ${formatNumber(result.data.difference.seconds)}`;
                                   : 'bg-blue-500 border-blue-600'
                               }`}
                             />
-                            <div className='mt-2'>
+                            <div className='mt-2 text-center'>
                               <div className={`text-xs font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
                                 Start
                               </div>
@@ -1466,7 +1466,7 @@ Seconds: ${formatNumber(result.data.difference.seconds)}`;
 
                             return isToday ? (
                               <div
-                                className='absolute text-center'
+                                className='absolute flex flex-col items-center'
                                 style={{
                                   left: `${progress}%`,
                                   transform: 'translateX(-50%)',
@@ -1479,7 +1479,7 @@ Seconds: ${formatNumber(result.data.difference.seconds)}`;
                                       : 'bg-yellow-500 border-yellow-600'
                                   }`}
                                 />
-                                <div className='mt-2'>
+                                <div className='mt-2 text-center'>
                                   <div className={`text-xs font-medium ${isDark ? 'text-yellow-400' : 'text-yellow-600'}`}>
                                     Today
                                   </div>
@@ -1489,7 +1489,7 @@ Seconds: ${formatNumber(result.data.difference.seconds)}`;
                           })()}
 
                           {/* End marker */}
-                          <div className='text-center'>
+                          <div className='flex flex-col items-center'>
                             <div
                               className={`w-4 h-4 rounded-full border-2 ${
                                 result.data.difference.direction === 'future'
@@ -1501,7 +1501,7 @@ Seconds: ${formatNumber(result.data.difference.seconds)}`;
                                     : 'bg-purple-500 border-purple-600'
                               }`}
                             />
-                            <div className='mt-2'>
+                            <div className='mt-2 text-center'>
                               <div className={`text-xs font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
                                 End
                               </div>
