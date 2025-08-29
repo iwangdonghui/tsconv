@@ -834,65 +834,50 @@ Seconds: ${formatNumber(result.data.difference.seconds)}`;
                       {ageMode ? 'Birth Date' : 'Start Date'}
                     </label>
                     <div className='relative'>
-                      {/* Text input for natural language */}
-                      {startDateInput && (
-                        <input
-                          ref={startInputRef}
-                          type='text'
-                          aria-label='Enter date or natural language'
-                          placeholder={ageMode ? 'Enter birth date or "50 years ago"' : 'Enter date or "yesterday"'}
-                          value={startDateInput}
-                          onChange={e => {
-                            const value = e.target.value;
-                            setStartDateInput(value);
-                            // Parse natural language on change
-                            const parsed = parseNaturalDate(value);
-                            if (parsed) {
-                              setStartDate(parsed);
-                            }
-                            setSelectedPreset('');
-                            if (value) setAgeMode(false);
-                          }}
-                          onBlur={() => {
-                            // If natural language was parsed, clear the input to show the date
-                            if (startDateInput && startDate) {
-                              const parsed = parseNaturalDate(startDateInput);
-                              if (parsed === startDate) {
-                                setStartDateInput('');
-                              }
-                            }
-                          }}
-                          className={`w-full px-4 pr-10 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent ${isDark ? 'bg-slate-700 border-slate-600 text-white placeholder-slate-400' : 'bg-white border-gray-300 text-gray-900'}`}
-                        />
-                      )}
-                      {/* Date input - shown when no text input */}
-                      {!startDateInput && (
-                        <input
-                          type='date'
-                          aria-label='Select date'
-                          value={startDate}
-                          onChange={e => {
-                            setStartDate(e.target.value);
+                      <input
+                        ref={startInputRef}
+                        type='text'
+                        aria-label='Enter date or natural language'
+                        placeholder={ageMode ? 'Enter birth date or "50 years ago"' : 'Enter date or "yesterday"'}
+                        value={startDateInput || startDate}
+                        onChange={e => {
+                          const value = e.target.value;
+                          setStartDateInput(value);
+                          // Try to parse as natural language
+                          const parsed = parseNaturalDate(value);
+                          if (parsed) {
+                            setStartDate(parsed);
+                            // Clear input after successful parse
+                            setTimeout(() => setStartDateInput(''), 100);
+                          } else if (value.match(/^\d{4}-\d{2}-\d{2}$/)) {
+                            // If it's a valid date format, set it directly
+                            setStartDate(value);
                             setStartDateInput('');
-                            setSelectedPreset('');
-                            setAgeMode(false);
-                          }}
-                          onFocus={() => {
-                            // Allow typing natural language on desktop
-                            if (window.innerWidth >= 768) {
-                              setStartDateInput(' ');
-                              setTimeout(() => {
-                                if (startInputRef.current) {
-                                  startInputRef.current.focus();
-                                  startInputRef.current.value = '';
-                                  setStartDateInput('');
-                                }
-                              }, 10);
-                            }
-                          }}
-                          className={`w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent ${isDark ? 'bg-slate-700 border-slate-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
-                        />
-                      )}
+                          }
+                          setSelectedPreset('');
+                          if (value) setAgeMode(false);
+                        }}
+                        onKeyDown={e => {
+                          // If user presses Escape, clear the text input to show date picker
+                          if (e.key === 'Escape') {
+                            setStartDateInput('');
+                          }
+                        }}
+                        className={`w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent ${isDark ? 'bg-slate-700 border-slate-600 text-white placeholder-slate-400' : 'bg-white border-gray-300 text-gray-900'}`}
+                      />
+                      {/* Hidden date input for calendar functionality */}
+                      <input
+                        type='date'
+                        aria-label='Select date'
+                        value={startDate}
+                        onChange={e => {
+                          setStartDate(e.target.value);
+                          setStartDateInput('');
+                          setSelectedPreset('');
+                          setAgeMode(false);
+                        }}
+                        className='absolute inset-0 w-full px-4 py-2 opacity-0 pointer-events-none [&::-webkit-calendar-picker-indicator]:pointer-events-auto [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:right-2 [&::-webkit-calendar-picker-indicator]:top-1/2 [&::-webkit-calendar-picker-indicator]:-translate-y-1/2 [&::-webkit-calendar-picker-indicator]:w-5 [&::-webkit-calendar-picker-indicator]:h-5 [&::-webkit-calendar-picker-indicator]:cursor-pointer'
+                      />
                     </div>
                     <div className='flex gap-2 mt-1'>
                       <button
@@ -968,67 +953,52 @@ Seconds: ${formatNumber(result.data.difference.seconds)}`;
                       </button>
                     </div>
                     <div className='relative'>
-                      {/* Text input for natural language */}
-                      {endDateInput && !ageMode && (
-                        <input
-                          ref={endInputRef}
-                          type='text'
-                          aria-label='Enter date or natural language'
-                          placeholder='Enter date or "tomorrow"'
-                          value={endDateInput}
-                          onChange={e => {
-                            if (ageMode) return;
-                            const value = e.target.value;
-                            setEndDateInput(value);
-                            // Parse natural language on change
-                            const parsed = parseNaturalDate(value);
-                            if (parsed) {
-                              setEndDate(parsed);
-                            }
-                            setSelectedPreset('');
-                          }}
-                          onBlur={() => {
-                            // If natural language was parsed, clear the input to show the date
-                            if (endDateInput && endDate) {
-                              const parsed = parseNaturalDate(endDateInput);
-                              if (parsed === endDate) {
-                                setEndDateInput('');
-                              }
-                            }
-                          }}
-                          disabled={ageMode}
-                          className={`w-full px-4 pr-10 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent ${isDark ? 'bg-slate-700 border-slate-600 text-white placeholder-slate-400' : 'bg-white border-gray-300 text-gray-900'} ${ageMode ? 'opacity-50 cursor-not-allowed' : ''}`}
-                        />
-                      )}
-                      {/* Date input - shown when no text input */}
-                      {!endDateInput && (
-                        <input
-                          type='date'
-                          aria-label='Select date'
-                          value={endDate}
-                          onChange={e => {
-                            setEndDate(e.target.value);
+                      <input
+                        ref={endInputRef}
+                        type='text'
+                        aria-label='Enter date or natural language'
+                        placeholder='Enter date or "tomorrow"'
+                        value={endDateInput || endDate}
+                        onChange={e => {
+                          if (ageMode) return;
+                          const value = e.target.value;
+                          setEndDateInput(value);
+                          // Try to parse as natural language
+                          const parsed = parseNaturalDate(value);
+                          if (parsed) {
+                            setEndDate(parsed);
+                            // Clear input after successful parse
+                            setTimeout(() => setEndDateInput(''), 100);
+                          } else if (value.match(/^\d{4}-\d{2}-\d{2}$/)) {
+                            // If it's a valid date format, set it directly
+                            setEndDate(value);
                             setEndDateInput('');
-                            setSelectedPreset('');
-                            setAgeMode(false);
-                          }}
-                          onFocus={() => {
-                            // Allow typing natural language on desktop
-                            if (!ageMode && window.innerWidth >= 768) {
-                              setEndDateInput(' ');
-                              setTimeout(() => {
-                                if (endInputRef.current) {
-                                  endInputRef.current.focus();
-                                  endInputRef.current.value = '';
-                                  setEndDateInput('');
-                                }
-                              }, 10);
-                            }
-                          }}
-                          disabled={ageMode}
-                          className={`w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent ${isDark ? 'bg-slate-700 border-slate-600 text-white' : 'bg-white border-gray-300 text-gray-900'} ${ageMode ? 'opacity-50 cursor-not-allowed' : ''}`}
-                        />
-                      )}
+                          }
+                          setSelectedPreset('');
+                        }}
+                        onKeyDown={e => {
+                          // If user presses Escape, clear the text input to show date picker
+                          if (e.key === 'Escape') {
+                            setEndDateInput('');
+                          }
+                        }}
+                        disabled={ageMode}
+                        className={`w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent ${isDark ? 'bg-slate-700 border-slate-600 text-white placeholder-slate-400' : 'bg-white border-gray-300 text-gray-900'} ${ageMode ? 'opacity-50 cursor-not-allowed' : ''}`}
+                      />
+                      {/* Hidden date input for calendar functionality */}
+                      <input
+                        type='date'
+                        aria-label='Select date'
+                        value={endDate}
+                        onChange={e => {
+                          setEndDate(e.target.value);
+                          setEndDateInput('');
+                          setSelectedPreset('');
+                          setAgeMode(false);
+                        }}
+                        disabled={ageMode}
+                        className={`absolute inset-0 w-full px-4 py-2 opacity-0 pointer-events-none [&::-webkit-calendar-picker-indicator]:pointer-events-auto [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:right-2 [&::-webkit-calendar-picker-indicator]:top-1/2 [&::-webkit-calendar-picker-indicator]:-translate-y-1/2 [&::-webkit-calendar-picker-indicator]:w-5 [&::-webkit-calendar-picker-indicator]:h-5 [&::-webkit-calendar-picker-indicator]:cursor-pointer ${ageMode ? '[&::-webkit-calendar-picker-indicator]:pointer-events-none' : ''}`}
+                      />
                     </div>
                     <div className='flex gap-2 mt-1'>
                       <button
