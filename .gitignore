@@ -58,3 +58,9 @@ jspm_packages/
 
 # Test deployment
 test-deploy/
+
+# Wrangler temporary files
+.wrangler/
+
+# Test files
+test-api.html
