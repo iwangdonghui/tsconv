@@ -1179,24 +1179,56 @@ Seconds: ${formatNumber(result.data.difference.seconds)}`;
                         )}
                       </div>
                       <div className='flex items-center gap-1 sm:gap-2 flex-wrap justify-end'>
-                        {/* Copy Format Selector */}
-                        <select
-                          value={copyFormat}
-                          onChange={e =>
-                            setCopyFormat(e.target.value as 'text' | 'markdown' | 'json')
-                          }
-                          className={`relative z-10 px-1 sm:px-2 py-1 text-xs rounded-md border appearance-none cursor-pointer ${
-                            isDark
-                              ? 'bg-slate-700 border-slate-600 text-white'
-                              : 'bg-white border-gray-300 text-gray-900'
-                          }`}
-                          style={{ minWidth: '60px' }}
-                          aria-label='Select copy format'
-                        >
-                          <option value='text'>Text</option>
-                          <option value='markdown'>MD</option>
-                          <option value='json'>JSON</option>
-                        </select>
+                        {/* Copy Format Selector - Using buttons instead of select to avoid dropdown issues */}
+                        <div className={`flex rounded-md text-xs overflow-hidden border ${
+                          isDark ? 'border-slate-600' : 'border-gray-300'
+                        }`}>
+                          <button
+                            onClick={() => setCopyFormat('text')}
+                            className={`px-2 py-1 transition-colors ${
+                              copyFormat === 'text'
+                                ? isDark
+                                  ? 'bg-blue-600 text-white'
+                                  : 'bg-blue-500 text-white'
+                                : isDark
+                                  ? 'bg-slate-700 text-gray-300 hover:bg-slate-600'
+                                  : 'bg-white text-gray-700 hover:bg-gray-50'
+                            }`}
+                            aria-label='Select text format'
+                          >
+                            Text
+                          </button>
+                          <button
+                            onClick={() => setCopyFormat('markdown')}
+                            className={`px-2 py-1 border-l transition-colors ${
+                              copyFormat === 'markdown'
+                                ? isDark
+                                  ? 'bg-blue-600 text-white'
+                                  : 'bg-blue-500 text-white'
+                                : isDark
+                                  ? 'bg-slate-700 text-gray-300 hover:bg-slate-600 border-slate-600'
+                                  : 'bg-white text-gray-700 hover:bg-gray-50 border-gray-300'
+                            }`}
+                            aria-label='Select markdown format'
+                          >
+                            MD
+                          </button>
+                          <button
+                            onClick={() => setCopyFormat('json')}
+                            className={`px-2 py-1 border-l transition-colors ${
+                              copyFormat === 'json'
+                                ? isDark
+                                  ? 'bg-blue-600 text-white'
+                                  : 'bg-blue-500 text-white'
+                                : isDark
+                                  ? 'bg-slate-700 text-gray-300 hover:bg-slate-600 border-slate-600'
+                                  : 'bg-white text-gray-700 hover:bg-gray-50 border-gray-300'
+                            }`}
+                            aria-label='Select JSON format'
+                          >
+                            JSON
+                          </button>
+                        </div>
                         <button
                           onClick={copyResults}
                           className={`flex items-center gap-1 px-2 py-1 text-xs rounded-md transition-all duration-200 flex-shrink-0 ${
