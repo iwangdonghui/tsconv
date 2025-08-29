@@ -11,6 +11,7 @@ import {
   Cake,
   Trash2,
   X,
+  Download,
 } from 'lucide-react';
 import { useCallback, useEffect, useState, useRef } from 'react';
 import { API_ENDPOINTS, buildApiUrl } from '../config/api';
@@ -309,6 +310,82 @@ Seconds: ${formatNumber(result.data.difference.seconds)}`;
     } catch (err) {
       setCopied(false);
     }
+  };
+
+  // Export to CSV function
+  const exportToCSV = () => {
+    if (!result) return;
+
+    const stats = getAdditionalStats(
+      new Date(result.data.startDate),
+      new Date(result.data.endDate)
+    );
+
+    // Create CSV content
+    const csvRows = [
+      // Headers
+      ['Date Difference Calculation Results'],
+      [],
+      ['Field', 'Value'],
+      ['Start Date', new Date(result.data.startDate).toLocaleString()],
+      ['End Date', new Date(result.data.endDate).toLocaleString()],
+      ['Human Readable', result.data.difference.humanReadable],
+      ['Direction', result.data.difference.direction],
+      [],
+      ['Time Units', 'Value'],
+      ['Years', result.data.difference.years],
+      ['Months', result.data.difference.months],
+      ['Weeks', result.data.difference.weeks],
+      ['Days', result.data.difference.days],
+      ['Hours', result.data.difference.hours],
+      ['Minutes', result.data.difference.minutes],
+      ['Seconds', result.data.difference.seconds],
+      ['Milliseconds', result.data.difference.milliseconds],
+      [],
+      ['Period Statistics', 'Value'],
+      ['Total Days', stats.totalDays],
+      ['Weekends', stats.weekends],
+      ['Weekdays', stats.weekdays],
+      ['Months Crossed', stats.monthsCrossed],
+      ['Quarters Crossed', stats.quartersCrossed],
+      ['Years Crossed', stats.yearsCrossed],
+      [],
+      ['Metadata', 'Value'],
+      ['Include Time', result.data.includeTime ? 'Yes' : 'No'],
+      ['Absolute Value', result.data.absolute ? 'Yes' : 'No'],
+      ['Calculation Time', new Date().toLocaleString()],
+      ['Processing Time', result.metadata.processingTime],
+    ];
+
+    // Convert to CSV string
+    const csvContent = csvRows
+      .map(row => row.map(cell => {
+        // Escape quotes and wrap in quotes if contains comma or quotes
+        const cellStr = String(cell);
+        if (cellStr.includes(',') || cellStr.includes('"') || cellStr.includes('\n')) {
+          return `"${cellStr.replace(/"/g, '""')}"`;
+        }
+        return cellStr;
+      }).join(','))
+      .join('\n');
+
+    // Create blob and download
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    
+    // Generate filename with timestamp
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `date-difference-${timestamp}.csv`);
+    link.style.display = 'none';
+    
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    // Clean up
+    setTimeout(() => URL.revokeObjectURL(url), 100);
   };
 
   const getTodayDate = (): string => {
@@ -1361,6 +1438,19 @@ Seconds: ${formatNumber(result.data.difference.seconds)}`;
                             <span className='hidden sm:inline ml-1'>Share</span>
                           </button>
                         )}
+                        <button
+                          onClick={exportToCSV}
+                          className={`flex items-center gap-1 px-2 py-1 text-xs rounded-md transition-all duration-200 flex-shrink-0 ${
+                            isDark
+                              ? 'bg-green-500/10 text-green-400 hover:bg-green-500/20 border border-green-500/20 hover:border-green-500/40'
+                              : 'bg-green-50 text-green-600 hover:bg-green-100 border border-green-200 hover:border-green-300'
+                          }`}
+                          aria-label='Export to CSV'
+                          title='Export results to CSV file'
+                        >
+                          <Download className='h-3 w-3' />
+                          <span className='hidden sm:inline ml-1'>CSV</span>
+                        </button>
                       </div>
                     </div>
 
@@ -1600,114 +1690,114 @@ Seconds: ${formatNumber(result.data.difference.seconds)}`;
                     {/* Detailed Breakdown */}
                     <div className='grid grid-cols-2 gap-4'>
                       <div
-                        className={`p-4 rounded-xl border transition-all duration-200 hover:shadow-lg ${
+                        className={`p-3 sm:p-4 rounded-xl border transition-all duration-200 hover:shadow-lg ${
                           isDark
                             ? 'bg-gradient-to-br from-blue-500/10 to-blue-600/5 border-blue-500/20 shadow-lg shadow-blue-500/10'
                             : 'bg-gradient-to-br from-blue-50 to-blue-100/50 border-blue-200 shadow-lg shadow-blue-500/5'
                         }`}
                       >
                         <div
-                          className={`text-2xl font-bold ${isDark ? 'text-blue-400' : 'text-blue-600'}`}
+                          className={`text-lg sm:text-2xl font-bold break-all ${isDark ? 'text-blue-400' : 'text-blue-600'}`}
                         >
                           {formatNumber(result.data.difference.years)}
                         </div>
                         <div
-                          className={`text-sm font-medium ${isDark ? 'text-blue-300' : 'text-blue-700'}`}
+                          className={`text-xs sm:text-sm font-medium ${isDark ? 'text-blue-300' : 'text-blue-700'}`}
                         >
                           Years
                         </div>
                       </div>
 
                       <div
-                        className={`p-4 rounded-xl border transition-all duration-200 hover:shadow-lg ${
+                        className={`p-3 sm:p-4 rounded-xl border transition-all duration-200 hover:shadow-lg ${
                           isDark
                             ? 'bg-gradient-to-br from-green-500/10 to-green-600/5 border-green-500/20 shadow-lg shadow-green-500/10'
                             : 'bg-gradient-to-br from-green-50 to-green-100/50 border-green-200 shadow-lg shadow-green-500/5'
                         }`}
                       >
                         <div
-                          className={`text-2xl font-bold ${isDark ? 'text-green-400' : 'text-green-600'}`}
+                          className={`text-lg sm:text-2xl font-bold break-all ${isDark ? 'text-green-400' : 'text-green-600'}`}
                         >
                           {formatNumber(result.data.difference.months)}
                         </div>
                         <div
-                          className={`text-sm font-medium ${isDark ? 'text-green-300' : 'text-green-700'}`}
+                          className={`text-xs sm:text-sm font-medium ${isDark ? 'text-green-300' : 'text-green-700'}`}
                         >
                           Months
                         </div>
                       </div>
 
                       <div
-                        className={`p-4 rounded-xl border transition-all duration-200 hover:shadow-lg ${
+                        className={`p-3 sm:p-4 rounded-xl border transition-all duration-200 hover:shadow-lg ${
                           isDark
                             ? 'bg-gradient-to-br from-yellow-500/10 to-yellow-600/5 border-yellow-500/20 shadow-lg shadow-yellow-500/10'
                             : 'bg-gradient-to-br from-yellow-50 to-yellow-100/50 border-yellow-200 shadow-lg shadow-yellow-500/5'
                         }`}
                       >
                         <div
-                          className={`text-2xl font-bold ${isDark ? 'text-yellow-400' : 'text-yellow-600'}`}
+                          className={`text-lg sm:text-2xl font-bold break-all ${isDark ? 'text-yellow-400' : 'text-yellow-600'}`}
                         >
                           {formatNumber(result.data.difference.days)}
                         </div>
                         <div
-                          className={`text-sm font-medium ${isDark ? 'text-yellow-300' : 'text-yellow-700'}`}
+                          className={`text-xs sm:text-sm font-medium ${isDark ? 'text-yellow-300' : 'text-yellow-700'}`}
                         >
                           Days
                         </div>
                       </div>
 
                       <div
-                        className={`p-4 rounded-xl border transition-all duration-200 hover:shadow-lg ${
+                        className={`p-3 sm:p-4 rounded-xl border transition-all duration-200 hover:shadow-lg ${
                           isDark
                             ? 'bg-gradient-to-br from-indigo-500/10 to-indigo-600/5 border-indigo-500/20 shadow-lg shadow-indigo-500/10'
                             : 'bg-gradient-to-br from-indigo-50 to-indigo-100/50 border-indigo-200 shadow-lg shadow-indigo-500/5'
                         }`}
                       >
                         <div
-                          className={`text-2xl font-bold ${isDark ? 'text-indigo-400' : 'text-indigo-600'}`}
+                          className={`text-lg sm:text-2xl font-bold break-all ${isDark ? 'text-indigo-400' : 'text-indigo-600'}`}
                         >
                           {formatNumber(result.data.difference.hours)}
                         </div>
                         <div
-                          className={`text-sm font-medium ${isDark ? 'text-indigo-300' : 'text-indigo-700'}`}
+                          className={`text-xs sm:text-sm font-medium ${isDark ? 'text-indigo-300' : 'text-indigo-700'}`}
                         >
                           Hours
                         </div>
                       </div>
 
                       <div
-                        className={`p-4 rounded-xl border transition-all duration-200 hover:shadow-lg ${
+                        className={`p-3 sm:p-4 rounded-xl border transition-all duration-200 hover:shadow-lg ${
                           isDark
                             ? 'bg-gradient-to-br from-purple-500/10 to-purple-600/5 border-purple-500/20 shadow-lg shadow-purple-500/10'
                             : 'bg-gradient-to-br from-purple-50 to-purple-100/50 border-purple-200 shadow-lg shadow-purple-500/5'
                         }`}
                       >
                         <div
-                          className={`text-2xl font-bold ${isDark ? 'text-purple-400' : 'text-purple-600'}`}
+                          className={`text-lg sm:text-2xl font-bold break-all ${isDark ? 'text-purple-400' : 'text-purple-600'}`}
                         >
                           {formatNumber(result.data.difference.minutes)}
                         </div>
                         <div
-                          className={`text-sm font-medium ${isDark ? 'text-purple-300' : 'text-purple-700'}`}
+                          className={`text-xs sm:text-sm font-medium ${isDark ? 'text-purple-300' : 'text-purple-700'}`}
                         >
                           Minutes
                         </div>
                       </div>
 
                       <div
-                        className={`p-4 rounded-xl border transition-all duration-200 hover:shadow-lg ${
+                        className={`p-3 sm:p-4 rounded-xl border transition-all duration-200 hover:shadow-lg ${
                           isDark
                             ? 'bg-gradient-to-br from-pink-500/10 to-pink-600/5 border-pink-500/20 shadow-lg shadow-pink-500/10'
                             : 'bg-gradient-to-br from-pink-50 to-pink-100/50 border-pink-200 shadow-lg shadow-pink-500/5'
                         }`}
                       >
                         <div
-                          className={`text-2xl font-bold ${isDark ? 'text-pink-400' : 'text-pink-600'}`}
+                          className={`text-lg sm:text-2xl font-bold break-all ${isDark ? 'text-pink-400' : 'text-pink-600'}`}
                         >
                           {formatNumber(result.data.difference.seconds)}
                         </div>
                         <div
-                          className={`text-sm font-medium ${isDark ? 'text-pink-300' : 'text-pink-700'}`}
+                          className={`text-xs sm:text-sm font-medium ${isDark ? 'text-pink-300' : 'text-pink-700'}`}
                         >
                           Seconds
                         </div>
