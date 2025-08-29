@@ -1,7 +1,9 @@
-import { AlertCircle, ArrowUpDown, Calendar, CheckCircle, Clock, Copy, Link, TrendingUp } from 'lucide-react';
-import { useCallback, useEffect, useState } from 'react';
+import { AlertCircle, ArrowUpDown, Calendar, CheckCircle, Clock, Copy, Link, TrendingUp, History, Cake, Trash2, X } from 'lucide-react';
+import { useCallback, useEffect, useState, useRef } from 'react';
 import { API_ENDPOINTS, buildApiUrl } from '../config/api';
 import { useTheme } from '../contexts/ThemeContext';
+import { useDateHistory } from '../hooks/useDateHistory';
+import { parseNaturalDate } from '../utils/naturalDateParser';
 import Footer from './Footer';
 import Header from './Header';
 import { SEO } from './SEO';
@@ -83,9 +85,16 @@ export default function DateDiffCalculator() {
   const [shareUrl, setShareUrl] = useState('');
   const [copyFormat, setCopyFormat] = useState<'text' | 'markdown' | 'json'>('text');
   const [selectedPreset, setSelectedPreset] = useState<string>('');
+  const [showHistory, setShowHistory] = useState(false);
+  const [startDateInput, setStartDateInput] = useState('');
+  const [endDateInput, setEndDateInput] = useState('');
+  const [ageMode, setAgeMode] = useState(false);
+  
+  const startInputRef = useRef<HTMLInputElement>(null);
+  const endInputRef = useRef<HTMLInputElement>(null);
 
   const { isDark } = useTheme();
-  // const { t: _t } = useLanguage(); // Commented out as not used in current implementation
+  const { history, addToHistory, removeFromHistory, clearHistory, getHistoryLabel } = useDateHistory();
 
   // Initialize from URL parameters
   useEffect(() => {
@@ -100,6 +109,27 @@ export default function DateDiffCalculator() {
     if (urlIncludeTime) setIncludeTime(urlIncludeTime);
     setAbsolute(urlAbsolute);
   }, []);
+
+  // Handle natural language input
+  const handleNaturalDateInput = (value: string, isStart: boolean) => {
+    const parsed = parseNaturalDate(value);
+    if (parsed) {
+      if (isStart) {
+        setStartDate(parsed);
+        setStartDateInput('');
+      } else {
+        setEndDate(parsed);
+        setEndDateInput('');
+      }
+    } else {
+      // If not natural language, treat as regular date
+      if (isStart) {
+        setStartDate(value);
+      } else {
+        setEndDate(value);
+      }
+    }
+  };
 
   // Auto-calculation function
   const performCalculation = useCallback(async () => {
@@ -128,6 +158,8 @@ export default function DateDiffCalculator() {
 
       if (data.success) {
         setResult(data);
+        // Add to history
+        addToHistory(startDate, endDate, includeTime, absolute);
       } else {
         setError(data.message || 'Failed to calculate date difference');
       }
@@ -175,6 +207,19 @@ export default function DateDiffCalculator() {
     setError('');
     setShareUrl('');
     setSelectedPreset('');
+    setStartDateInput('');
+    setEndDateInput('');
+    setAgeMode(false);
+  };
+
+  // Age calculator mode
+  const enableAgeMode = () => {
+    setAgeMode(true);
+    setEndDate(getTodayDate());
+    setAbsolute(true);
+    setSelectedPreset('age');
+    // Focus on start date for birth date input
+    setTimeout(() => startInputRef.current?.focus(), 100);
   };
 
   // Swap dates function
@@ -526,9 +571,99 @@ Seconds: ${formatNumber(result.data.difference.seconds)}`;
                     <Calendar className='h-5 w-5' />
                   </div>
                   <h2 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                    Date Selection
+                    {ageMode ? 'Age Calculator' : 'Date Selection'}
                   </h2>
+                  <div className='ml-auto flex gap-2'>
+                    <button
+                      onClick={() => setShowHistory(!showHistory)}
+                      className={`p-2 rounded-lg transition-all duration-200 ${
+                        showHistory
+                          ? isDark
+                            ? 'bg-blue-500/20 text-blue-400'
+                            : 'bg-blue-100 text-blue-600'
+                          : isDark
+                            ? 'hover:bg-slate-700 text-gray-400'
+                            : 'hover:bg-gray-100 text-gray-600'
+                      }`}
+                      title='Calculation history'
+                    >
+                      <History className='h-4 w-4' />
+                    </button>
+                    <button
+                      onClick={ageMode ? resetForm : enableAgeMode}
+                      className={`p-2 rounded-lg transition-all duration-200 ${
+                        ageMode
+                          ? isDark
+                            ? 'bg-purple-500/20 text-purple-400'
+                            : 'bg-purple-100 text-purple-600'
+                          : isDark
+                            ? 'hover:bg-slate-700 text-gray-400'
+                            : 'hover:bg-gray-100 text-gray-600'
+                      }`}
+                      title={ageMode ? 'Exit age mode' : 'Age calculator'}
+                    >
+                      {ageMode ? <X className='h-4 w-4' /> : <Cake className='h-4 w-4' />}
+                    </button>
+                  </div>
                 </div>
+
+                {/* History Panel */}
+                {showHistory && history.length > 0 && (
+                  <div
+                    className={`mb-4 p-3 rounded-lg border ${
+                      isDark ? 'border-slate-600 bg-slate-800/50' : 'border-gray-200 bg-gray-50'
+                    }`}
+                  >
+                    <div className='flex items-center justify-between mb-2'>
+                      <h4 className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
+                        Recent Calculations
+                      </h4>
+                      <button
+                        onClick={clearHistory}
+                        className={`text-xs px-2 py-1 rounded ${
+                          isDark
+                            ? 'text-red-400 hover:bg-red-500/10'
+                            : 'text-red-600 hover:bg-red-50'
+                        }`}
+                      >
+                        Clear all
+                      </button>
+                    </div>
+                    <div className='space-y-1 max-h-32 overflow-y-auto'>
+                      {history.slice(0, 5).map(item => (
+                        <div
+                          key={item.id}
+                          className={`flex items-center justify-between p-2 rounded text-xs ${
+                            isDark ? 'hover:bg-slate-700' : 'hover:bg-gray-100'
+                          }`}
+                        >
+                          <button
+                            onClick={() => {
+                              setStartDate(item.startDate);
+                              setEndDate(item.endDate);
+                              setIncludeTime(item.includeTime);
+                              setAbsolute(item.absolute);
+                              setShowHistory(false);
+                            }}
+                            className='flex-1 text-left truncate'
+                          >
+                            {getHistoryLabel(item)}
+                          </button>
+                          <button
+                            onClick={() => removeFromHistory(item.id)}
+                            className={`ml-2 p-1 rounded ${
+                              isDark
+                                ? 'text-gray-500 hover:text-red-400'
+                                : 'text-gray-400 hover:text-red-600'
+                            }`}
+                          >
+                            <Trash2 className='h-3 w-3' />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 {/* Quick Presets */}
                 <div
@@ -717,26 +852,58 @@ Seconds: ${formatNumber(result.data.difference.seconds)}`;
                     <label
                       className={`block text-sm font-medium mb-2 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}
                     >
-                      Start Date
+                      {ageMode ? 'Birth Date' : 'Start Date'}
                     </label>
                     <div className='relative'>
+                      <input
+                        ref={startInputRef}
+                        type='text'
+                        aria-label='Enter date or natural language'
+                        placeholder={ageMode ? 'Enter birth date or "50 years ago"' : 'Enter date or "yesterday"'}
+                        value={startDateInput || startDate}
+                        onChange={e => {
+                          const value = e.target.value;
+                          setStartDateInput(value);
+                          handleNaturalDateInput(value, true);
+                          setSelectedPreset('');
+                          setAgeMode(false);
+                        }}
+                        onBlur={() => {
+                          if (startDateInput) {
+                            handleNaturalDateInput(startDateInput, true);
+                          }
+                        }}
+                        className={`w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent ${isDark ? 'bg-slate-700 border-slate-600 text-white placeholder-slate-400' : 'bg-white border-gray-300 text-gray-900'}`}
+                      />
                       <input
                         type='date'
                         aria-label='Select date'
                         value={startDate}
                         onChange={e => {
                           setStartDate(e.target.value);
-                          setSelectedPreset(''); // Clear preset when manually changing date
+                          setStartDateInput('');
+                          setSelectedPreset('');
+                          setAgeMode(false);
                         }}
-                        className={`w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent ${isDark ? 'bg-slate-700 border-slate-600 text-white placeholder-slate-400' : 'bg-white border-gray-300 text-gray-900'}`}
+                        className={`absolute inset-0 w-full px-4 py-2 border rounded-md opacity-0 cursor-pointer ${isDark ? 'bg-slate-700 border-slate-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
                       />
                     </div>
-                    <button
-                      onClick={() => setStartDate(getTodayDate())}
-                      className={`mt-1 text-sm transition-colors ${isDark ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-800'}`}
-                    >
-                      Use today
-                    </button>
+                    <div className='flex gap-2 mt-1'>
+                      <button
+                        onClick={() => {
+                          setStartDate(getTodayDate());
+                          setStartDateInput('');
+                        }}
+                        className={`text-sm transition-colors ${isDark ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-800'}`}
+                      >
+                        Use today
+                      </button>
+                      {startDateInput && (
+                        <span className={`text-xs ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
+                          Type "yesterday", "last week", "3 days ago", etc.
+                        </span>
+                      )}
+                    </div>
                   </div>
 
                   {/* Start Time (if enabled) */}
@@ -796,15 +963,61 @@ Seconds: ${formatNumber(result.data.difference.seconds)}`;
                     </div>
                     <div className='relative'>
                       <input
+                        ref={endInputRef}
+                        type='text'
+                        aria-label='Enter date or natural language'
+                        placeholder='Enter date or "tomorrow"'
+                        value={endDateInput || endDate}
+                        onChange={e => {
+                          const value = e.target.value;
+                          setEndDateInput(value);
+                          handleNaturalDateInput(value, false);
+                          setSelectedPreset('');
+                          setAgeMode(false);
+                        }}
+                        onBlur={() => {
+                          if (endDateInput) {
+                            handleNaturalDateInput(endDateInput, false);
+                          }
+                        }}
+                        disabled={ageMode}
+                        className={`w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent ${isDark ? 'bg-slate-700 border-slate-600 text-white placeholder-slate-400' : 'bg-white border-gray-300 text-gray-900'} ${ageMode ? 'opacity-50 cursor-not-allowed' : ''}`}
+                      />
+                      <input
                         type='date'
                         aria-label='Select date'
                         value={endDate}
                         onChange={e => {
                           setEndDate(e.target.value);
-                          setSelectedPreset(''); // Clear preset when manually changing date
+                          setEndDateInput('');
+                          setSelectedPreset('');
+                          setAgeMode(false);
                         }}
-                        className={`w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent ${isDark ? 'bg-slate-700 border-slate-600 text-white placeholder-slate-400' : 'bg-white border-gray-300 text-gray-900'}`}
+                        disabled={ageMode}
+                        className={`absolute inset-0 w-full px-4 py-2 border rounded-md opacity-0 cursor-pointer ${isDark ? 'bg-slate-700 border-slate-600 text-white' : 'bg-white border-gray-300 text-gray-900'} ${ageMode ? 'pointer-events-none' : ''}`}
                       />
+                    </div>
+                    <div className='flex gap-2 mt-1'>
+                      <button
+                        onClick={() => {
+                          setEndDate(getTodayDate());
+                          setEndDateInput('');
+                        }}
+                        disabled={ageMode}
+                        className={`text-sm transition-colors ${isDark ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-800'} ${ageMode ? 'opacity-50 cursor-not-allowed' : ''}`}
+                      >
+                        Use today
+                      </button>
+                      {endDateInput && !ageMode && (
+                        <span className={`text-xs ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
+                          Type "tomorrow", "next month", "5 days from now", etc.
+                        </span>
+                      )}
+                      {ageMode && (
+                        <span className={`text-xs ${isDark ? 'text-green-400' : 'text-green-600'}`}>
+                          Auto-set to today for age calculation
+                        </span>
+                      )}
                     </div>
                   </div>
 
