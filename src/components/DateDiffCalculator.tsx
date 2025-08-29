@@ -110,27 +110,6 @@ export default function DateDiffCalculator() {
     setAbsolute(urlAbsolute);
   }, []);
 
-  // Handle natural language input
-  const handleNaturalDateInput = (value: string, isStart: boolean) => {
-    const parsed = parseNaturalDate(value);
-    if (parsed) {
-      if (isStart) {
-        setStartDate(parsed);
-        setStartDateInput('');
-      } else {
-        setEndDate(parsed);
-        setEndDateInput('');
-      }
-    } else {
-      // If not natural language, treat as regular date
-      if (isStart) {
-        setStartDate(value);
-      } else {
-        setEndDate(value);
-      }
-    }
-  };
-
   // Auto-calculation function
   const performCalculation = useCallback(async () => {
     if (!startDate || !endDate) {
@@ -860,20 +839,30 @@ Seconds: ${formatNumber(result.data.difference.seconds)}`;
                         type='text'
                         aria-label='Enter date or natural language'
                         placeholder={ageMode ? 'Enter birth date or "50 years ago"' : 'Enter date or "yesterday"'}
-                        value={startDateInput || startDate}
+                        value={startDateInput}
                         onChange={e => {
                           const value = e.target.value;
                           setStartDateInput(value);
-                          handleNaturalDateInput(value, true);
+                          // Parse natural language on change
+                          const parsed = parseNaturalDate(value);
+                          if (parsed) {
+                            setStartDate(parsed);
+                          }
                           setSelectedPreset('');
-                          setAgeMode(false);
+                          if (value) setAgeMode(false);
                         }}
                         onBlur={() => {
-                          if (startDateInput) {
-                            handleNaturalDateInput(startDateInput, true);
+                          // If natural language was parsed, clear the input to show the date
+                          if (startDateInput && startDate) {
+                            const parsed = parseNaturalDate(startDateInput);
+                            if (parsed === startDate) {
+                              setStartDateInput('');
+                            }
                           }
                         }}
-                        className={`w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent ${isDark ? 'bg-slate-700 border-slate-600 text-white placeholder-slate-400' : 'bg-white border-gray-300 text-gray-900'}`}
+                        className={`w-full px-4 pr-10 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent ${isDark ? 'bg-slate-700 border-slate-600 text-white placeholder-slate-400' : 'bg-white border-gray-300 text-gray-900'} ${
+                          startDateInput ? '' : 'hidden md:block'
+                        }`}
                       />
                       <input
                         type='date'
@@ -885,8 +874,25 @@ Seconds: ${formatNumber(result.data.difference.seconds)}`;
                           setSelectedPreset('');
                           setAgeMode(false);
                         }}
-                        className={`absolute inset-0 w-full px-4 py-2 border rounded-md opacity-0 cursor-pointer ${isDark ? 'bg-slate-700 border-slate-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
+                        className={`w-full px-4 pr-10 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent ${isDark ? 'bg-slate-700 border-slate-600 text-white' : 'bg-white border-gray-300 text-gray-900'} ${
+                          startDateInput ? 'hidden' : 'block'
+                        }`}
                       />
+                      {/* Calendar icon button for desktop */}
+                      <button
+                        type='button'
+                        onClick={() => {
+                          // Focus the date input to trigger native date picker
+                          const dateInput = startInputRef.current?.nextElementSibling as HTMLInputElement;
+                          if (dateInput) dateInput.showPicker?.();
+                        }}
+                        className={`absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded hover:bg-gray-100 dark:hover:bg-slate-600 transition-colors hidden md:block ${
+                          isDark ? 'text-gray-400 hover:text-gray-300' : 'text-gray-500 hover:text-gray-700'
+                        }`}
+                        aria-label='Open calendar'
+                      >
+                        <Calendar className='h-4 w-4' />
+                      </button>
                     </div>
                     <div className='flex gap-2 mt-1'>
                       <button
@@ -967,21 +973,31 @@ Seconds: ${formatNumber(result.data.difference.seconds)}`;
                         type='text'
                         aria-label='Enter date or natural language'
                         placeholder='Enter date or "tomorrow"'
-                        value={endDateInput || endDate}
+                        value={endDateInput}
                         onChange={e => {
+                          if (ageMode) return;
                           const value = e.target.value;
                           setEndDateInput(value);
-                          handleNaturalDateInput(value, false);
+                          // Parse natural language on change
+                          const parsed = parseNaturalDate(value);
+                          if (parsed) {
+                            setEndDate(parsed);
+                          }
                           setSelectedPreset('');
-                          setAgeMode(false);
                         }}
                         onBlur={() => {
-                          if (endDateInput) {
-                            handleNaturalDateInput(endDateInput, false);
+                          // If natural language was parsed, clear the input to show the date
+                          if (endDateInput && endDate) {
+                            const parsed = parseNaturalDate(endDateInput);
+                            if (parsed === endDate) {
+                              setEndDateInput('');
+                            }
                           }
                         }}
                         disabled={ageMode}
-                        className={`w-full px-4 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent ${isDark ? 'bg-slate-700 border-slate-600 text-white placeholder-slate-400' : 'bg-white border-gray-300 text-gray-900'} ${ageMode ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        className={`w-full px-4 pr-10 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent ${isDark ? 'bg-slate-700 border-slate-600 text-white placeholder-slate-400' : 'bg-white border-gray-300 text-gray-900'} ${ageMode ? 'opacity-50 cursor-not-allowed' : ''} ${
+                          endDateInput ? '' : 'hidden md:block'
+                        }`}
                       />
                       <input
                         type='date'
@@ -994,8 +1010,27 @@ Seconds: ${formatNumber(result.data.difference.seconds)}`;
                           setAgeMode(false);
                         }}
                         disabled={ageMode}
-                        className={`absolute inset-0 w-full px-4 py-2 border rounded-md opacity-0 cursor-pointer ${isDark ? 'bg-slate-700 border-slate-600 text-white' : 'bg-white border-gray-300 text-gray-900'} ${ageMode ? 'pointer-events-none' : ''}`}
+                        className={`w-full px-4 pr-10 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent ${isDark ? 'bg-slate-700 border-slate-600 text-white' : 'bg-white border-gray-300 text-gray-900'} ${ageMode ? 'opacity-50 cursor-not-allowed' : ''} ${
+                          endDateInput ? 'hidden' : 'block'
+                        }`}
                       />
+                      {/* Calendar icon button for desktop */}
+                      <button
+                        type='button'
+                        onClick={() => {
+                          if (ageMode) return;
+                          // Focus the date input to trigger native date picker
+                          const dateInput = endInputRef.current?.nextElementSibling as HTMLInputElement;
+                          if (dateInput) dateInput.showPicker?.();
+                        }}
+                        disabled={ageMode}
+                        className={`absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded hover:bg-gray-100 dark:hover:bg-slate-600 transition-colors hidden md:block ${
+                          isDark ? 'text-gray-400 hover:text-gray-300' : 'text-gray-500 hover:text-gray-700'
+                        } ${ageMode ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        aria-label='Open calendar'
+                      >
+                        <Calendar className='h-4 w-4' />
+                      </button>
                     </div>
                     <div className='flex gap-2 mt-1'>
                       <button
@@ -1147,12 +1182,12 @@ Seconds: ${formatNumber(result.data.difference.seconds)}`;
                           </span>
                         )}
                       </div>
-                      <div className='flex items-center gap-2'>
-                        {/* Copy Format Selector */}
+                      <div className='flex items-center gap-2 flex-wrap'>
+                        {/* Copy Format Selector - hidden on mobile */}
                         <select
                           value={copyFormat}
                           onChange={(e) => setCopyFormat(e.target.value as 'text' | 'markdown' | 'json')}
-                          className={`px-2 py-1 text-xs rounded-md border ${
+                          className={`px-2 py-1 text-xs rounded-md border hidden sm:block ${
                             isDark
                               ? 'bg-slate-700 border-slate-600 text-white'
                               : 'bg-white border-gray-300 text-gray-900'
@@ -1165,7 +1200,7 @@ Seconds: ${formatNumber(result.data.difference.seconds)}`;
                         </select>
                         <button
                           onClick={copyResults}
-                          className={`flex items-center gap-2 px-3 py-1.5 text-xs rounded-md transition-all duration-200 ${
+                          className={`flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 text-xs rounded-md transition-all duration-200 ${
                             copied
                               ? isDark
                                 ? 'bg-green-500/20 text-green-400 border border-green-500/40'
@@ -1179,19 +1214,20 @@ Seconds: ${formatNumber(result.data.difference.seconds)}`;
                           {copied ? (
                             <>
                               <CheckCircle className='h-3 w-3' />
-                              Copied!
+                              <span className='hidden sm:inline'>Copied!</span>
+                              <span className='sm:hidden'>✓</span>
                             </>
                           ) : (
                             <>
                               <Copy className='h-3 w-3' />
-                              Copy
+                              <span className='hidden sm:inline'>Copy</span>
                             </>
                           )}
                         </button>
                         {shareUrl && (
                           <button
                             onClick={copyShareUrl}
-                            className={`flex items-center gap-2 px-3 py-1.5 text-xs rounded-md transition-all duration-200 ${
+                            className={`flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 text-xs rounded-md transition-all duration-200 ${
                               isDark
                                 ? 'bg-purple-500/10 text-purple-400 hover:bg-purple-500/20 border border-purple-500/20 hover:border-purple-500/40'
                                 : 'bg-purple-50 text-purple-600 hover:bg-purple-100 border border-purple-200 hover:border-purple-300'
@@ -1200,7 +1236,7 @@ Seconds: ${formatNumber(result.data.difference.seconds)}`;
                             title='Copy shareable link'
                           >
                             <Link className='h-3 w-3' />
-                            Share
+                            <span className='hidden sm:inline'>Share</span>
                           </button>
                         )}
                       </div>
