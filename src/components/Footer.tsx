@@ -40,6 +40,54 @@ export default function Footer() {
               </li>
               <li>
                 <Link 
+                  to="/format"
+                  className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                >
+                  Format Tool
+                </Link>
+              </li>
+              <li>
+                <Link 
+                  to="/date-diff"
+                  className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                >
+                  Date Difference
+                </Link>
+              </li>
+              <li>
+                <Link 
+                  to="/workdays"
+                  className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                >
+                  Workdays Calculator
+                </Link>
+              </li>
+              <li>
+                <Link 
+                  to="/time-units"
+                  className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                >
+                  Time Units
+                </Link>
+              </li>
+              <li>
+                <Link 
+                  to="/timezones"
+                  className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                >
+                  Timezone Explorer
+                </Link>
+              </li>
+              <li>
+                <Link 
+                  to="/discord"
+                  className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                >
+                  Discord Timestamp
+                </Link>
+              </li>
+              <li>
+                <Link 
                   to="/api"
                   className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
                 >
