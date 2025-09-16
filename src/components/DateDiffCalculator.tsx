@@ -1208,7 +1208,7 @@ Seconds: ${formatNumber(result.data.difference.seconds)}`;
                               : 'bg-gray-100 text-gray-600 hover:bg-gray-50'
                         }`}
                       >
-                        {naturalLanguageMode ? '📝 Text Input' : '📅 Calendar'}
+                      {naturalLanguageMode ? '📝 Text' : '📅 Calendar'}
                       </button>
                     </div>
 
@@ -1628,18 +1628,18 @@ Seconds: ${formatNumber(result.data.difference.seconds)}`;
                         )}
                       </div>
                       <div
-                        className='flex items-center gap-2 flex-wrap justify-end'
+                        className='flex items-center gap-1 sm:gap-2 flex-wrap justify-end'
                         data-tour='export'
                       >
-                        {/* Copy Format Selector - Mobile Optimized */}
+                        {/* Copy Format Selector and Actions - All in one row */}
                         <div
-                          className={`flex rounded-md text-sm overflow-hidden border ${
+                          className={`flex rounded-md text-xs sm:text-sm overflow-hidden border ${
                             isDark ? 'border-slate-600' : 'border-gray-300'
                           }`}
                         >
                           <button
                             onClick={() => setCopyFormat('text')}
-                            className={`px-3 py-2 min-w-[44px] min-h-[44px] transition-colors ${
+                            className={`px-2 sm:px-3 py-2 min-w-[40px] sm:min-w-[44px] min-h-[40px] sm:min-h-[44px] transition-colors ${
                               copyFormat === 'text'
                                 ? isDark
                                   ? 'bg-blue-600 text-white'
@@ -1654,7 +1654,7 @@ Seconds: ${formatNumber(result.data.difference.seconds)}`;
                           </button>
                           <button
                             onClick={() => setCopyFormat('markdown')}
-                            className={`px-3 py-2 min-w-[44px] min-h-[44px] border-l transition-colors ${
+                            className={`px-2 sm:px-3 py-2 min-w-[40px] sm:min-w-[44px] min-h-[40px] sm:min-h-[44px] border-l transition-colors ${
                               copyFormat === 'markdown'
                                 ? isDark
                                   ? 'bg-blue-600 text-white'
@@ -1669,7 +1669,7 @@ Seconds: ${formatNumber(result.data.difference.seconds)}`;
                           </button>
                           <button
                             onClick={() => setCopyFormat('json')}
-                            className={`px-3 py-2 min-w-[44px] min-h-[44px] border-l transition-colors ${
+                            className={`px-2 sm:px-3 py-2 min-w-[40px] sm:min-w-[44px] min-h-[40px] sm:min-h-[44px] border-l transition-colors ${
                               copyFormat === 'json'
                                 ? isDark
                                   ? 'bg-blue-600 text-white'
@@ -1685,7 +1685,7 @@ Seconds: ${formatNumber(result.data.difference.seconds)}`;
                         </div>
                         <button
                           onClick={copyResults}
-                          className={`flex items-center gap-1 px-3 py-2 min-w-[44px] min-h-[44px] text-sm rounded-md transition-all duration-200 flex-shrink-0 ${
+                          className={`flex items-center justify-center p-2 min-w-[40px] sm:min-w-[44px] min-h-[40px] sm:min-h-[44px] text-xs sm:text-sm rounded-md transition-all duration-200 ${
                             copied
                               ? isDark
                                 ? 'bg-green-500/20 text-green-400 border border-green-500/40'
@@ -1695,46 +1695,39 @@ Seconds: ${formatNumber(result.data.difference.seconds)}`;
                                 : 'bg-blue-50 text-blue-600 hover:bg-blue-100 border border-blue-200 hover:border-blue-300'
                           }`}
                           aria-label='Copy results to clipboard'
+                          title='Copy'
                         >
                           {copied ? (
-                            <>
-                              <CheckCircle className='h-4 w-4' />
-                              <span className='hidden sm:inline'>Copied!</span>
-                            </>
+                            <CheckCircle className='h-4 w-4' />
                           ) : (
-                            <>
-                              <Copy className='h-4 w-4' />
-                              <span className='hidden sm:inline'>Copy</span>
-                            </>
+                            <Copy className='h-4 w-4' />
                           )}
                         </button>
                         {shareUrl && (
                           <button
                             onClick={copyShareUrl}
-                            className={`flex items-center gap-1 px-3 py-2 min-w-[44px] min-h-[44px] text-sm rounded-md transition-all duration-200 flex-shrink-0 ${
+                            className={`flex items-center justify-center p-2 min-w-[40px] sm:min-w-[44px] min-h-[40px] sm:min-h-[44px] text-xs sm:text-sm rounded-md transition-all duration-200 ${
                               isDark
                                 ? 'bg-purple-500/10 text-purple-400 hover:bg-purple-500/20 border border-purple-500/20 hover:border-purple-500/40'
                                 : 'bg-purple-50 text-purple-600 hover:bg-purple-100 border border-purple-200 hover:border-purple-300'
                             }`}
                             aria-label='Copy share URL'
-                            title='Copy shareable link'
+                            title='Share'
                           >
                             <Link className='h-4 w-4' />
-                            <span className='hidden sm:inline'>Share</span>
                           </button>
                         )}
                         <button
                           onClick={exportToCSV}
-                          className={`flex items-center gap-1 px-3 py-2 min-w-[44px] min-h-[44px] text-sm rounded-md transition-all duration-200 flex-shrink-0 ${
+                          className={`flex items-center justify-center p-2 min-w-[40px] sm:min-w-[44px] min-h-[40px] sm:min-h-[44px] text-xs sm:text-sm rounded-md transition-all duration-200 ${
                             isDark
                               ? 'bg-green-500/10 text-green-400 hover:bg-green-500/20 border border-green-500/20 hover:border-green-500/40'
                               : 'bg-green-50 text-green-600 hover:bg-green-100 border border-green-200 hover:border-green-300'
                           }`}
                           aria-label='Export to CSV'
-                          title='Export results to CSV file'
+                          title='Download CSV'
                         >
                           <Download className='h-4 w-4' />
-                          <span className='hidden sm:inline'>CSV</span>
                         </button>
                       </div>
                     </div>
