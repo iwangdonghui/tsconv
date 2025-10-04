@@ -1,5 +1,6 @@
-import { Check, Clock, Copy, X } from 'lucide-react';
+import { ArrowUpRight, Check, Clock, Copy, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
 
 import { useLanguage } from '../contexts/LanguageContext';
 import { useTheme } from '../contexts/ThemeContext';
@@ -47,7 +48,7 @@ export default function TimestampConverter() {
   const inputRef = useRef<HTMLInputElement>(null);
   const historyPanelRef = useRef<HTMLDivElement>(null);
   const { isDark } = useTheme();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const { history, addToHistory, clearHistory } = useHistory();
   const { isMobile, isTouchDevice } = useDeviceCapabilities();
   const {
@@ -384,6 +385,65 @@ export default function TimestampConverter() {
   const results = formatResults();
   const currentTimestamp = Math.floor(currentTime.getTime() / 1000);
 
+  const accentStyles = {
+    blue: {
+      arrow: 'text-blue-500',
+      hoverDark: 'hover:border-blue-500/70',
+      hoverLight: 'hover:border-blue-500/70',
+    },
+    emerald: {
+      arrow: 'text-emerald-500',
+      hoverDark: 'hover:border-emerald-500/70',
+      hoverLight: 'hover:border-emerald-500/70',
+    },
+    violet: {
+      arrow: 'text-violet-500',
+      hoverDark: 'hover:border-violet-500/70',
+      hoverLight: 'hover:border-violet-500/70',
+    },
+  } as const;
+
+  const clusterCards = [
+    {
+      key: 'format',
+      to: '/format',
+      accent: 'blue' as const,
+      title: language === 'zh' ? '需要格式化输出？' : 'Need formatted output?',
+      description:
+        language === 'zh'
+          ? '前往格式化工具，获取 ISO 8601、RFC 3339、Discord/Slack 消息等格式。'
+          : 'Jump to the Format Tool for ISO 8601, RFC 3339, Discord/Slack messages, and locale-aware strings.',
+    },
+    {
+      key: 'datediff',
+      to: '/date-diff',
+      accent: 'emerald' as const,
+      title: language === 'zh' ? '比较两个时间戳' : 'Compare two timestamps',
+      description:
+        language === 'zh'
+          ? '使用日期差计算器处理持续时间、年龄计算、倒计时和工作日排班。'
+          : 'Use the Date Difference Calculator for durations, age math, countdowns, and workday planning.',
+    },
+    {
+      key: 'discord',
+      to: '/discord',
+      accent: 'violet' as const,
+      title: language === 'zh' ? '跨平台安排日程' : 'Schedule across communities',
+      description:
+        language === 'zh'
+          ? '为 Discord、Slack、Notion 以及跨时区活动生成时间戳，并查看时区指南获取最佳实践。'
+          : 'Generate rich timestamps for Discord, Slack, Notion, and cross-timezone events; review the timezone guides for best practices.',
+      span: true,
+    },
+  ];
+
+  const getCardClasses = (accent: keyof typeof accentStyles, extra = '') =>
+    `group flex flex-col gap-2 rounded-2xl border px-4 py-5 transition-colors ${extra} ${
+      isDark
+        ? `border-slate-700 bg-slate-800/60 hover:bg-slate-800 ${accentStyles[accent].hoverDark}`
+        : `border-slate-200 bg-white hover:bg-slate-50 ${accentStyles[accent].hoverLight}`
+    }`;
+
   return (
     <div
       className={`min-h-screen flex flex-col transition-colors duration-200 ${
@@ -400,12 +460,14 @@ export default function TimestampConverter() {
       />
       <Header />
       {/* 转换器主要内容 */}
-      <main className='flex-1 max-w-2xl mx-auto px-4 sm:px-6 py-8 sm:py-12'>
+      <main className='flex-1 max-w-2xl mx-auto px-4 sm:px-6 py-6 sm:py-12'>
         {/* Title */}
-        <div className='text-center mb-8'>
-          <h1 className='text-3xl sm:text-4xl font-bold mb-4'>Timestamp Converter</h1>
-          <p className='text-lg text-slate-600 dark:text-slate-400'>
-            Convert Unix timestamps to human-readable dates and vice versa
+        <div className='text-center mb-4 sm:mb-8'>
+          <h1 className='text-xl sm:text-4xl font-bold mb-2 sm:mb-4'>Timestamp Converter</h1>
+          <p className='text-sm sm:text-lg text-slate-600 dark:text-slate-400 leading-relaxed'>
+            Convert Unix timestamps to human-readable dates (and back) in real time. Explore timezone
+            aware output, batch conversion, and language-specific snippets to cover every timestamp
+            workflow.
           </p>
         </div>
 
@@ -657,51 +719,51 @@ export default function TimestampConverter() {
         )}
 
         {/* Current Timestamp */}
-        <div className='mb-8'>
+        <div className='mb-6 sm:mb-12'>
           <div
-            className={`p-4 sm:p-6 rounded-xl border-2 ${
+            className={`p-4 sm:p-8 rounded-2xl border shadow-md sm:shadow-xl ${
               isDark
-                ? 'bg-gradient-to-r from-blue-900/30 to-purple-900/30 border-blue-500/30'
-                : 'bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200'
+                ? 'bg-slate-900/70 border-blue-500/30'
+                : 'bg-white border-blue-200'
             }`}
           >
-            <div className='flex justify-between items-start gap-3'>
+            <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4'>
               <div className='flex-1 min-w-0'>
                 <div
-                  className={`text-sm sm:text-base font-medium mb-2 ${
-                    isDark ? 'text-blue-300' : 'text-blue-700'
+                  className={`text-sm sm:text-lg font-semibold tracking-tight mb-2 ${
+                    isDark ? 'text-blue-200' : 'text-blue-700'
                   }`}
                 >
                   {t('current.title')}
                 </div>
                 <div
-                  className={`text-xl sm:text-2xl font-mono font-bold break-all ${
+                  className={`text-xl sm:text-4xl font-mono font-bold break-all ${
                     isDark ? 'text-white' : 'text-slate-900'
                   }`}
                 >
                   {currentTimestamp}
                 </div>
                 <div
-                  className={`text-xs sm:text-sm mt-1 ${
-                    isDark ? 'text-slate-400' : 'text-slate-600'
+                  className={`text-xs sm:text-base mt-2 sm:mt-3 leading-relaxed ${
+                    isDark ? 'text-slate-300' : 'text-slate-600'
                   }`}
                 >
                   {isPaused ? t('current.paused') : t('current.updates')}
                 </div>
               </div>
-              <div className='flex gap-2'>
+              <div className='flex gap-2 sm:gap-3'>
                 <button
                   onClick={() => setIsPaused(!isPaused)}
-                  className={`flex-shrink-0 p-3 rounded-lg transition-all duration-200 ${
+                  className={`flex-shrink-0 px-3 py-2 sm:px-4 sm:py-3 rounded-xl font-medium transition-all duration-200 ${
                     isDark
-                      ? 'hover:bg-blue-800/50 bg-blue-900/30 border border-blue-500/30'
-                      : 'hover:bg-blue-100 bg-blue-50 border border-blue-200'
+                      ? 'hover:bg-blue-800/60 bg-blue-900/30 border border-blue-500/30 text-blue-200'
+                      : 'hover:bg-blue-100 bg-blue-50 border border-blue-200 text-blue-700'
                   }`}
                   title={isPaused ? t('current.resume') : t('current.pause')}
                 >
                   {isPaused ? (
                     <svg
-                      className={`w-5 h-5 ${isDark ? 'text-blue-300' : 'text-blue-600'}`}
+                      className='w-4 h-4 sm:w-5 sm:h-5 mx-auto'
                       fill='currentColor'
                       viewBox='0 0 20 20'
                     >
@@ -713,7 +775,7 @@ export default function TimestampConverter() {
                     </svg>
                   ) : (
                     <svg
-                      className={`w-5 h-5 ${isDark ? 'text-blue-300' : 'text-blue-600'}`}
+                      className={`w-4 h-4 sm:w-5 sm:h-5 ${isDark ? 'text-blue-300' : 'text-blue-600'}`}
                       fill='currentColor'
                       viewBox='0 0 20 20'
                     >
@@ -727,21 +789,97 @@ export default function TimestampConverter() {
                 </button>
                 <button
                   onClick={() => copyToClipboard(currentTimestamp.toString(), 'current')}
-                  className={`flex-shrink-0 p-3 rounded-lg transition-all duration-200 ${
+                  className={`flex-shrink-0 px-3 py-2 sm:px-4 sm:py-3 rounded-xl transition-all duration-200 border font-medium ${
                     isDark
-                      ? 'hover:bg-blue-800/50 bg-blue-900/30 border border-blue-500/30'
-                      : 'hover:bg-blue-100 bg-blue-50 border border-blue-200'
+                      ? 'hover:bg-blue-800/60 bg-blue-900/30 border-blue-500/30 text-blue-200'
+                      : 'hover:bg-blue-100 bg-blue-50 border-blue-200 text-blue-700'
                   }`}
                 >
                   {copiedStates.current ? (
-                    <Check className='w-5 h-5 text-green-500' />
+                    <Check className='w-4 h-4 sm:w-5 sm:h-5 text-emerald-400 mx-auto' />
                   ) : (
-                    <Copy className={`w-5 h-5 ${isDark ? 'text-blue-300' : 'text-blue-600'}`} />
+                    <Copy className='w-4 h-4 sm:w-5 sm:h-5 mx-auto' />
                   )}
                 </button>
               </div>
             </div>
           </div>
+        </div>
+
+        {/* Content cluster navigation */}
+        <section className='mb-6 sm:mb-12'>
+          <div className='sm:hidden mb-4'>
+            <details className={`${isDark ? 'bg-slate-800/80 border border-slate-700 text-slate-100' : 'bg-slate-50 border border-slate-200 text-slate-700'} rounded-xl p-3`}> 
+              <summary className='text-sm font-semibold cursor-pointer'>Quick tools & guides</summary>
+              <div className='mt-3 space-y-2'>
+                {clusterCards.map(card => (
+                  <Link
+                    key={`accordion-${card.key}`}
+                    to={card.to}
+                    className={getCardClasses(card.accent, 'flex-shrink-0 px-3 py-3')}
+                  >
+                    <div className='flex items-center justify-between'>
+                      <h2 className='text-sm font-semibold'>{card.title}</h2>
+                      <ArrowUpRight
+                        className={`h-4 w-4 ${accentStyles[card.accent].arrow} transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5`}
+                      />
+                    </div>
+                    <p className='text-xs leading-relaxed text-slate-500 dark:text-slate-400'>
+                      {card.description}
+                    </p>
+                  </Link>
+                ))}
+              </div>
+            </details>
+          </div>
+
+          <div className='hidden sm:grid sm:grid-cols-2 gap-4'>
+            {clusterCards.map(card => (
+              <Link
+                key={`desktop-${card.key}`}
+                to={card.to}
+                className={getCardClasses(card.accent, card.span ? 'sm:col-span-2' : '')}
+              >
+                <div className='flex items-center justify-between'>
+                  <h2 className='text-lg font-semibold'>{card.title}</h2>
+                  <ArrowUpRight
+                    className={`h-4 w-4 ${accentStyles[card.accent].arrow} transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5`}
+                  />
+                </div>
+                <p className='text-sm leading-relaxed text-slate-500 dark:text-slate-400'>
+                  {card.description}
+                </p>
+              </Link>
+            ))}
+          </div>
+        </section>
+
+        <div className='mb-8 sm:mb-10 text-xs sm:text-sm text-center text-slate-500 dark:text-slate-400 px-4 sm:px-0'>
+          {language === 'zh' ? (
+            <>
+              需要代码示例？前往
+              <Link to='/how-to' className='mx-1 text-blue-600 dark:text-blue-400 underline-offset-2 hover:underline'>
+                使用教程库
+              </Link>
+              或
+              <Link to='/guide' className='ml-1 text-blue-600 dark:text-blue-400 underline-offset-2 hover:underline'>
+                开发者指南
+              </Link>
+              获取跨语言时间戳解决方案。
+            </>
+          ) : (
+            <>
+              Need code samples? Head to
+              <Link to='/how-to' className='mx-1 text-blue-600 dark:text-blue-400 underline-offset-2 hover:underline'>
+                How-To Library
+              </Link>
+              or
+              <Link to='/guide' className='ml-1 text-blue-600 dark:text-blue-400 underline-offset-2 hover:underline'>
+                Developer Guides
+              </Link>
+              for multi-language timestamp solutions.
+            </>
+          )}
         </div>
 
         {/* Manual Date & Time section */}

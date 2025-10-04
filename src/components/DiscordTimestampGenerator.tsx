@@ -1,5 +1,6 @@
-import { AlertCircle, CheckCircle, Clock, Copy, MessageSquare, TrendingUp } from 'lucide-react';
+import { AlertCircle, ArrowUpRight, CheckCircle, Clock, Copy, MessageSquare, TrendingUp } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 
 import { useTheme } from '../contexts/ThemeContext';
 import Footer from './Footer';
@@ -314,6 +315,59 @@ export default function DiscordTimestampGenerator() {
               Perfect for scheduling events, setting reminders, or coordinating activities across
               different time zones. Choose from 7 different display formats.
             </p>
+          </div>
+
+          <div className='mb-8 grid gap-3 sm:gap-4 sm:grid-cols-2'>
+            <Link
+              to='/'
+              className={`group flex items-start justify-between gap-3 rounded-2xl border px-4 py-5 text-left transition-colors ${
+                isDark
+                  ? 'border-slate-600 bg-slate-800/50 hover:border-blue-400/70 hover:bg-slate-800'
+                  : 'border-blue-200/70 bg-white hover:border-blue-400/70 hover:bg-blue-50'
+              }`}
+            >
+              <div>
+                <p className='text-sm font-semibold text-blue-600 dark:text-blue-300'>Timestamp Converter</p>
+                <p className='mt-1 text-xs leading-relaxed text-slate-500 dark:text-slate-400'>
+                  Grab Unix timestamps or ISO strings from the main converter and paste them directly into Discord formats.
+                </p>
+              </div>
+              <ArrowUpRight className='h-4 w-4 flex-shrink-0 text-blue-500 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5' />
+            </Link>
+
+            <Link
+              to='/timezones'
+              className={`group flex items-start justify-between gap-3 rounded-2xl border px-4 py-5 text-left transition-colors ${
+                isDark
+                  ? 'border-slate-600 bg-slate-800/50 hover:border-emerald-400/70 hover:bg-slate-800'
+                  : 'border-emerald-200/70 bg-white hover:border-emerald-400/70 hover:bg-emerald-50'
+              }`}
+            >
+              <div>
+                <p className='text-sm font-semibold text-emerald-600 dark:text-emerald-300'>Timezone Explorer</p>
+                <p className='mt-1 text-xs leading-relaxed text-slate-500 dark:text-slate-400'>
+                  Research offsets, DST changes, and localized names before sharing event links across regions.
+                </p>
+              </div>
+              <ArrowUpRight className='h-4 w-4 flex-shrink-0 text-emerald-500 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5' />
+            </Link>
+
+            <Link
+              to='/how-to/timezone-conversion'
+              className={`group sm:col-span-2 flex items-start justify-between gap-3 rounded-2xl border px-4 py-5 text-left transition-colors ${
+                isDark
+                  ? 'border-slate-600 bg-slate-800/50 hover:border-violet-400/70 hover:bg-slate-800'
+                  : 'border-violet-200/70 bg-white hover:border-violet-400/70 hover:bg-violet-50'
+              }`}
+            >
+              <div>
+                <p className='text-sm font-semibold text-violet-600 dark:text-violet-300'>Timezone Conversion How-To</p>
+                <p className='mt-1 text-xs leading-relaxed text-slate-500 dark:text-slate-400'>
+                  Learn how to convert timestamps programmatically for Discord bots, Slack apps, and scheduling pipelines.
+                </p>
+              </div>
+              <ArrowUpRight className='h-4 w-4 flex-shrink-0 text-violet-500 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5' />
+            </Link>
           </div>
 
           {/* Main Layout - Left/Right Split */}

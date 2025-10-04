@@ -14,6 +14,8 @@ import JavaScriptTimestamps from './guides/JavaScriptTimestamps';
 import PythonDatetime from './guides/PythonDatetime';
 import TimezonesGuide from './guides/TimezonesGuide';
 import WhatIsUnixTimestamp from './guides/WhatIsUnixTimestamp';
+import ExcelTimestampBasics from './guides/ExcelTimestampBasics';
+import FixTimestampOffsets from './guides/FixTimestampOffsets';
 
 export default function Guide() {
   const { articleId } = useParams();
@@ -62,6 +64,20 @@ export default function Guide() {
       description: 'RESTful and GraphQL timestamp handling best practices',
       icon: <Server className='w-5 h-5 sm:w-6 sm:h-6' />,
       content: <APITimestampHandling />,
+    },
+    {
+      id: 'excel-timestamp-basics',
+      title: 'Excel Timestamp Basics',
+      description: 'Simple formulas to convert Unix time inside Excel or Google Sheets without confusion',
+      icon: <Clock className='w-5 h-5 sm:w-6 sm:h-6' />,
+      content: <ExcelTimestampBasics />,
+    },
+    {
+      id: 'fix-timestamp-offsets',
+      title: 'Fix Off-By-Hours Timestamp Bugs',
+      description: 'Fast checklist to solve timezone and unit mistakes that shift times in apps',
+      icon: <Code className='w-5 h-5 sm:w-6 sm:h-6' />,
+      content: <FixTimestampOffsets />,
     },
   ];
 
