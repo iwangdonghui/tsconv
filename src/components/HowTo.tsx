@@ -1,4 +1,4 @@
-import { Calculator, Clock, Code, Database, Globe, Zap } from 'lucide-react';
+import { Calculator, CalendarClock, Clock, Code, Database, FileSpreadsheet, Globe, Zap } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import { useTheme } from '../contexts/ThemeContext';
@@ -11,6 +11,8 @@ import CommonPatterns from './howto/CommonPatterns';
 import DatabaseOperations from './howto/DatabaseOperations';
 import FormatTimestamps from './howto/FormatTimestamps';
 import GetCurrentTimestamp from './howto/GetCurrentTimestamp';
+import ExcelSerialToUnix from './howto/ExcelSerialToUnix';
+import ExcelUtcSharing from './howto/ExcelUtcSharing';
 import TimeArithmetic from './howto/TimeArithmetic';
 import TimezoneConversion from './howto/TimezoneConversion';
 
@@ -62,6 +64,20 @@ export default function HowTo() {
       description: 'Frequently used timestamp patterns and best practices',
       icon: <Zap className='w-5 h-5 sm:w-6 sm:h-6' />,
       content: <CommonPatterns />,
+    },
+    {
+      id: 'excel-serial-to-unix',
+      title: 'Excel Serial Date to Unix Timestamp',
+      description: 'Convert Excel serial dates into API-ready Unix timestamps without macros',
+      icon: <FileSpreadsheet className='w-5 h-5 sm:w-6 sm:h-6' />,
+      content: <ExcelSerialToUnix />,
+    },
+    {
+      id: 'excel-utc-sharing',
+      title: 'Keep Excel Sheets in UTC',
+      description: 'Freeze timestamp columns in UTC before exporting or sharing with your team',
+      icon: <CalendarClock className='w-5 h-5 sm:w-6 sm:h-6' />,
+      content: <ExcelUtcSharing />,
     },
   ];
 
