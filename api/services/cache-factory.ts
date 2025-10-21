@@ -82,21 +82,15 @@ export class CacheFactory {
    */
   private static createUpstashCache(): CacheService {
     try {
-      // Dynamic import to avoid loading Upstash dependencies if not needed
-      // In Vitest, ESM/CJS interop can differ; support both default and named exports
-      // Try both ESM and CJS paths to satisfy vitest resolver
-      let UpstashCacheServiceModule: any;
-      try {
-        UpstashCacheServiceModule = require('./upstash-cache-service');
-      } catch (e) {
-        UpstashCacheServiceModule = require('./upstash-cache-service.ts');
+      const upstashModule = require('./upstash-cache-service');
+      const UpstashCacheService = upstashModule?.UpstashCacheService ?? upstashModule?.default;
+      if (UpstashCacheService) {
+        return new UpstashCacheService();
       }
-      const UpstashCacheService =
-        UpstashCacheServiceModule?.UpstashCacheService ?? UpstashCacheServiceModule?.default;
-      return new UpstashCacheService();
+      throw new Error('Upstash cache service not available');
     } catch (error) {
       console.warn('Failed to load Upstash cache service:', error);
-      throw error;
+      return new MemoryCacheService();
     }
   }
 
@@ -105,12 +99,15 @@ export class CacheFactory {
    */
   private static createRedisCache(): CacheService {
     try {
-      // Dynamic import to avoid loading Redis dependencies if not needed
-      const { RedisCacheService } = require('./redis-cache-service.ts');
-      return new RedisCacheService();
+      const redisModule = require('./redis-cache-service');
+      const RedisCacheService = redisModule?.RedisCacheService ?? redisModule?.default;
+      if (RedisCacheService) {
+        return new RedisCacheService();
+      }
+      throw new Error('Redis cache service not available');
     } catch (error) {
       console.warn('Failed to load Redis cache service:', error);
-      throw error;
+      return new MemoryCacheService();
     }
   }
 

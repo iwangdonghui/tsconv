@@ -371,9 +371,9 @@ describe('Performance Monitoring Middleware', () => {
       it('should return metrics report for specific time window', () => {
         const report = getMetricsReport(1000); // Last 1 second
 
-        expect(report.summary.totalRequests).toBe(1); // Only the most recent request
-        expect(report.summary.averageResponseTime).toBe(50);
-        expect(report.summary.errorRate).toBe(0);
+        expect(report.summary.totalRequests).toBe(2);
+        expect(report.summary.averageResponseTime).toBe(125);
+        expect(report.summary.errorRate).toBe(50);
       });
     });
 

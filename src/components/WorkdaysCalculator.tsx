@@ -133,6 +133,7 @@ export default function WorkdaysCalculator() {
         startDate,
         excludeWeekends: excludeWeekends.toString(),
         excludeHolidays: excludeHolidays.toString(),
+        mode: calculationMode,
         ...(excludeHolidays && { country }),
         ...(calculationMode === 'dateRange' ? { endDate } : { days }),
       });
@@ -143,7 +144,7 @@ export default function WorkdaysCalculator() {
       if (data.success) {
         setResult(data);
       } else {
-        setError(data.message || 'Failed to calculate workdays');
+        setError(data.error || data.message || 'Failed to calculate workdays');
       }
     } catch (err) {
       setError('Network error occurred');

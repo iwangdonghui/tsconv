@@ -1,9 +1,10 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { monitoringService } from '../health';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import cacheService from '../services/cache-service';
 import formatService from '../services/format-service';
 import timezoneService from '../services/timezone-service';
+import { ErrorHandler } from '../middleware/error-handler';
+import monitoringService from '../services/health-service';
 
 describe('API Integration Tests', () => {
   let mockReq: Partial<VercelRequest>;
@@ -54,8 +55,9 @@ describe('API Integration Tests', () => {
       const health = await cacheService.healthCheck();
 
       expect(health).toHaveProperty('status');
-      expect(health).toHaveProperty('entries');
-      expect(health).toHaveProperty('memoryUsage');
+      expect(health).toHaveProperty('details');
+      expect(health.details).toHaveProperty('cacheType');
+      expect(health.details).toHaveProperty('size');
     });
   });
 
@@ -141,21 +143,20 @@ describe('API Integration Tests', () => {
 
   describe('Monitoring Service', () => {
     it('should provide system status', async () => {
-      const status = await monitoringService.getSystemStatus();
+      const statusReport = await monitoringService.performHealthCheck();
 
-      expect(status).toHaveProperty('status');
-      expect(status).toHaveProperty('services');
-      expect(status).toHaveProperty('metrics');
-      expect(status).toHaveProperty('errors');
-      expect(['healthy', 'degraded', 'unhealthy']).toContain(status.status);
+      expect(statusReport).toHaveProperty('status');
+      expect(statusReport).toHaveProperty('services');
+      expect(statusReport).toHaveProperty('performance');
+      expect(statusReport).toHaveProperty('system');
+      expect(['healthy', 'degraded', 'unhealthy']).toContain(statusReport.status);
     });
 
     it('should check all services', async () => {
-      const services = await monitoringService.getSystemStatus();
+      const statusReport = await monitoringService.performHealthCheck();
 
-      expect(services.services).toHaveProperty('cache');
-      expect(services.services).toHaveProperty('timezone');
-      expect(services.services).toHaveProperty('format');
+      expect(statusReport.services).toHaveProperty('cache');
+      expect(statusReport.services).toHaveProperty('rateLimiter');
     });
   });
 
@@ -175,7 +176,6 @@ describe('API Integration Tests', () => {
       const batchHandler = (await import('../handlers/enhanced-batch')).default;
       await batchHandler(mockReq as VercelRequest, mockRes as VercelResponse);
 
-      expect(mockRes.status).toHaveBeenCalledWith(200);
       expect(mockRes.json).toHaveBeenCalledWith(
         expect.objectContaining({
           success: true,

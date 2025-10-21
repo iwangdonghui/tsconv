@@ -52,29 +52,63 @@ function addBusinessDays(
   excludeWeekends: boolean,
   excludeHolidays: boolean,
   country: string
-): Date {
+): {
+  targetDate: Date;
+  workdays: number;
+  totalDays: number;
+  weekends: number;
+  holidays: number;
+  excludedDates: Array<{ date: string; reason: string; name?: string }>;
+} {
   const currentDate = new Date(startDate);
   let addedDays = 0;
+  let weekends = 0;
+  let holidays = 0;
+  const excludedDates: Array<{ date: string; reason: string; name?: string }> = [];
 
   while (addedDays < days) {
     currentDate.setDate(currentDate.getDate() + 1);
 
-    let shouldCount = true;
+    let isExcluded = false;
+    let exclusionReason = '';
+    let holidayName = '';
 
     if (excludeWeekends && isWeekend(currentDate)) {
-      shouldCount = false;
+      weekends++;
+      isExcluded = true;
+      exclusionReason = 'Weekend';
     }
 
-    if (excludeHolidays && isHoliday(currentDate, country)) {
-      shouldCount = false;
+    const holiday = excludeHolidays ? isHoliday(currentDate, country) : null;
+    if (holiday) {
+      holidays++;
+      isExcluded = true;
+      exclusionReason = exclusionReason ? `${exclusionReason}, Holiday` : 'Holiday';
+      holidayName = holiday.name;
     }
 
-    if (shouldCount) {
-      addedDays++;
+    if (isExcluded) {
+      excludedDates.push({
+        date: currentDate.toISOString().slice(0, 10),
+        reason: exclusionReason,
+        ...(holidayName ? { name: holidayName } : {}),
+      });
+      continue;
     }
+
+    addedDays++;
   }
 
-  return currentDate;
+  const totalDays = addedDays + excludedDates.length;
+
+  return {
+    targetDate: currentDate,
+    workdays: addedDays,
+    totalDays,
+    weekends,
+    holidays,
+    excludedDates,
+  };
 }
 
 function calculateWorkdays(
@@ -114,7 +148,7 @@ function calculateWorkdays(
 
     if (isExcluded) {
       excludedDates.push({
-        date: current.toISOString().split('T')[0] ?? '',
+        date: current.toISOString().slice(0, 10),
         reason: exclusionReason,
         ...(holidayName ? { name: holidayName } : {}),
       });
@@ -183,9 +217,24 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         });
       }
 
-      const targetDate = addBusinessDays(
+      const requestedDays = parseInt(days, 10);
+      if (Number.isNaN(requestedDays) || requestedDays <= 0) {
+        return res.status(400).json({
+          success: false,
+          error: 'Days parameter must be a positive number',
+        });
+      }
+
+      const {
+        targetDate,
+        workdays,
+        totalDays,
+        weekends,
+        holidays,
+        excludedDates,
+      } = addBusinessDays(
         start,
-        parseInt(days),
+        requestedDays,
         excludeWeekendsFlag,
         excludeHolidaysFlag,
         country
@@ -193,9 +242,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       result = {
         mode: 'dayCount',
-        startDate: start.toISOString().split('T')[0],
-        targetDate: targetDate.toISOString().split('T')[0],
-        requestedDays: parseInt(days),
+        startDate: start.toISOString().slice(0, 10),
+        targetDate: targetDate.toISOString().slice(0, 10),
+        requestedDays,
+        workdays,
+        totalDays,
+        weekends,
+        holidays,
+        excludedDates,
         settings: {
           excludeWeekends: excludeWeekendsFlag,
           excludeHolidays: excludeHolidaysFlag,
@@ -221,8 +275,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       result = {
         mode: 'dateRange',
-        startDate: start.toISOString().split('T')[0],
-        endDate: end.toISOString().split('T')[0],
+        startDate: start.toISOString().slice(0, 10),
+        endDate: end.toISOString().slice(0, 10),
         ...calculation,
         settings: {
           excludeWeekends: excludeWeekendsFlag,

@@ -1,6 +1,11 @@
 import '@testing-library/jest-dom';
 import { vi } from 'vitest';
 
+// Ensure feature flags default to enabled during tests unless explicitly overridden
+if (typeof process !== 'undefined') {
+  process.env.RATE_LIMITING_ENABLED = 'true';
+}
+
 // Mock window.matchMedia
 Object.defineProperty(window, 'matchMedia', {
   writable: true,

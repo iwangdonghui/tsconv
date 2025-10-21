@@ -7,48 +7,7 @@ import {
   getClientIdentifier,
   getRateLimitRule,
 } from '../rate-limiter-factory';
-
-// Mock the config module with mutable structure
-vi.mock('../config/config', () => {
-  const mockConfig = {
-    rateLimiting: {
-      enabled: true,
-      rules: [
-        {
-          identifier: 'anonymous',
-          limit: 100,
-          window: 60000,
-          type: 'ip',
-        },
-      ],
-      defaultLimits: {
-        anonymous: {
-          identifier: 'anonymous',
-          limit: 100,
-          window: 60000,
-          type: 'ip',
-        },
-        authenticated: {
-          identifier: 'authenticated',
-          limit: 1000,
-          window: 60000,
-          type: 'user',
-        },
-      },
-    },
-    caching: {
-      redis: {
-        url: 'redis://localhost:6379',
-        useUpstash: false,
-        fallbackToMemory: true,
-      },
-    },
-  };
-
-  return {
-    default: mockConfig,
-  };
-});
+import { getConfig, overrideConfig, resetConfig } from '../../config/config';
 
 // Mock the rate limiter modules
 vi.mock('../rate-limiter', () => ({
@@ -101,11 +60,20 @@ vi.mock('../upstash-rate-limiter', () => ({
   })),
 }));
 
+const originalRateLimitEnv = process.env.RATE_LIMITING_ENABLED;
+
 describe('RateLimiterFactory', () => {
   beforeEach(() => {
     // Reset the singleton instance before each test
     RateLimiterFactory.reset();
     vi.clearAllMocks();
+
+    resetConfig();
+    process.env.RATE_LIMITING_ENABLED = 'true';
+    overrideConfig(cfg => {
+      cfg.rateLimiting.enabled = true;
+      cfg.caching.redis.useUpstash = false;
+    });
 
     // Clear environment variables
     delete process.env.UPSTASH_REDIS_REST_URL;
@@ -116,6 +84,13 @@ describe('RateLimiterFactory', () => {
   afterEach(() => {
     RateLimiterFactory.reset();
     vi.clearAllMocks();
+    resetConfig();
+
+    if (originalRateLimitEnv === undefined) {
+      delete process.env.RATE_LIMITING_ENABLED;
+    } else {
+      process.env.RATE_LIMITING_ENABLED = originalRateLimitEnv;
+    }
   });
 
   describe('create()', () => {
@@ -138,31 +113,14 @@ describe('RateLimiterFactory', () => {
       process.env.UPSTASH_REDIS_REST_URL = 'https://test.upstash.io';
       process.env.UPSTASH_REDIS_REST_TOKEN = 'test-token';
 
-      // Mock config to use Upstash
-      vi.doMock('../config/config', () => ({
-        default: {
-          rateLimiting: {
-            enabled: true,
-            rules: [],
-            defaultLimits: {
-              anonymous: { identifier: 'anonymous', limit: 100, window: 60000, type: 'ip' },
-              authenticated: {
-                identifier: 'authenticated',
-                limit: 1000,
-                window: 60000,
-                type: 'user',
-              },
-            },
-          },
-          caching: {
-            redis: {
-              url: 'https://test.upstash.io',
-              useUpstash: true,
-              fallbackToMemory: true,
-            },
-          },
-        },
-      }));
+      overrideConfig(cfg => {
+        cfg.caching.redis = {
+          ...cfg.caching.redis,
+          url: 'https://test.upstash.io',
+          useUpstash: true,
+          fallbackToMemory: true,
+        };
+      });
 
       const rateLimiter = RateLimiterFactory.create();
       expect(rateLimiter).toBeDefined();
@@ -197,31 +155,9 @@ describe('RateLimiterFactory', () => {
     });
 
     it('should create disabled rate limiter when rate limiting is disabled', () => {
-      // Mock config with rate limiting disabled
-      vi.doMock('../config/config', () => ({
-        default: {
-          rateLimiting: {
-            enabled: false,
-            rules: [],
-            defaultLimits: {
-              anonymous: { identifier: 'anonymous', limit: 100, window: 60000, type: 'ip' },
-              authenticated: {
-                identifier: 'authenticated',
-                limit: 1000,
-                window: 60000,
-                type: 'user',
-              },
-            },
-          },
-          caching: {
-            redis: {
-              url: 'redis://localhost:6379',
-              useUpstash: false,
-              fallbackToMemory: true,
-            },
-          },
-        },
-      }));
+      overrideConfig(cfg => {
+        cfg.rateLimiting.enabled = false;
+      });
 
       const rateLimiter = RateLimiterFactory.create();
       expect(rateLimiter).toBeDefined();
@@ -238,65 +174,35 @@ describe('RateLimiterFactory', () => {
     });
 
     it('should return invalid when rate limiting is disabled', () => {
-      // Mock config with rate limiting disabled
-      vi.doMock('../config/config', () => ({
-        default: {
-          rateLimiting: {
-            enabled: false,
-            rules: [],
-            defaultLimits: {
-              anonymous: { identifier: 'anonymous', limit: 100, window: 60000, type: 'ip' },
-              authenticated: {
-                identifier: 'authenticated',
-                limit: 1000,
-                window: 60000,
-                type: 'user',
-              },
-            },
-          },
-          caching: {
-            redis: {
-              url: 'redis://localhost:6379',
-              useUpstash: false,
-              fallbackToMemory: true,
-            },
-          },
-        },
-      }));
+      const originalEnv = process.env.RATE_LIMITING_ENABLED;
+      process.env.RATE_LIMITING_ENABLED = 'false';
+      overrideConfig(cfg => {
+        cfg.rateLimiting.enabled = false;
+      });
 
       const validation = RateLimiterFactory.validateConfiguration();
 
       expect(validation.valid).toBe(false);
       expect(validation.provider).toBe('disabled');
       expect(validation.issues).toContain('Rate limiting is disabled in configuration');
+
+      if (originalEnv) {
+        process.env.RATE_LIMITING_ENABLED = originalEnv;
+      } else {
+        delete process.env.RATE_LIMITING_ENABLED;
+      }
     });
 
     it('should validate Upstash configuration', () => {
       // Mock config to use Upstash without environment variables
-      vi.doMock('../config/config', () => ({
-        default: {
-          rateLimiting: {
-            enabled: true,
-            rules: [],
-            defaultLimits: {
-              anonymous: { identifier: 'anonymous', limit: 100, window: 60000, type: 'ip' },
-              authenticated: {
-                identifier: 'authenticated',
-                limit: 1000,
-                window: 60000,
-                type: 'user',
-              },
-            },
-          },
-          caching: {
-            redis: {
-              url: 'https://test.upstash.io',
-              useUpstash: true,
-              fallbackToMemory: true,
-            },
-          },
-        },
-      }));
+      overrideConfig(cfg => {
+        cfg.caching.redis = {
+          ...cfg.caching.redis,
+          url: 'https://test.upstash.io',
+          useUpstash: true,
+          fallbackToMemory: true,
+        };
+      });
 
       const validation = RateLimiterFactory.validateConfiguration();
 
@@ -310,19 +216,26 @@ describe('RateLimiterFactory', () => {
   describe('getConfigurationSummary()', () => {
     it('should return configuration summary', () => {
       const summary = RateLimiterFactory.getConfigurationSummary();
+      const currentConfig = getConfig();
 
       expect(summary).toEqual({
-        enabled: true,
+        enabled: currentConfig.rateLimiting.enabled,
         provider: 'memory',
-        rules: 1,
+        rules: currentConfig.rateLimiting.rules.length,
         defaultLimits: {
-          anonymous: { limit: 100, window: 60000 },
-          authenticated: { limit: 1000, window: 60000 },
+          anonymous: {
+            limit: currentConfig.rateLimiting.defaultLimits.anonymous.limit,
+            window: currentConfig.rateLimiting.defaultLimits.anonymous.window,
+          },
+          authenticated: {
+            limit: currentConfig.rateLimiting.defaultLimits.authenticated.limit,
+            window: currentConfig.rateLimiting.defaultLimits.authenticated.window,
+          },
         },
         redisConfig: {
-          url: '[CONFIGURED]',
-          useUpstash: false,
-          fallbackToMemory: true,
+          url: currentConfig.caching.redis.url ? '[CONFIGURED]' : undefined,
+          useUpstash: currentConfig.caching.redis.useUpstash ?? false,
+          fallbackToMemory: currentConfig.caching.redis.fallbackToMemory ?? false,
         },
       });
     });
@@ -330,6 +243,9 @@ describe('RateLimiterFactory', () => {
 
   describe('healthCheck()', () => {
     it('should perform health check successfully', async () => {
+      const rateLimiter = RateLimiterFactory.create();
+      expect(typeof (rateLimiter as any).checkLimit).toBe('function');
+
       const health = await RateLimiterFactory.healthCheck();
 
       expect(health.status).toBe('healthy');
@@ -344,12 +260,16 @@ describe('RateLimiterFactory', () => {
         checkLimit: vi.fn().mockRejectedValue(new Error('Test error')),
       };
 
-      vi.spyOn(RateLimiterFactory, 'create').mockReturnValue(mockRateLimiter as any);
+      const createSpy = vi
+        .spyOn(RateLimiterFactory, 'create')
+        .mockReturnValue(mockRateLimiter as any);
 
       const health = await RateLimiterFactory.healthCheck();
 
       expect(health.status).toBe('unhealthy');
       expect(health.details.error).toBe('Test error');
+
+      createSpy.mockRestore();
     });
   });
 

@@ -130,11 +130,23 @@ if (process.env['NODE_ENV'] === 'development') {
 }
 
 if (process.env['NODE_ENV'] === 'test') {
-  config.rateLimiting.enabled = false;
-  config.caching.enabled = false;
+  const rateLimitEnv = process.env['RATE_LIMITING_ENABLED'];
+  const cachingEnv = process.env['CACHING_ENABLED'];
+
+  if (rateLimitEnv !== 'true') {
+    config.rateLimiting.enabled = false;
+  }
+
+  if (cachingEnv !== 'true') {
+    config.caching.enabled = false;
+  }
+
   config.monitoring.metricsEnabled = false;
   config.monitoring.logLevel = 'error';
 }
+
+const deepClone = <T>(value: T): T => JSON.parse(JSON.stringify(value));
+const baselineConfig: APIConfiguration = deepClone(config);
 
 export default config;
 
@@ -174,3 +186,17 @@ export const getCacheTTL = (endpoint?: string): number => {
 export const getTimezoneConfig = () => config.timezone;
 export const getSecurityConfig = () => config.security;
 export const getMonitoringConfig = () => config.monitoring;
+
+// Test helpers to safely override and reset configuration between test cases
+export const overrideConfig = (updater: (mutableConfig: APIConfiguration) => void): void => {
+  if (typeof updater === 'function') {
+    updater(config);
+  }
+};
+
+export const resetConfig = (): void => {
+  const snapshot = deepClone(baselineConfig);
+  (Object.keys(snapshot) as Array<keyof APIConfiguration>).forEach(key => {
+    (config as any)[key] = snapshot[key];
+  });
+};
