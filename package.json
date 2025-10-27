@@ -140,7 +140,7 @@
   "devDependencies": {
     "@commitlint/cli": "^19.8.1",
     "@commitlint/config-conventional": "^19.8.1",
-    "@testing-library/jest-dom": "^6.1.5",
+    "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.0",
     "@testing-library/user-event": "^14.5.1",
     "@types/react": "^18.2.66",
@@ -178,7 +178,7 @@
     "typescript": "^5.2.2",
     "vercel": "^44.7.3",
     "vite": "^7.1.1",
-    "vitest": "^3.2.4",
+    "vitest": "^4.0.3",
     "wrangler": "^4.28.1"
   },
   "engines": {
