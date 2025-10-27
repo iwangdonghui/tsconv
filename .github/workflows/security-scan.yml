@@ -61,7 +61,7 @@ jobs:
           fi
       
       - name: 📊 Upload audit report
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v5
         if: always()
         with:
           name: dependency-audit-report
@@ -135,7 +135,7 @@ jobs:
           sarif_file: semgrep.sarif
       
       - name: 📊 Upload ESLint results
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v5
         if: always()
         with:
           name: eslint-security-report
@@ -251,7 +251,7 @@ jobs:
           fi
       
       - name: 📊 Upload license report
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v5
         if: always()
         with:
           name: license-report
@@ -292,7 +292,7 @@ jobs:
           node scripts/security-scanner.cjs
       
       - name: 📊 Upload comprehensive report
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v5
         if: always()
         with:
           name: comprehensive-security-report
