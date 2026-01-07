@@ -1,13 +1,13 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
-import { 
-  ValidationResult, 
-  ValidationState,
-  getValidationState,
-  validateTimestamp,
-  validateDateString,
-  validateManualDate,
-  isLikelyTimestamp,
-  ManualDate
+import { useCallback, useEffect, useRef, useState } from 'react';
+import {
+    getValidationState,
+    isLikelyTimestamp,
+    ManualDate,
+    validateDateString,
+    validateManualDate,
+    validateTimestamp,
+    ValidationResult,
+    ValidationState
 } from '../utils/validation';
 
 export type ValidationFunction = (input: string) => ValidationResult;
@@ -19,25 +19,25 @@ export interface UseInputValidationOptions {
    * @default 300
    */
   debounceMs?: number;
-  
+
   /**
    * Initial validation state
    * @default 'idle'
    */
   initialState?: ValidationState;
-  
+
   /**
    * Custom validation function
    * If not provided, the hook will try to auto-detect the input type
    */
   validator?: ValidationFunction | ManualDateValidationFunction;
-  
+
   /**
    * Enable caching of validation results
    * @default true
    */
   enableCache?: boolean;
-  
+
   /**
    * Maximum cache size
    * @default 50
@@ -50,27 +50,27 @@ export interface UseInputValidationReturn<T extends string | ManualDate> {
    * Current validation result
    */
   validationResult: ValidationResult | null;
-  
+
   /**
    * Current validation state
    */
   validationState: ValidationState;
-  
+
   /**
    * Whether validation is in progress
    */
   isValidating: boolean;
-  
+
   /**
    * Validate input manually
    */
   validateInput: (input: T) => void;
-  
+
   /**
    * Clear validation state and result
    */
   clearValidation: () => void;
-  
+
   /**
    * Reset validation to initial state
    */
@@ -95,9 +95,9 @@ export function useInputValidation<T extends string | ManualDate = string>(
   const [validationState, setValidationState] = useState<ValidationState>(initialState);
   const [validationResult, setValidationResult] = useState<ValidationResult | null>(null);
   const [isValidating, setIsValidating] = useState(false);
-  
+
   // Refs
-  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const cacheRef = useRef<Map<string, ValidationResult>>(new Map());
   const lastInputRef = useRef<T | null>(null);
 
@@ -141,15 +141,15 @@ export function useInputValidation<T extends string | ManualDate = string>(
    */
   const validateWithCache = useCallback((input: T): ValidationResult => {
     const cacheKey = getCacheKey(input);
-    
+
     // Check cache first if enabled
     if (enableCache && cacheKey !== undefined && cacheRef.current.has(cacheKey)) {
       return cacheRef.current.get(cacheKey)!;
     }
-    
+
     // Perform validation based on input type
     let result: ValidationResult;
-    
+
     if (validator) {
       // Use custom validator
       if (typeof input === 'string') {
@@ -166,7 +166,7 @@ export function useInputValidation<T extends string | ManualDate = string>(
         result = validateManualDate(input as ManualDate);
       }
     }
-    
+
     // Cache the result if enabled
     if (enableCache) {
       // Implement LRU-like behavior by removing oldest entries if cache is too large
@@ -176,12 +176,12 @@ export function useInputValidation<T extends string | ManualDate = string>(
           cacheRef.current.delete(firstKey);
         }
       }
-      
+
       if (cacheKey !== undefined && cacheKey !== null) {
         cacheRef.current.set(cacheKey, result);
       }
     }
-    
+
     return result;
   }, [validator, enableCache, maxCacheSize, autoDetectAndValidate, getCacheKey]);
 
@@ -191,16 +191,16 @@ export function useInputValidation<T extends string | ManualDate = string>(
   const validateInput = useCallback((input: T) => {
     // Store the input for potential later use
     lastInputRef.current = input;
-    
+
     // Clear any existing timer
     if (debounceTimerRef.current) {
       clearTimeout(debounceTimerRef.current);
     }
-    
+
     // Set validating state immediately
     setIsValidating(true);
     setValidationState('validating');
-    
+
     // Debounce the validation
     debounceTimerRef.current = setTimeout(() => {
       try {
@@ -230,7 +230,7 @@ export function useInputValidation<T extends string | ManualDate = string>(
     setValidationState('idle');
     setValidationResult(null);
     setIsValidating(false);
-    
+
     if (debounceTimerRef.current) {
       clearTimeout(debounceTimerRef.current);
       debounceTimerRef.current = null;
@@ -244,7 +244,7 @@ export function useInputValidation<T extends string | ManualDate = string>(
     setValidationState(initialState);
     setValidationResult(null);
     setIsValidating(false);
-    
+
     if (debounceTimerRef.current) {
       clearTimeout(debounceTimerRef.current);
       debounceTimerRef.current = null;

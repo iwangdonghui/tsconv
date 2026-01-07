@@ -600,4 +600,11 @@ export function trackApiResponseTime(endpoint: string, duration: number): void {
   }
 }
 
+export function resetPerformanceMonitor(): void {
+  if (performanceMonitor) {
+    performanceMonitor.cleanup();
+    performanceMonitor = null;
+  }
+}
+
 export default PerformanceMonitor;

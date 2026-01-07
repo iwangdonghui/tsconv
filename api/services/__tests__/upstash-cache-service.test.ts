@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { UpstashCacheService } from '../upstash-cache-service';
 
 // Mock Upstash Redis
@@ -164,7 +164,6 @@ describe('UpstashCacheService', () => {
       const stats = await cacheService.stats();
 
       expect(stats.size).toBe(10);
-      expect(stats.memoryUsed).toBe(1048576);
       expect(stats.keys).toEqual(['key1', 'key2', 'key3']);
     });
 

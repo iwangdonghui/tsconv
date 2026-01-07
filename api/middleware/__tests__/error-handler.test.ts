@@ -1,18 +1,18 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { VercelRequest, VercelResponse } from '@vercel/node';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
-  errorHandlerMiddleware,
-  asyncErrorHandler,
   APIErrorClass,
-  ErrorType,
+  CircuitBreaker,
   ErrorSeverity,
-  createValidationError,
+  ErrorType,
+  asyncErrorHandler,
+  createInternalError,
   createNotFoundError,
   createRateLimitError,
   createTimeoutError,
-  createInternalError,
+  createValidationError,
+  errorHandlerMiddleware,
   withRetry,
-  CircuitBreaker,
 } from '../error-handler';
 
 // Mock config
@@ -227,7 +227,13 @@ describe('Error Handler Middleware', () => {
       const middleware = errorHandlerMiddleware({ onError });
       middleware(error, req, res);
 
-      expect(onError).toHaveBeenCalledWith(error, expect.any(Object));
+      expect(onError).toHaveBeenCalledWith(
+        expect.objectContaining({
+          message: 'Test error',
+          cause: error,
+        }),
+        expect.any(Object)
+      );
     });
 
     it('should use custom error formatter', () => {
@@ -246,7 +252,13 @@ describe('Error Handler Middleware', () => {
       const middleware = errorHandlerMiddleware({ customErrorFormatter });
       middleware(error, req, res);
 
-      expect(customErrorFormatter).toHaveBeenCalledWith(error, expect.any(Object));
+      expect(customErrorFormatter).toHaveBeenCalledWith(
+        expect.objectContaining({
+          message: 'Test error',
+          cause: error,
+        }),
+        expect.any(Object)
+      );
       expect(res.status).toHaveBeenCalledWith(418);
       expect(res.json).toHaveBeenCalledWith(
         expect.objectContaining({

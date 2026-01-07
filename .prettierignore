@@ -129,4 +129,8 @@ docker-compose.yaml
 
 # Ignore markdown files with specific formatting
 CHANGELOG.md
-LICENSE.md
+
+# Legacy code
+api-handlers/
+scripts/.archive/
+scripts/archive/

@@ -63,7 +63,7 @@ export abstract class BaseHandler {
       };
 
       // Set timeout if specified
-      let timeoutHandle: NodeJS.Timeout | undefined;
+      let timeoutHandle: ReturnType<typeof setTimeout> | undefined;
       if (this.options.timeout) {
         timeoutHandle = setTimeout(() => {
           throw new Error('Request timeout');

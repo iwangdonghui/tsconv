@@ -1,11 +1,11 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
-import { APIErrorHandler, createCorsHeaders, validateRequest } from '../utils/response';
-import { convertTimestamp } from '../utils/conversion-utils';
 import {
-  EnhancedConversionRequest,
-  EnhancedConversionResponse,
-  ConversionData,
+    ConversionData,
+    EnhancedConversionRequest,
+    EnhancedConversionResponse,
 } from '../types/api';
+import { convertTimestamp } from '../utils/conversion-utils';
+import { APIErrorHandler, createCorsHeaders, validateRequest } from '../utils/response';
 
 const MAX_BATCH_SIZE = 250;
 const DEFAULT_OUTPUT_FORMATS = ['iso', 'unix', 'human', 'relative'];
@@ -91,11 +91,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       response.analytics = analytics;
     }
 
-    APIErrorHandler.sendSuccess(res, response, {
-      processingTime: Date.now() - startTime,
-      itemCount: Array.isArray(results) ? results.length : 1,
-      cacheHit: false,
-    });
+    // Generate request ID for consistency
+    const requestId = `req_${Date.now().toString(36)}_${Math.random().toString(36).substring(2, 9)}`;
+    res.setHeader('X-Request-ID', requestId);
+    if (response.metadata) {
+      response.metadata.requestId = requestId;
+    }
+
+    res.status(200).json(response);
   } catch (error) {
     console.error('Enhanced batch conversion error:', error);
     APIErrorHandler.handleServerError(res, error as Error, {

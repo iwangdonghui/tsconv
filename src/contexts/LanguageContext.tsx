@@ -125,7 +125,7 @@ const translations = {
     'footer.resources.unix': 'About Unix Time',
     'footer.resources.timezone': 'IANA Time Zones',
     'footer.resources.rfc': 'RFC 3339 Standard',
-    'footer.copyright': '© 2025 tsconv.com. Built for developers, by developers.',
+    'footer.copyright': '© 2026 tsconv.com. Built for developers, by developers.',
     'footer.made': 'Made with ❤️ for the developer community',
   },
   zh: {
@@ -241,7 +241,7 @@ const translations = {
     'footer.resources.unix': '关于 Unix 时间',
     'footer.resources.timezone': 'IANA 时区',
     'footer.resources.rfc': 'RFC 3339 标准',
-    'footer.copyright': '© 2025 tsconv.com. 为开发者而生，由开发者打造。',
+    'footer.copyright': '© 2026 tsconv.com. 为开发者而生，由开发者打造。',
     'footer.made': '用 ❤️ 为开发者社区制作',
   },
 };

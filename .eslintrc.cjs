@@ -14,8 +14,10 @@ module.exports = {
     'node_modules',
     'coverage',
     'build',
-    '*.config.js',
-    '*.config.ts'
+    '*.config.ts',
+    'api-handlers/',
+    'scripts/.archive/',
+    'scripts/archive/'
   ],
   parser: '@typescript-eslint/parser',
   parserOptions: {
@@ -60,7 +62,8 @@ module.exports = {
     'max-params': ['warn', 6],
 
     // Import/Export rules
-    'no-duplicate-imports': 'error'
+    'no-duplicate-imports': 'error',
+    'no-undef': 'off'
   },
   settings: {
     react: {

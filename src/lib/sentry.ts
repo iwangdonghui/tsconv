@@ -142,9 +142,11 @@ export function initializeSentry(): void {
 
     // 暴露到全局供调试使用
     if (isDevelopment) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (window as any).Sentry = Sentry;
     }
 
+    // eslint-disable-next-line no-console
     console.log('✅ Sentry error tracking initialized successfully!');
   } catch (error) {
     console.error('Failed to initialize Sentry:', error);
@@ -171,7 +173,7 @@ function generateAnonymousUserId(): string {
 function sanitizeTransactionName(transaction: string): string {
   // Remove potential sensitive data from URLs
   return transaction
-    .replace(/\/api\/[^\/]+\/[a-f0-9-]{36}/g, '/api/*/[uuid]')
+    .replace(/\/api\/[^/]+\/[a-f0-9-]{36}/g, '/api/*/[uuid]')
     .replace(/\?.*$/, '')
     .replace(/\/\d+/g, '/[id]');
 }
@@ -221,7 +223,7 @@ export const ErrorReporting = {
   /**
    * Set user context
    */
-  setUser(user: { id?: string; email?: string; username?: string; [key: string]: any }): void {
+  setUser(user: { id?: string; email?: string; username?: string; [key: string]: string | number | undefined | null }): void {
     Sentry.setUser(user);
   },
 
@@ -247,7 +249,7 @@ export const ErrorReporting = {
   /**
    * Set custom context
    */
-  setContext(key: string, context: Record<string, any>): void {
+  setContext(key: string, context: Record<string, unknown>): void {
     Sentry.setContext(key, context);
   },
 };

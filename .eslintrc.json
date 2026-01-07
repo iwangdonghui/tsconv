@@ -158,6 +158,7 @@
     "no-useless-return": "error",
     "prefer-template": "error",
     "yoda": "error",
+    "no-undef": "off",
 
     // Prettier integration
     "prettier/prettier": [
@@ -199,7 +200,11 @@
     "*.min.js",
     "*.bundle.js",
     "public/sw.js",
-    "scripts/*.cjs"
+    "public/sw.js",
+    "scripts/*.cjs",
+    "api-handlers/",
+    "scripts/.archive/",
+    "scripts/archive/"
   ],
   "overrides": [
     {

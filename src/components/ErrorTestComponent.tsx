@@ -25,18 +25,18 @@ export function ErrorTestComponent() {
   // 异步错误（不会被 ErrorBoundary 捕获，但会被全局错误处理器捕获）
   const handleAsyncError = () => {
     setTimeout(() => {
-      throw new Error('🧪 测试异步错误 - ' + new Date().toLocaleTimeString());
+      throw new Error(`🧪 测试异步错误 - ${  new Date().toLocaleTimeString()}`);
     }, 100);
   };
 
   // Promise 错误（会被全局 unhandledrejection 处理器捕获）
   const handlePromiseError = () => {
-    Promise.reject(new Error('🧪 测试 Promise 错误 - ' + new Date().toLocaleTimeString()));
+    Promise.reject(new Error(`🧪 测试 Promise 错误 - ${  new Date().toLocaleTimeString()}`));
   };
 
   // 事件处理器错误（会被全局错误处理器捕获）
   const handleEventError = () => {
-    throw new Error('🧪 测试事件处理器错误 - ' + new Date().toLocaleTimeString());
+    throw new Error(`🧪 测试事件处理器错误 - ${  new Date().toLocaleTimeString()}`);
   };
 
   return (

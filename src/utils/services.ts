@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 // Frontend-specific type definitions to avoid API dependency
 // Note: These interfaces are exported for future API expansion
 export interface SupportedFormat {
