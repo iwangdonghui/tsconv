@@ -256,7 +256,7 @@ export default function FormatTool() {
       <SEO
         title='Date Format Tool - Custom Date Formatting | tsconv.com'
         description='Format dates and timestamps with custom patterns. Choose from 25+ predefined templates including SQL formats for MySQL, PostgreSQL, Oracle, SQL Server. Support for ISO, US, EU, and database-specific formats.'
-        canonical='https://www.tsconv.com/format'
+        canonical='https://tsconv.com/format'
         ogTitle='Date Format Tool - Custom Date Formatting'
         ogDescription='Format dates and timestamps with custom patterns. Choose from 25+ predefined templates including SQL formats for MySQL, PostgreSQL, Oracle, SQL Server. Support for ISO, US, EU, and database-specific formats.'
         keywords='date format, timestamp format, date formatting, custom date format, date patterns, ISO format, SQL format, MySQL datetime, PostgreSQL timestamp, Oracle date, SQL Server datetime, database date format'

@@ -173,11 +173,11 @@ export default function TimestampConverter() {
     // 设置 canonical URL
     let canonical = document.querySelector('link[rel="canonical"]');
     if (canonical) {
-      canonical.setAttribute('href', 'https://www.tsconv.com/');
+      canonical.setAttribute('href', 'https://tsconv.com/');
     } else {
       canonical = document.createElement('link');
       canonical.setAttribute('rel', 'canonical');
-      canonical.setAttribute('href', 'https://www.tsconv.com/');
+      canonical.setAttribute('href', 'https://tsconv.com/');
       document.head.appendChild(canonical);
     }
   }, []);
@@ -453,7 +453,7 @@ export default function TimestampConverter() {
       <SEO
         title='Timestamp Converter - Unix & Epoch Time | tsconv.com'
         description='Convert Unix timestamps to human-readable dates and vice versa. Fast, simple, and accurate timestamp conversion tool with real-time results. Includes FAQ about timestamp conversion, timezone handling, and programming best practices.'
-        canonical='https://www.tsconv.com/'
+        canonical='https://tsconv.com/'
         ogTitle='Timestamp Converter - Unix & Epoch Time'
         ogDescription='Convert Unix timestamps to human-readable dates and vice versa. Fast, simple, and accurate timestamp conversion tool with real-time results. Includes FAQ about timestamp conversion, timezone handling, and programming best practices.'
         keywords='timestamp converter, unix timestamp, epoch time, date converter, time conversion, unix time, timestamp FAQ, 时间戳转换, 毫秒转换, 1970年, 闰秒, 时区处理, 2038年问题'

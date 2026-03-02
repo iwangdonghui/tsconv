@@ -311,7 +311,7 @@ export default function DiscordTimestampGenerator() {
   };
 
   const DiscordFAQSchema = () => {
-  const schema = {
+  const faqSchema = {
     "@context": "https://schema.org",
     "@type": "FAQPage",
     "mainEntity": [
@@ -342,11 +342,40 @@ export default function DiscordTimestampGenerator() {
     ]
   };
 
+  const appSchema = {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "Discord Timestamp Generator",
+    "url": "https://tsconv.com/discord",
+    "applicationCategory": "UtilitiesApplication",
+    "operatingSystem": "Any",
+    "browserRequirements": "Requires JavaScript",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "USD"
+    },
+    "description": "Free Discord timestamp generator. Create dynamic time codes that auto-convert to each user's timezone. 7 formats with one-click copy.",
+    "featureList": [
+      "7 Discord timestamp formats",
+      "One-click copy to clipboard",
+      "Timezone selection",
+      "Real-time preview",
+      "Relative time support"
+    ]
+  };
+
   return (
-    <script
-      type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
-    />
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(appSchema) }}
+      />
+    </>
   );
 };
 
@@ -357,12 +386,12 @@ export default function DiscordTimestampGenerator() {
       }`}
     >
       <SEO
-        title='Discord Timestamp Generator - Copy & Paste Dynamic Time (2026)'
-        description="The easiest Discord timestamp generator. Create dynamic time codes that automatically convert to everyone's local timezone. One-click copy for 7+ formats including relative time."
-        canonical='https://www.tsconv.com/discord'
-        ogTitle='Best Discord Timestamp Generator | tsconv.com'
-        ogDescription='Easily generate and copy Discord dynamic time codes for your community.'
-        keywords='discord timestamp, discord time code, dynamic discord time, discord bot, discord events, timezone conversion, discord formatting'
+        title='Discord Timestamp Generator — Free One-Click Copy | tsconv.com'
+        description='Free Discord timestamp generator. Create dynamic time codes like <t:timestamp:F> that auto-convert to each user&#39;s timezone. 7 formats, one-click copy. Works for bots, events &amp; announcements.'
+        canonical='https://tsconv.com/discord'
+        ogTitle='Discord Timestamp Generator — Free Online Tool | tsconv.com'
+        ogDescription='Generate and copy Discord dynamic time codes instantly. 7 formats including relative time. Free, no login required.'
+        keywords='discord timestamp generator, discord time code, discord timestamp converter, dynamic time discord, discord dynamic time, discord timestamp, discord bot timestamp, discord event time'
       />
       <DiscordFAQSchema />
       <Header />

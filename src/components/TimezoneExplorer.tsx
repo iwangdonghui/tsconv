@@ -264,7 +264,7 @@ export default function TimezoneExplorer() {
       <SEO
         title='Timezone Explorer - World Time Zones | tsconv.com'
         description='Explore world timezones with search and filtering. Find current time in any city or US state. View time in Mississippi, New York, California and more. Real-time world clock with IANA timezone support.'
-        canonical='https://www.tsconv.com/timezones'
+        canonical='https://tsconv.com/timezones'
         ogTitle='Timezone Explorer - World Time Zones'
         ogDescription='Explore world timezones with search and filtering. Find current time in any city or US state. View time in Mississippi, New York, California and more. Real-time world clock with IANA timezone support.'
         keywords='timezone explorer, world timezones, time zones, world clock, timezone search, what time is it in mississippi, what time zone is ms, current time in states, US state timezones, timezone converter, IANA timezones, UTC offset, GMT'

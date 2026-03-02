@@ -165,7 +165,7 @@ ${Object.entries(result.conversions)
       <SEO
         title='Time Units Converter - Convert Seconds, Minutes, Hours | tsconv.com'
         description='Convert between time units: microseconds, milliseconds, seconds, minutes, hours, days, weeks, months, years. Instant conversions with precise calculations.'
-        canonical='https://www.tsconv.com/time-units'
+        canonical='https://tsconv.com/time-units'
         ogTitle='Time Units Converter - Convert Seconds, Minutes, Hours'
         ogDescription='Convert between time units: microseconds, milliseconds, seconds, minutes, hours, days, weeks, months, years. Instant conversions with precise calculations.'
         keywords='time units converter, seconds to minutes, milliseconds to seconds, hours to days, time conversion calculator, microseconds, nanoseconds'

@@ -1,3 +1,6 @@
+# Redirect www to canonical non-www domain
+https://www.tsconv.com/* https://tsconv.com/:splat 301
+
 # Static assets should be served directly (highest priority)
 /favicon.ico  /favicon.ico  200
 /robots.txt  /robots.txt  200
@@ -32,6 +35,10 @@
 /date-diff  /index.html  200
 /format  /index.html  200
 /timezones  /index.html  200
+/discord  /index.html  200
+/time-units  /index.html  200
+/health  /index.html  200
 
 # Catch-all for client-side routing
 /*  /index.html  200
+

@@ -99,7 +99,7 @@ export default function HowTo() {
         <SEO
           title={`${article.title} - How To | tsconv.com`}
           description={article.description}
-          canonical={`https://www.tsconv.com/how-to/${articleId}`}
+          canonical={`https://tsconv.com/how-to/${articleId}`}
           ogTitle={`${article.title} - How To`}
           ogDescription={article.description}
           keywords={`timestamp how to, ${article.title.toLowerCase()}, unix timestamp tutorial, date conversion`}
@@ -129,7 +129,7 @@ export default function HowTo() {
       <SEO
         title='How To Guides - Timestamp Converter | tsconv.com'
         description='Quick reference guides for common timestamp operations across different programming languages. Learn how to work with timestamps effectively.'
-        canonical='https://www.tsconv.com/how-to'
+        canonical='https://tsconv.com/how-to'
         ogTitle='How To Guides - Timestamp Converter'
         ogDescription='Quick reference guides for common timestamp operations across different programming languages. Learn how to work with timestamps effectively.'
         keywords='timestamp how to, unix timestamp tutorial, date conversion tutorial, programming timestamps'
