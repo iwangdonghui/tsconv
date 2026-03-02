@@ -1,5 +1,5 @@
-import { AlertCircle, ArrowUpRight, CheckCircle, Clock, Copy, MessageSquare, TrendingUp } from 'lucide-react';
-import { useCallback, useEffect, useState } from 'react';
+import { AlertCircle, ArrowUpRight, CheckCircle, Clock, Copy, Globe, MessageSquare, TrendingUp } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 
 import { useTheme } from '../contexts/ThemeContext';
@@ -58,14 +58,77 @@ interface DiscordTimestamp {
   previews: Record<DiscordFormat, string>;
 }
 
+// Get the UTC offset in minutes for a given IANA timezone at a specific date
+function getTimezoneOffsetMinutes(timeZone: string, date: Date): number {
+  // Format the date in UTC and in the target timezone, then compute the difference
+  const utcParts = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'UTC',
+    year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', second: '2-digit',
+    hour12: false,
+  }).formatToParts(date);
+
+  const tzParts = new Intl.DateTimeFormat('en-US', {
+    timeZone,
+    year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', second: '2-digit',
+    hour12: false,
+  }).formatToParts(date);
+
+  const get = (parts: Intl.DateTimeFormatPart[], type: string) => {
+    const val = parts.find(p => p.type === type)?.value ?? '0';
+    return parseInt(val, 10);
+  };
+
+  const utcTotal = Date.UTC(
+    get(utcParts, 'year'), get(utcParts, 'month') - 1, get(utcParts, 'day'),
+    get(utcParts, 'hour'), get(utcParts, 'minute'), get(utcParts, 'second')
+  );
+  const tzTotal = Date.UTC(
+    get(tzParts, 'year'), get(tzParts, 'month') - 1, get(tzParts, 'day'),
+    get(tzParts, 'hour'), get(tzParts, 'minute'), get(tzParts, 'second')
+  );
+
+  return (tzTotal - utcTotal) / 60000;
+}
+
+// Format offset minutes as a UTC offset string like "UTC+08:00"
+function formatUtcOffset(offsetMinutes: number): string {
+  const sign = offsetMinutes >= 0 ? '+' : '-';
+  const abs = Math.abs(offsetMinutes);
+  const h = String(Math.floor(abs / 60)).padStart(2, '0');
+  const m = String(abs % 60).padStart(2, '0');
+  return `UTC${sign}${h}:${m}`;
+}
+
 export default function DiscordTimestampGenerator() {
+  const defaultTimezone = useMemo(() => Intl.DateTimeFormat().resolvedOptions().timeZone, []);
+
   const [date, setDate] = useState('');
   const [time, setTime] = useState('');
+  const [timezone, setTimezone] = useState(defaultTimezone);
   const [result, setResult] = useState<DiscordTimestamp | null>(null);
   const [error, setError] = useState('');
   const [copiedFormat, setCopiedFormat] = useState<DiscordFormat | null>(null);
 
   const { isDark } = useTheme();
+
+  // Build sorted timezone options with UTC offsets
+  const timezoneOptions = useMemo(() => {
+    const now = new Date();
+    try {
+      const tzNames: string[] = Intl.supportedValuesOf('timeZone');
+      return tzNames
+        .map(tz => {
+          const offset = getTimezoneOffsetMinutes(tz, now);
+          return { value: tz, label: `(${formatUtcOffset(offset)}) ${tz.replace(/_/g, ' ')}`, offset };
+        })
+        .sort((a, b) => a.offset - b.offset || a.value.localeCompare(b.value));
+    } catch {
+      // Fallback for older browsers
+      return [{ value: defaultTimezone, label: defaultTimezone, offset: 0 }];
+    }
+  }, [defaultTimezone]);
 
   // Debounced auto-generation
   const debouncedGenerate = useCallback(
@@ -74,7 +137,7 @@ export default function DiscordTimestampGenerator() {
         generateTimestamps();
       }
     }, 300),
-    [date, time]
+    [date, time, timezone]
   );
 
   // Check if we have enough data to auto-generate
@@ -104,14 +167,15 @@ export default function DiscordTimestampGenerator() {
     }
 
     try {
-      // Create date object from inputs
-      const dateTime = new Date(`${date}T${time}:00`);
-
-      if (isNaN(dateTime.getTime())) {
+      // Create date in UTC then adjust for the selected timezone offset
+      const naiveUtc = new Date(`${date}T${time}:00Z`); // treat input as UTC first
+      if (isNaN(naiveUtc.getTime())) {
         setError('Invalid date or time');
         setResult(null);
         return;
       }
+      const offsetMinutes = getTimezoneOffsetMinutes(timezone, naiveUtc);
+      const dateTime = new Date(naiveUtc.getTime() - offsetMinutes * 60000);
 
       const timestamp = Math.floor(dateTime.getTime() / 1000);
 
@@ -190,7 +254,7 @@ export default function DiscordTimestampGenerator() {
           minute: '2-digit',
           hour12: true,
         });
-      case 'R':
+      case 'R': {
         const diffSeconds = Math.floor(diffMs / 1000);
         const diffMinutes = Math.floor(diffSeconds / 60);
         const diffHours = Math.floor(diffMinutes / 60);
@@ -211,6 +275,7 @@ export default function DiscordTimestampGenerator() {
         } else {
           return diffSeconds >= 0 ? 'in a few seconds' : 'a few seconds ago';
         }
+      }
       default:
         return 'Preview';
     }
@@ -219,6 +284,7 @@ export default function DiscordTimestampGenerator() {
   const resetForm = () => {
     setDate('');
     setTime('');
+    setTimezone(defaultTimezone);
     setResult(null);
     setError('');
     setCopiedFormat(null);
@@ -244,6 +310,46 @@ export default function DiscordTimestampGenerator() {
     }
   };
 
+  const DiscordFAQSchema = () => {
+  const schema = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "How do I create a dynamic timestamp in Discord?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Select your desired date and time using our generator, then copy the generated code (like &lt;t:1772150400:F&gt;) and paste it directly into your Discord message. It will automatically convert to the viewer's local time."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "What are Discord dynamic timestamps?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Discord dynamic timestamps are special code snippets that display time relative to each user's own timezone and device settings. They can show specific dates, exact times, or relative periods like 'in 2 hours'."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "How to show 'Relative Time' (e.g., '3 minutes ago') on Discord?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Use the 'Relative Time' format (suffix :R) in our generator. The code looks like &lt;t:timestamp:R&gt;. This will stay updated and show how much time is left or has passed since the event."
+        }
+      }
+    ]
+  };
+
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+    />
+  );
+};
+
   return (
     <div
       className={`min-h-screen flex flex-col transition-colors duration-200 ${
@@ -251,13 +357,14 @@ export default function DiscordTimestampGenerator() {
       }`}
     >
       <SEO
-        title='Discord Timestamp Generator - Dynamic Time Display | tsconv.com'
-        description='Generate Discord timestamps that display dynamically for all users. Create timestamps for events, reminders, and announcements with automatic timezone conversion.'
+        title='Discord Timestamp Generator - Copy & Paste Dynamic Time (2026)'
+        description="The easiest Discord timestamp generator. Create dynamic time codes that automatically convert to everyone's local timezone. One-click copy for 7+ formats including relative time."
         canonical='https://www.tsconv.com/discord'
-        ogTitle='Discord Timestamp Generator - Dynamic Time Display'
-        ogDescription='Generate Discord timestamps that display dynamically for all users. Create timestamps for events, reminders, and announcements with automatic timezone conversion.'
-        keywords='discord timestamp, discord time, dynamic timestamp, discord bot, discord events, timezone conversion, discord formatting'
+        ogTitle='Best Discord Timestamp Generator | tsconv.com'
+        ogDescription='Easily generate and copy Discord dynamic time codes for your community.'
+        keywords='discord timestamp, discord time code, dynamic discord time, discord bot, discord events, timezone conversion, discord formatting'
       />
+      <DiscordFAQSchema />
       <Header />
 
       <main className='flex-1 container mx-auto px-4 py-8'>
@@ -307,7 +414,7 @@ export default function DiscordTimestampGenerator() {
                 <TrendingUp className='h-5 w-5' />
               </div>
               <h2 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                Dynamic Discord Timestamps
+                Dynamic Discord Timestamps.Works perfectly for Discord bots, events, and community announcements.
               </h2>
             </div>
             <p className={`mb-6 leading-relaxed ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
@@ -427,6 +534,30 @@ export default function DiscordTimestampGenerator() {
                       onChange={e => setTime(e.target.value)}
                       className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 shadow-sm hover:shadow-md ${isDark ? 'bg-slate-700 border-slate-600 text-white hover:border-slate-500' : 'bg-white border-gray-300 text-gray-900 hover:border-gray-400'}`}
                     />
+                  </div>
+
+                  {/* Timezone Input */}
+                  <div>
+                    <label
+                      className={`block text-sm font-medium mb-2 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}
+                    >
+                      <span className='flex items-center gap-1.5'>
+                        <Globe className='h-4 w-4' />
+                        Timezone
+                      </span>
+                    </label>
+                    <select
+                      aria-label='Select timezone for timestamp'
+                      value={timezone}
+                      onChange={e => setTimezone(e.target.value)}
+                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 shadow-sm hover:shadow-md ${isDark ? 'bg-slate-700 border-slate-600 text-white hover:border-slate-500' : 'bg-white border-gray-300 text-gray-900 hover:border-gray-400'}`}
+                    >
+                      {timezoneOptions.map(tz => (
+                        <option key={tz.value} value={tz.value}>
+                          {tz.label}
+                        </option>
+                      ))}
+                    </select>
                   </div>
 
                   {/* Quick Actions */}
